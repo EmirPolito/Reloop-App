@@ -1,0 +1,1 @@
+export { PantallaFavoritos } from "./PantallaFavoritos";

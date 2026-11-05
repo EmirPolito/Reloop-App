@@ -1,0 +1,22 @@
+{
+  // Base mínima para los tsconfig.json de los paquetes de Expo que hay en node_modules.
+  // Solo sirve para que el editor los lea sin errores: la app no se compila con esto.
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react-jsx",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+
+    // Los paquetes piden emitDeclarationOnly, que exige declaration
+    "declaration": true,
+    "skipLibCheck": true,
+
+    // El código de terceros no se revisa: solo importa que el editor no marque errores en él
+    "noCheck": true
+  }
+}

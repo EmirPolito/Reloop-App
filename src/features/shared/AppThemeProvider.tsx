@@ -1,0 +1,61 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
+
+import { useRequiredContext } from "@/hooks/useRequiredContext";
+import { createStyles, type AppStyles } from "./styles";
+
+const STORAGE_KEY = "reloop.theme";
+
+interface AppThemeValue {
+  isDark: boolean;
+  /** Cambia el tema y recuerda la elección para la próxima vez que se abra la app. */
+  setIsDark: (isDark: boolean) => void;
+  /** Hojas de estilo compartidas, ya resueltas para el tema actual. */
+  styles: AppStyles;
+}
+
+const AppThemeContext = createContext<AppThemeValue | null>(null);
+
+export function AppThemeProvider({ children }: PropsWithChildren) {
+  const [isDark, setIsDarkState] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        if (active && stored === "dark") setIsDarkState(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const setIsDark = useCallback((next: boolean) => {
+    setIsDarkState(next);
+    AsyncStorage.setItem(STORAGE_KEY, next ? "dark" : "light").catch(() => {});
+  }, []);
+
+  const styles = useMemo(() => createStyles(isDark), [isDark]);
+  const value = useMemo(
+    () => ({ isDark, setIsDark, styles }),
+    [isDark, setIsDark, styles],
+  );
+
+  return (
+    <AppThemeContext.Provider value={value}>
+      {children}
+    </AppThemeContext.Provider>
+  );
+}
+
+export function useAppTheme(): AppThemeValue {
+  return useRequiredContext(AppThemeContext, "AppThemeProvider");
+}

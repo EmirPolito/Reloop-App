@@ -1,0 +1,7 @@
+{
+  "name": "expo-module-scripts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Solo el archivo tsconfig.base.json que extienden los tsconfig.json de varios paquetes de Expo en node_modules, para que el editor no marque errores al abrirlos. No es la herramienta real de Expo para crear módulos.",
+  "license": "MIT"
+}

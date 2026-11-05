@@ -1,0 +1,216 @@
+rules_version = '2';
+
+// Reglas de seguridad de ReLoop. Se publican con: npx firebase-tools deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Solo cuentas con el correo verificado (el token lleva `email_verified`).
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // ─── Perfiles ────────────────────────────────────────────────────────────
+    // Cualquier persona con sesión puede ver los perfiles (son públicos); solo su dueña
+    // puede crearlos y editarlos. El correo no se guarda aquí (lo ve cualquiera con sesión):
+    // vive en Authentication y, en privado, en `cuentas/{uid}`.
+    function validProfile(d) {
+      return d.keys().hasOnly(['uid', 'nombre', 'fotoUrl', 'descripcion', 'color', 'etiquetas',
+                               'stickers', 'creadoEn', 'actualizadoEn'])
+        && d.nombre is string && d.nombre.size() > 0 && d.nombre.size() <= 30
+        && d.descripcion is string && d.descripcion.size() <= 80
+        && d.color in ['azul', 'naranja', 'rosa', 'verde', 'amarillo']
+        && d.etiquetas is list && d.etiquetas.size() <= 4
+        && d.stickers is list && d.stickers.size() <= 4
+        && (d.fotoUrl == null || (d.fotoUrl is string && d.fotoUrl.matches('https://.*')))
+        && d.actualizadoEn == request.time;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if signedIn();
+
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.creadoEn == request.time
+        && validProfile(request.resource.data);
+
+      allow update: if isOwner(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.creadoEn == resource.data.creadoEn
+        && validProfile(request.resource.data);
+
+      // Favoritos: privados de cada persona
+      match /favoritos/{productId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['productId', 'creadoEn'])
+          && request.resource.data.productId == productId
+          && request.resource.data.creadoEn == request.time;
+      }
+
+      // Calificaciones propias (la nota que esta persona dio a cada producto)
+      match /calificaciones/{productId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['productId', 'rating', 'actualizadoEn'])
+          && request.resource.data.productId == productId
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.actualizadoEn == request.time;
+      }
+    }
+
+    // ─── Cuentas ─────────────────────────────────────────────────────────────
+    // Copia del correo de cada cuenta para verlo en la consola de Firebase junto a los perfiles
+    // (el doc `cuentas/{uid}` tiene el mismo id que `usuarios/{uid}`). A diferencia del perfil es
+    // privado: solo su dueña lo lee, y no se puede escribir un correo que no sea el de su sesión.
+    match /cuentas/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['uid', 'correo', 'actualizadoEn'])
+        && request.resource.data.uid == uid
+        && request.resource.data.correo == request.auth.token.email
+        && request.resource.data.actualizadoEn == request.time;
+    }
+
+    // ─── Publicaciones ───────────────────────────────────────────────────────
+    function validNewProduct(d) {
+      return d.keys().hasOnly(['ownerId', 'seller', 'name', 'description', 'category', 'price',
+                               'imageUrl', 'distance', 'ratingTotal', 'ratingCount', 'creadoEn'])
+        && d.ownerId == request.auth.uid
+        && d.seller is string && d.seller.size() > 0 && d.seller.size() <= 30
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 40
+        && d.description is string && d.description.size() <= 500
+        && d.category in ['venta', 'cambio', 'donacion', 'mascota', 'comida']
+        && d.price is number && d.price >= 0 && d.price <= 1000000
+        && (d.imageUrl == null || (d.imageUrl is string && d.imageUrl.matches('https://.*')))
+        && d.distance is string
+        && d.creadoEn == request.time
+        && ((d.category in ['venta', 'comida'])
+              ? (d.ratingTotal == 5 && d.ratingCount == 1)
+              : (d.ratingTotal == 0 && d.ratingCount == 0));
+    }
+
+    // Solo la dueña puede cambiar el nombre de vendedor de sus publicaciones.
+    function validSellerRename() {
+      return resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seller'])
+        && request.resource.data.seller is string
+        && request.resource.data.seller.size() > 0
+        && request.resource.data.seller.size() <= 30;
+    }
+
+    // Cualquier persona, salvo la dueña, puede calificar. El promedio solo cambia en la
+    // medida exacta de su propia nota: se compara su calificación antes y después del cambio.
+    function validRatingUpdate(productId) {
+      let ratingPath = /databases/$(database)/documents/usuarios/$(request.auth.uid)/calificaciones/$(productId);
+      let before = exists(ratingPath) ? get(ratingPath).data.rating : 0;
+      let after = getAfter(ratingPath).data.rating;
+      return resource.data.ownerId != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingTotal', 'ratingCount'])
+        && resource.data.category in ['venta', 'comida']
+        && after is int && after >= 1 && after <= 5
+        && request.resource.data.ratingTotal == resource.data.ratingTotal - before + after
+        && request.resource.data.ratingCount == resource.data.ratingCount + (before == 0 ? 1 : 0);
+    }
+
+    match /productos/{productId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && validNewProduct(request.resource.data);
+      allow update: if signedIn() && (validSellerRename() || validRatingUpdate(productId));
+
+      match /comentarios/{commentId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['authorId', 'author', 'text', 'creadoEn'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.author is string
+          && request.resource.data.author.size() > 0
+          && request.resource.data.author.size() <= 30
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.creadoEn == request.time;
+      }
+    }
+
+    // ─── Reportes ────────────────────────────────────────────────────────────
+    // Cada persona solo ve sus propios reportes; el resto se revisa desde la consola.
+    match /reportes/{reportId} {
+      allow read: if signedIn() && resource.data.reporterId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['productId', 'reporterId', 'creadoEn'])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.productId is string
+        && reportId == request.auth.uid + '_' + request.resource.data.productId
+        && request.resource.data.creadoEn == request.time;
+    }
+
+    // ─── Chats ───────────────────────────────────────────────────────────────
+    // Un chat por pareja de personas: su id es `uidA_uidB` con los uid ordenados.
+    function validNewChat(chatId, d) {
+      return d.keys().hasOnly(['participants', 'names', 'productId', 'introducedProducts',
+                               'lastMessage', 'reads', 'creadoEn', 'actualizadoEn'])
+        && d.participants is list && d.participants.size() == 2
+        && d.participants[0] < d.participants[1]
+        && chatId == d.participants[0] + '_' + d.participants[1]
+        && request.auth.uid in d.participants
+        && d.names is map && d.names.keys().hasOnly(d.participants)
+        && d.names[d.participants[0]] is string && d.names[d.participants[0]].size() <= 30
+        && d.names[d.participants[1]] is string && d.names[d.participants[1]].size() <= 30
+        && d.reads is map && d.reads.keys().hasOnly([request.auth.uid])
+        && (d.productId == null || d.productId is string)
+        && d.introducedProducts is list && d.introducedProducts.size() <= 1
+        && (d.lastMessage == null
+              || (d.lastMessage.from == request.auth.uid && d.lastMessage.time == request.time))
+        && d.creadoEn == request.time
+        && d.actualizadoEn == request.time;
+    }
+
+    // Cada participante solo puede cambiar su propio nombre y su propia marca de lectura,
+    // y el resumen del último mensaje solo puede ser un mensaje suyo.
+    function validChatUpdate() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return request.auth.uid in before.participants
+        && after.participants == before.participants
+        && changed.hasOnly(['names', 'reads', 'lastMessage', 'productId', 'introducedProducts',
+                            'actualizadoEn'])
+        && (!('names' in changed)
+              || after.names.diff(before.names).affectedKeys().hasOnly([request.auth.uid]))
+        && (!('reads' in changed)
+              || after.reads.diff(before.reads).affectedKeys().hasOnly([request.auth.uid]))
+        && (!('lastMessage' in changed)
+              || (after.lastMessage.from == request.auth.uid && after.lastMessage.time == request.time));
+    }
+
+    match /chats/{chatId} {
+      // `resource == null` permite comprobar si el chat ya existe antes de crearlo
+      allow read: if signedIn() && (resource == null || request.auth.uid in resource.data.participants);
+      allow create: if signedIn() && validNewChat(chatId, request.resource.data);
+      allow update: if signedIn() && validChatUpdate();
+
+      match /mensajes/{messageId} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+
+        // getAfter: el primer mensaje se crea en la misma operación que el chat
+        allow create: if signedIn()
+          && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && request.resource.data.keys().hasOnly(['from', 'text', 'images', 'creadoEn'])
+          && request.resource.data.from == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.images is list
+          && request.resource.data.images.size() <= 10
+          && (request.resource.data.text.size() > 0 || request.resource.data.images.size() > 0)
+          && request.resource.data.creadoEn == request.time;
+      }
+    }
+  }
+}
