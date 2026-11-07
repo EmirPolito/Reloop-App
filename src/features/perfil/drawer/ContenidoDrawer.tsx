@@ -27,6 +27,8 @@ export interface DrawerEditarPerfilProps {
   onSave: (data: DatosPerfil) => void | Promise<void>;
 }
 
+type TextInputInstance = ComponentRef<typeof TextInput>;
+
 export function ContenidoDrawer({
   visible,
   initialData,
@@ -47,7 +49,7 @@ export function ContenidoDrawer({
   const tecladoRef = useRef(0);
   const scrollRef = useRef<ComponentRef<typeof BottomSheetScrollView>>(null);
   const scrollY = useRef(0);
-  const inputActivo = useRef<TextInput | null>(null);
+  const inputActivo = useRef<TextInputInstance | null>(null);
 
   const modo: Modo = isDark ? "oscuro" : "claro";
   const p = PALETA[modo];
@@ -65,7 +67,7 @@ export function ContenidoDrawer({
 
   /* Desplaza el scroll lo justo para que el input quede sobre el teclado */
   const asegurarVisible = useCallback(
-    (input: TextInput) => {
+    (input: TextInputInstance) => {
       inputActivo.current = input;
       setTimeout(
         () => {

@@ -1,7 +1,6 @@
-import { Image } from "expo-image";
+import { Image, type ImageSource } from "expo-image";
 import { useEffect } from "react";
 import {
-  type ImageSourcePropType,
   StyleSheet,
   View,
   type ViewStyle,
@@ -68,7 +67,7 @@ function StickerFlotante({
   rotate,
   index,
 }: {
-  source: ImageSourcePropType;
+  source: ImageSource;
   slot: ViewStyle;
   /** Inclinación base en grados */
   rotate: number;

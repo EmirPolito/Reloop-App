@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Modal, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,12 +23,15 @@ export function ImageViewerModal({
 }) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   // La página visible arranca en `initialIndex` cada vez que se abre el visor
   const [page, setPage] = useState(initialIndex);
   const [openedWith, setOpenedWith] = useState({ images, initialIndex });
-  if (openedWith.images !== images || openedWith.initialIndex !== initialIndex) {
+  if (
+    openedWith.images !== images ||
+    openedWith.initialIndex !== initialIndex
+  ) {
     setOpenedWith({ images, initialIndex });
     setPage(initialIndex);
   }

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+} from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,8 +36,11 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
   const { sendMessage, markRead } = useChatActions();
-  const { messages, initialCount, status: messagesStatus } =
-    useThreadMessages(chatId);
+  const {
+    messages,
+    initialCount,
+    status: messagesStatus,
+  } = useThreadMessages(chatId);
   const { back, openProduct, openUserProfile } = useAppNavigation();
   const { pickImages } = useImagePicker();
   const [messageDraft, setMessageDraft] = useDraft(`message:${chatId}`);
@@ -40,7 +49,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const [selectedImages, setSelectedImages] = useState<string[]>(NO_IMAGES);
   const [sending, setSending] = useState(false);
   const [viewer, setViewer] = useState({ images: NO_IMAGES, initialIndex: 0 });
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { product: relatedProduct } = useProduct(activeChat?.productId);

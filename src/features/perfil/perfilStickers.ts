@@ -1,4 +1,4 @@
-import type { ImageSourcePropType } from "react-native";
+import type { ImageSource } from "expo-image";
 
 /* -------------------------------------------------------------------------- */
 /*  Stickers                                                                  */
@@ -8,7 +8,7 @@ import type { ImageSourcePropType } from "react-native";
 
 export interface StickerPerfil {
   id: string;
-  source: ImageSourcePropType;
+  source: ImageSource;
 }
 
 export const STICKERS_PERFIL: StickerPerfil[] = [

@@ -34,6 +34,10 @@ const FONTS = {
   Poppins_800ExtraBold,
 };
 
+export const unstable_settings = {
+  initialRouteName: "(app)",
+};
+
 /** Acceso para quien no tiene sesión y la app para quien sí; Expo Router redirige al cambiar la sesión. */
 function RootNavigator() {
   const { status } = useAuth();
@@ -42,10 +46,13 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={STACK_SCREEN_OPTIONS}>
-      <Stack.Protected guard={isAuthenticated}>
+      <Stack.Protected
+        guard={isAuthenticated}
+        redirectTo={status === "unverified" ? "/verify" : "/login"}
+      >
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!isAuthenticated}>
+      <Stack.Protected guard={!isAuthenticated} redirectTo="/">
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

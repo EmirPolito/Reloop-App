@@ -13,12 +13,18 @@ export default function AuthLayout() {
   return (
     <AuthFormProvider>
       <Stack screenOptions={STACK_SCREEN_OPTIONS}>
-        <Stack.Protected guard={status === "unauthenticated"}>
+        <Stack.Protected
+          guard={status === "unauthenticated"}
+          redirectTo="/verify"
+        >
           <Stack.Screen name="login" />
           <Stack.Screen name="register" />
           <Stack.Screen name="recovery" />
         </Stack.Protected>
-        <Stack.Protected guard={status === "unverified"}>
+        <Stack.Protected
+          guard={status === "unverified"}
+          redirectTo="/login"
+        >
           <Stack.Screen name="verify" />
         </Stack.Protected>
       </Stack>
