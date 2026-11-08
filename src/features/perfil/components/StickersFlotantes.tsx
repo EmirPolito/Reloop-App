@@ -17,21 +17,21 @@ import { stickerPorId } from "../perfilStickers";
 /** Flotado de los stickers alrededor del avatar */
 const FLOTE = {
   /** Cuánto suben y bajan (px). Súbelo para más movimiento */
-  amplitud: 4,
+  amplitud: 5,
   /** Cuánto se inclinan (grados) */
-  giro: 3,
+  giro: 5,
   /** Duración de un ciclo completo (ms), uno por sticker para que no vayan sincronizados */
-  duraciones: [3200, 3400, 3600, 3800],
+  duraciones: [3300, 3500, 3700, 3900],
   /** Retraso de arranque entre un sticker y el siguiente (ms) */
   desfase: 350,
 } as const;
 
 /** Lugares alrededor del avatar donde caen los stickers elegidos (en orden) */
 const SLOTS_STICKERS: (ViewStyle & { rotate: string })[] = [
-  { top: 48, left: "10%", rotate: "-12deg" },
-  { top: 48, right: "13%", rotate: "14deg" },
-  { top: 175, left: "-1%", rotate: "-15deg" },
-  { top: 172, right: "-1%", rotate: "9deg" },
+  { top: 35, left: "13%", rotate: "-12deg" },
+  { top: 35, right: "13%", rotate: "14deg" },
+  { top: 167, left: "-1%", rotate: "-15deg" },
+  { top: 167, right: "-1%", rotate: "9deg" },
 ];
 
 /** Stickers elegidos por el usuario, colocados alrededor del avatar y flotando suavemente. */
@@ -136,5 +136,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 5,
   },
-  stickerImage: { width: 105, height: 105 },
+  stickerImage: { width: 108, height: 108 },
 });

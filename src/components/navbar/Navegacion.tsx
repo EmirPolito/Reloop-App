@@ -336,7 +336,7 @@ function createStyles(isDark: boolean) {
         text: "#FFFFFF",
       }
     : {
-        glass: "rgba(255, 255, 255, 0.81)",
+        glass: "rgba(255, 255, 255, 0.87)",
         outerBorder: "#ffffff",
         selectedPill: "#FFFFFF",
         pillBorder: "#ffffffff",

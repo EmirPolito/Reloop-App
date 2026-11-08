@@ -21,14 +21,14 @@ export function coloresTarjeta(isDark: boolean) {
 /** Estilos compartidos por el perfil propio y el perfil público */
 export const estilosPerfil = StyleSheet.create({
   headerContainer: {
-    height: 220,
+    height: 218,
     width: "100%",
     position: "relative",
     zIndex: 20,
   },
   skyBackground: {
     flex: 1,
-    paddingTop: 11.5,
+    paddingTop: 2,
     alignItems: "center",
     backgroundColor: "transparent",
   },
@@ -40,7 +40,7 @@ export const estilosPerfil = StyleSheet.create({
     paddingHorizontal: 15,
   },
   headerTitle: {
-    fontSize: 23,
+    fontSize: 22,
     fontWeight: "600",
     color: "#FFFFFF",
     textAlign: "center",
@@ -58,10 +58,10 @@ export const estilosPerfil = StyleSheet.create({
     zIndex: 10,
   },
   avatarRing: {
-    width: 145,
-    height: 145,
+    width: 148,
+    height: 148,
     borderRadius: 150,
-    padding: 5.5,
+    padding: 5,
   },
   avatarPlaceholder: {
     width: "100%",
@@ -73,11 +73,11 @@ export const estilosPerfil = StyleSheet.create({
 
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
-    top: 2,
-    fontSize: 24,
+    top: 1,
+    fontSize: 26,
     fontWeight: "600",
     textAlign: "center",
-    letterSpacing: -0.8,
+    letterSpacing: -1.5,
     lineHeight: 25,
     minHeight: 25,
     includeFontPadding: false,
@@ -85,8 +85,8 @@ export const estilosPerfil = StyleSheet.create({
   profileSubtitle: {
     paddingHorizontal: 15,
     marginTop: 5.5,
-    fontSize: 12.5,
-    color: "#929292ff",
+    fontSize: 12,
+    color: "#888888ff",
     fontWeight: "400",
     textAlign: "center",
   },

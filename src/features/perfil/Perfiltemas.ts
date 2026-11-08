@@ -72,7 +72,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
     gradientLight: ["#ff8725ff", "#ffb16dff", "#ffbb7fff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
     pillBg: "#fff9f5ff",
-    pillBorder: "#ff6a003e",
+    pillBorder: "#ff6a0026",
   },
   rosa: {
     label: "Rosa",
@@ -80,12 +80,12 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
     gradientLight: ["#ff4fa3", "#ff74b8", "#ffa3cf"],
     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
     pillBg: "#fff6fbff",
-    pillBorder: "#ff008028",
+    pillBorder: "#ff00801c",
   },
   verde: {
     label: "Verde",
     accent: "#4ac88954",
-    gradientLight: ["#22c55e", "#4ade80", "#86efac"],
+    gradientLight: ["#2cb844ff", "#4ade80", "#86efac"],
     gradientDark: ["#166534", "#16A34A", "#4ADE80"],
     pillBg: "#f5fffaff",
     pillBorder: "#59cf9454",
@@ -95,7 +95,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
     accent: "#EAB308",
     gradientLight: ["#facc15", "#fde047", "#fef08a"],
     gradientDark: ["#854D0E", "#CA8A04", "#FACC15"],
-    pillBg: "#fffcf61a",
+    pillBg: "#fffcf6ff", // Corregido de '1a' a 'ff'
     pillBorder: "#eab2083d",
   },
 };

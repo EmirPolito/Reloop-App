@@ -22,11 +22,11 @@ export function PildoraPerfil({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        height: 22,
+        height: 20,
         backgroundColor: tema.pillBg,
         borderColor: tema.pillBorder,
         borderWidth: 1,
-        paddingHorizontal: 5.7,
+        paddingHorizontal: 5,
         borderRadius: 15,
       }}
     >
@@ -38,8 +38,8 @@ export function PildoraPerfil({
       ) : null}
       <Text
         style={{
-          top: 1,
-          fontSize: 11,
+          top: 0,
+          fontSize: 10.5,
           fontWeight: "500",
           color: textColor,
         }}
