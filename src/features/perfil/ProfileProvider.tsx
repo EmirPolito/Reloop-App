@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { useSessionUser } from "@/features/session/SessionUserProvider";
+import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { ensureAccountEmail } from "./accountRepository";
@@ -30,6 +31,7 @@ const ProfileContext = createContext<ProfileValue | null>(null);
  */
 export function ProfileProvider({ children }: PropsWithChildren) {
   const user = useSessionUser();
+  const { setThemeColor } = useAppTheme();
   const [stored, setStored] = useState<DatosPerfil | null>(null);
 
   useEffect(() => {
@@ -43,13 +45,16 @@ export function ProfileProvider({ children }: PropsWithChildren) {
     return subscribeProfile(
       user.uid,
       (profile) => {
-        if (profile) setStored(profile);
+        if (profile) {
+          setStored(profile);
+          setThemeColor(profile.color);
+        }
       },
       (error) =>
         console.warn("No se pudo leer el perfil.", describeFirestoreError(error)),
       user.name,
     );
-  }, [user.uid, user.name, user.email]);
+  }, [user.uid, user.name, user.email, setThemeColor]);
 
   const profile = useMemo(
     () => stored ?? defaultProfile(user.name),

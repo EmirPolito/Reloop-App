@@ -24,6 +24,7 @@ import { PerfilInformacion } from "./components/PerfilInformacion";
 import { StickersFlotantes } from "./components/StickersFlotantes";
 import { TarjetaAccion } from "./components/TarjetaAccion";
 import { DrawerEditarPerfil } from "./drawer/DrawerEditarPerfil";
+import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import {
   IconoCampana,
   IconoCandado,
@@ -36,7 +37,6 @@ import {
   IconoPublicaciones,
   IconoSol,
 } from "./Perfiliconos";
-import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import { type ColorPerfil } from "./Perfiltemas";
 import { useProfile } from "./ProfileProvider";
 
@@ -48,7 +48,12 @@ const SEGUIDORES = "0";
 
 /** Pantalla de perfil: header editable, estadísticas, publicaciones y ajustes */
 export function PantallaPerfil() {
-  const { styles: baseStyles, isDark, setIsDark } = useAppTheme();
+  const {
+    styles: baseStyles,
+    isDark,
+    setIsDark,
+    setThemeColor,
+  } = useAppTheme();
   const { profile, saveProfile } = useProfile();
   const { uid } = useSessionUser();
   const { favorites } = useMarketplaceState();
@@ -65,11 +70,12 @@ export function PantallaPerfil() {
   const handleColor = useCallback(
     (color: ColorPerfil) => {
       if (color === profile.color) return;
+      setThemeColor(color);
       saveProfile({ ...profile, color }).catch((error) =>
         showErrorAlert("No se pudo cambiar el color", error),
       );
     },
-    [profile, saveProfile],
+    [profile, saveProfile, setThemeColor],
   );
 
   const abrirDrawer = useCallback(() => setDrawerOpen(true), []);
@@ -147,7 +153,7 @@ export function PantallaPerfil() {
               icon={
                 <IconoPublicaciones
                   size={80}
-                  color={isDark ? "#475569" : "#C5CAD3"}
+                  color={isDark ? "#475569" : "#ffffffff"}
                 />
               }
               title="Aún no tienes publicaciones"
@@ -157,14 +163,16 @@ export function PantallaPerfil() {
           )}
 
           {/* ========================== GENERAL ========================== */}
-          <View style={[styles.settingsCard, { backgroundColor: fondoTarjeta }]}>
+          <View
+            style={[styles.settingsCard, { backgroundColor: fondoTarjeta }]}
+          >
             <Text style={[styles.cardLabel, { color: mutedColor }]}>
               General
             </Text>
 
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoEditar size={24} color="#ffa20075" />}
+              icon={<IconoEditar size={23} color="#5d5d5d7d" />}
               label="Editar perfil"
               textColor={textoFila}
               onPress={abrirDrawer}
@@ -172,7 +180,7 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoMensaje size={24} color="#0062ff75" />}
+              icon={<IconoMensaje size={23} color="#5d5d5d7d" />}
               label="Cambiar correo"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Cambiar correo")}
@@ -180,19 +188,33 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoCandado size={24} color="#ff002b83" />}
+              icon={<IconoCandado size={23} color="#5d5d5d7d" />}
               label="Cambiar contraseña"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Cambiar contraseña")}
               right={<IconoFlecha size={22} color={flecha} />}
             />
+
+            {/* Color del perfil: paleta a la izquierda, círculos a la derecha, sin flecha */}
+            <FilaAjuste
+              bg={rowBg}
+              icon={
+                <Ionicons name="color-palette" size={23} color="#5d5d5d7d" />
+              }
+              iconWidth={26}
+              label="Color"
+              textColor={textoFila}
+              right={
+                <CirculosColor color={profile.color} onColor={handleColor} />
+              }
+            />
             <FilaAjuste
               bg={rowBg}
               icon={
                 <IconoCampana
-                  size={25}
-                  color="#5d00ff36"
-                  secondaryColor="#5d00ff6c"
+                  size={24}
+                  color="#5d5d5d7d"
+                  secondaryColor="#757575ff"
                 />
               }
               label="Notificaciones"
@@ -212,12 +234,12 @@ export function PantallaPerfil() {
               bg={rowBg}
               icon={
                 isDark ? (
-                  <IconoSol size={24} color="#f59e0baa" />
+                  <IconoLuna size={24} color="#c3c3c3aa" />
                 ) : (
-                  <IconoLuna size={24} color="#6366f19e" />
+                  <IconoSol size={24} color="#f59e0baa" />
                 )
               }
-              label="Modo oscuro"
+              label="Modo claro"
               textColor={textoFila}
               right={
                 <Switch
@@ -230,28 +252,17 @@ export function PantallaPerfil() {
                 />
               }
             />
-            {/* Color del perfil: paleta a la izquierda, círculos a la derecha, sin flecha */}
-            <FilaAjuste
-              bg={rowBg}
-              icon={
-                <Ionicons name="color-palette" size={24} color="#00b8a975" />
-              }
-              iconWidth={26}
-              label="Color"
-              textColor={textoFila}
-              right={
-                <CirculosColor color={profile.color} onColor={handleColor} />
-              }
-            />
           </View>
 
           {/* =========================== LEGAL =========================== */}
-          <View style={[styles.settingsCard, { backgroundColor: fondoTarjeta }]}>
+          <View
+            style={[styles.settingsCard, { backgroundColor: fondoTarjeta }]}
+          >
             <Text style={[styles.cardLabel, { color: mutedColor }]}>Legal</Text>
 
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#8181817d" />}
+              icon={<IconoDocumento size={24.5} color="#7676767d" />}
               label="Términos y condiciones"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Términos y condiciones")}
@@ -259,7 +270,7 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#8181817d" />}
+              icon={<IconoDocumento size={24.5} color="#7676767d" />}
               label="Política de privacidad"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Política de privacidad")}

@@ -1,4 +1,5 @@
 import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { AppIcon } from "@/features/shared/AppIcon";
@@ -12,9 +13,10 @@ export function BackHeader({
   title: string;
   onBack: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { styles, isDark } = useAppTheme();
   return (
-    <View style={styles.backHeader}>
+    <View style={[styles.backHeader, { paddingTop: insets.top }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Volver"

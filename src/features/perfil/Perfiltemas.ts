@@ -31,7 +31,7 @@ export const MAX_NOMBRE = 30;
 export const MAX_DESCRIPCION = 80;
 export const MAX_TEXTO_PILDORA = 16;
 
-export const DESCRIPCION_POR_DEFECTO = "Miembro de Reloop";
+export const DESCRIPCION_POR_DEFECTO = "Nada que decir";
 
 /* -------------------------------------------------------------------------- */
 /*  Colores                                                                   */
@@ -69,7 +69,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   naranja: {
     label: "Naranja",
     accent: "#ff7919ff",
-    gradientLight: ["#ff8d2fff", "#ffb16dff", "#ffbb7fff"],
+    gradientLight: ["#ff8725ff", "#ffb16dff", "#ffbb7fff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
     pillBg: "#fff9f5ff",
     pillBorder: "#ff6a003e",
@@ -109,4 +109,16 @@ export function gradienteHeader(
   const [a, b, c] = isDark ? tema.gradientDark : tema.gradientLight;
   // Mismo color que el tercero, sin opacidad (#rrggbb + 00): así el fundido no se ensucia al mezclar
   return [a, b, c, `${c.slice(0, 7)}00`];
+}
+
+/** Degradado de fondo de la app: color del tema elegido arriba y blanco/claro (#f7f7f7) al centro y abajo */
+export function gradienteAppBackground(
+  color: ColorPerfil,
+  isDark: boolean,
+): [string, string, string, string] {
+  const tema = TEMAS[color] ?? TEMAS.azul;
+  if (isDark) {
+    return [tema.gradientDark[0], "#10203A", "#112536", "#35152D"];
+  }
+  return [tema.gradientLight[0], "#f7f7f7ff", "#f7f7f7ff", "#f7f7f7"];
 }

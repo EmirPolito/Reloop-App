@@ -1,4 +1,7 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -25,12 +28,14 @@ import { usePublicProfile } from "./hooks/usePublicProfile";
 import { IconoMensaje, IconoPublicaciones } from "./Perfiliconos";
 import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import { defaultProfile } from "./profileMappers";
+import { gradienteAppBackground } from "./Perfiltemas";
 
 /** Todavía no hay seguidores: el número es fijo. */
 const SEGUIDORES = "0";
 
 /** Perfil de otra persona (o el propio, visto como lo ven las demás), con el mismo estilo del perfil propio. */
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
+  const insets = useSafeAreaInsets();
   const { styles: baseStyles, isDark } = useAppTheme();
   const { uid } = useSessionUser();
   const { profile: storedProfile, status } = usePublicProfile(userId);
@@ -44,6 +49,15 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
 
+  // Sin ficha de perfil (o si no se pudo leer) se muestra lo que se sabe de la persona
+  const profile =
+    storedProfile ?? defaultProfile(userProducts[0]?.seller ?? "Usuario");
+
+  const backgroundColors = useMemo(
+    () => gradienteAppBackground(profile.color, isDark),
+    [profile.color, isDark],
+  );
+
   if (status === "loading") {
     return (
       <View style={baseStyles.fill}>
@@ -53,98 +67,103 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
     );
   }
 
-  // Sin ficha de perfil (o si no se pudo leer) se muestra lo que se sabe de la persona
-  const profile =
-    storedProfile ?? defaultProfile(userProducts[0]?.seller ?? "Usuario");
-
   return (
-    <ScrollView
-      style={baseStyles.screenScroll}
-      contentContainerStyle={{ paddingBottom: 100 }}
-      showsVerticalScrollIndicator={false}
+    <LinearGradient
+      colors={backgroundColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ flex: 1 }}
     >
-      <PerfilCabecera
-        color={profile.color}
-        isDark={isDark}
-        nav={
-          <>
-            <PressableSuave
-              accessibilityRole="button"
-              accessibilityLabel="Volver"
-              onPress={back}
-              style={styles.backBtn}
-            >
-              <AppIcon name="back" size={22} color="#FFFFFF" />
-            </PressableSuave>
-            <Text style={estilosPerfil.headerTitle}>Perfil</Text>
-            <View style={styles.backBtn} />
-          </>
-        }
-        avatar={
-          <PerfilAvatar
-            photo={profile.photo}
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+        <ScrollView
+          style={baseStyles.screenScroll}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <PerfilCabecera
             color={profile.color}
-            name={profile.name}
-            placeholder="iniciales"
-          />
-        }
-      >
-        <StickersFlotantes stickers={profile.stickers} />
-      </PerfilCabecera>
-
-      <PerfilInformacion
-        profile={profile}
-        stats={{
-          publicaciones: String(userProducts.length),
-          seguidores: SEGUIDORES,
-          reputacion: averageRatingLabel(userProducts),
-        }}
-        isDark={isDark}
-      />
-
-      <View style={{ paddingHorizontal: 15 }}>
-        {userProducts.length ? (
-          <View style={baseStyles.profilePostGrid}>
-            {userProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                item={product}
-                cardWidth={cardWidth}
-                favorite={favorites.includes(product.id)}
-                onOpen={openProduct}
-                onToggleFavorite={toggleFavorite}
-              />
-            ))}
-          </View>
-        ) : productsStatus === "loading" ? (
-          <LoadingState />
-        ) : (
-          <IllustratedEmptyState
-            icon={
-              <IconoPublicaciones
-                size={80}
-                color={isDark ? "#475569" : "#C5CAD3"}
+            isDark={isDark}
+            nav={
+              <>
+                <PressableSuave
+                  accessibilityRole="button"
+                  accessibilityLabel="Volver"
+                  onPress={back}
+                  style={styles.backBtn}
+                >
+                  <AppIcon name="back" size={22} color="#FFFFFF" />
+                </PressableSuave>
+                <Text style={estilosPerfil.headerTitle}>Perfil</Text>
+                <View style={styles.backBtn} />
+              </>
+            }
+            avatar={
+              <PerfilAvatar
+                photo={profile.photo}
+                color={profile.color}
+                name={profile.name}
+                placeholder="iniciales"
               />
             }
-            title="Aún no hay publicaciones"
-            message="Las publicaciones de esta persona aparecerán aquí."
-            style={{ paddingTop: 60, paddingBottom: 80 }}
-          />
-        )}
+          >
+            <StickersFlotantes stickers={profile.stickers} />
+          </PerfilCabecera>
 
-        {userId !== uid ? (
-          <TarjetaAccion
-            icon={<IconoMensaje size={25} color="#0062ff75" />}
-            label="Enviar mensaje"
-            labelColor={textoFila}
-            backgroundColor={fondoTarjeta}
-            arrowColor={flecha}
-            accessibilityLabel={`Enviar mensaje a ${profile.name}`}
-            onPress={() => openChat({ id: userId, name: profile.name })}
+          <PerfilInformacion
+            profile={profile}
+            stats={{
+              publicaciones: String(userProducts.length),
+              seguidores: SEGUIDORES,
+              reputacion: averageRatingLabel(userProducts),
+            }}
+            isDark={isDark}
           />
-        ) : null}
+
+          <View style={{ paddingHorizontal: 15 }}>
+            {userProducts.length ? (
+              <View style={baseStyles.profilePostGrid}>
+                {userProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    item={product}
+                    cardWidth={cardWidth}
+                    favorite={favorites.includes(product.id)}
+                    onOpen={openProduct}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ))}
+              </View>
+            ) : productsStatus === "loading" ? (
+              <LoadingState />
+            ) : (
+              <IllustratedEmptyState
+                icon={
+                  <IconoPublicaciones
+                    size={80}
+                    color={isDark ? "#475569" : "#C5CAD3"}
+                  />
+                }
+                title="Aún no hay publicaciones"
+                message="Las publicaciones de esta persona aparecerán aquí."
+                style={{ paddingTop: 60, paddingBottom: 80 }}
+              />
+            )}
+
+            {userId !== uid ? (
+              <TarjetaAccion
+                icon={<IconoMensaje size={25} color="#0062ff75" />}
+                label="Enviar mensaje"
+                labelColor={textoFila}
+                backgroundColor={fondoTarjeta}
+                arrowColor={flecha}
+                accessibilityLabel={`Enviar mensaje a ${profile.name}`}
+                onPress={() => openChat({ id: userId, name: profile.name })}
+              />
+            ) : null}
+          </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </LinearGradient>
   );
 }
 

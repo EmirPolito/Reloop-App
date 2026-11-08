@@ -1,10 +1,6 @@
 import { Image, type ImageSource } from "expo-image";
 import { useEffect } from "react";
-import {
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from "react-native";
+import { StyleSheet, View, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -23,17 +19,17 @@ const FLOTE = {
   /** Cuánto suben y bajan (px). Súbelo para más movimiento */
   amplitud: 4,
   /** Cuánto se inclinan (grados) */
-  giro: 2,
+  giro: 3,
   /** Duración de un ciclo completo (ms), uno por sticker para que no vayan sincronizados */
-  duraciones: [3200, 3300, 3400, 3500],
+  duraciones: [3200, 3400, 3600, 3800],
   /** Retraso de arranque entre un sticker y el siguiente (ms) */
   desfase: 350,
 } as const;
 
 /** Lugares alrededor del avatar donde caen los stickers elegidos (en orden) */
 const SLOTS_STICKERS: (ViewStyle & { rotate: string })[] = [
-  { top: 53, left: "10%", rotate: "-12deg" },
-  { top: 53, right: "13%", rotate: "14deg" },
+  { top: 48, left: "10%", rotate: "-12deg" },
+  { top: 48, right: "13%", rotate: "14deg" },
   { top: 175, left: "-1%", rotate: "-15deg" },
   { top: 172, right: "-1%", rotate: "9deg" },
 ];
@@ -140,5 +136,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 5,
   },
-  stickerImage: { width: 104, height: 104 },
+  stickerImage: { width: 105, height: 105 },
 });

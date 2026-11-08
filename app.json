@@ -12,12 +12,18 @@
     },
     "android": {
       "package": "com.jamingarciadev.reloop",
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
+    },
+    "androidNavigationBar": {
+      "visible": "always",
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000"
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +55,13 @@
       "expo-video",
       "expo-font",
       "expo-image",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

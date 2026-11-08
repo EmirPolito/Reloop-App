@@ -27,6 +27,11 @@ import {
   mapProfile,
   toProfileDocument,
 } from "@/features/perfil/profileMappers";
+import {
+  gradienteAppBackground,
+  gradienteHeader,
+  TEMAS,
+} from "@/features/perfil/Perfiltemas";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
 import { parsePrice } from "@/utils/price";
 import { getInitials } from "@/utils/text";
@@ -273,6 +278,22 @@ describe("mapeo de perfiles", () => {
     assert.equal(isCurrentProfileDocument(current), true);
     assert.equal(isCurrentProfileDocument({ ...current, correo: "a@b.c" }), false);
     assert.equal(isCurrentProfileDocument({ uid: "a", nombre: "Ana", correo: "a@b.c" }), false);
+  });
+  it("gradiente de cabecera usa el color específico de cada perfil y termina transparente", () => {
+    const cabeceraVerde = gradienteHeader("verde", false);
+    assert.equal(cabeceraVerde[0], TEMAS.verde.gradientLight[0]);
+    assert.match(cabeceraVerde[3], /00$/);
+
+    const cabeceraNaranja = gradienteHeader("naranja", false);
+    assert.equal(cabeceraNaranja[0], TEMAS.naranja.gradientLight[0]);
+  });
+  it("gradiente de fondo de la app usa el color de perfil arriba y blanco abajo", () => {
+    const fondoNaranja = gradienteAppBackground("naranja", false);
+    assert.equal(fondoNaranja[0], TEMAS.naranja.gradientLight[0]);
+    assert.deepEqual(fondoNaranja.slice(1), ["#f7f7f7ff", "#f7f7f7ff", "#f7f7f7"]);
+
+    const fondoAzulDark = gradienteAppBackground("azul", true);
+    assert.equal(fondoAzulDark[0], TEMAS.azul.gradientDark[0]);
   });
 });
 

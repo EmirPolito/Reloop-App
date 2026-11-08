@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -31,6 +32,7 @@ import { allowsProductRating, formatProductPrice } from "./rules";
 const DETAIL_IMAGE_WIDTH = 1000;
 
 export function DetailScreen({ productId }: { productId: string }) {
+  const insets = useSafeAreaInsets();
   const { styles, isDark } = useAppTheme();
   const { favorites, ratings, reported } = useMarketplaceState();
   const { rateProduct } = useMarketplaceActions();
@@ -88,7 +90,10 @@ export function DetailScreen({ productId }: { productId: string }) {
   return (
     <ScrollView
       style={styles.fill}
-      contentContainerStyle={styles.detailContent}
+      contentContainerStyle={[
+        styles.detailContent,
+        { paddingBottom: Math.max(insets.bottom + 24, 28) },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.detailHero}>
@@ -116,7 +121,7 @@ export function DetailScreen({ productId }: { productId: string }) {
           accessibilityRole="button"
           accessibilityLabel="Volver"
           onPress={back}
-          style={styles.detailBack}
+          style={[styles.detailBack, { top: insets.top + 10 }]}
         >
           <AppIcon
             name="back"
@@ -130,7 +135,7 @@ export function DetailScreen({ productId }: { productId: string }) {
             favorite ? "Quitar de favoritos" : "Agregar a favoritos"
           }
           onPress={() => toggleFavorite(product.id)}
-          style={styles.detailFav}
+          style={[styles.detailFav, { top: insets.top + 10 }]}
         >
           <AppIcon
             name="favorite"

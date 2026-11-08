@@ -21,13 +21,17 @@ export function coloresTarjeta(isDark: boolean) {
 /** Estilos compartidos por el perfil propio y el perfil público */
 export const estilosPerfil = StyleSheet.create({
   headerContainer: {
-    height: 221,
+    height: 220,
     width: "100%",
     position: "relative",
     zIndex: 20,
-    elevation: 20,
   },
-  skyBackground: { flex: 1, paddingTop: 20, alignItems: "center" },
+  skyBackground: {
+    flex: 1,
+    paddingTop: 11.5,
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
   topNav: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -36,14 +40,14 @@ export const estilosPerfil = StyleSheet.create({
     paddingHorizontal: 15,
   },
   headerTitle: {
-    fontSize: 22.5,
+    fontSize: 23,
     fontWeight: "600",
     color: "#FFFFFF",
     textAlign: "center",
     flex: 1,
 
     // Brillo de las letras
-    textShadowColor: "#ffffff7b",
+    textShadowColor: "#ffffff81",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 5,
   },
@@ -57,7 +61,7 @@ export const estilosPerfil = StyleSheet.create({
     width: 145,
     height: 145,
     borderRadius: 150,
-    padding: 5,
+    padding: 5.5,
   },
   avatarPlaceholder: {
     width: "100%",
@@ -70,10 +74,10 @@ export const estilosPerfil = StyleSheet.create({
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
     top: 2,
-    fontSize: 25,
-    fontWeight: "900",
+    fontSize: 24,
+    fontWeight: "600",
     textAlign: "center",
-    letterSpacing: -0.6,
+    letterSpacing: -0.8,
     lineHeight: 25,
     minHeight: 25,
     includeFontPadding: false,
