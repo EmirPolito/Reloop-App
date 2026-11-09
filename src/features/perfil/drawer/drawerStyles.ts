@@ -12,17 +12,17 @@ export const styles = StyleSheet.create({
 
   /* Encabezado */
   header: {
-    height: 48,
+    height: 33,
     alignItems: "center",
     justifyContent: "center",
   },
   close: {
     position: "absolute",
-    top: 8,
+    top: 0,
     right: 16,
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 15,
     zIndex: 20,
     elevation: 0,
     borderWidth: 0,
@@ -31,19 +31,19 @@ export const styles = StyleSheet.create({
 
   /* gap = separación idéntica entre todas las secciones */
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 15,
+    paddingTop: 10,
     gap: MEDIDAS.gapSecciones,
   },
 
   /* Avatar */
-  avatarWrap: { alignItems: "center", gap: 5 },
+  avatarWrap: { alignItems: "center", gap: 7 },
   avatar: {
     width: MEDIDAS.avatar,
     height: MEDIDAS.avatar,
     borderRadius: MEDIDAS.avatar / 2,
     overflow: "hidden",
-    marginBottom: 2,
+    marginBottom: 5,
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFill,
@@ -52,7 +52,7 @@ export const styles = StyleSheet.create({
   },
 
   /* Inputs nombre / descripción */
-  inputsGroup: { gap: 10 },
+  inputsGroup: { gap: 12 },
   campo: { borderRadius: RADIO, overflow: "hidden" },
   contadorUna: {
     position: "absolute",
@@ -70,6 +70,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 1,
   },
+
   /* h-11: una línea, centrada, sin lineHeight => cursor y placeholder alineados */
   inputUna: {
     height: MEDIDAS.altoInput,

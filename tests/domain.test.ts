@@ -289,11 +289,20 @@ describe("mapeo de perfiles", () => {
   });
   it("gradiente de fondo de la app usa el color de perfil arriba y blanco abajo", () => {
     const fondoNaranja = gradienteAppBackground("naranja", false);
-    assert.equal(fondoNaranja[0], TEMAS.naranja.gradientLight[0]);
-    assert.deepEqual(fondoNaranja.slice(1), ["#f7f7f7ff", "#f7f7f7ff", "#f7f7f7"]);
+    assert.deepEqual(fondoNaranja, [
+      TEMAS.naranja.gradientLight[0],
+      TEMAS.naranja.gradientLight[1],
+      TEMAS.naranja.gradientLight[2],
+      "#f8f8f8ff",
+    ]);
 
     const fondoAzulDark = gradienteAppBackground("azul", true);
-    assert.equal(fondoAzulDark[0], TEMAS.azul.gradientDark[0]);
+    assert.deepEqual(fondoAzulDark, [
+      TEMAS.azul.gradientDark[0],
+      TEMAS.azul.gradientDark[1],
+      TEMAS.azul.gradientDark[2],
+      "#0F172A",
+    ]);
   });
 });
 

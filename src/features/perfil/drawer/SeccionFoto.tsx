@@ -1,13 +1,12 @@
-import { Image } from "expo-image";
-import { memo } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { PressableSuave } from "@/components/PressableSuave";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { Text } from "@/features/shared/Text";
+import { Image } from "expo-image";
+import { memo } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { IconoEditar } from "../Perfiliconos";
-import { PELIGRO, TIPO, PALETA, DURACION, type Modo } from "./drawerTheme";
 import { styles } from "./drawerStyles";
+import { PALETA, TIPO, type Modo } from "./drawerTheme";
 
 export const SeccionFoto = memo(function SeccionFoto({
   photo,
@@ -16,7 +15,6 @@ export const SeccionFoto = memo(function SeccionFoto({
   accent,
   modo,
   onPick,
-  onRemove,
 }: {
   photo: string | null;
   picking: boolean;
@@ -24,7 +22,6 @@ export const SeccionFoto = memo(function SeccionFoto({
   accent: string;
   modo: Modo;
   onPick: () => void;
-  onRemove: () => void;
 }) {
   const p = PALETA[modo];
   return (
@@ -73,18 +70,6 @@ export const SeccionFoto = memo(function SeccionFoto({
       <Text style={{ fontSize: TIPO.ayuda, color: p.suave }}>
         Toca la foto para cambiarla
       </Text>
-      {photo ? (
-        <Animated.View
-          entering={FadeIn.duration(DURACION)}
-          exiting={FadeOut.duration(DURACION)}
-        >
-          <Pressable accessibilityRole="button" onPress={onRemove} hitSlop={8}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: PELIGRO }}>
-              Quitar foto
-            </Text>
-          </Pressable>
-        </Animated.View>
-      ) : null}
     </View>
   );
 });

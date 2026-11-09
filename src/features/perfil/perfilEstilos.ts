@@ -64,8 +64,8 @@ export const estilosPerfil = StyleSheet.create({
     zIndex: 10,
   },
   avatarRing: {
-    width: 153,
-    height: 153,
+    width: 150,
+    height: 150,
     borderRadius: 150,
     padding: 5,
   },
@@ -89,7 +89,7 @@ export const estilosPerfil = StyleSheet.create({
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
     top: 1.5,
-    fontSize: 26,
+    fontSize: 24.5,
     fontWeight: "600",
     textAlign: "center",
     letterSpacing: -1.5,
@@ -139,7 +139,7 @@ export const estilosPerfil = StyleSheet.create({
     marginTop: 19,
     height: 60,
     borderRadius: 17,
-    paddingHorizontal: 12.5,
+    paddingHorizontal: 10,
     gap: 9,
     elevation: 0.2,
     flexDirection: "row",

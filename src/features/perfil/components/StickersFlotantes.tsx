@@ -136,5 +136,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 5,
   },
-  stickerImage: { width: 108, height: 108 },
+  stickerImage: { width: 105, height: 105 },
 });

@@ -1,20 +1,50 @@
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { BottomSheet, Button, Spinner } from "heroui-native";
-import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
-import { Keyboard, Platform, TextInput, View, useWindowDimensions, type KeyboardEvent } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
 import { userMessageFor } from "@/utils/errors";
-import { COLORES_PERFIL, MAX_DESCRIPCION, MAX_NOMBRE, MAX_PILDORAS, MAX_STICKERS, TEMAS, type ColorPerfil, type DatosPerfil } from "../Perfiltemas";
-import { PELIGRO, TIPO, PALETA, DURACION, MARGEN_TECLADO, nuevoId, type Modo } from "./drawerTheme";
-import { styles } from "./drawerStyles";
-import { AsegurarVisibleCtx } from "./InputSheet";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheet, Button, Spinner } from "heroui-native";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+} from "react";
+import {
+  Keyboard,
+  Platform,
+  TextInput,
+  View,
+  useWindowDimensions,
+  type KeyboardEvent,
+} from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  COLORES_PERFIL,
+  MAX_DESCRIPCION,
+  MAX_NOMBRE,
+  MAX_PILDORAS,
+  MAX_STICKERS,
+  TEMAS,
+  type ColorPerfil,
+  type DatosPerfil,
+} from "../Perfiltemas";
 import { Aparece } from "./Aparece";
 import { CampoTexto } from "./CampoTexto";
-import { SeccionFoto } from "./SeccionFoto";
+import { styles } from "./drawerStyles";
+import {
+  DURACION,
+  MARGEN_TECLADO,
+  PALETA,
+  PELIGRO,
+  TIPO,
+  nuevoId,
+  type Modo,
+} from "./drawerTheme";
+import { AsegurarVisibleCtx } from "./InputSheet";
 import { SeccionEtiquetas } from "./SeccionEtiquetas";
+import { SeccionFoto } from "./SeccionFoto";
 import { SeccionStickers } from "./SeccionStickers";
 
 export interface DrawerEditarPerfilProps {
@@ -209,7 +239,10 @@ export function ContenidoDrawer({
       cerrar();
     } catch (e) {
       setError(
-        userMessageFor(e, "No se pudieron guardar los cambios. Intenta de nuevo."),
+        userMessageFor(
+          e,
+          "No se pudieron guardar los cambios. Intenta de nuevo.",
+        ),
       );
     } finally {
       setSaving(false);
@@ -264,7 +297,6 @@ export function ContenidoDrawer({
               accent={tema.accent}
               modo={modo}
               onPick={pickPhoto}
-              onRemove={onRemovePhoto}
             />
           </Aparece>
 

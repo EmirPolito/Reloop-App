@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
@@ -27,9 +27,9 @@ import { PerfilInformacion } from "./components/PerfilInformacion";
 import { StickersFlotantes } from "./components/StickersFlotantes";
 import { TarjetaAccion } from "./components/TarjetaAccion";
 import { usePublicProfile } from "./hooks/usePublicProfile";
-import { AVATAR_BASE_Y, coloresTarjeta, estilosPerfil } from "./perfilEstilos";
+import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import { IconoMensaje, IconoPublicaciones } from "./Perfiliconos";
-import { gradienteCieloPerfil } from "./Perfiltemas";
+import { gradienteAppBackground } from "./Perfiltemas";
 import { defaultProfile } from "./profileMappers";
 
 /** Todavía no hay seguidores: el número es fijo. */
@@ -45,20 +45,21 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
     useUserProducts(userId);
   const { back, openProduct } = useAppNavigation();
   const openChat = useOpenChat();
-  const { width: windowWidth } = useWindowDimensions();
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-
-  const cloudHeight = windowWidth * 1.8;
-  const cloudTop = 230 - cloudHeight * 0.8;
-
-  const fondoAbajo = isDark ? "#0F172A" : "#f8f8f8";
+  const { height: windowHeight } = useWindowDimensions();
 
   // Sin ficha de perfil (o si no se pudo leer) se muestra lo que se sabe de la persona
   const profile =
     storedProfile ?? defaultProfile(userProducts[0]?.seller ?? "Usuario");
 
-  const coloresCielo = gradienteCieloPerfil(profile.color, isDark);
+  const backgroundColors = useMemo(
+    () => gradienteAppBackground(profile.color, isDark),
+    [profile.color, isDark],
+  );
+
+  const fondoPantalla = isDark ? "#0F172A" : "#f8f8f8";
+  const alturaDegradado = windowHeight * 0.45;
 
   if (status === "loading") {
     return (
@@ -70,72 +71,46 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   }
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }}>
-      {/* Cielo fijo: cubre desde arriba hasta las nubes, no scrollea */}
-      <LinearGradient
-        colors={coloresCielo}
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top + AVATAR_BASE_Y,
-          zIndex: 0,
-        }}
-      />
-      {/* Fondo fijo inferior para que todo lo de abajo esté cubierto */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: insets.top + AVATAR_BASE_Y,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: fondoAbajo,
-        }}
-      />
-
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: fondoPantalla,
+        paddingTop: insets.top,
+      }}
+    >
       <ScrollView
         style={baseStyles.screenScroll}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Fondo de nubes y capa inferior — se mueven con el scroll */}
+        {/* Extensión superior para rebote al estirar hacia abajo */}
         <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            top: -500,
+            left: 0,
+            right: 0,
+            height: 500,
+            backgroundColor: backgroundColors[0],
+          }}
+        />
+
+        {/* Degradado en la cabecera que scrollea con el contenido (no sigue la pantalla) */}
+        <LinearGradient
+          colors={backgroundColors}
+          locations={[0, 0.25, 0.6, 1.0]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
           pointerEvents="none"
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
-            zIndex: 0,
+            height: alturaDegradado,
           }}
-        >
-          <Image
-            source={require("../../../assets/images/nubes3.png")}
-            style={{
-              position: "absolute",
-              top: cloudTop,
-              left: 0,
-              width: windowWidth,
-              height: cloudHeight,
-            }}
-            resizeMode="cover"
-          />
-          <View
-            style={{
-              position: "absolute",
-              top: AVATAR_BASE_Y,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: fondoAbajo,
-            }}
-          />
-        </View>
+        />
 
         <PerfilCabecera
           color={profile.color}

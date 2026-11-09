@@ -6,7 +6,10 @@ import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppTabBar } from "@/features/navigation/AppTabBar";
-import { gradienteAppBackground } from "@/features/perfil/Perfiltemas";
+import {
+  gradienteAppBackground,
+  LOCATIONS_APP_BACKGROUND,
+} from "@/features/perfil/Perfiltemas";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
 export default function TabsLayout() {
@@ -25,6 +28,7 @@ export default function TabsLayout() {
   return (
     <LinearGradient
       colors={backgroundColors}
+      locations={LOCATIONS_APP_BACKGROUND}
       start={gradientStart}
       end={{ x: 0, y: 1 }}
       style={styles.container}

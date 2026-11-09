@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
@@ -21,10 +20,6 @@ export function PerfilCabecera({
   avatar: ReactNode;
   children?: ReactNode;
 }) {
-  const gradienteBlanco = isDark
-    ? (["rgba(15, 23, 42, 0)", "#0F172A"] as const)
-    : (["rgba(248, 248, 248, 0)", "#f8f8f8"] as const);
-
   return (
     <View style={estilosPerfil.headerContainer}>
       <View style={estilosPerfil.skyBackground}>
@@ -41,13 +36,6 @@ export function PerfilCabecera({
           </View>
         </View>
       </View>
-
-      {/* Degradado blanco debajo de la mitad del avatar para abajo */}
-      <LinearGradient
-        colors={gradienteBlanco}
-        style={estilosPerfil.degradadoAvatar}
-        pointerEvents="none"
-      />
 
       {children}
     </View>

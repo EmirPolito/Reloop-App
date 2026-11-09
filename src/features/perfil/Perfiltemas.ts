@@ -61,7 +61,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   azul: {
     label: "Azul",
     accent: "#0EA5E9",
-    gradientLight: ["#2ab4ff", "#41bdff", "#78d0ff"],
+    gradientLight: ["#15a5ffff", "#3eb5ffff", "#87d1ffff"],
     gradientDark: ["#1E3A8A", "#2563EB", "#38BDF8"],
     pillBg: "#f3fbffff",
     pillBorder: "#006eff2e",
@@ -69,7 +69,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   naranja: {
     label: "Naranja",
     accent: "#ff7919ff",
-    gradientLight: ["#ff8725ff", "#ffb16dff", "#ffbb7fff"],
+    gradientLight: ["#ff8725ff", "#ff9d4cff", "#ffbd87ff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
     pillBg: "#fff9f5ff",
     pillBorder: "#ff6a0026",
@@ -77,7 +77,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   rosa: {
     label: "Rosa",
     accent: "#EC4899",
-    gradientLight: ["#ff4fa3", "#ff74b8", "#ffa3cf"],
+    gradientLight: ["#ff208cff", "#ff3d9bff", "#ff90c5ff"],
     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
     pillBg: "#fff6fbff",
     pillBorder: "#ff00801c",
@@ -120,14 +120,27 @@ export function gradienteCieloPerfil(
   return isDark ? tema.gradientDark : tema.gradientLight;
 }
 
-/** Degradado de fondo de la app: color del tema elegido arriba y blanco/claro (#f7f7f7) al centro y abajo */
+/** Puntos de parada del degradado: los 3 tonos del tema terminan un poco antes de la mitad de la pantalla (0.45) */
+export const LOCATIONS_APP_BACKGROUND = [0, 0.12, 0.26, 0.45] as const;
+
+/** Degradado de fondo de la app: color del tema elegido arriba y blanco/claro (#f8f8f8) al centro y abajo */
 export function gradienteAppBackground(
   color: ColorPerfil,
   isDark: boolean,
 ): [string, string, string, string] {
   const tema = TEMAS[color] ?? TEMAS.azul;
   if (isDark) {
-    return [tema.gradientDark[0], "#10203A", "#112536", "#35152D"];
+    return [
+      tema.gradientDark[0],
+      tema.gradientDark[1],
+      tema.gradientDark[2],
+      "#0F172A",
+    ];
   }
-  return [tema.gradientLight[0], "#f8f8f8ff", "#f8f8f8ff", "#f8f8f8ff"];
+  return [
+    tema.gradientLight[0],
+    tema.gradientLight[1],
+    tema.gradientLight[2],
+    "#f8f8f8ff",
+  ];
 }

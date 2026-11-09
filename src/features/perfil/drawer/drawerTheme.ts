@@ -106,4 +106,5 @@ export const conAlfa = (hex: string, a: number) => {
   return `#${h.slice(0, 6)}${al}`;
 };
 
-export const nuevoId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+export const nuevoId = () =>
+  `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

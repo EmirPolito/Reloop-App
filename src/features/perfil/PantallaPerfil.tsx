@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Switch,
@@ -29,7 +28,7 @@ import { PerfilInformacion } from "./components/PerfilInformacion";
 import { StickersFlotantes } from "./components/StickersFlotantes";
 import { TarjetaAccion } from "./components/TarjetaAccion";
 import { DrawerEditarPerfil } from "./drawer/DrawerEditarPerfil";
-import { AVATAR_BASE_Y, coloresTarjeta, estilosPerfil } from "./perfilEstilos";
+import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import {
   IconoCampana,
   IconoCandado,
@@ -42,7 +41,7 @@ import {
   IconoPublicaciones,
   IconoSol,
 } from "./Perfiliconos";
-import { gradienteCieloPerfil, type ColorPerfil } from "./Perfiltemas";
+import { gradienteAppBackground, type ColorPerfil } from "./Perfiltemas";
 import { useProfile } from "./ProfileProvider";
 
 /** Color de acción de los switches (igual que el del drawer) */
@@ -68,11 +67,6 @@ export function PantallaPerfil() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  const { width: windowWidth } = useWindowDimensions();
-
-  const cloudHeight = windowWidth * 1.8;
-  const cloudTop = 230 - cloudHeight * 0.8;
-
   /* Cambia solo el color del perfil desde la fila de ajustes (sin abrir el drawer) */
   const handleColor = useCallback(
     (color: ColorPerfil) => {
@@ -95,86 +89,60 @@ export function PantallaPerfil() {
   }, [signOut]);
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-  const rowBg = isDark ? "#273449" : "#f5f5f5";
+  const rowBg = isDark ? "#273449" : "#f8f8f8ff";
   const mutedColor = isDark ? "#94A3B8" : "#9CA3AF";
   const switchTrack = {
     false: isDark ? "#334155" : "#E5E7EB",
     true: isDark ? "#38BDF8" : ACCION,
   };
 
-  const fondoAbajo = isDark ? "#0F172A" : "#f8f8f8";
-  const coloresCielo = gradienteCieloPerfil(profile.color, isDark);
+  const { height: windowHeight } = useWindowDimensions();
+
+  const backgroundColors = useMemo(
+    () => gradienteAppBackground(profile.color, isDark),
+    [profile.color, isDark],
+  );
+
+  const fondoPantalla = isDark ? "#0F172A" : "#f8f8f8";
+  const alturaDegradado = windowHeight * 0.45;
 
   return (
-    <>
-      <View style={{ flex: 1 }}>
-        {/* Cielo fijo: cubre desde arriba hasta las nubes, no scrollea */}
+    <View style={{ flex: 1, backgroundColor: fondoPantalla }}>
+      <ScrollView
+        style={baseStyles.screenScroll}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Extensión superior para rebote al estirar hacia abajo */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            top: -500,
+            left: 0,
+            right: 0,
+            height: 500,
+            backgroundColor: backgroundColors[0],
+          }}
+        />
+
+        {/* Degradado en la cabecera que scrollea con el contenido (no sigue la pantalla) */}
         <LinearGradient
-          colors={coloresCielo}
+          colors={backgroundColors}
+          locations={[0, 0.25, 0.6, 1.0]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
           pointerEvents="none"
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: AVATAR_BASE_Y,
-            zIndex: 0,
-          }}
-        />
-        {/* Fondo fijo inferior para que todo lo de abajo esté cubierto */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: AVATAR_BASE_Y,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: fondoAbajo,
+            height: alturaDegradado,
           }}
         />
 
-        <ScrollView
-          style={baseStyles.screenScroll}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Fondo de nubes y capa inferior */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 0,
-            }}
-          >
-            <Image
-              source={require("../../../assets/images/nubes3.png")}
-              style={{
-                position: "absolute",
-                top: cloudTop,
-                left: 0,
-                width: windowWidth,
-                height: cloudHeight,
-              }}
-              resizeMode="cover"
-            />
-            <View
-              style={{
-                position: "absolute",
-                top: AVATAR_BASE_Y,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: fondoAbajo,
-              }}
-            />
-          </View>
-
-          {/* ============================ HEADER ============================ */}
+        {/* ============================ HEADER ============================ */}
           <PerfilCabecera
             color={profile.color}
             isDark={isDark}
@@ -372,18 +340,17 @@ export function PantallaPerfil() {
             />
           </View>
         </ScrollView>
-      </View>
 
-      <DrawerEditarPerfil
-        visible={drawerOpen}
-        initialData={profile}
-        isDark={isDark}
-        onClose={cerrarDrawer}
-        onSave={saveProfile}
-      />
-    </>
-  );
-}
+        <DrawerEditarPerfil
+          visible={drawerOpen}
+          initialData={profile}
+          isDark={isDark}
+          onClose={cerrarDrawer}
+          onSave={saveProfile}
+        />
+      </View>
+    );
+  }
 
 const styles = StyleSheet.create({
   publicationsHeader: {
@@ -405,6 +372,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
   },
+
   //Tarjetas de General y legal
   settingsCard: {
     borderRadius: 19,
