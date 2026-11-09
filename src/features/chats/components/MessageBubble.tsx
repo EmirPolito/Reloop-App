@@ -156,7 +156,7 @@ export const MessageBubble = memo(function MessageBubble({
               }
             : isMe
               ? {
-                  backgroundColor: "#4fa1ffff",
+                  backgroundColor: "#272727ff",
                   borderBottomRightRadius: 3.5,
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
@@ -166,14 +166,11 @@ export const MessageBubble = memo(function MessageBubble({
                 }
               : {
                   backgroundColor: isDark ? "#2A2B32" : "#FFFFFF",
-                  borderBottomLeftRadius: 4,
-                  borderWidth: 1,
-                  borderColor: isDark ? "#3A3B42" : "#EAEAEA",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
                   shadowRadius: 2,
-                  elevation: 1,
+                  elevation: 0.5,
                 }),
         },
       ]}

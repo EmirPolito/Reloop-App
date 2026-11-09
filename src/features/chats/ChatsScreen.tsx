@@ -39,7 +39,9 @@ export function ChatsScreen() {
       ) : chats.length === 0 ? (
         <IllustratedEmptyState
           icon={<BulkMessageIcon size={80} />}
-          title={status === "error" ? "No pudimos cargar tus chats" : "Sin mensajes"}
+          title={
+            status === "error" ? "No pudimos cargar tus chats" : "Sin mensajes"
+          }
           message={
             status === "error"
               ? "Revisa tu conexión e inténtalo de nuevo."

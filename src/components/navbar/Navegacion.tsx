@@ -1,9 +1,9 @@
 import { NavigationIcon } from "@/components/iconos";
+import type { Tab } from "@/features/navigation/routes";
 import {
   estiloBotonTema,
   type ColorPerfil,
 } from "@/features/perfil/Perfiltemas";
-import type { Tab } from "@/features/navigation/routes";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { LinearGradient } from "expo-linear-gradient";
@@ -355,7 +355,7 @@ function createStyles(isDark: boolean) {
         text: "#FFFFFF",
       }
     : {
-        glass: "rgba(255, 255, 255, 0.87)",
+        glass: "rgba(255, 255, 255, 0.9)",
         outerBorder: "#ffffff",
         selectedPill: "#FFFFFF",
         pillBorder: "#ffffffff",

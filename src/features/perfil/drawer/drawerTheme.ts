@@ -10,13 +10,13 @@ export type Modo = "claro" | "oscuro";
 export const PELIGRO = "#EF4444";
 
 /** Radio único para tarjetas, inputs, botones, paneles y celdas */
-export const RADIO = 16;
+export const RADIO = 12;
 
 /** Altura fija del sheet (también con el teclado abierto) */
 export const SNAP_POINTS = ["92%"];
 
 export const MEDIDAS = {
-  altoInput: 44, // h-11
+  altoInput: 45, // h-11
   altoDescripcion: 60, // h-15
   padH: 14,
   avatar: 85,
@@ -47,7 +47,7 @@ export const PALETA = {
     texto: "#101010",
     suave: "#A6A6A6",
     cursor: "#101010",
-    activo: "#0785FF",
+    activo: "#101010",
     sobreActivo: "#FFFFFF",
     inactivo: "#E7E7E7",
     cerrarFondo: "#F2F2F2",

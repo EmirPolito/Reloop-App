@@ -5,6 +5,8 @@ import {
   ProfilePostCard,
   profilePostCardHeight,
 } from "@/features/perfil/components/ProfilePostCard";
+import { AppIcon } from "@/features/shared/AppIcon";
+import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import type { Product } from "../types";
 
@@ -12,7 +14,6 @@ const ANGLE = 10; // Inclinación tarjetas de los lados
 const DROP = 13; // Caída moderada
 const PAD_V = 20; // Espaciado arriba
 const PAD_BOTTOM = 30; // Espaciado abajo
-const SLIDE_MS = 250;
 const OFFSETS = [-2, -1, 0, 1, 2];
 const PAIR_OFFSET = 0.8;
 
@@ -154,6 +155,88 @@ const FanSlot = memo(function FanSlot({
 });
 
 /* ------------------------------------------------------------------ */
+/* Tarjeta de relleno para cuando el usuario solo tiene 1 publicación */
+/* ------------------------------------------------------------------ */
+interface PlaceholderFanSlotProps {
+  offset: -1 | 1;
+  cardWidth: number;
+  cardHeight: number;
+  spread: number;
+  left: number;
+  isDark: boolean;
+}
+
+const PlaceholderFanSlot = memo(function PlaceholderFanSlot({
+  offset,
+  cardWidth,
+  cardHeight,
+  spread,
+  left,
+  isDark,
+}: PlaceholderFanSlotProps) {
+  const translateX = offset * spread;
+  const translateY = DROP;
+  const rotate = `${offset * ANGLE}deg`;
+  const scale = 0.94;
+
+  const bgOuter = isDark ? "#1E293B" : "#FFFFFF";
+  const bgInner = isDark ? "#162032" : "#F3F4F6";
+  const borderColor = isDark ? "#334155" : "#E5E7EB";
+  const textMuted = isDark ? "#64748B" : "#9CA3AF";
+
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        left,
+        top: PAD_V,
+        zIndex: 1,
+        width: cardWidth,
+        height: cardHeight,
+        borderRadius: 35,
+        backgroundColor: bgOuter,
+        shadowColor: "#000000",
+        shadowOpacity: isDark ? 0.25 : 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 2,
+        transform: [{ translateX }, { translateY }, { rotate }, { scale }],
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          borderRadius: 35,
+          margin: 3,
+          backgroundColor: bgInner,
+          borderWidth: 1.5,
+          borderStyle: "dashed",
+          borderColor,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 10,
+          gap: 6,
+        }}
+      >
+        <AppIcon name="photo" size={24} color={textMuted} />
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: "500",
+            color: textMuted,
+            textAlign: "center",
+            lineHeight: 14,
+          }}
+        >
+          Sin más publicaciones
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+/* ------------------------------------------------------------------ */
 /* Carrusel en abanico                                                 */
 /* ------------------------------------------------------------------ */
 export const ProductFan = memo(function ProductFan({
@@ -161,6 +244,7 @@ export const ProductFan = memo(function ProductFan({
   onOpen,
   cardWidth: cardWidthProp,
 }: ProductFanProps) {
+  const { isDark } = useAppTheme();
   const [containerWidth, setContainerWidth] = useState(0);
   const [step, setStep] = useState(0);
 
@@ -203,11 +287,31 @@ export const ProductFan = memo(function ProductFan({
   return (
     <View
       className="w-full items-center"
-      style={{ paddingBottom: total > 1 ? PAD_BOTTOM : 0 }}
+      style={{ paddingBottom: PAD_BOTTOM }}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
       {containerWidth > 0 ? (
         <View style={{ width: containerWidth, height: stageHeight }}>
+          {total === 1 ? (
+            <>
+              <PlaceholderFanSlot
+                offset={-1}
+                cardWidth={cardWidth}
+                cardHeight={cardHeight}
+                spread={spread}
+                left={left}
+                isDark={isDark}
+              />
+              <PlaceholderFanSlot
+                offset={1}
+                cardWidth={cardWidth}
+                cardHeight={cardHeight}
+                spread={spread}
+                left={left}
+                isDark={isDark}
+              />
+            </>
+          ) : null}
           {items.map((product, i) => {
             const { offset, active } = slotFor(i, step, total);
             if (Math.abs(offset) > 2) return null;

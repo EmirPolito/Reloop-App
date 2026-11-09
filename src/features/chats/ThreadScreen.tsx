@@ -27,12 +27,17 @@ import { ThreadHeader } from "./components/ThreadHeader";
 import { ThreadMenu } from "./components/ThreadMenu";
 import { ThreadProductContext } from "./components/ThreadProductContext";
 import { useThreadMessages } from "./hooks/useThreadMessages";
-import { THREAD_CONTENT_GAP, threadFixedHeight } from "./threadLayout";
+import {
+  THREAD_CONTENT_GAP,
+  threadFixedHeight,
+  useThreadHeaderHeight,
+} from "./threadLayout";
 
 const NO_IMAGES: string[] = [];
 
 export function ThreadScreen({ chatId }: { chatId: string }) {
   const insets = useSafeAreaInsets();
+  const headerHeight = useThreadHeaderHeight();
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
   const { sendMessage, markRead } = useChatActions();
@@ -132,34 +137,22 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
     );
   }
 
+  const fixedTop = threadFixedHeight(headerHeight, Boolean(relatedProduct));
+
   return (
     <KeyboardAvoidingView
       style={styles.fill}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ThreadHeader
-        contactName={activeChat.name}
-        onBack={back}
-        onOpenProfile={() => openUserProfile(activeChat.otherId)}
-        onOpenMenu={() => setShowMenu(true)}
-      />
-
-      <ThreadMenu visible={showMenu} onClose={() => setShowMenu(false)} />
-
-      {relatedProduct ? (
-        <ThreadProductContext
-          product={relatedProduct}
-          onPress={() => openProduct(relatedProduct.id)}
-        />
-      ) : null}
-
+      {/* 1. Los mensajes van PRIMERO y sin marginTop:
+          ocupan toda la pantalla y pasan por detrás del header */}
       <ScrollView
         ref={scrollRef}
-        style={{ marginTop: threadFixedHeight(Boolean(relatedProduct)) }}
+        style={{ flex: 1 }}
         contentContainerStyle={[
           styles.threadMessages,
           {
-            paddingTop: THREAD_CONTENT_GAP,
+            paddingTop: fixedTop + THREAD_CONTENT_GAP,
             paddingHorizontal: 17,
             paddingBottom:
               Math.max(insets.bottom, 16) +
@@ -167,6 +160,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
               5,
           },
         ]}
+        scrollIndicatorInsets={{ top: fixedTop }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() =>
@@ -182,6 +176,24 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
           />
         ))}
       </ScrollView>
+
+      {/* 2. Tarjeta del producto, encima de la lista y debajo del header */}
+      {relatedProduct ? (
+        <ThreadProductContext
+          product={relatedProduct}
+          onPress={() => openProduct(relatedProduct.id)}
+        />
+      ) : null}
+
+      {/* 3. El header va DESPUÉS de la lista, así queda por encima */}
+      <ThreadHeader
+        contactName={activeChat.name}
+        onBack={back}
+        onOpenProfile={() => openUserProfile(activeChat.otherId)}
+        onOpenMenu={() => setShowMenu(true)}
+      />
+
+      <ThreadMenu visible={showMenu} onClose={() => setShowMenu(false)} />
 
       <ImageViewerModal
         images={viewer.images}

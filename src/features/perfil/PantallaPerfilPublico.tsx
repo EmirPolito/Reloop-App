@@ -75,9 +75,15 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
       style={{
         flex: 1,
         backgroundColor: fondoPantalla,
-        paddingTop: insets.top,
       }}
     >
+      {/* Franja superior donde va la hora adaptada al primer tono del perfil visitado */}
+      <View
+        style={{
+          height: insets.top,
+          backgroundColor: backgroundColors[0],
+        }}
+      />
       <ScrollView
         style={baseStyles.screenScroll}
         contentContainerStyle={{ paddingBottom: 100 }}

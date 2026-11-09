@@ -1,8 +1,8 @@
 import { StyleSheet } from "react-native";
 
 /** Colores fijos de los iconos de las 3 tarjetas (no dependen del color de fondo del perfil) */
-export const COLOR_ICONO_PUBLICACIONES = "#858585ff";
-export const COLOR_ICONO_SEGUIDORES = "#858585ff";
+export const COLOR_ICONO_PUBLICACIONES = "#545454ff";
+export const COLOR_ICONO_SEGUIDORES = "#545454ff";
 export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 
 /** Separación entre lo de arriba y las 3 tarjetas de estadísticas */
@@ -88,18 +88,20 @@ export const estilosPerfil = StyleSheet.create({
 
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
-    top: 1.5,
+    top: 2,
     fontSize: 25,
     fontWeight: "600",
     textAlign: "center",
     letterSpacing: -1.3,
-    lineHeight: 25,
-    minHeight: 25,
-    includeFontPadding: false,
+    lineHeight: 32, // <-- Aumentado de 25 a 32 para dar espacio a trazos descendentes (g, j, p, q, y)
+    minHeight: 32, // <-- Ajustado al nuevo lineHeight
+    includeFontPadding: true, // <-- Cambiado a true para evitar el recorte de glifos en Android
+    zIndex: 10, // <-- Asegura que el texto quede por encima de degradadoAvatar (zIndex: 5)
   },
+
   profileSubtitle: {
     paddingHorizontal: 15,
-    marginTop: 7,
+    marginTop: 5,
     fontSize: 12,
     color: "#838383ff",
     fontWeight: "400",
@@ -124,15 +126,15 @@ export const estilosPerfil = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 9,
-    paddingHorizontal: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 7,
     borderRadius: 15,
     gap: 2,
     elevation: 0.2,
   },
-  statValueRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  statValue: { fontSize: 20, fontWeight: "800" },
-  statLabel: { fontSize: 12, color: "#848484ff", fontWeight: "500" },
+  statValueRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  statValue: { fontSize: 18, fontWeight: "600" },
+  statLabel: { fontSize: 11.5, color: "#767676ff", fontWeight: "500" },
 
   // Tarjeta de una sola acción (cerrar sesión, enviar mensaje)
   tarjetaAccion: {

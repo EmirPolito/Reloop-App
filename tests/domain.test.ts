@@ -295,7 +295,7 @@ describe("mapeo de perfiles", () => {
       TEMAS.naranja.gradientLight[0],
       TEMAS.naranja.gradientLight[1],
       TEMAS.naranja.gradientLight[2],
-      "#f8f8f8ff",
+      "#f6f6f6ff",
     ]);
 
     const fondoAzulDark = gradienteAppBackground("azul", true);
@@ -308,7 +308,7 @@ describe("mapeo de perfiles", () => {
 
     const suaveRosa = gradienteSuaveModulos("rosa", false);
     assert.equal(suaveRosa.length, 4);
-    assert.equal(suaveRosa[3], "#f8f8f8ff");
+    assert.equal(suaveRosa[3], "#f6f6f6ff");
 
     const botonRosa = estiloBotonTema("rosa");
     assert.equal(botonRosa.shadowColor, "#DB2777");

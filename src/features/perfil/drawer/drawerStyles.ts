@@ -85,8 +85,8 @@ export const styles = StyleSheet.create({
     minHeight: MEDIDAS.altoDescripcion,
     paddingHorizontal: MEDIDAS.padH,
     paddingRight: 52,
-    paddingTop: 13,
-    paddingBottom: 13,
+    paddingTop: 15,
+    paddingBottom: 15,
     lineHeight: 18,
     textAlignVertical: "top",
     includeFontPadding: false,
@@ -99,7 +99,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  description: { lineHeight: 17, marginTop: 3, marginBottom: 14 },
+  description: { lineHeight: 15, marginTop: 3, marginBottom: 14 },
 
   /* Scroll horizontal que llega a los bordes de la tarjeta */
   hScroll: { marginHorizontal: -MEDIDAS.padTarjeta },
@@ -195,7 +195,7 @@ export const styles = StyleSheet.create({
   button: {
     flex: 1,
     height: MEDIDAS.altoBoton,
-    borderRadius: RADIO,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },

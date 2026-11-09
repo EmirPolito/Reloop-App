@@ -141,7 +141,7 @@ export function gradienteAppBackground(
     tema.gradientLight[0],
     tema.gradientLight[1],
     tema.gradientLight[2],
-    "#f8f8f8ff",
+    "#f6f6f6ff",
   ];
 }
 
@@ -158,20 +158,10 @@ export function gradienteSuaveModulos(
   const tema = TEMAS[color] ?? TEMAS.azul;
   if (isDark) {
     const [c0, c1] = tema.gradientDark;
-    return [
-      c0,
-      c0,
-      `${c1.slice(0, 7)}55`,
-      "#0F172A",
-    ];
+    return [c0, c0, `${c1.slice(0, 7)}55`, "#0F172A"];
   }
   const [c0, c1] = tema.gradientLight;
-  return [
-    c0,
-    c0,
-    `${c1.slice(0, 7)}66`,
-    "#f8f8f8ff",
-  ];
+  return [c0, c0, `${c1.slice(0, 7)}66`, "#f6f6f6ff"];
 }
 
 export interface EstiloBotonColor {
