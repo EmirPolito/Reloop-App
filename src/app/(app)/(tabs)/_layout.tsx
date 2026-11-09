@@ -1,5 +1,4 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { usePathname } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
@@ -7,29 +6,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppTabBar } from "@/features/navigation/AppTabBar";
 import {
-  gradienteAppBackground,
-  LOCATIONS_APP_BACKGROUND,
+  gradienteSuaveModulos,
+  LOCATIONS_MODULOS,
 } from "@/features/perfil/Perfiltemas";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
 export default function TabsLayout() {
   const { isDark, themeColor } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const pathname = usePathname();
-  const isProfile = pathname === "/profile";
   const backgroundColors = useMemo(
-    () => gradienteAppBackground(themeColor, isDark),
+    () => gradienteSuaveModulos(themeColor, isDark),
     [themeColor, isDark],
   );
-
-  // En el perfil el degradado arranca un poco más abajo (y: 0.04 ≈ 4 % pantalla)
-  const gradientStart = isProfile ? { x: 0, y: 0.09 } : { x: 0, y: 0 };
 
   return (
     <LinearGradient
       colors={backgroundColors}
-      locations={LOCATIONS_APP_BACKGROUND}
-      start={gradientStart}
+      locations={LOCATIONS_MODULOS}
+      start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >

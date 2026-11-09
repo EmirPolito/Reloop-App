@@ -89,10 +89,10 @@ export const estilosPerfil = StyleSheet.create({
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
     top: 1.5,
-    fontSize: 24.5,
+    fontSize: 25,
     fontWeight: "600",
     textAlign: "center",
-    letterSpacing: -1.5,
+    letterSpacing: -1.3,
     lineHeight: 25,
     minHeight: 25,
     includeFontPadding: false,

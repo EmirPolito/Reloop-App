@@ -8,7 +8,7 @@ import { TAB_ROUTE_NAMES, tabFromRouteName, type Tab } from "./routes";
 
 /** Conecta el navegador de pestañas con la barra animada de la app. */
 export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
-  const { isDark } = useAppTheme();
+  const { isDark, themeColor } = useAppTheme();
   const { chats } = useChats();
   const activeTab = tabFromRouteName(state.routes[state.index].name) ?? "home";
 
@@ -28,6 +28,7 @@ export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
       activeTab={activeTab}
       onNavigate={handleNavigate}
       isDark={isDark}
+      themeColor={themeColor}
       hasUnreadChats={chats.some((chat) => chat.unread)}
     />
   );

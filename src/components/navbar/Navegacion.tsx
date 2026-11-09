@@ -1,4 +1,8 @@
 import { NavigationIcon } from "@/components/iconos";
+import {
+  estiloBotonTema,
+  type ColorPerfil,
+} from "@/features/perfil/Perfiltemas";
 import type { Tab } from "@/features/navigation/routes";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
@@ -27,6 +31,7 @@ export interface NavegacionProps {
   onNavigate: (tab: Tab) => void;
   isDark?: boolean;
   hasUnreadChats?: boolean;
+  themeColor?: ColorPerfil;
 }
 
 interface NavTabItem {
@@ -208,10 +213,13 @@ const TabButton = React.memo(function TabButton({
 const CreateButton = React.memo(function CreateButton({
   onPress,
   styles,
+  themeColor = "azul",
 }: {
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
+  themeColor?: ColorPerfil;
 }) {
+  const botonTema = estiloBotonTema(themeColor);
   const pressScale = useSharedValue(1);
 
   const scaleStyle = useAnimatedStyle(() => ({
@@ -232,9 +240,15 @@ const CreateButton = React.memo(function CreateButton({
         onPress={onPress}
       >
         <LinearGradient
-          colors={["#72b4ffff", "#4fa1ffff", "#3493ffff"]}
+          colors={botonTema.colors}
           locations={[0, 0.54, 1]}
-          style={styles.createButton}
+          style={[
+            styles.createButton,
+            {
+              borderColor: botonTema.borderColor,
+              shadowColor: botonTema.shadowColor,
+            },
+          ]}
         >
           {/* Reflejo superior Glossy */}
           <LinearGradient
@@ -258,6 +272,7 @@ export function Navegacion({
   onNavigate,
   isDark = false,
   hasUnreadChats = false,
+  themeColor = "azul",
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
@@ -317,7 +332,11 @@ export function Navegacion({
         ))}
       </View>
 
-      <CreateButton onPress={handleCreatePress} styles={styles} />
+      <CreateButton
+        onPress={handleCreatePress}
+        styles={styles}
+        themeColor={themeColor}
+      />
     </View>
   );
 }

@@ -28,8 +28,10 @@ import {
   toProfileDocument,
 } from "@/features/perfil/profileMappers";
 import {
+  estiloBotonTema,
   gradienteAppBackground,
   gradienteHeader,
+  gradienteSuaveModulos,
   TEMAS,
 } from "@/features/perfil/Perfiltemas";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
@@ -303,6 +305,14 @@ describe("mapeo de perfiles", () => {
       TEMAS.azul.gradientDark[2],
       "#0F172A",
     ]);
+
+    const suaveRosa = gradienteSuaveModulos("rosa", false);
+    assert.equal(suaveRosa.length, 4);
+    assert.equal(suaveRosa[3], "#f8f8f8ff");
+
+    const botonRosa = estiloBotonTema("rosa");
+    assert.equal(botonRosa.shadowColor, "#DB2777");
+    assert.equal(botonRosa.colors.length, 3);
   });
 });
 
