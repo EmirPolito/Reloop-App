@@ -14,7 +14,6 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const isProfile = pathname === "/profile";
-
   const backgroundColors = useMemo(
     () => gradienteAppBackground(themeColor, isDark),
     [themeColor, isDark],

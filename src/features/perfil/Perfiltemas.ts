@@ -111,6 +111,15 @@ export function gradienteHeader(
   return [a, b, c, `${c.slice(0, 7)}00`];
 }
 
+/** Degradado del cielo en la cabecera del perfil (acompaña al scroll y no baja con él) */
+export function gradienteCieloPerfil(
+  color: ColorPerfil,
+  isDark: boolean,
+): [string, string, string] {
+  const tema = TEMAS[color] ?? TEMAS.azul;
+  return isDark ? tema.gradientDark : tema.gradientLight;
+}
+
 /** Degradado de fondo de la app: color del tema elegido arriba y blanco/claro (#f7f7f7) al centro y abajo */
 export function gradienteAppBackground(
   color: ColorPerfil,
@@ -120,5 +129,5 @@ export function gradienteAppBackground(
   if (isDark) {
     return [tema.gradientDark[0], "#10203A", "#112536", "#35152D"];
   }
-  return [tema.gradientLight[0], "#f7f7f7ff", "#f7f7f7ff", "#f7f7f7"];
+  return [tema.gradientLight[0], "#f8f8f8ff", "#f8f8f8ff", "#f8f8f8ff"];
 }

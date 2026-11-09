@@ -1,10 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  StyleSheet,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
@@ -31,9 +26,7 @@ export function IllustratedEmptyState({
       <Text style={[styles.title, { color: isDark ? "#ffffff" : "#101010" }]}>
         {title}
       </Text>
-      <Text
-        style={[styles.message, { color: isDark ? "#9ca3af" : "#696969" }]}
-      >
+      <Text style={[styles.message, { color: isDark ? "#9ca3af" : "#696969" }]}>
         {message}
       </Text>
     </View>

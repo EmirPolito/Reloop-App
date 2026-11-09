@@ -8,6 +8,12 @@ export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 /** Separación entre lo de arriba y las 3 tarjetas de estadísticas */
 export const MARGEN_STATS = 22;
 
+/** Posición Y de la mitad del avatar en la cabecera */
+export const AVATAR_MITAD_Y = 204;
+
+/** Base del avatar donde termina el degradado y empieza el fondo sólido inferior */
+export const AVATAR_BASE_Y = 280;
+
 /** Colores de las tarjetas según el tema (estadísticas, ajustes y acciones) */
 export function coloresTarjeta(isDark: boolean) {
   return {
@@ -58,8 +64,8 @@ export const estilosPerfil = StyleSheet.create({
     zIndex: 10,
   },
   avatarRing: {
-    width: 148,
-    height: 148,
+    width: 153,
+    height: 153,
     borderRadius: 150,
     padding: 5,
   },
@@ -70,10 +76,19 @@ export const estilosPerfil = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  /** Degradado blanco debajo de la mitad del avatar para abajo (de Y=204 a Y=284) */
+  degradadoAvatar: {
+    position: "absolute",
+    top: 204,
+    left: 0,
+    right: 0,
+    height: 80,
+    zIndex: 5,
+  },
 
   /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
-    top: 1,
+    top: 1.5,
     fontSize: 26,
     fontWeight: "600",
     textAlign: "center",
@@ -84,9 +99,9 @@ export const estilosPerfil = StyleSheet.create({
   },
   profileSubtitle: {
     paddingHorizontal: 15,
-    marginTop: 5.5,
+    marginTop: 7,
     fontSize: 12,
-    color: "#888888ff",
+    color: "#838383ff",
     fontWeight: "400",
     textAlign: "center",
   },
@@ -94,14 +109,14 @@ export const estilosPerfil = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: "center",
     paddingTop: 65,
-    paddingBottom: 20,
+    paddingBottom: 35,
   },
 
   /* El marginTop va en línea (cambia según haya o no etiquetas) */
   statsContainer: {
     flexDirection: "row",
     width: "100%",
-    gap: 9,
+    gap: 10,
   },
 
   // 3 tarjetas: Publicaciones, Seguidores, Reputación
