@@ -17,6 +17,11 @@ import { ProductFan } from "@/features/marketplace/components/productAbanico";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import {
+  AVATAR_BASE_Y,
+  coloresTarjeta,
+  estilosPerfil,
+} from "@/features/perfil/perfilEstilos";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -24,10 +29,10 @@ import { Text } from "@/features/shared/Text";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
+import { NubesPerfil } from "./components/PerfilNubes";
 import { StickersFlotantes } from "./components/StickersFlotantes";
 import { TarjetaAccion } from "./components/TarjetaAccion";
 import { usePublicProfile } from "./hooks/usePublicProfile";
-import { coloresTarjeta, estilosPerfil } from "./perfilEstilos";
 import { IconoMensaje, IconoPublicaciones } from "./Perfiliconos";
 import { gradienteAppBackground } from "./Perfiltemas";
 import { defaultProfile } from "./profileMappers";
@@ -116,6 +121,13 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
             right: 0,
             height: alturaDegradado,
           }}
+        />
+
+        {/* Nubes decorativas detrás del avatar (no alteran el color del degradado) */}
+        <NubesPerfil
+          source={require("@/assets/images/nubes3.png")}
+          isDark={isDark}
+          bottomY={AVATAR_BASE_Y + 50}
         />
 
         <PerfilCabecera

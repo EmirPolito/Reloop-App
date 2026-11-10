@@ -64,10 +64,10 @@ export const estilosPerfil = StyleSheet.create({
     zIndex: 10,
   },
   avatarRing: {
-    width: 150,
-    height: 150,
+    width: 152,
+    height: 152,
     borderRadius: 150,
-    padding: 5,
+    padding: 5.5,
   },
   avatarPlaceholder: {
     width: "100%",
@@ -86,31 +86,36 @@ export const estilosPerfil = StyleSheet.create({
     zIndex: 5,
   },
 
-  /* minHeight = una línea: si el nombre llega un instante después, no cambia el alto */
   profileName: {
-    top: 2,
-    fontSize: 25,
+    top: 0,
+    fontSize: 27.5,
     fontWeight: "600",
     textAlign: "center",
     letterSpacing: -1.3,
-    lineHeight: 32, // <-- Aumentado de 25 a 32 para dar espacio a trazos descendentes (g, j, p, q, y)
-    minHeight: 32, // <-- Ajustado al nuevo lineHeight
-    includeFontPadding: true, // <-- Cambiado a true para evitar el recorte de glifos en Android
-    zIndex: 10, // <-- Asegura que el texto quede por encima de degradadoAvatar (zIndex: 5)
+    lineHeight: 36, // Aumentado a 36 para dar margen vertical a los trazos inferiores
+    includeFontPadding: false, // Evita que Android empuje el texto hacia abajo
+    zIndex: 10,
+    elevation: 10, // Asegura en Android que el texto quede por encima del degradado/fondo
+
+    // Brillo blanco alrededor de las letras
+    textShadowColor: "#ffffff81",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
 
   profileSubtitle: {
     paddingHorizontal: 15,
-    marginTop: 5,
-    fontSize: 12,
-    color: "#838383ff",
+    marginTop: 2,
+    fontSize: 12.5,
+    color: "#757575ff",
     fontWeight: "400",
     textAlign: "center",
+    paddingBottom: 2,
   },
   profileInfoSection: {
     paddingHorizontal: 15,
     alignItems: "center",
-    paddingTop: 65,
+    paddingTop: 63,
     paddingBottom: 35,
   },
 

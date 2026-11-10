@@ -2,33 +2,32 @@ import { Image } from "expo-image";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
 
-import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import {
+  ArrowRightIcon,
+  LocationIcon,
+  SearchIcon,
+  StarIcon,
+} from "@/features/shared/PillIcons";
 import { Text, TextInput } from "@/features/shared/Text";
-import { optimizedImageUrl } from "@/lib/imageUrl";
-import { showNoNotificationsAlert } from "@/utils/alerts";
 
-/** Cabecera del inicio: logo, saludo, acceso al perfil, comunidad, buscador y notificaciones. */
+/** Cabecera del inicio: logo, comunidad, buscador y filtro. */
 export const HomeHeader = memo(function HomeHeader({
-  profileName,
-  profilePhoto,
   query,
   onChangeQuery,
-  onOpenProfile,
   onClearCategory,
 }: {
-  profileName: string;
-  profilePhoto: string | null;
   query: string;
   onChangeQuery: (query: string) => void;
-  onOpenProfile: () => void;
   onClearCategory: () => void;
 }) {
+  // styles solo se usa para el logo; isDark para props que no son estilos
   const { styles, isDark } = useAppTheme();
+
   return (
-    <View style={styles.feedHeader}>
-      <View style={styles.topHeader}>
-        <View style={styles.brandRow}>
+    <View className="w-full">
+      <View className="flex-row items-center justify-between gap-3 pt-[5px]">
+        <View className="flex-1 min-w-0 flex-row items-center gap-2">
           <Image
             accessibilityLabel="Logo ReLoop"
             source={require("@/assets/images/reloop-logo.png")}
@@ -36,44 +35,22 @@ export const HomeHeader = memo(function HomeHeader({
             style={styles.brandLogo}
           />
         </View>
-        <View style={styles.identityRow}>
-          <Text numberOfLines={1} style={styles.greeting}>
-            ¡Hola, {profileName}!
+
+        <Pressable
+          accessibilityRole="button"
+          className="min-h-9.5 flex-row items-center gap-1 px-2.5 rounded-full bg-white"
+        >
+          <LocationIcon size={18} color="#101010" />
+          <Text className="mr-3 text-[11px] font-semibold text-black/90">
+            UTSV
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir perfil"
-            onPress={onOpenProfile}
-            style={styles.profileShortcut}
-          >
-            {profilePhoto ? (
-              <Image
-                source={{ uri: optimizedImageUrl(profilePhoto, 120) ?? profilePhoto }}
-                contentFit="cover"
-                style={styles.homeAvatar}
-              />
-            ) : (
-              <AppIcon
-                name="person"
-                size={23}
-                color={isDark ? "#FFFFFF" : "#0785FF"}
-              />
-            )}
-          </Pressable>
-        </View>
-      </View>
-      <View style={styles.notificationRow}>
-        <Pressable style={styles.communityPill} accessibilityRole="button">
-          <AppIcon name="location" size={13} color="#0785FF" />
-          <Text style={styles.communityText}>UTSV</Text>
-          <AppIcon name="chevronDown" size={12} color="#0785FF" />
+          <ArrowRightIcon size={16} color="#1c77ffff" />
         </Pressable>
-        <View style={styles.searchRow}>
-          <AppIcon
-            name="search"
-            size={16}
-            color={isDark ? "#E3DEED" : "#828690"}
-          />
+      </View>
+
+      <View className="mt-3 mb-1">
+        <View className="bg-white flex-row items-center gap-2 min-h-13 px-1.5 py-1 pl-4 rounded-full">
+          <SearchIcon size={20} color={isDark ? "#E3DEED" : "#828690"} />
           <TextInput
             accessibilityLabel="Buscar productos"
             value={query}
@@ -81,29 +58,20 @@ export const HomeHeader = memo(function HomeHeader({
             placeholder="Buscar..."
             placeholderTextColor={isDark ? "#B3AEC0" : "#828690"}
             returnKeyType="search"
-            style={styles.searchInput}
+            className="flex-1 min-w-0 py-2 font-[500] text-[14px] text-[#23242C] dark:text-[#F5F4FA]"
           />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Filtrar por categoría"
+            accessibilityLabel="Ver destacadas"
             onPress={onClearCategory}
-            style={styles.filterButton}
+            className="h-9 flex-row items-center gap-1 px-2 rounded-full bg-[#E8E8EA] active:opacity-70"
           >
-            <AppIcon name="filter" size={16} color="#FFFFFF" />
+            <StarIcon size={15} color="#888888ff" />
+            <Text className="text-[10.5px] font-[500] text-[#888888ff]">
+              Destacadas
+            </Text>
           </Pressable>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Notificaciones"
-          onPress={showNoNotificationsAlert}
-          style={[styles.communityPill, styles.notificationButton]}
-        >
-          <AppIcon
-            name="notifications"
-            size={15}
-            color={isDark ? "#FFFFFF" : "#23242C"}
-          />
-        </Pressable>
       </View>
     </View>
   );

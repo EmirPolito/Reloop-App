@@ -28,8 +28,8 @@ const FLOTE = {
 
 /** Lugares alrededor del avatar donde caen los stickers elegidos (en orden) */
 const SLOTS_STICKERS: (ViewStyle & { rotate: string })[] = [
-  { top: 35, left: "13%", rotate: "-12deg" },
-  { top: 35, right: "13%", rotate: "14deg" },
+  { top: 33, left: "12%", rotate: "-12deg" },
+  { top: 33, right: "12%", rotate: "14deg" },
   { top: 167, left: "-1%", rotate: "-15deg" },
   { top: 167, right: "-1%", rotate: "9deg" },
 ];
@@ -136,5 +136,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 5,
   },
-  stickerImage: { width: 105, height: 105 },
+  stickerImage: { width: 107, height: 107 },
 });

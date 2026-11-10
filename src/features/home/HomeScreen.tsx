@@ -4,8 +4,8 @@ import { FlatList, View } from "react-native";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { filterProducts } from "@/features/marketplace/feedFilters";
 import { ProductCard } from "@/features/marketplace/components/ProductCard";
+import { filterProducts } from "@/features/marketplace/feedFilters";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
 import {
   useMarketplaceActions,
@@ -16,12 +16,13 @@ import { useProfile } from "@/features/perfil/ProfileProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { CategoryRow } from "./components/CategoryRow";
-import { FeedIntro } from "./components/FeedIntro";
 import { HomeHeader } from "./components/HomeHeader";
+import { FeedIntro } from "./components/SectionAnuncio";
+import { SectionTitle } from "./components/SectionTitle";
 import { buildHomeFeedRows, homeRowKey, type HomeFeedRow } from "./feedRows";
 
-/** Posición de la fila de categorías (la cabecera cuenta como índice 0): queda fija al hacer scroll. */
-const STICKY_HEADER_INDICES = [1];
+/** Posición de la fila de categorías (cabecera = 0, banner = 1): queda fija al hacer scroll. */
+const STICKY_HEADER_INDICES = [2];
 
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
@@ -45,6 +46,8 @@ export const HomeScreen = memo(function HomeScreen() {
   const renderItem = useCallback(
     ({ item }: { item: HomeFeedRow }) => {
       switch (item.type) {
+        case "banner":
+          return <FeedIntro />;
         case "categories":
           return (
             <CategoryRow
@@ -52,9 +55,9 @@ export const HomeScreen = memo(function HomeScreen() {
               onToggleCategory={toggleCategory}
             />
           );
-        case "banner":
+        case "sectionTitle":
           return (
-            <FeedIntro
+            <SectionTitle
               activeCategory={activeCategory}
               onClearCategory={clearCategory}
             />
@@ -133,11 +136,8 @@ export const HomeScreen = memo(function HomeScreen() {
       contentContainerStyle={styles.productsContent}
       ListHeaderComponent={
         <HomeHeader
-          profileName={profile.name}
-          profilePhoto={profile.photo}
           query={query}
           onChangeQuery={setQuery}
-          onOpenProfile={openProfileTab}
           onClearCategory={clearCategory}
         />
       }

@@ -1,10 +1,11 @@
 import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData";
 import type { Product } from "@/features/marketplace/types";
 
-/** Filas del inicio: categorías fijas, banner y los productos de dos en dos. */
+/** Filas del inicio: banner, categorías fijas, título de sección y los productos de dos en dos. */
 export type HomeFeedRow =
-  | { type: "categories" }
   | { type: "banner" }
+  | { type: "categories" }
+  | { type: "sectionTitle" }
   | { type: "products"; products: Product[] }
   | { type: "empty" }
   | { type: "loading" }
@@ -16,7 +17,11 @@ export function buildHomeFeedRows(
   products: Product[],
   status: FeedStatus,
 ): HomeFeedRow[] {
-  const rows: HomeFeedRow[] = [{ type: "categories" }, { type: "banner" }];
+  const rows: HomeFeedRow[] = [
+    { type: "banner" },
+    { type: "categories" },
+    { type: "sectionTitle" },
+  ];
   if (status === "loading") {
     rows.push({ type: "loading" });
     return rows;
