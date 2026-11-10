@@ -100,7 +100,7 @@ export const FeedIntro = memo(function FeedIntro() {
     <View className="w-full mt-[13px] mb-5" onLayout={onLayout}>
       <View
         accessibilityLabel="Carrusel de anuncios de ReLoop"
-        className="h-[130px] w-full"
+        className="h-[165px] w-full"
       >
         {width > 0 ? (
           <ScrollView

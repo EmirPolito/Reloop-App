@@ -74,6 +74,7 @@ export function PantallaCrearPublicacion() {
               color={isDark ? "#FFFFFF" : "#23242C"}
             />
           </Pressable>
+
           <Text style={styles.createTitle}>Nueva publicación</Text>
           <View style={styles.closeButtonSpacer} />
         </View>
@@ -81,10 +82,7 @@ export function PantallaCrearPublicacion() {
         <Pressable
           accessibilityRole="button"
           onPress={handlePickPhoto}
-          style={[
-            styles.photoPicker,
-            draft.photo && styles.photoPickerFilled,
-          ]}
+          style={[styles.photoPicker, draft.photo && styles.photoPickerFilled]}
         >
           {draft.photo ? (
             <Image

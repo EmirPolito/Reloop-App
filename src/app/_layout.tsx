@@ -9,11 +9,11 @@ import { useFonts } from "expo-font";
 import { Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
-import { IntroVideoSplash } from "@/features/intro";
 import {
   STACK_SCREEN_OPTIONS,
   TRANSPARENT_NAVIGATION_THEME,
@@ -38,9 +38,18 @@ export const unstable_settings = {
   initialRouteName: "(app)",
 };
 
-/** Acceso para quien no tiene sesión y la app para quien sí; Expo Router redirige al cambiar la sesión. */
+/** Bienvenida para quien no tiene sesión y la app para quien sí; Expo Router redirige al cambiar la sesión. */
 function RootNavigator() {
   const { status } = useAuth();
+
+  // La splash nativa sigue visible hasta que se sabe si hay sesión,
+  // así la pantalla de bienvenida (o la app) aparece sin parpadeos.
+  useEffect(() => {
+    if (status !== "loading") {
+      SplashScreen.hideAsync();
+    }
+  }, [status]);
+
   if (status === "loading") return null;
   const isAuthenticated = status === "authenticated";
 
@@ -48,7 +57,7 @@ function RootNavigator() {
     <Stack screenOptions={STACK_SCREEN_OPTIONS}>
       <Stack.Protected
         guard={isAuthenticated}
-        redirectTo={status === "unverified" ? "/verify" : "/login"}
+        redirectTo={status === "unverified" ? "/verify" : "/bienvenida"}
       >
         <Stack.Screen name="(app)" />
       </Stack.Protected>
@@ -63,7 +72,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(FONTS);
 
   if (fontError) throw fontError;
-  // La splash nativa sigue visible hasta que el video de introducción se dibuja
+  // La splash nativa sigue visible mientras cargan las fuentes
   if (!fontsLoaded) return null;
 
   return (
@@ -75,7 +84,6 @@ export default function RootLayout() {
               <AppFrame>
                 <RootNavigator />
               </AppFrame>
-              <IntroVideoSplash />
             </AuthProvider>
           </AppThemeProvider>
         </ThemeProvider>

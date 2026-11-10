@@ -1,1 +1,1 @@
-export { IntroVideoSplash } from "./IntroVideoSplash";
+export { PantallaBienvenida } from "@/features/intro/pantallaBienvenida";
