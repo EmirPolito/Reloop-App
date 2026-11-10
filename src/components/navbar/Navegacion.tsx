@@ -8,11 +8,9 @@ import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { LinearGradient } from "expo-linear-gradient";
 import React, {
-  startTransition,
   useCallback,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -54,10 +52,10 @@ const NAV_TABS: NavTabItem[] = [
 const FLEX_NORMAL = 1;
 const FLEX_SELECTED = 1.42;
 const FLEX_FAV_SELECTED = 1.62;
-const FLEX_EASING = Easing.bezier(0.25, 0.1, 0.25, 1);
-const FLEX_DUR = 300;
+const FLEX_EASING = Easing.out(Easing.cubic);
+const FLEX_DUR = 200;
 
-/** El texto entra con un pequeño desplazamiento y sale más rápido; sin useState ni callbacks */
+/** El texto entra y sale ágilmente sin demoras artificiales */
 const LABEL_ENTERING = new Keyframe({
   0: { opacity: 0, transform: [{ translateX: 4 }] },
   100: {
@@ -65,9 +63,7 @@ const LABEL_ENTERING = new Keyframe({
     transform: [{ translateX: 0 }],
     easing: Easing.out(Easing.cubic),
   },
-})
-  .delay(70)
-  .duration(180);
+}).duration(160);
 
 const LABEL_EXITING = new Keyframe({
   0: { opacity: 1, transform: [{ translateX: 0 }] },
@@ -76,7 +72,7 @@ const LABEL_EXITING = new Keyframe({
     transform: [{ translateX: 4 }],
     easing: Easing.in(Easing.quad),
   },
-}).duration(120);
+}).duration(90);
 
 const TabButton = React.memo(function TabButton({
   tab,
@@ -279,39 +275,17 @@ export function Navegacion({
   const showChatBadge = hasUnreadChats;
   const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 12);
 
-  // Pestaña local: la animación arranca al instante al tocar, sin esperar a que
-  // la pantalla nueva termine de renderizar. Si la pestaña activa cambia desde
-  // fuera, la local se alinea durante el render.
-  const [localTab, setLocalTab] = useState<Tab>(activeTab);
-  const [syncedTab, setSyncedTab] = useState<Tab>(activeTab);
-  if (syncedTab !== activeTab) {
-    setSyncedTab(activeTab);
-    setLocalTab(activeTab);
-  }
-
-  /* Se espera UN frame antes de lanzar la navegación: así el primer frame de la
-     animación de la barra ya está pintado cuando empieza el montaje pesado de
-     la pantalla (antes ambos arrancaban a la vez y la barra se trababa). */
-  const navegar = useCallback(
-    (tabId: Tab) => {
-      requestAnimationFrame(() => {
-        // Prioridad baja e interrumpible: el render de la pantalla no bloquea
-        // la animación de la barra
-        startTransition(() => onNavigate(tabId));
-      });
-    },
-    [onNavigate],
-  );
-
   const handleTabPress = useCallback(
     (tabId: Tab) => {
-      setLocalTab(tabId); // prioridad alta: la barra anima al instante
-      navegar(tabId);
+      if (tabId === activeTab) return;
+      onNavigate(tabId);
     },
-    [navegar],
+    [activeTab, onNavigate],
   );
 
-  const handleCreatePress = useCallback(() => navegar("create"), [navegar]);
+  const handleCreatePress = useCallback(() => {
+    onNavigate("create");
+  }, [onNavigate]);
 
   return (
     <View
@@ -323,7 +297,7 @@ export function Navegacion({
           <TabButton
             key={tab.id}
             tab={tab}
-            selected={localTab === tab.id}
+            selected={activeTab === tab.id}
             isDark={isDark}
             showChatBadge={showChatBadge}
             onPress={handleTabPress}

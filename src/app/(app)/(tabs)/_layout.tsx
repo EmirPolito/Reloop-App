@@ -33,6 +33,7 @@ export default function TabsLayout() {
           screenOptions={{
             headerShown: false,
             sceneStyle: { backgroundColor: "transparent" },
+            freezeOnBlur: true,
           }}
         >
           <Tabs.Screen name="index" />
