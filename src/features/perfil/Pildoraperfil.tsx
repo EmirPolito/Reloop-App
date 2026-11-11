@@ -27,7 +27,7 @@ export function PildoraPerfil({
         borderColor: tema.pillBorder,
         borderWidth: 1,
         paddingHorizontal: 5.5,
-        borderRadius: 15,
+        borderRadius: 17,
       }}
     >
       {icon ? (

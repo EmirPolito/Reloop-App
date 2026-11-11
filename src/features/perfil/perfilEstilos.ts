@@ -83,7 +83,7 @@ export const estilosPerfil = StyleSheet.create({
 
   profileSubtitle: {
     fontFamily: "Inter_400Regular",
-    marginTop: 1,
+    marginTop: 5,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: "400",
@@ -92,7 +92,7 @@ export const estilosPerfil = StyleSheet.create({
   /* Estadísticas: una sola tarjeta con 3 columnas separadas por divisores */
   /* Sin fondo: los 3 datos en una línea, repartidos de orilla a orilla */
   statsContainer: {
-    marginTop: 15,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

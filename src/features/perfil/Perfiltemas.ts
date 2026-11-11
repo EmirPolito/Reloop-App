@@ -61,7 +61,7 @@ export const COLORES_PERFIL: ColorPerfil[] = [
 export const TEMAS: Record<ColorPerfil, TemaColor> = {
   azul: {
     label: "Azul",
-    accent: "#757575ff",
+    accent: "#232323ff",
     gradientLight: ["#15a5ffff", "#3eb5ffff", "#9ad8ffff"],
     gradientDark: ["#1E3A8A", "#2563EB", "#38BDF8"],
     pillBg: "#e1e1e1ff",
@@ -69,7 +69,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   },
   naranja: {
     label: "Naranja",
-    accent: "#757575ff",
+    accent: "#232323ff",
     gradientLight: ["#ff8725ff", "#ff9d4cff", "#ffcea6ff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
     pillBg: "#e1e1e1ff",
@@ -77,7 +77,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   },
   rosa: {
     label: "Rosa",
-    accent: "#757575ff",
+    accent: "#232323ff",
     gradientLight: ["#ff208cff", "#ff3d9bff", "#ffacd4ff"],
     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
     pillBg: "#e1e1e1ff",
@@ -85,7 +85,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   },
   verde: {
     label: "Verde",
-    accent: "#757575ff",
+    accent: "#232323ff",
     gradientLight: ["#2cb844ff", "#4ade80", "#a0ffc3ff"],
     gradientDark: ["#166534", "#16A34A", "#4ADE80"],
     pillBg: "#e1e1e1ff",
@@ -93,7 +93,7 @@ export const TEMAS: Record<ColorPerfil, TemaColor> = {
   },
   amarillo: {
     label: "Amarillo",
-    accent: "#757575ff",
+    accent: "#232323ff",
     gradientLight: ["#facc15", "#fde047", "#fff6afff"],
     gradientDark: ["#854D0E", "#CA8A04", "#FACC15"],
     pillBg: "#e1e1e1ff",
