@@ -20,7 +20,6 @@ export const MEDIDAS = {
   altoDescripcion: 60, // h-15
   padH: 14,
   avatar: 85,
-  celdaSticker: 60,
   celdaIcono: 40,
   altoBoton: 48,
   gapSecciones: 20,

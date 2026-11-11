@@ -1,7 +1,8 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
-import { Animated, Pressable, View } from "react-native";
+import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
+import Animated, { type AnimatedStyle } from "react-native-reanimated";
 
 import type { Product } from "@/features/marketplace/types";
 import { AppIcon } from "@/features/shared/AppIcon";
@@ -13,11 +14,8 @@ export interface ProfilePostCardProps {
   item: Product;
   cardWidth: number;
   onPress: () => void;
-  /** Opacidad del precio (el carrusel solo lo muestra en la tarjeta central). */
-  priceOpacity?:
-    | Animated.AnimatedInterpolation<number>
-    | Animated.Value
-    | number;
+  /** Estilo animado del precio (el carrusel solo lo muestra en la tarjeta central). */
+  priceStyle?: StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
 }
 
 /** Alto de la tarjeta según su ancho (lo usa también el carrusel). */
@@ -33,7 +31,7 @@ export const ProfilePostCard = memo(function ProfilePostCard({
   item,
   cardWidth,
   onPress,
-  priceOpacity = 1,
+  priceStyle,
 }: ProfilePostCardProps) {
   const imageUri = optimizedImageUrl(item.imageUri, cardWidth * 2);
   const height = profilePostCardHeight(cardWidth);
@@ -96,16 +94,18 @@ export const ProfilePostCard = memo(function ProfilePostCard({
         {/* Precio arriba a la izquierda (solo visible en la tarjeta central) */}
         <Animated.View
           pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: 8,
-            left: 8,
-            opacity: priceOpacity,
-            backgroundColor: "rgba(255,255,255,0.95)",
-            borderRadius: 999,
-            paddingHorizontal: 12,
-            paddingVertical: 4,
-          }}
+          style={[
+            {
+              position: "absolute",
+              top: 8,
+              left: 8,
+              backgroundColor: "rgba(255,255,255,0.95)",
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+            },
+            priceStyle,
+          ]}
         >
           <Text className="text-xs font-bold text-neutral-900">
             {priceLabel}

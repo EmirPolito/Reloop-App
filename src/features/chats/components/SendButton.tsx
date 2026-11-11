@@ -3,8 +3,7 @@ import { memo } from "react";
 import { ActivityIndicator, View, type ViewStyle } from "react-native";
 
 import { PressableScale } from "@/components/PressableScale";
-import { estiloBotonTema } from "@/features/perfil/Perfiltemas";
-import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
 import { SendIcon } from "./ThreadIcons";
 
 // Estilos fuera del componente: referencias estables, cero trabajo al re-renderizar
@@ -53,8 +52,7 @@ export const SendButton = memo(function SendButton({
   /** Se están subiendo las fotos: en lugar del avión se muestra un indicador. */
   sending?: boolean;
 }) {
-  const { themeColor } = useAppTheme();
-  const botonTema = estiloBotonTema(themeColor);
+  const botonTema = ESTILO_BOTON_ACCION;
 
   return (
     <PressableScale

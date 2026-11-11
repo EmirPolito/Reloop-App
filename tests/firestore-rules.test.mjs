@@ -136,6 +136,19 @@ await expectDenied("B edita el perfil de A", () => updateDoc(doc(B.db, "usuarios
 await expectDenied("A borra su perfil", () => deleteDoc(doc(A.db, "usuarios", A.uid)));
 await expectOk("B lee el perfil de A", async () => { const s = await getDoc(doc(B.db, "usuarios", A.uid)); if (!s.exists() || s.data().nombre !== "Ana Pérez") throw new Error("datos distintos"); });
 await expectOk("el perfil de A no contiene correo", async () => { const s = await getDoc(doc(B.db, "usuarios", A.uid)); if ("correo" in s.data()) throw new Error("hay correo"); });
+await expectOk("A guarda imagen de fondo https", () => saveProfile(A, profileDoc("Ana Pérez", { fondoUrl: "https://res.cloudinary.com/demo/image/upload/v1/f.png" })));
+await expectOk("A quita su imagen de fondo", () => saveProfile(A, profileDoc("Ana Pérez", { fondoUrl: null })));
+await expectDenied("A guarda imagen de fondo http (no https)", () => saveProfile(A, profileDoc("Ana", { fondoUrl: "http://x.com/f.png" })));
+
+// ── SEGUIDORES ──────────────────────────────────────────────────────────────
+const follower = (owner, by) => doc(by.db, "usuarios", owner.uid, "seguidores", by.uid);
+await expectOk("B sigue a A", () => setDoc(follower(A, B), { creadoEn: serverTimestamp() }));
+await expectOk("A ve cuántos la siguen", async () => { if ((await getDocs(collection(A.db, "usuarios", A.uid, "seguidores"))).size !== 1) throw new Error("cantidad"); });
+await expectDenied("A se sigue a sí misma", () => setDoc(follower(A, A), { creadoEn: serverTimestamp() }));
+await expectDenied("A agrega a B como seguidora de B", () => setDoc(doc(A.db, "usuarios", B.uid, "seguidores", B.uid), { creadoEn: serverTimestamp() }));
+await expectDenied("A quita a B de sus seguidores", () => deleteDoc(doc(A.db, "usuarios", A.uid, "seguidores", B.uid)));
+await expectDenied("B sigue con un campo extra", () => setDoc(follower(A, B), { creadoEn: serverTimestamp(), extra: 1 }));
+await expectOk("B deja de seguir a A", () => deleteDoc(follower(A, B)));
 
 // ── PUBLICACIONES ───────────────────────────────────────────────────────────
 await expectOk("A publica una venta (5/1)", () => createProduct(A, "p-venta"));

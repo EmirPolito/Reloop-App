@@ -18,6 +18,7 @@ export async function saveOwnProfile(
   const data: DatosPerfil = {
     ...next,
     photo: next.photo ? await uploadImage(next.photo) : null,
+    cover: next.cover ? await uploadImage(next.cover) : null,
   };
   const renamed = data.name !== previous.name;
 

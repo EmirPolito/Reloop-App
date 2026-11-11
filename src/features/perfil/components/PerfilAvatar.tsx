@@ -12,7 +12,7 @@ import { type ColorPerfil, TEMAS } from "../Perfiltemas";
 const ANCHO_FOTO = 400;
 
 /**
- * Avatar dentro del aro de la cabecera: la foto de perfil o, si no hay, un círculo del
+ * Avatar dentro del marco de la cabecera: la foto de perfil o, si no hay, un cuadro del
  * color del perfil con un icono (perfil propio) o las iniciales (perfil de otra persona).
  */
 export function PerfilAvatar({
@@ -46,7 +46,7 @@ export function PerfilAvatar({
       style={[estilosPerfil.avatarPlaceholder, { backgroundColor: tema.pillBg }]}
     >
       {placeholder === "icono" ? (
-        <AppIcon name="person" size={50} color={tema.accent} />
+        <AppIcon name="person" size={44} color={tema.accent} />
       ) : (
         <Text style={[styles.initials, { color: tema.accent }]}>
           {getInitials(name)}
@@ -57,6 +57,6 @@ export function PerfilAvatar({
 }
 
 const styles = StyleSheet.create({
-  image: { width: "100%", height: "100%", borderRadius: 100 },
-  initials: { fontSize: 42, fontWeight: "800" },
+  image: { width: "100%", height: "100%", borderRadius: 26 },
+  initials: { fontSize: 34, fontWeight: "800" },
 });

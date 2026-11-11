@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { View } from "react-native";
 
 import { Text } from "@/features/shared/Text";
@@ -15,73 +15,68 @@ import {
   estilosPerfil,
 } from "../perfilEstilos";
 
-/** Tarjeta de estadística: [icono] número, y debajo la etiqueta */
-function TarjetaEstadistica({
-  icon,
-  value,
-  label,
-  bg,
-  textColor,
-}: {
+interface Estadistica {
   icon: ReactNode;
   value: string;
   label: string;
-  bg: string;
-  textColor: string;
-}) {
-  return (
-    <View style={[estilosPerfil.statCard, { backgroundColor: bg }]}>
-      <View style={estilosPerfil.statValueRow}>
-        {icon}
-        <Text style={[estilosPerfil.statValue, { color: textColor }]}>
-          {value}
-        </Text>
-      </View>
-      <Text style={estilosPerfil.statLabel} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
 }
 
-/** Fila con las tres tarjetas: publicaciones, seguidores y reputación. */
+/** Tarjeta con publicaciones, seguidores y reputación: [icono] número, y debajo el texto. */
 export function PerfilEstadisticas({
   publicaciones,
   seguidores,
   reputacion,
-  marginTop,
   isDark,
 }: {
   publicaciones: string;
   seguidores: string;
   reputacion: string;
-  marginTop: number;
   isDark: boolean;
 }) {
-  const { fondoTarjeta, texto } = coloresTarjeta(isDark);
+  const { texto, suave, divisor } = coloresTarjeta(isDark);
+  const items: Estadistica[] = [
+    {
+      icon: <IconoPublicaciones size={19} color={COLOR_ICONO_PUBLICACIONES} />,
+      value: publicaciones,
+      label: "Publicaciones",
+    },
+    {
+      icon: <IconoSeguidores size={19} color={COLOR_ICONO_SEGUIDORES} />,
+      value: seguidores,
+      label: "Seguidores",
+    },
+    {
+      icon: <IconoReputacion size={19} color={COLOR_ICONO_REPUTACION} />,
+      value: reputacion,
+      label: "Reputación",
+    },
+  ];
+
   return (
-    <View style={[estilosPerfil.statsContainer, { marginTop }]}>
-      <TarjetaEstadistica
-        icon={<IconoPublicaciones size={22} color={COLOR_ICONO_PUBLICACIONES} />}
-        value={publicaciones}
-        label="Publicaciones"
-        bg={fondoTarjeta}
-        textColor={texto}
-      />
-      <TarjetaEstadistica
-        icon={<IconoSeguidores size={22} color={COLOR_ICONO_SEGUIDORES} />}
-        value={seguidores}
-        label="Seguidores"
-        bg={fondoTarjeta}
-        textColor={texto}
-      />
-      <TarjetaEstadistica
-        icon={<IconoReputacion size={22} color={COLOR_ICONO_REPUTACION} />}
-        value={reputacion}
-        label="Reputación"
-        bg={fondoTarjeta}
-        textColor={texto}
-      />
+    <View style={estilosPerfil.statsContainer}>
+      {items.map((item, index) => (
+        <Fragment key={item.label}>
+          {index > 0 ? (
+            <View
+              style={[estilosPerfil.statDivisor, { backgroundColor: divisor }]}
+            />
+          ) : null}
+          <View style={estilosPerfil.statColumna}>
+            <View style={estilosPerfil.statValueRow}>
+              {item.icon}
+              <Text style={[estilosPerfil.statValue, { color: texto }]}>
+                {item.value}
+              </Text>
+            </View>
+            <Text
+              style={[estilosPerfil.statLabel, { color: suave }]}
+              numberOfLines={1}
+            >
+              {item.label}
+            </Text>
+          </View>
+        </Fragment>
+      ))}
     </View>
   );
 }

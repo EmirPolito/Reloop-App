@@ -1,5 +1,15 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
 
 import {
   ProfilePostCard,
@@ -17,9 +27,32 @@ const PAD_BOTTOM = 30; // Espaciado abajo
 const OFFSETS = [-2, -1, 0, 1, 2];
 const PAIR_OFFSET = 0.8;
 
-const mod = (a: number, n: number) => ((a % n) + n) % n;
+/** Con más publicaciones que esto solo se montan las cercanas a la actual */
+const MAX_MONTADAS = 15;
+const VENTANA = 4;
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+/**
+ * Todo el abanico se mueve con UNA posición animada: cada toque solo cambia el destino y
+ * el spring sigue desde donde va (con su velocidad), así los toques rápidos no reinician
+ * nada ni hacen saltar tarjetas. Casi críticamente amortiguado: rápido, suave, sin rebote.
+ */
+const SPRING_ABANICO = { mass: 1, stiffness: 320, damping: 34 };
+
+/**
+ * Orden de apilado en 3 niveles: solo cambia cuando la tarjeta cruza la mitad del camino
+ * (donde las tarjetas se ven simétricas). Cambiarlo en cada cuadro reordenaba las vistas
+ * en Android y hacía parpadear las imágenes.
+ */
+function nivel(ad: number) {
+  "worklet";
+  return ad < 0.5 ? 3 : ad < 1.5 ? 2 : 1;
+}
+
+/** Botón: se hunde rápido al presionar y vuelve suave al soltar */
+const PRESION = { duration: 100, easing: Easing.out(Easing.quad) };
+const SOLTAR = { duration: 160, easing: Easing.out(Easing.quad) };
+
+const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 interface ProductFanProps {
   items: Product[];
@@ -27,6 +60,7 @@ interface ProductFanProps {
   cardWidth?: number;
 }
 
+/** Posición discreta de una tarjeta para un paso (decide qué hace cada toque) */
 function slotFor(i: number, step: number, n: number) {
   if (n === 1) return { offset: 0, active: true };
   if (n === 2) {
@@ -40,115 +74,133 @@ function slotFor(i: number, step: number, n: number) {
   return { offset: d, active: d === 0 };
 }
 
+/** Distancia continua (con decimales) de la tarjeta `i` al centro, dando la vuelta */
+function distancia(i: number, pos: number, n: number) {
+  "worklet";
+  const r = (((i - pos) % n) + n) % n;
+  return r > n / 2 ? r - n : r;
+}
+
 /* ------------------------------------------------------------------ */
 /* Una tarjeta del carrusel                                           */
 /* ------------------------------------------------------------------ */
 interface FanSlotProps {
   item: Product;
-  offset: number;
-  active: boolean;
+  index: number;
+  total: number;
+  posicion: SharedValue<number>;
   cardWidth: number;
   spread: number;
   left: number;
-  onPress: () => void;
+  onPressIndex: (index: number) => void;
 }
 
 const FanSlot = memo(function FanSlot({
   item,
-  offset,
-  active,
+  index,
+  total,
+  posicion,
   cardWidth,
   spread,
   left,
-  onPress,
+  onPressIndex,
 }: FanSlotProps) {
-  const anim = useRef(new Animated.Value(offset)).current;
-  const activeAnim = useRef(new Animated.Value(active ? 1 : 0)).current;
-  const prevOffset = useRef(offset);
+  const onPress = useCallback(() => onPressIndex(index), [onPressIndex, index]);
 
-  useEffect(() => {
-    const prev = prevOffset.current;
-    if (prev === offset) return;
-    prevOffset.current = offset;
+  // Todo se calcula en el hilo de la interfaz a partir de la posición: sin estado por tarjeta
+  const estilo = useAnimatedStyle(() => {
+    const d = distancia(index, posicion.value, total);
+    const ad = Math.abs(d);
 
-    const delta = offset - prev;
-
-    if (Math.abs(delta) > 1.5) {
-      anim.setValue(offset);
-    } else {
-      // Usar spring en el desplazamiento permite toques rápidos sin tirones ni flickers
-      Animated.spring(anim, {
-        toValue: offset,
-        friction: 9,
-        tension: 60,
-        useNativeDriver: true,
-      }).start();
+    if (total === 2) {
+      // Pareja: las dos quedan fijas a los lados; la activa pasa al frente
+      const lado = index === 0 ? -PAIR_OFFSET : PAIR_OFFSET;
+      const activa = Math.max(0, 1 - ad);
+      return {
+        zIndex: activa >= 0.5 ? 2 : 1,
+        opacity: 1,
+        transform: [
+          { translateX: lado * spread },
+          { translateY: DROP * PAIR_OFFSET },
+          { rotate: `${lado * ANGLE}deg` },
+          { scale: 1 - 0.06 * PAIR_OFFSET },
+        ],
+      };
     }
-  }, [anim, offset]);
 
-  useEffect(() => {
-    Animated.spring(activeAnim, {
-      toValue: active ? 1 : 0,
-      friction: 8,
-      tension: 50,
-      useNativeDriver: true,
-    }).start();
-  }, [activeAnim, active]);
+    // Se desvanece al acercarse al punto donde da la vuelta (con 3 tarjetas es ±1.5):
+    // así el cambio de lado nunca se ve
+    const borde = interpolate(
+      total / 2 - ad,
+      [0, 0.5],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    // Solo se ven la central y las dos de los lados: más allá de 1 se desvanece rápido, así
+    // con toques rápidos no aparece una tarjeta "de más"
+    const opacidad =
+      interpolate(ad, [0, 1, 1.6], [1, 1, 0], Extrapolation.CLAMP) * borde;
 
-  const translateX = anim.interpolate({
-    inputRange: OFFSETS,
-    outputRange: [-spread * 1.5, -spread, 0, spread, spread * 1.5],
-    extrapolate: "clamp",
+    return {
+      zIndex: nivel(ad),
+      opacity: opacidad,
+      transform: [
+        {
+          translateX: interpolate(
+            d,
+            OFFSETS,
+            [-spread * 1.5, -spread, 0, spread, spread * 1.5],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          translateY: interpolate(
+            d,
+            OFFSETS,
+            [DROP * 1.8, DROP, 0, DROP, DROP * 1.8],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          rotate: `${interpolate(
+            d,
+            OFFSETS,
+            [-ANGLE * 1.4, -ANGLE, 0, ANGLE, ANGLE * 1.4],
+            Extrapolation.CLAMP,
+          )}deg`,
+        },
+        {
+          scale: interpolate(
+            d,
+            OFFSETS,
+            [0.88, 0.94, 1, 0.94, 0.88],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    };
   });
 
-  const translateY = anim.interpolate({
-    inputRange: OFFSETS,
-    outputRange: [DROP * 1.8, DROP, 0, DROP, DROP * 1.8],
-    extrapolate: "clamp",
-  });
-
-  const rotate = anim.interpolate({
-    inputRange: OFFSETS,
-    outputRange: [
-      `${-ANGLE * 1.4}deg`,
-      `${-ANGLE}deg`,
-      "0deg",
-      `${ANGLE}deg`,
-      `${ANGLE * 1.4}deg`,
-    ],
-    extrapolate: "clamp",
-  });
-
-  const scale = anim.interpolate({
-    inputRange: OFFSETS,
-    outputRange: [0.88, 0.94, 1, 0.94, 0.88],
-    extrapolate: "clamp",
-  });
-
-  const opacity = anim.interpolate({
-    inputRange: OFFSETS,
-    outputRange: [0, 1, 1, 1, 0],
-    extrapolate: "clamp",
+  // El precio solo se ve en la tarjeta del centro (se desvanece al alejarse)
+  const estiloPrecio = useAnimatedStyle(() => {
+    if (total === 1) return { opacity: 1 };
+    const ad = Math.abs(distancia(index, posicion.value, total));
+    return { opacity: Math.max(0, 1 - ad) };
   });
 
   return (
+    // Android: sin esto, al estar semitransparente pinta por separado el fondo blanco y la
+    // foto, y el blanco se transparenta ("card blanca"). Así se compone como una sola capa.
     <Animated.View
+      needsOffscreenAlphaCompositing
       renderToHardwareTextureAndroid
-      shouldRasterizeIOS
-      style={{
-        position: "absolute",
-        left,
-        top: PAD_V,
-        zIndex: active ? 3 : Math.abs(offset) <= 1 ? 2 : 1,
-        opacity,
-        transform: [{ translateX }, { translateY }, { rotate }, { scale }],
-      }}
+      style={[{ position: "absolute", left, top: PAD_V }, estilo]}
     >
       <ProfilePostCard
         item={item}
         cardWidth={cardWidth}
         onPress={onPress}
-        priceOpacity={activeAnim}
+        priceStyle={estiloPrecio}
       />
     </Animated.View>
   );
@@ -247,39 +299,47 @@ export const ProductFan = memo(function ProductFan({
   const { isDark } = useAppTheme();
   const [containerWidth, setContainerWidth] = useState(0);
   const [step, setStep] = useState(0);
-
-  const buttonScale = useRef(new Animated.Value(1)).current;
-
   const total = items.length;
+
+  // Posición continua que sigue a `step` con un spring interrumpible
+  const posicion = useSharedValue(0);
+  useEffect(() => {
+    posicion.set(withSpring(step, SPRING_ABANICO));
+  }, [step, posicion]);
 
   const goNext = useCallback(() => setStep((s) => s + 1), []);
   const goPrev = useCallback(() => setStep((s) => s - 1), []);
 
-  // Efecto táctil continuo en el botón (inmediato al presionar/soltar)
-  const handlePressIn = useCallback(() => {
-    Animated.spring(buttonScale, {
-      toValue: 0.92,
-      useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
-    }).start();
-  }, [buttonScale]);
+  // Refs para que el toque de cada tarjeta sea estable: tocar no re-renderiza las tarjetas
+  const stepRef = useRef(step);
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    stepRef.current = step;
+    itemsRef.current = items;
+  }, [step, items]);
 
-  const handlePressOut = useCallback(() => {
-    Animated.spring(buttonScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
-    }).start();
-  }, [buttonScale]);
+  const onPressIndex = useCallback(
+    (index: number) => {
+      const lista = itemsRef.current;
+      const { offset, active } = slotFor(index, stepRef.current, lista.length);
+      if (active) onOpen(lista[index].id);
+      else if (lista.length === 2 || offset > 0) goNext();
+      else goPrev();
+    },
+    [onOpen, goNext, goPrev],
+  );
+
+  // Botón Siguiente: se hunde un poco al presionar (respuesta inmediata)
+  const escalaBoton = useSharedValue(1);
+  const estiloBoton = useAnimatedStyle(() => ({
+    transform: [{ scale: escalaBoton.value }],
+  }));
 
   if (!total) return null;
 
-  // Tamaño de tarjeta compacto (42% del ancho disponible)
   const cardWidth = cardWidthProp ?? Math.round(containerWidth * 0.44);
   const cardHeight = profilePostCardHeight(cardWidth);
-  const spread = cardWidth * 0.6;
+  const spread = cardWidth * 0.5;
   const left = (containerWidth - cardWidth) / 2;
   const stageHeight = cardHeight + PAD_V * 2 + DROP;
   const activeIndex = mod(step, total);
@@ -313,25 +373,24 @@ export const ProductFan = memo(function ProductFan({
             </>
           ) : null}
           {items.map((product, i) => {
-            const { offset, active } = slotFor(i, step, total);
-            if (Math.abs(offset) > 2) return null;
-
+            // Con pocas publicaciones se montan todas (nada aparece/desaparece de golpe)
+            if (
+              total > MAX_MONTADAS &&
+              Math.abs(slotFor(i, step, total).offset) > VENTANA
+            ) {
+              return null;
+            }
             return (
               <FanSlot
                 key={product.id}
                 item={product}
-                offset={offset}
-                active={active}
+                index={i}
+                total={total}
+                posicion={posicion}
                 cardWidth={cardWidth}
                 spread={spread}
                 left={left}
-                onPress={
-                  active
-                    ? () => onOpen(product.id)
-                    : total === 2 || offset > 0
-                      ? goNext
-                      : goPrev
-                }
+                onPressIndex={onPressIndex}
               />
             );
           })}
@@ -340,17 +399,22 @@ export const ProductFan = memo(function ProductFan({
 
       {total > 1 ? (
         <View className="mt-1 items-center gap-3">
-          <AnimatedPressable
+          <Pressable
             accessibilityRole="button"
             accessibilityLabel="Ver siguiente publicación"
             onPress={goNext}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            style={{ transform: [{ scale: buttonScale }] }}
-            className="rounded-full bg-neutral-900 px-6 py-2.5"
+            onPressIn={() => escalaBoton.set(withTiming(0.96, PRESION))}
+            onPressOut={() => escalaBoton.set(withTiming(1, SOLTAR))}
           >
-            <Text className="text-sm font-semibold text-white">Siguiente</Text>
-          </AnimatedPressable>
+            <Animated.View
+              style={estiloBoton}
+              className="rounded-full bg-neutral-900 px-6 py-2.5"
+            >
+              <Text className="text-sm font-semibold text-white">
+                Siguiente
+              </Text>
+            </Animated.View>
+          </Pressable>
 
           {/* Indicador de posición */}
           {total <= 7 ? (

@@ -11,6 +11,13 @@ const SQUARE_IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.85,
 };
 
+const COVER_IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  aspect: [4, 3],
+  quality: 0.85,
+};
+
 const GALLERY_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ["images"],
   allowsMultipleSelection: true,
@@ -61,6 +68,22 @@ export function useImagePicker() {
     }
   }, []);
 
+  /** Una foto horizontal (4:3) para la portada del perfil. `null` si se cancela. */
+  const pickCoverImage = useCallback(async (): Promise<string | null> => {
+    setIsPicking(true);
+    try {
+      if (!(await ensureLibraryPermission())) return null;
+      const result =
+        await ImagePicker.launchImageLibraryAsync(COVER_IMAGE_OPTIONS);
+      return result.canceled ? null : (result.assets[0]?.uri ?? null);
+    } catch (error) {
+      showGalleryError(error);
+      return null;
+    } finally {
+      setIsPicking(false);
+    }
+  }, []);
+
   /** Varias fotos sin recortar (chat). Si la selección múltiple falla, pide una sola. */
   const pickImages = useCallback(async (): Promise<string[]> => {
     setIsPicking(true);
@@ -89,5 +112,5 @@ export function useImagePicker() {
     }
   }, []);
 
-  return { isPicking, pickSquareImage, pickImages };
+  return { isPicking, pickSquareImage, pickCoverImage, pickImages };
 }

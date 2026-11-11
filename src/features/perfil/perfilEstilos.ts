@@ -1,145 +1,108 @@
 import { StyleSheet } from "react-native";
 
-/** Colores fijos de los iconos de las 3 tarjetas (no dependen del color de fondo del perfil) */
+import { APP_BACKGROUND } from "@/features/shared/constants";
+
+/** Colores fijos de los iconos de las estadísticas */
 export const COLOR_ICONO_PUBLICACIONES = "#545454ff";
 export const COLOR_ICONO_SEGUIDORES = "#545454ff";
 export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 
-/** Separación entre lo de arriba y las 3 tarjetas de estadísticas */
-export const MARGEN_STATS = 22;
+/** Alto de la portada (imagen de fondo), sin contar la barra de estado */
+export const ALTO_PORTADA = 175;
 
-/** Posición Y de la mitad del avatar en la cabecera */
-export const AVATAR_MITAD_Y = 204;
+/** Lado del avatar cuadrado redondeado */
+export const LADO_AVATAR = 90;
 
-/** Base del avatar donde termina el degradado y empieza el fondo sólido inferior */
-export const AVATAR_BASE_Y = 280;
+/** Cuánto sube el avatar sobre la portada */
+export const SOLAPE_AVATAR = 47;
+
+/** Fondo de la pantalla del perfil (gris tipo Apple en claro) */
+export function fondoPerfil(isDark: boolean) {
+  return isDark ? APP_BACKGROUND.dark : APP_BACKGROUND.light;
+}
 
 /** Colores de las tarjetas según el tema (estadísticas, ajustes y acciones) */
 export function coloresTarjeta(isDark: boolean) {
   return {
-    fondoTarjeta: isDark ? "#1E293B" : "#ffffffff",
+    fondoTarjeta: isDark ? "#1E293B" : "#fefefeff",
     texto: isDark ? "#F1F5F9" : "#101010",
     textoFila: isDark ? "#CBD5E1" : "#424242ff",
     flecha: isDark ? "#8391A7" : "#424242ff",
+    suave: isDark ? "#94A3B8" : "#8a8a8aff",
+    divisor: isDark ? "#334155" : "#E5E5EA",
   };
 }
 
 /** Estilos compartidos por el perfil propio y el perfil público */
 export const estilosPerfil = StyleSheet.create({
-  headerContainer: {
-    height: 218,
-    width: "100%",
-    position: "relative",
+  /* Fila del avatar (izquierda) y la acción (derecha), montada sobre la portada */
+  filaAvatar: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginTop: -SOLAPE_AVATAR,
     zIndex: 20,
   },
-  skyBackground: {
-    flex: 1,
-    paddingTop: 2,
-    alignItems: "center",
-    backgroundColor: "transparent",
-  },
-  topNav: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 15,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    textAlign: "center",
-    flex: 1,
-
-    // Brillo de las letras
-    textShadowColor: "#ffffff81",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-  avatarContainer: {
-    position: "absolute",
-    bottom: -60,
-    alignSelf: "center",
-    zIndex: 10,
-  },
-  avatarRing: {
-    width: 152,
-    height: 152,
-    borderRadius: 150,
-    padding: 5.5,
+  avatarMarco: {
+    width: LADO_AVATAR,
+    height: LADO_AVATAR,
+    borderRadius: 27,
+    padding: 3,
   },
   avatarPlaceholder: {
     width: "100%",
     height: "100%",
-    borderRadius: 150,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
-  /** Degradado blanco debajo de la mitad del avatar para abajo (de Y=204 a Y=284) */
-  degradadoAvatar: {
-    position: "absolute",
-    top: 204,
-    left: 0,
-    right: 0,
-    height: 80,
-    zIndex: 5,
-  },
 
-  profileName: {
-    top: 0,
-    fontSize: 27.5,
-    fontWeight: "600",
-    textAlign: "center",
-    letterSpacing: -1.3,
-    lineHeight: 36, // Aumentado a 36 para dar margen vertical a los trazos inferiores
-    includeFontPadding: false, // Evita que Android empuje el texto hacia abajo
-    zIndex: 10,
-    elevation: 10, // Asegura en Android que el texto quede por encima del degradado/fondo
-
-    // Brillo blanco alrededor de las letras
-    textShadowColor: "#ffffff81",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-
-  profileSubtitle: {
-    paddingHorizontal: 15,
-    marginTop: 2,
-    fontSize: 12.5,
-    color: "#757575ff",
-    fontWeight: "400",
-    textAlign: "center",
-    paddingBottom: 2,
-  },
+  /* Nombre, etiquetas y descripción: alineados a la izquierda */
   profileInfoSection: {
-    paddingHorizontal: 15,
-    alignItems: "center",
-    paddingTop: 63,
-    paddingBottom: 35,
+    paddingHorizontal: 20,
+    paddingTop: 1,
+    paddingBottom: 30,
   },
-
-  /* El marginTop va en línea (cambia según haya o no etiquetas) */
-  statsContainer: {
+  /* Inter: la fuente libre más parecida a las de X, Instagram o Facebook.
+     Cada grosor es un archivo; fontWeight se ignora (ver Text.tsx) */
+  profileName: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 20,
+    letterSpacing: -1,
+    lineHeight: 34,
+    includeFontPadding: false,
+  },
+  profileSubtitle: {
+    fontFamily: "Inter_400Regular",
+    marginTop: -1.5,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "400",
+  },
+  tagsRow: {
+    marginTop: 10,
     flexDirection: "row",
-    width: "100%",
-    gap: 10,
+    flexWrap: "wrap",
+    gap: 7.5,
   },
 
-  // 3 tarjetas: Publicaciones, Seguidores, Reputación
-  statCard: {
-    flex: 1,
+  /* Estadísticas: una sola tarjeta con 3 columnas separadas por divisores */
+  /* Sin fondo: las 3 columnas se reparten de orilla a orilla, con los divisores al centro */
+  statsContainer: {
+    marginTop: 25,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 7,
-    borderRadius: 15,
-    gap: 2,
-    elevation: 0.2,
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
-  statValueRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  statValue: { fontSize: 18, fontWeight: "600" },
-  statLabel: { fontSize: 11.5, color: "#767676ff", fontWeight: "500" },
+  statColumna: { alignItems: "center", gap: 3 },
+  statDivisor: { width: StyleSheet.hairlineWidth * 2, height: 30 },
+  statValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  statValue: { fontSize: 17, fontWeight: "600" },
+  statLabel: { fontSize: 11.5, fontWeight: "500" },
 
   // Tarjeta de una sola acción (cerrar sesión, enviar mensaje)
   tarjetaAccion: {
@@ -147,8 +110,8 @@ export const estilosPerfil = StyleSheet.create({
     height: 60,
     borderRadius: 17,
     paddingHorizontal: 10,
-    gap: 9,
-    elevation: 0.2,
+    gap: 10,
+    elevation: 0.4,
     flexDirection: "row",
     alignItems: "center",
   },

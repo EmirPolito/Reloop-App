@@ -28,10 +28,8 @@ import {
   toProfileDocument,
 } from "@/features/perfil/profileMappers";
 import {
-  estiloBotonTema,
-  gradienteAppBackground,
+  ESTILO_BOTON_ACCION,
   gradienteHeader,
-  gradienteSuaveModulos,
   TEMAS,
 } from "@/features/perfil/Perfiltemas";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
@@ -260,7 +258,7 @@ describe("mapeo de chats", () => {
 describe("mapeo de perfiles", () => {
   it("el perfil por defecto usa el nombre (máx. 30)", () => {
     assert.equal(defaultProfile("x".repeat(40)).name.length, 30);
-    assert.deepEqual(defaultProfile("Ana"), { photo: null, name: "Ana", description: "", color: "azul", pills: [], stickers: [] });
+    assert.deepEqual(defaultProfile("Ana"), { photo: null, cover: null, name: "Ana", description: "", color: "azul", pills: [], stickers: [] });
   });
   it("valores seguros para campos que faltan o están mal", () => {
     const p = mapProfile({ nombre: "", color: "negro", etiquetas: [{ id: "1", text: "Mate", color: "rosa", icon: "work" }, { id: 2 }, "x"], stickers: ["sticker-1", 3] }, "Respaldo");
@@ -269,6 +267,13 @@ describe("mapeo de perfiles", () => {
     assert.deepEqual(p.pills, [{ id: "1", text: "Mate", color: "rosa", icon: "work" }]);
     assert.deepEqual(p.stickers, ["sticker-1"]);
     assert.equal(p.photo, null);
+    assert.equal(p.cover, null);
+  });
+  it("la imagen de fondo se lee y se guarda como `fondoUrl`", () => {
+    const url = "https://res.cloudinary.com/demo/image/upload/v1/fondo.png";
+    assert.equal(mapProfile({ fondoUrl: url }, "Ana").cover, url);
+    assert.equal(toProfileDocument({ ...defaultProfile("Ana"), cover: url }).fondoUrl, url);
+    assert.equal("fondoUrl" in toProfileDocument(defaultProfile("Ana")), false);
   });
   it("al guardar no se escribe `icon: undefined` (Firestore lo rechaza)", () => {
     const doc = toProfileDocument({ ...defaultProfile("Ana"), pills: [{ id: "1", text: "Mate", color: "azul", icon: undefined }] });
@@ -289,30 +294,9 @@ describe("mapeo de perfiles", () => {
     const cabeceraNaranja = gradienteHeader("naranja", false);
     assert.equal(cabeceraNaranja[0], TEMAS.naranja.gradientLight[0]);
   });
-  it("gradiente de fondo de la app usa el color de perfil arriba y blanco abajo", () => {
-    const fondoNaranja = gradienteAppBackground("naranja", false);
-    assert.deepEqual(fondoNaranja, [
-      TEMAS.naranja.gradientLight[0],
-      TEMAS.naranja.gradientLight[1],
-      TEMAS.naranja.gradientLight[2],
-      "#f6f6f6ff",
-    ]);
-
-    const fondoAzulDark = gradienteAppBackground("azul", true);
-    assert.deepEqual(fondoAzulDark, [
-      TEMAS.azul.gradientDark[0],
-      TEMAS.azul.gradientDark[1],
-      TEMAS.azul.gradientDark[2],
-      "#0F172A",
-    ]);
-
-    const suaveRosa = gradienteSuaveModulos("rosa", false);
-    assert.equal(suaveRosa.length, 4);
-    assert.equal(suaveRosa[3], "#f6f6f6ff");
-
-    const botonRosa = estiloBotonTema("rosa");
-    assert.equal(botonRosa.shadowColor, "#DB2777");
-    assert.equal(botonRosa.colors.length, 3);
+  it("el botón de acción tiene un único estilo fijo (sin color de tema)", () => {
+    assert.equal(ESTILO_BOTON_ACCION.colors.length, 3);
+    assert.equal(ESTILO_BOTON_ACCION.shadowColor, "#2563EB");
   });
 });
 

@@ -1,10 +1,3 @@
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  Poppins_800ExtraBold,
-} from "@expo-google-fonts/poppins";
 import { useFonts } from "expo-font";
 import { Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -21,7 +14,21 @@ import {
 import { AppFrame } from "@/features/shared/AppFrame";
 import { AppThemeProvider } from "@/features/shared/AppThemeProvider";
 
-// Muestra de errores de renderizado de las pantallas con el contenedor por defecto de Expo Router
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from "@expo-google-fonts/poppins";
+
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+
 export { ErrorBoundary } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
@@ -32,6 +39,11 @@ const FONTS = {
   Poppins_600SemiBold,
   Poppins_700Bold,
   Poppins_800ExtraBold,
+
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
 };
 
 export const unstable_settings = {

@@ -1,43 +1,29 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
-import type { ColorPerfil } from "../Perfiltemas";
-import { estilosPerfil } from "../perfilEstilos";
+import { estilosPerfil, fondoPerfil } from "../perfilEstilos";
 
-/**
- * Cabecera del perfil: se integra directamente sobre el fondo degradado de la pantalla
- * sin generar capas duplicadas ni sombras de tarjeta.
- */
+/** Fila bajo la portada: avatar a la izquierda y, opcionalmente, una acción a la derecha. */
 export function PerfilCabecera({
   isDark,
-  nav,
   avatar,
-  children,
+  accion,
 }: {
-  color?: ColorPerfil;
   isDark: boolean;
-  nav: ReactNode;
   avatar: ReactNode;
-  children?: ReactNode;
+  accion?: ReactNode;
 }) {
   return (
-    <View style={estilosPerfil.headerContainer}>
-      <View style={estilosPerfil.skyBackground}>
-        <View style={estilosPerfil.topNav}>{nav}</View>
-
-        <View style={estilosPerfil.avatarContainer}>
-          <View
-            style={[
-              estilosPerfil.avatarRing,
-              { backgroundColor: isDark ? "#0F172A" : "#FFFFFF" },
-            ]}
-          >
-            {avatar}
-          </View>
-        </View>
+    <View style={estilosPerfil.filaAvatar}>
+      <View
+        style={[
+          estilosPerfil.avatarMarco,
+          { backgroundColor: fondoPerfil(isDark) },
+        ]}
+      >
+        {avatar}
       </View>
-
-      {children}
+      {accion ? <View style={{ marginBottom: 8 }}>{accion}</View> : null}
     </View>
   );
 }

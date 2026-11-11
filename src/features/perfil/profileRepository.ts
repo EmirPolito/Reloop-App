@@ -75,6 +75,7 @@ export async function saveProfileData(
     doc(db, USERS, uid),
     {
       ...toProfileDocument(data),
+      fondoUrl: data.cover ?? deleteField(),
       correo: deleteField(),
       actualizadoEn: serverTimestamp(),
     },

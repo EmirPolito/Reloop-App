@@ -1,6 +1,3 @@
-import { memo, useCallback, useMemo } from "react";
-import { FlatList, View } from "react-native";
-
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -15,12 +12,13 @@ import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useProfile } from "@/features/perfil/ProfileProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
+import { memo, useCallback, useMemo } from "react";
+import { FlatList, View } from "react-native";
 import { CategoryRow } from "./components/CategoryRow";
 import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
 import { buildHomeFeedRows, homeRowKey, type HomeFeedRow } from "./feedRows";
-
 /** Posición de la fila de categorías (cabecera = 0, banner = 1): queda fija al hacer scroll. */
 const STICKY_HEADER_INDICES = [2];
 

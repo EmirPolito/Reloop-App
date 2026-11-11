@@ -1,44 +1,31 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { useMemo } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { BackHeader } from "@/components/ui/BackHeader";
-import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
-import { ProductFan } from "@/features/marketplace/components/productAbanico";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import {
-  AVATAR_BASE_Y,
-  coloresTarjeta,
-  estilosPerfil,
-} from "@/features/perfil/perfilEstilos";
+import { coloresTarjeta, fondoPerfil } from "@/features/perfil/perfilEstilos";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { Text } from "@/features/shared/Text";
+import { BotonSeguir } from "./components/BotonSeguir";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
-import { NubesPerfil } from "./components/PerfilNubes";
-import { StickersFlotantes } from "./components/StickersFlotantes";
+import { PerfilPortada } from "./components/PerfilPortada";
+import {
+  PublicacionesPerfil,
+  SIN_ANUNCIOS,
+} from "./components/PublicacionesPerfil";
 import { TarjetaAccion } from "./components/TarjetaAccion";
+import { useFollowers } from "./hooks/useFollowers";
 import { usePublicProfile } from "./hooks/usePublicProfile";
-import { IconoMensaje, IconoPublicaciones } from "./Perfiliconos";
-import { gradienteAppBackground } from "./Perfiltemas";
+import { IconoMensaje } from "./Perfiliconos";
 import { defaultProfile } from "./profileMappers";
-
-/** Todavía no hay seguidores: el número es fijo. */
-const SEGUIDORES = "0";
 
 /** Perfil de otra persona (o el propio, visto como lo ven las demás), con el mismo estilo del perfil propio. */
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
@@ -50,21 +37,15 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
     useUserProducts(userId);
   const { back, openProduct } = useAppNavigation();
   const openChat = useOpenChat();
+  const { followersCount, isFollowing, pending, toggleFollow } =
+    useFollowers(userId);
+  const isOwn = userId === uid;
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-  const { height: windowHeight } = useWindowDimensions();
 
   // Sin ficha de perfil (o si no se pudo leer) se muestra lo que se sabe de la persona
   const profile =
     storedProfile ?? defaultProfile(userProducts[0]?.seller ?? "Usuario");
-
-  const backgroundColors = useMemo(
-    () => gradienteAppBackground(profile.color, isDark),
-    [profile.color, isDark],
-  );
-
-  const fondoPantalla = isDark ? "#0F172A" : "#f8f8f8";
-  const alturaDegradado = windowHeight * 0.45;
 
   if (status === "loading") {
     return (
@@ -76,77 +57,30 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: fondoPantalla,
-      }}
-    >
-      {/* Franja superior donde va la hora adaptada al primer tono del perfil visitado */}
-      <View
-        style={{
-          height: insets.top,
-          backgroundColor: backgroundColors[0],
-        }}
-      />
+    <View style={{ flex: 1, backgroundColor: fondoPerfil(isDark) }}>
       <ScrollView
         style={baseStyles.screenScroll}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Extensión superior para rebote al estirar hacia abajo */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: -500,
-            left: 0,
-            right: 0,
-            height: 500,
-            backgroundColor: backgroundColors[0],
-          }}
-        />
-
-        {/* Degradado en la cabecera que scrollea con el contenido (no sigue la pantalla) */}
-        <LinearGradient
-          colors={backgroundColors}
-          locations={[0, 0.25, 0.6, 1.0]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: alturaDegradado,
-          }}
-        />
-
-        {/* Nubes decorativas detrás del avatar (no alteran el color del degradado) */}
-        <NubesPerfil
-          source={require("@/assets/images/nubes3.png")}
+        {/* La portada llega hasta arriba, detrás de la barra de estado */}
+        <PerfilPortada
+          cover={profile.cover}
           isDark={isDark}
-          bottomY={AVATAR_BASE_Y + 50}
-        />
+          topInset={insets.top}
+        >
+          <PressableSuave
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+            onPress={back}
+            style={[styles.backBtn, { top: insets.top + 8 }]}
+          >
+            <AppIcon name="back" size={22} color="#101010" />
+          </PressableSuave>
+        </PerfilPortada>
 
         <PerfilCabecera
-          color={profile.color}
           isDark={isDark}
-          nav={
-            <>
-              <PressableSuave
-                accessibilityRole="button"
-                accessibilityLabel="Volver"
-                onPress={back}
-                style={styles.backBtn}
-              >
-                <AppIcon name="back" size={22} color="#FFFFFF" />
-              </PressableSuave>
-              <Text style={estilosPerfil.headerTitle}>Perfil</Text>
-              <View style={styles.backBtn} />
-            </>
-          }
           avatar={
             <PerfilAvatar
               photo={profile.photo}
@@ -155,61 +89,41 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
               placeholder="iniciales"
             />
           }
-        >
-          <StickersFlotantes stickers={profile.stickers} />
-        </PerfilCabecera>
+          accion={
+            isOwn ? null : (
+              <BotonSeguir
+                isFollowing={isFollowing}
+                pending={pending}
+                isDark={isDark}
+                name={profile.name}
+                onPress={() => void toggleFollow()}
+              />
+            )
+          }
+        />
 
         <PerfilInformacion
           profile={profile}
           stats={{
             publicaciones: String(userProducts.length),
-            seguidores: SEGUIDORES,
+            seguidores: String(followersCount),
             reputacion: averageRatingLabel(userProducts),
           }}
           isDark={isDark}
         />
 
         <View style={{ paddingHorizontal: 15 }}>
-          {userProducts.length ? (
-            /* Publicaciones en abanico tipo carrusel infinito, igual que el perfil propio */
-            <>
-              <View style={styles.publicationsHeader}>
-                <Text
-                  style={[
-                    styles.publicationsTitle,
-                    { color: isDark ? "#ffffff" : "#101010" },
-                  ]}
-                >
-                  Publicaciones
-                </Text>
-                <Text
-                  style={[
-                    styles.publicationsDescription,
-                    { color: isDark ? "#9ca3af" : "#696969" },
-                  ]}
-                >
-                  Todo lo que ha publicado en ReLoop.
-                </Text>
-              </View>
-              <ProductFan items={userProducts} onOpen={openProduct} />
-            </>
-          ) : productsStatus === "loading" ? (
-            <LoadingState />
-          ) : (
-            <IllustratedEmptyState
-              icon={
-                <IconoPublicaciones
-                  size={80}
-                  color={isDark ? "#475569" : "#C5CAD3"}
-                />
-              }
-              title="Aún no hay publicaciones"
-              message="Las publicaciones de esta persona aparecerán aquí."
-              style={{ paddingTop: 60, paddingBottom: 80 }}
-            />
-          )}
+          {/* Publicaciones y anuncios, en pestañas */}
+          <PublicacionesPerfil
+            publicaciones={userProducts}
+            anuncios={SIN_ANUNCIOS}
+            status={productsStatus}
+            isOwn={isOwn}
+            isDark={isDark}
+            onOpen={openProduct}
+          />
 
-          {userId !== uid ? (
+          {!isOwn ? (
             <TarjetaAccion
               icon={<IconoMensaje size={25} color="#0062ff75" />}
               label="Enviar mensaje"
@@ -227,30 +141,14 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
 }
 
 const styles = StyleSheet.create({
-  publicationsHeader: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  publicationsTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  publicationsDescription: {
-    fontSize: 12.5,
-    fontWeight: "400",
-    textAlign: "center",
-    lineHeight: 18,
-  },
   backBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    position: "absolute",
+    left: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#FFFFFFD9",
   },
 });

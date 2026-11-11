@@ -1,19 +1,12 @@
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
 import { Text } from "@/features/shared/Text";
-import {
-  coloresTarjeta,
-  estilosPerfil,
-  MARGEN_STATS,
-} from "../perfilEstilos";
+import { coloresTarjeta, estilosPerfil } from "../perfilEstilos";
 import { DESCRIPCION_POR_DEFECTO, type DatosPerfil } from "../Perfiltemas";
 import { PildoraPerfil } from "../Pildoraperfil";
 import { PerfilEstadisticas } from "./PerfilEstadisticas";
 
-/** Margen de las estadísticas cuando NO hay etiquetas (las tarjetas suben un poco). */
-const MARGEN_STATS_SIN_ETIQUETAS = 14;
-
-/** Nombre, descripción, etiquetas y estadísticas: la parte de texto de un perfil, propio o ajeno. */
+/** Nombre, etiquetas, descripción y estadísticas: la parte de texto de un perfil, propio o ajeno. */
 export function PerfilInformacion({
   profile,
   stats,
@@ -23,20 +16,20 @@ export function PerfilInformacion({
   stats: { publicaciones: string; seguidores: string; reputacion: string };
   isDark: boolean;
 }) {
-  const { texto } = coloresTarjeta(isDark);
-  const hayEtiquetas = profile.pills.length > 0;
+  const { texto, suave } = coloresTarjeta(isDark);
 
   return (
     <View style={estilosPerfil.profileInfoSection}>
       <Text style={[estilosPerfil.profileName, { color: texto }]}>
         {profile.name}
       </Text>
-      <Text style={estilosPerfil.profileSubtitle}>
+
+      <Text style={[estilosPerfil.profileSubtitle, { color: suave }]}>
         {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
       </Text>
 
-      {hayEtiquetas ? (
-        <View style={styles.tagsRow}>
+      {profile.pills.length > 0 ? (
+        <View style={estilosPerfil.tagsRow}>
           {profile.pills.map((pill) => (
             <PildoraPerfil
               key={pill.id}
@@ -53,19 +46,8 @@ export function PerfilInformacion({
         publicaciones={stats.publicaciones}
         seguidores={stats.seguidores}
         reputacion={stats.reputacion}
-        marginTop={hayEtiquetas ? MARGEN_STATS : MARGEN_STATS_SIN_ETIQUETAS}
         isDark={isDark}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  tagsRow: {
-    marginTop: 7,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 7.5,
-  },
-});

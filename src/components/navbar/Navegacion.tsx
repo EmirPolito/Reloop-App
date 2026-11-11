@@ -1,9 +1,6 @@
 import { NavigationIcon } from "@/components/iconos";
 import type { Tab } from "@/features/navigation/routes";
-import {
-  estiloBotonTema,
-  type ColorPerfil,
-} from "@/features/perfil/Perfiltemas";
+import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,7 +26,6 @@ export interface NavegacionProps {
   onNavigate: (tab: Tab) => void;
   isDark?: boolean;
   hasUnreadChats?: boolean;
-  themeColor?: ColorPerfil;
 }
 
 interface NavTabItem {
@@ -209,13 +205,11 @@ const TabButton = React.memo(function TabButton({
 const CreateButton = React.memo(function CreateButton({
   onPress,
   styles,
-  themeColor = "azul",
 }: {
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
-  themeColor?: ColorPerfil;
 }) {
-  const botonTema = estiloBotonTema(themeColor);
+  const botonTema = ESTILO_BOTON_ACCION;
   const pressScale = useSharedValue(1);
 
   const scaleStyle = useAnimatedStyle(() => ({
@@ -268,7 +262,6 @@ export function Navegacion({
   onNavigate,
   isDark = false,
   hasUnreadChats = false,
-  themeColor = "azul",
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
@@ -306,11 +299,7 @@ export function Navegacion({
         ))}
       </View>
 
-      <CreateButton
-        onPress={handleCreatePress}
-        styles={styles}
-        themeColor={themeColor}
-      />
+      <CreateButton onPress={handleCreatePress} styles={styles} />
     </View>
   );
 }

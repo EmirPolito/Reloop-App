@@ -163,33 +163,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  /* Stickers (padding arriba/derecha para que la insignia no se recorte) */
-  stickersContent: {
-    paddingHorizontal: MEDIDAS.padTarjeta,
-    paddingTop: 6,
-    paddingRight: 21,
-    gap: 10,
-  },
-  stickerCell: {
-    width: MEDIDAS.celdaSticker,
-    height: MEDIDAS.celdaSticker,
-    borderRadius: RADIO,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stickerImage: { width: "66%", height: "66%" },
-  stickerBadge: {
-    position: "absolute",
-    top: -5,
-    right: -5,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
   /* Acciones */
   actions: { flexDirection: "row", gap: 12 },
   button: {

@@ -1,40 +1,29 @@
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useMemo, useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Switch,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, Switch, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  AVATAR_BASE_Y,
-  coloresTarjeta,
-  estilosPerfil,
-} from "@/features/perfil/perfilEstilos";
-import { NubesPerfil } from "./components/PerfilNubes";
+import { coloresTarjeta, fondoPerfil } from "@/features/perfil/perfilEstilos";
 
-import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { ProductFan } from "@/features/marketplace/components/productAbanico";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
-import { showComingSoonAlert, showErrorAlert } from "@/utils/alerts";
-import { CirculosColor } from "./components/CirculosColor";
+import { showComingSoonAlert } from "@/utils/alerts";
 import { FilaAjuste } from "./components/FilaAjuste";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
-import { StickersFlotantes } from "./components/StickersFlotantes";
+import { PerfilPortada } from "./components/PerfilPortada";
+import {
+  PublicacionesPerfil,
+  SIN_ANUNCIOS,
+} from "./components/PublicacionesPerfil";
 import { TarjetaAccion } from "./components/TarjetaAccion";
 import { DrawerEditarPerfil } from "./drawer/DrawerEditarPerfil";
+import { useFollowers } from "./hooks/useFollowers";
 import {
   IconoCampana,
   IconoCandado,
@@ -44,46 +33,26 @@ import {
   IconoLogin,
   IconoLuna,
   IconoMensaje,
-  IconoPublicaciones,
   IconoSol,
 } from "./Perfiliconos";
-import { gradienteAppBackground, type ColorPerfil } from "./Perfiltemas";
 import { useProfile } from "./ProfileProvider";
 
 /** Color de acción de los switches (igual que el del drawer) */
 const ACCION = "#101010";
 
-// Todavía no hay seguidores: el número es fijo
-const SEGUIDORES = "0";
-
 /** Pantalla de perfil: header editable, estadísticas, publicaciones y ajustes */
 export function PantallaPerfil() {
-  const {
-    styles: baseStyles,
-    isDark,
-    setIsDark,
-    setThemeColor,
-  } = useAppTheme();
+  const { styles: baseStyles, isDark, setIsDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const { profile, saveProfile } = useProfile();
   const { uid } = useSessionUser();
   const { products: mine, status: mineStatus } = useUserProducts(uid);
+  const { followersCount } = useFollowers(uid);
   const { openProduct } = useAppNavigation();
   const { signOut } = useAuth();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  /* Cambia solo el color del perfil desde la fila de ajustes (sin abrir el drawer) */
-  const handleColor = useCallback(
-    (color: ColorPerfil) => {
-      if (color === profile.color) return;
-      setThemeColor(color);
-      saveProfile({ ...profile, color }).catch((error) =>
-        showErrorAlert("No se pudo cambiar el color", error),
-      );
-    },
-    [profile, saveProfile, setThemeColor],
-  );
 
   const abrirDrawer = useCallback(() => setDrawerOpen(true), []);
   const cerrarDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -95,71 +64,29 @@ export function PantallaPerfil() {
   }, [signOut]);
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-  const rowBg = isDark ? "#273449" : "#f8f8f8ff";
+  const rowBg = isDark ? "#273449" : "#ffffffff";
   const mutedColor = isDark ? "#94A3B8" : "#9CA3AF";
   const switchTrack = {
     false: isDark ? "#334155" : "#E5E7EB",
     true: isDark ? "#38BDF8" : ACCION,
   };
 
-  const { height: windowHeight } = useWindowDimensions();
-
-  const backgroundColors = useMemo(
-    () => gradienteAppBackground(profile.color, isDark),
-    [profile.color, isDark],
-  );
-
-  const fondoPantalla = isDark ? "#0F172A" : "#f8f8f8";
-  const alturaDegradado = windowHeight * 0.45;
-
   return (
-    <View style={{ flex: 1, backgroundColor: fondoPantalla }}>
+    <View style={{ flex: 1, backgroundColor: fondoPerfil(isDark) }}>
       <ScrollView
         style={baseStyles.screenScroll}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Extensión superior para rebote al estirar hacia abajo */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: -500,
-            left: 0,
-            right: 0,
-            height: 500,
-            backgroundColor: backgroundColors[0],
-          }}
-        />
-
-        {/* Degradado en la cabecera que scrollea con el contenido (no sigue la pantalla) */}
-        <LinearGradient
-          colors={backgroundColors}
-          locations={[0, 0.25, 0.6, 1.0]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: alturaDegradado,
-          }}
-        />
-
-        {/* Nubes decorativas detrás del avatar (no alteran el color del degradado) */}
-        <NubesPerfil
-          source={require("@/assets/images/nubes3.png")}
+        {/* ======================= PORTADA + AVATAR ======================= */}
+        <PerfilPortada
+          cover={profile.cover}
           isDark={isDark}
-          bottomY={AVATAR_BASE_Y + 30}
+          topInset={insets.top}
         />
 
-        {/* ============================ HEADER ============================ */}
         <PerfilCabecera
-          color={profile.color}
           isDark={isDark}
-          nav={<Text style={estilosPerfil.headerTitle}>Perfil</Text>}
           avatar={
             <PerfilAvatar
               photo={profile.photo}
@@ -168,61 +95,29 @@ export function PantallaPerfil() {
               placeholder="icono"
             />
           }
-        >
-          {/* Stickers elegidos por el usuario (flotan suavemente) */}
-          <StickersFlotantes stickers={profile.stickers} />
-        </PerfilCabecera>
+        />
 
         {/* ======================= INFO DEL PERFIL ======================= */}
         <PerfilInformacion
           profile={profile}
           stats={{
             publicaciones: String(mine.length),
-            seguidores: SEGUIDORES,
+            seguidores: String(followersCount),
             reputacion: averageRatingLabel(mine),
           }}
           isDark={isDark}
         />
 
         <View style={{ paddingHorizontal: 15 }}>
-          {mine.length ? (
-            /* Publicaciones en abanico tipo carrusel, una por una */
-            <>
-              <View style={styles.publicationsHeader}>
-                <Text
-                  style={[
-                    styles.publicationsTitle,
-                    { color: isDark ? "#ffffff" : "#101010" },
-                  ]}
-                >
-                  Publicaciones
-                </Text>
-                <Text
-                  style={[
-                    styles.publicationsDescription,
-                    { color: isDark ? "#9ca3af" : "#696969" },
-                  ]}
-                >
-                  Todo lo que has publicado en ReLoop.
-                </Text>
-              </View>
-              <ProductFan items={mine} onOpen={openProduct} />
-            </>
-          ) : mineStatus === "loading" ? (
-            <LoadingState />
-          ) : (
-            <IllustratedEmptyState
-              icon={
-                <IconoPublicaciones
-                  size={80}
-                  color={isDark ? "#475569" : "#e4e4e4ff"}
-                />
-              }
-              title="Aún no tienes publicaciones"
-              message="Lo que publiques aparecerá aquí automáticamente."
-              style={{ paddingTop: 60, paddingBottom: 80 }}
-            />
-          )}
+          {/* Publicaciones y anuncios, en pestañas */}
+          <PublicacionesPerfil
+            publicaciones={mine}
+            anuncios={SIN_ANUNCIOS}
+            status={mineStatus}
+            isOwn
+            isDark={isDark}
+            onOpen={openProduct}
+          />
 
           {/* ========================== GENERAL ========================== */}
           <View
@@ -257,19 +152,6 @@ export function PantallaPerfil() {
               right={<IconoFlecha size={22} color={flecha} />}
             />
 
-            {/* Color del perfil: paleta a la izquierda, círculos a la derecha, sin flecha */}
-            <FilaAjuste
-              bg={rowBg}
-              icon={
-                <Ionicons name="color-palette" size={23} color="#5d5d5d7d" />
-              }
-              iconWidth={26}
-              label="Color"
-              textColor={textoFila}
-              right={
-                <CirculosColor color={profile.color} onColor={handleColor} />
-              }
-            />
             <FilaAjuste
               bg={rowBg}
               icon={
@@ -364,33 +246,20 @@ export function PantallaPerfil() {
 }
 
 const styles = StyleSheet.create({
-  publicationsHeader: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  publicationsTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  publicationsDescription: {
-    fontSize: 12.5,
-    fontWeight: "400",
-    textAlign: "center",
-    lineHeight: 18,
-  },
-
   // Tarjetas de General y Legal
+  // Las filas se extienden más a los lados (padding 9); el título queda donde estaba (9 + 6)
   settingsCard: {
     borderRadius: 19,
-    padding: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 9,
     marginTop: 21,
     gap: 8,
-    elevation: 0.2,
+    elevation: 0.4,
   },
-  cardLabel: { fontSize: 13.5, fontWeight: "500", marginBottom: 5 },
+  cardLabel: {
+    paddingHorizontal: 6,
+    fontSize: 13.5,
+    fontWeight: "500",
+    marginBottom: 5,
+  },
 });

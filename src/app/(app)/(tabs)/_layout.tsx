@@ -1,38 +1,32 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router/js-tabs";
-import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppTabBar } from "@/features/navigation/AppTabBar";
-import {
-  gradienteSuaveModulos,
-  LOCATIONS_MODULOS,
-} from "@/features/perfil/Perfiltemas";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import { APP_BACKGROUND } from "@/features/shared/constants";
 
 export default function TabsLayout() {
-  const { isDark, themeColor } = useAppTheme();
+  const { isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const backgroundColors = useMemo(
-    () => gradienteSuaveModulos(themeColor, isDark),
-    [themeColor, isDark],
-  );
 
   return (
-    <LinearGradient
-      colors={backgroundColors}
-      locations={LOCATIONS_MODULOS}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.container}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? APP_BACKGROUND.dark : APP_BACKGROUND.light },
+      ]}
     >
-      <View style={[styles.inner, { paddingTop: insets.top }]}>
+      <View style={styles.inner}>
         <Tabs
           tabBar={(props) => <AppTabBar {...props} />}
           screenOptions={{
             headerShown: false,
-            sceneStyle: { backgroundColor: "transparent" },
+            // Cada pestaña deja libre el espacio de la barra de estado...
+            sceneStyle: {
+              backgroundColor: "transparent",
+              paddingTop: insets.top,
+            },
             freezeOnBlur: true,
           }}
         >
@@ -40,10 +34,14 @@ export default function TabsLayout() {
           <Tabs.Screen name="favorites" />
           <Tabs.Screen name="create" />
           <Tabs.Screen name="chats" />
-          <Tabs.Screen name="profile" />
+          {/* ...salvo Perfil: su portada llega hasta arriba, detrás de la hora */}
+          <Tabs.Screen
+            name="profile"
+            options={{ sceneStyle: { backgroundColor: "transparent" } }}
+          />
         </Tabs>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 

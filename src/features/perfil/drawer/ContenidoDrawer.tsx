@@ -1,5 +1,6 @@
 import { Text } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
+import { describeFirestoreError } from "@/lib/firestoreValues";
 import { userMessageFor } from "@/utils/errors";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { BottomSheet, Button, Spinner } from "heroui-native";
@@ -25,7 +26,6 @@ import {
   MAX_DESCRIPCION,
   MAX_NOMBRE,
   MAX_PILDORAS,
-  MAX_STICKERS,
   TEMAS,
   type ColorPerfil,
   type DatosPerfil,
@@ -44,8 +44,8 @@ import {
 } from "./drawerTheme";
 import { AsegurarVisibleCtx } from "./InputSheet";
 import { SeccionEtiquetas } from "./SeccionEtiquetas";
+import { SeccionFondo } from "./SeccionFondo";
 import { SeccionFoto } from "./SeccionFoto";
-import { SeccionStickers } from "./SeccionStickers";
 
 export interface DrawerEditarPerfilProps {
   visible: boolean;
@@ -68,7 +68,8 @@ export function ContenidoDrawer({
 }: DrawerEditarPerfilProps) {
   const insets = useSafeAreaInsets();
   const { height: altoVentana } = useWindowDimensions();
-  const { isPicking: picking, pickSquareImage } = useImagePicker();
+  const { isPicking: picking, pickSquareImage, pickCoverImage } =
+    useImagePicker();
   const [draft, setDraft] = useState<DatosPerfil>(initialData);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -170,12 +171,19 @@ export function ContenidoDrawer({
     [update],
   );
   const onRemovePhoto = useCallback(() => update({ photo: null }), [update]);
+  const onRemoveCover = useCallback(() => update({ cover: null }), [update]);
 
   const pickPhoto = useCallback(async () => {
     Keyboard.dismiss();
     const uri = await pickSquareImage();
     if (uri) update({ photo: uri });
   }, [pickSquareImage, update]);
+
+  const pickCover = useCallback(async () => {
+    Keyboard.dismiss();
+    const uri = await pickCoverImage();
+    if (uri) update({ cover: uri });
+  }, [pickCoverImage, update]);
 
   const addPill = useCallback((text: string, icon?: string) => {
     setDraft((curr) => {
@@ -206,16 +214,6 @@ export function ContenidoDrawer({
     }));
   }, []);
 
-  const toggleSticker = useCallback((id: string) => {
-    setDraft((curr) => {
-      if (curr.stickers.includes(id)) {
-        return { ...curr, stickers: curr.stickers.filter((s) => s !== id) };
-      }
-      if (curr.stickers.length >= MAX_STICKERS) return curr;
-      return { ...curr, stickers: [...curr.stickers, id] };
-    });
-  }, []);
-
   const handleSave = async () => {
     if (saving) return;
     Keyboard.dismiss();
@@ -238,11 +236,16 @@ export function ContenidoDrawer({
       await onSave(data);
       cerrar();
     } catch (e) {
+      console.warn("No se pudo guardar el perfil.", describeFirestoreError(e));
+      // permission-denied: las reglas publicadas en Firestore no aceptan algún campo
+      const denied = (e as { code?: string } | null)?.code === "permission-denied";
       setError(
-        userMessageFor(
-          e,
-          "No se pudieron guardar los cambios. Intenta de nuevo.",
-        ),
+        denied
+          ? "Firestore rechazó los cambios (permiso denegado)."
+          : userMessageFor(
+              e,
+              "No se pudieron guardar los cambios. Intenta de nuevo.",
+            ),
       );
     } finally {
       setSaving(false);
@@ -290,6 +293,16 @@ export function ContenidoDrawer({
           ]}
         >
           <Aparece index={0}>
+            <SeccionFondo
+              cover={draft.cover}
+              picking={picking}
+              modo={modo}
+              onPick={pickCover}
+              onRemove={onRemoveCover}
+            />
+          </Aparece>
+
+          <Aparece index={0}>
             <SeccionFoto
               photo={draft.photo}
               picking={picking}
@@ -335,14 +348,6 @@ export function ContenidoDrawer({
           </Aparece>
 
           <Aparece index={3} deslizar>
-            <SeccionStickers
-              selected={draft.stickers}
-              modo={modo}
-              onToggle={toggleSticker}
-            />
-          </Aparece>
-
-          <Aparece index={4} deslizar>
             <View>
               {error ? (
                 <Animated.View

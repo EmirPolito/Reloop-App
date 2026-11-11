@@ -11,6 +11,7 @@ import {
 export function defaultProfile(name: string): DatosPerfil {
   return {
     photo: null,
+    cover: null,
     name: name.slice(0, MAX_NOMBRE),
     description: "",
     color: "azul",
@@ -44,6 +45,7 @@ export function mapProfile(data: DocumentData, fallbackName: string): DatosPerfi
     typeof data.nombre === "string" && data.nombre ? data.nombre : fallbackName;
   return {
     photo: typeof data.fotoUrl === "string" ? data.fotoUrl : null,
+    cover: typeof data.fondoUrl === "string" ? data.fondoUrl : null,
     name: name.slice(0, MAX_NOMBRE),
     description: typeof data.descripcion === "string" ? data.descripcion : "",
     color: isColor(data.color) ? data.color : "azul",
@@ -59,6 +61,8 @@ export function toProfileDocument(data: DatosPerfil) {
   return {
     nombre: data.name,
     fotoUrl: data.photo,
+    // Sin portada no se escribe el campo (al quitarla, saveProfileData lo borra)
+    ...(data.cover ? { fondoUrl: data.cover } : {}),
     descripcion: data.description,
     color: data.color,
     // Firestore no admite `undefined`: el icono solo se escribe si existe
