@@ -13,7 +13,7 @@ export const ALTO_PORTADA = 190;
 /** Espacio sobre el avatar (además de la barra de estado), igual en el perfil propio y el público */
 export const ESPACIO_SUPERIOR_PERFIL = 90;
 
-/** Lado del avatar cuadrado redondeado */
+/** Lado del avatar redondo */
 export const LADO_AVATAR = 90;
 
 /** Fondo de la pantalla del perfil (gris tipo Apple en claro) */
@@ -45,13 +45,13 @@ export const estilosPerfil = StyleSheet.create({
   avatarMarco: {
     width: LADO_AVATAR,
     height: LADO_AVATAR,
-    borderRadius: 20,
-    // padding: 2.5,
+    borderRadius: LADO_AVATAR / 2,
+    overflow: "hidden",
   },
   avatarPlaceholder: {
     width: "100%",
     height: "100%",
-    borderRadius: 20,
+    borderRadius: LADO_AVATAR / 2,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -63,7 +63,7 @@ export const estilosPerfil = StyleSheet.create({
     paddingBottom: 30,
   },
   /* Inter: la fuente libre más parecida a las de X, Instagram o Facebook.
-     Cada grosor es un archivo; fontWeight se ignora (ver Text.tsx) */
+      Cada grosor es un archivo; fontWeight se ignora (ver Text.tsx) */
   /* Fila del nombre: el nombre a la izquierda y, opcional, una acción (Seguir) a la derecha */
   filaNombre: {
     top: -9,

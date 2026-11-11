@@ -30,7 +30,7 @@ export const HomeHeader = memo(function HomeHeader({
         <View className="flex-1 min-w-0 flex-row items-center gap-2">
           <Image
             accessibilityLabel="Logo ReLoop"
-            source={require("@/assets/images/reloop-logo.png")}
+            source={require("@/assets/images/logoo.png")}
             contentFit="contain"
             style={styles.brandLogo}
           />

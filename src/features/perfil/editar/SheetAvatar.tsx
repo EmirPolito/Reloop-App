@@ -72,7 +72,10 @@ export function SheetAvatar({
   const volver =
     paso === "inicio"
       ? undefined
-      : () => setPaso(paso === "ajustar" && origen === "camara" ? "camara" : "inicio");
+      : () =>
+          setPaso(
+            paso === "ajustar" && origen === "camara" ? "camara" : "inicio",
+          );
 
   return (
     <SheetEditar
@@ -92,7 +95,12 @@ export function SheetAvatar({
           <View style={styles.inicio}>
             <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
               {photo ? (
-                <Image source={{ uri: photo }} contentFit="cover" transition={200} style={StyleSheet.absoluteFill} />
+                <Image
+                  source={{ uri: photo }}
+                  contentFit="cover"
+                  transition={200}
+                  style={StyleSheet.absoluteFill}
+                />
               ) : (
                 <Text style={[INTER.medium, { fontSize: 40, color: c.texto }]}>
                   {getInitials(name)}
@@ -101,7 +109,12 @@ export function SheetAvatar({
             </View>
 
             <View style={styles.opciones}>
-              <Opcion icono="camera-outline" texto="Tomar" isDark={isDark} onPress={tomar} />
+              <Opcion
+                icono="camera-outline"
+                texto="Tomar"
+                isDark={isDark}
+                onPress={tomar}
+              />
               <Opcion
                 icono="images-outline"
                 texto="Elegir"
@@ -130,7 +143,11 @@ export function SheetAvatar({
             foto={foto}
             isDark={isDark}
             textoSecundario={origen === "camara" ? "Repetir" : "Elegir otra"}
-            onSecundario={origen === "camara" ? () => setPaso("camara") : () => void elegir()}
+            onSecundario={
+              origen === "camara"
+                ? () => setPaso("camara")
+                : () => void elegir()
+            }
             onGuardar={async (uri) => {
               await onGuardar(uri);
               onClose();
@@ -162,29 +179,39 @@ function Opcion({
       accessibilityLabel={texto}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.opcion, { backgroundColor: isDark ? "#17233A" : "#F2F2F2" }]}
+      style={[
+        styles.opcion,
+        { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
+      ]}
     >
       <Ionicons name={icono} size={20} color={c.texto} />
-      <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>{texto}</Text>
+      <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>
+        {texto}
+      </Text>
     </PressableSuave>
   );
 }
 
 const styles = StyleSheet.create({
-  inicio: { alignItems: "center", gap: 26, paddingTop: 10 },
+  inicio: { alignItems: "center", gap: 26, paddingTop: 15 },
   avatar: {
-    width: 120,
-    height: 120,
+    width: 125,
+    height: 125,
     borderRadius: 60,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
-  opciones: { flexDirection: "row", gap: 12, paddingHorizontal: 16, alignSelf: "stretch" },
+  opciones: {
+    flexDirection: "row",
+    gap: 15,
+    paddingHorizontal: 17,
+    alignSelf: "stretch",
+  },
   opcion: {
     flex: 1,
-    height: 52,
-    borderRadius: 26,
+    height: 50,
+    borderRadius: 30,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

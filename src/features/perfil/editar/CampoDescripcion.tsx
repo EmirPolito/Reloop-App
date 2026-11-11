@@ -67,11 +67,10 @@ export function CampoDescripcion({
 const styles = StyleSheet.create({
   cuadro: {
     alignSelf: "stretch",
-    minHeight: 64,
+    minHeight: 60,
     borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 7,
     textAlign: "center",
     textAlignVertical: "center",
   },

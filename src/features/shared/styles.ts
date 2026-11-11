@@ -63,7 +63,7 @@ export function createStyles(isDark: boolean) {
       alignItems: "center",
       gap: 8,
     },
-    brandLogo: { width: 92, height: 44 },
+    brandLogo: { width: 92, height: 38 },
     identityRow: { flexDirection: "row", alignItems: "center", gap: 7 },
     greeting: {
       maxWidth: 120,

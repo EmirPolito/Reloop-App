@@ -4,11 +4,7 @@ import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { LinearGradient } from "expo-linear-gradient";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -318,7 +314,7 @@ function createStyles(isDark: boolean) {
         text: "#FFFFFF",
       }
     : {
-        glass: "rgba(255, 255, 255, 0.9)",
+        glass: "rgba(241, 241, 241, 1)",
         outerBorder: "#ffffff",
         selectedPill: "#FFFFFF",
         pillBorder: "#ffffffff",

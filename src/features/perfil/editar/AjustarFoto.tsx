@@ -42,10 +42,16 @@ export function AjustarFoto({
 
   // Medidas reales de la foto ya rotada: las que reporta la imagen al cargar. Las de la cámara
   // pueden venir sin aplicar la rotación (ancho y alto invertidos en Android).
-  const [medidas, setMedidas] = useState({ width: foto.width, height: foto.height });
+  const [medidas, setMedidas] = useState({
+    width: foto.width,
+    height: foto.height,
+  });
 
   // Tamaño base: la foto cubre el círculo justo (como "cover")
-  const base = Math.max(LADO_CIRCULO / medidas.width, LADO_CIRCULO / medidas.height);
+  const base = Math.max(
+    LADO_CIRCULO / medidas.width,
+    LADO_CIRCULO / medidas.height,
+  );
   const anchoBase = medidas.width * base;
   const altoBase = medidas.height * base;
 
@@ -107,7 +113,9 @@ export function AjustarFoto({
     setGuardando(true);
     try {
       // Píxeles reales con los que trabaja el recorte (la foto ya rotada)
-      const original = await ImageManipulator.ImageManipulator.manipulate(foto.uri).renderAsync();
+      const original = await ImageManipulator.ImageManipulator.manipulate(
+        foto.uri,
+      ).renderAsync();
       const W = original.width;
       const H = original.height;
 
@@ -143,7 +151,11 @@ export function AjustarFoto({
         style={StyleSheet.absoluteFill}
         onLoad={(e) => {
           const { width, height } = e.source;
-          if (width > 0 && height > 0 && (width !== medidas.width || height !== medidas.height)) {
+          if (
+            width > 0 &&
+            height > 0 &&
+            (width !== medidas.width || height !== medidas.height)
+          ) {
             setMedidas({ width, height });
           }
         }}
@@ -155,13 +167,24 @@ export function AjustarFoto({
     <View style={{ gap: 22 }}>
       <GestureDetector gesture={gestos}>
         <View style={styles.area}>
-          <View style={[styles.circulo, styles.centro, { backgroundColor: c.avatarFondo }]}>
+          <View
+            style={[
+              styles.circulo,
+              styles.centro,
+              { backgroundColor: c.avatarFondo },
+            ]}
+          >
             {capaFoto}
           </View>
         </View>
       </GestureDetector>
 
-      <Text style={[INTER.regular, { fontSize: 12.5, color: c.suave, textAlign: "center" }]}>
+      <Text
+        style={[
+          INTER.regular,
+          { fontSize: 12.5, color: c.suave, textAlign: "center" },
+        ]}
+      >
         Arrastra para mover · pellizca para hacer zoom
       </Text>
 
@@ -170,7 +193,10 @@ export function AjustarFoto({
           accessibilityRole="button"
           onPress={onSecundario}
           disabled={guardando}
-          style={[styles.boton, { backgroundColor: isDark ? "#22304A" : "#EDEDED" }]}
+          style={[
+            styles.boton,
+            { backgroundColor: isDark ? "#22304A" : "#EDEDED" },
+          ]}
         >
           <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>
             {textoSecundario}
@@ -179,12 +205,20 @@ export function AjustarFoto({
         <Pressable
           accessibilityRole="button"
           onPress={() => void guardar()}
-          style={[styles.boton, { backgroundColor: isDark ? "#F1F5F9" : "#1C1C1E" }]}
+          style={[
+            styles.boton,
+            { backgroundColor: isDark ? "#F1F5F9" : "#1C1C1E" },
+          ]}
         >
           {guardando ? (
             <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
           ) : (
-            <Text style={[INTER.medium, { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" }]}>
+            <Text
+              style={[
+                INTER.medium,
+                { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+              ]}
+            >
               Guardar
             </Text>
           )}
@@ -207,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: LADO_CIRCULO / 2,
     overflow: "hidden",
   },
-  acciones: { flexDirection: "row", gap: 12, paddingHorizontal: 16 },
+  acciones: { flexDirection: "row", gap: 12, paddingHorizontal: 15 },
   boton: {
     flex: 1,
     height: 52,

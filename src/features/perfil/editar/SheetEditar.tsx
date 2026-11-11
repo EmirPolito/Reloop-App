@@ -53,7 +53,10 @@ export function SheetEditar({
           bottomInset={insets.bottom + 6}
           className="mx-1.5"
           // El radio y el color van por style: el CSS de HeroUI solo redondea las esquinas de arriba
-          backgroundStyle={{ borderRadius: RADIO_CARD, backgroundColor: FONDO_CARD[isDark ? 1 : 0] }}
+          backgroundStyle={{
+            borderRadius: RADIO_CARD,
+            backgroundColor: FONDO_CARD[isDark ? 1 : 0],
+          }}
           // HeroUI agrega pb-safe-offset-3 (zona segura + 12): con bottomInset la zona segura
           // contaría doble y el contenido quedaría muy arriba
           contentContainerClassName="px-0 pt-0 pb-0"
@@ -70,14 +73,21 @@ export function SheetEditar({
                 accessibilityRole="button"
                 accessibilityLabel="Volver"
                 onPress={onBack}
-                style={[styles.boton, styles.izquierda, { backgroundColor: p.cerrarFondo }]}
+                style={[
+                  styles.boton,
+                  styles.izquierda,
+                  { backgroundColor: p.cerrarFondo },
+                ]}
               >
                 <Ionicons name="chevron-back" size={18} color={p.texto} />
               </Pressable>
             ) : null}
 
             <BottomSheet.Title
-              style={[INTER.semibold, { fontSize: 15, color: p.texto, textAlign: "center" }]}
+              style={[
+                INTER.semibold,
+                { fontSize: 15, color: p.texto, textAlign: "center" },
+              ]}
             >
               {titulo}
             </BottomSheet.Title>
@@ -85,20 +95,22 @@ export function SheetEditar({
             <BottomSheet.Close
               accessibilityLabel="Cerrar"
               iconProps={{ size: 16, color: p.texto }}
-              style={[styles.boton, styles.derecha, { backgroundColor: p.cerrarFondo }]}
+              style={[
+                styles.boton,
+                styles.derecha,
+                { backgroundColor: p.cerrarFondo },
+              ]}
             />
           </View>
 
-          <View style={{ paddingBottom: 18 }}>
-            {children}
-          </View>
+          <View style={{ paddingBottom: 18 }}>{children}</View>
         </BottomSheet.Content>
       </BottomSheet.Portal>
     </BottomSheet>
   );
 }
 
-const RADIO_CARD = 36;
+const RADIO_CARD = 30;
 /** Fondo de la card: [claro, oscuro] (mismos colores que PALETA.sheet) */
 const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
 
@@ -111,9 +123,9 @@ const styles = StyleSheet.create({
   },
   boton: {
     position: "absolute",
-    top: 2,
-    width: 34,
-    height: 34,
+    top: -7,
+    width: 33,
+    height: 33,
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",

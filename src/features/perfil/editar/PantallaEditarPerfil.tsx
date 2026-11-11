@@ -28,11 +28,16 @@ import { PildoraPerfil } from "../Pildoraperfil";
 import { useProfile } from "../ProfileProvider";
 import { CampoDescripcion } from "./CampoDescripcion";
 import { CampoEnLinea } from "./CampoEnLinea";
-import { DURACION_EDITAR, EASE_EDITAR, INTER, coloresEditar } from "./editarTema";
+import {
+  DURACION_EDITAR,
+  EASE_EDITAR,
+  INTER,
+  coloresEditar,
+} from "./editarTema";
 import { SheetAvatar } from "./SheetAvatar";
 import { SheetEtiquetas } from "./SheetEtiquetas";
 
-const LADO_AVATAR = 104;
+const LADO_AVATAR = 120;
 const ALTO_FONDO = 300;
 /** Lo que tarda en cerrarse un drawer */
 const CIERRE_DRAWER_MS = 450;
@@ -71,18 +76,31 @@ export function PantallaEditarPerfil() {
     }
   };
 
-  const textoNombre = { ...INTER.semibold, fontSize: 22, letterSpacing: -0.6, color: c.texto };
-  const textoDescripcion = { ...INTER.regular, fontSize: 13.5, lineHeight: 19, color: c.texto };
+  const textoNombre = {
+    ...INTER.semibold,
+    fontSize: 22,
+    letterSpacing: -0.6,
+    color: c.texto,
+  };
+  const textoDescripcion = {
+    ...INTER.regular,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: c.texto,
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: fondo }}>
       {/* Fondo superior: degradado opaco de gris a blanco que se funde con la pantalla */}
-      <View pointerEvents="none" style={[styles.fondo, { height: ALTO_FONDO + insets.top }]}>
+      <View
+        pointerEvents="none"
+        style={[styles.fondo, { height: ALTO_FONDO + insets.top }]}
+      >
         <LinearGradient
           colors={
             isDark
               ? ["#2A3446", "#1A2130", fondo]
-              : ["#C9CBD1", "#E2E3E7", fondo]
+              : ["#dbdbdbff", "#E2E3E7", fondo]
           }
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
@@ -90,7 +108,10 @@ export function PantallaEditarPerfil() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{
+          paddingTop: insets.top + 8,
+          paddingBottom: insets.bottom + 40,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -101,7 +122,10 @@ export function PantallaEditarPerfil() {
             accessibilityLabel="Volver al perfil"
             onPress={back}
             scaleTo={0.92}
-            style={[styles.botonVolver, { backgroundColor: c.boton, borderColor: c.bordeBoton }]}
+            style={[
+              styles.botonVolver,
+              { backgroundColor: c.boton, borderColor: c.bordeBoton },
+            ]}
           >
             <View style={{ transform: [{ translateX: -1.5 }] }}>
               <BackArrowIcon size={26} color={c.texto} />
@@ -119,7 +143,9 @@ export function PantallaEditarPerfil() {
             <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
               {profile.photo ? (
                 <Image
-                  source={{ uri: optimizedImageUrl(profile.photo, 400) ?? profile.photo }}
+                  source={{
+                    uri: optimizedImageUrl(profile.photo, 400) ?? profile.photo,
+                  }}
                   contentFit="cover"
                   transition={200}
                   style={StyleSheet.absoluteFill}
@@ -135,8 +161,13 @@ export function PantallaEditarPerfil() {
 
         {/* Nombre, etiquetas y descripción */}
         <Animated.View
-          entering={FadeInDown.duration(DURACION_EDITAR + 80).delay(60).easing(EASE_EDITAR)}
-          style={[styles.centro, { gap: 12, marginTop: 16, paddingHorizontal: 20 }]}
+          entering={FadeInDown.duration(DURACION_EDITAR + 80)
+            .delay(60)
+            .easing(EASE_EDITAR)}
+          style={[
+            styles.centro,
+            { gap: 12, marginTop: 16, paddingHorizontal: 20 },
+          ]}
         >
           <CampoEnLinea
             value={profile.name}
@@ -176,7 +207,9 @@ export function PantallaEditarPerfil() {
 
         {/* Opciones */}
         <Animated.View
-          entering={FadeInDown.duration(DURACION_EDITAR + 80).delay(120).easing(EASE_EDITAR)}
+          entering={FadeInDown.duration(DURACION_EDITAR + 80)
+            .delay(120)
+            .easing(EASE_EDITAR)}
           style={[styles.tarjeta, { backgroundColor: c.tarjeta }]}
         >
           <Fila
@@ -248,7 +281,9 @@ function Fila({
       style={styles.fila}
     >
       <Ionicons name={icono} size={21} color={c.icono} />
-      <Text style={[INTER.medium, { flex: 1, fontSize: 14.5, color: c.texto }]}>{texto}</Text>
+      <Text style={[INTER.medium, { flex: 1, fontSize: 14.5, color: c.texto }]}>
+        {texto}
+      </Text>
       {derecha}
       <IconoFlecha size={20} color={c.suave} />
     </PressableSuave>
@@ -256,7 +291,13 @@ function Fila({
 }
 
 const styles = StyleSheet.create({
-  fondo: { position: "absolute", top: 0, left: 0, right: 0, overflow: "hidden" },
+  fondo: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    overflow: "hidden",
+  },
   barra: { paddingHorizontal: 16, height: 52, justifyContent: "center" },
   botonVolver: {
     width: 45,
@@ -275,7 +316,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  pildoras: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8 },
+  pildoras: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+  },
   tarjeta: {
     marginHorizontal: 16,
     marginTop: 30,
