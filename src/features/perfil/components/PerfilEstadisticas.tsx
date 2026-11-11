@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { View } from "react-native";
 
 import { Text } from "@/features/shared/Text";
@@ -21,7 +21,7 @@ interface Estadistica {
   label: string;
 }
 
-/** Tarjeta con publicaciones, seguidores y reputación: [icono] número, y debajo el texto. */
+/** Publicaciones, seguidores y reputación en una línea: [icono] número texto. */
 export function PerfilEstadisticas({
   publicaciones,
   seguidores,
@@ -33,20 +33,20 @@ export function PerfilEstadisticas({
   reputacion: string;
   isDark: boolean;
 }) {
-  const { texto, suave, divisor } = coloresTarjeta(isDark);
+  const { texto, suave } = coloresTarjeta(isDark);
   const items: Estadistica[] = [
     {
-      icon: <IconoPublicaciones size={19} color={COLOR_ICONO_PUBLICACIONES} />,
+      icon: <IconoPublicaciones size={18} color={COLOR_ICONO_PUBLICACIONES} />,
       value: publicaciones,
-      label: "Publicaciones",
+      label: "Posts",
     },
     {
-      icon: <IconoSeguidores size={19} color={COLOR_ICONO_SEGUIDORES} />,
+      icon: <IconoSeguidores size={18} color={COLOR_ICONO_SEGUIDORES} />,
       value: seguidores,
       label: "Seguidores",
     },
     {
-      icon: <IconoReputacion size={19} color={COLOR_ICONO_REPUTACION} />,
+      icon: <IconoReputacion size={18} color={COLOR_ICONO_REPUTACION} />,
       value: reputacion,
       label: "Reputación",
     },
@@ -54,28 +54,20 @@ export function PerfilEstadisticas({
 
   return (
     <View style={estilosPerfil.statsContainer}>
-      {items.map((item, index) => (
-        <Fragment key={item.label}>
-          {index > 0 ? (
-            <View
-              style={[estilosPerfil.statDivisor, { backgroundColor: divisor }]}
-            />
-          ) : null}
-          <View style={estilosPerfil.statColumna}>
-            <View style={estilosPerfil.statValueRow}>
-              {item.icon}
-              <Text style={[estilosPerfil.statValue, { color: texto }]}>
-                {item.value}
-              </Text>
-            </View>
-            <Text
-              style={[estilosPerfil.statLabel, { color: suave }]}
-              numberOfLines={1}
-            >
-              {item.label}
-            </Text>
-          </View>
-        </Fragment>
+      {items.map((item) => (
+        // En una línea: [icono] número en negrita y el texto en gris
+        <View key={item.label} style={estilosPerfil.statItem}>
+          {item.icon}
+          <Text style={[estilosPerfil.statValue, { color: texto }]}>
+            {item.value}
+          </Text>
+          <Text
+            style={[estilosPerfil.statLabel, { color: suave }]}
+            numberOfLines={1}
+          >
+            {item.label}
+          </Text>
+        </View>
       ))}
     </View>
   );

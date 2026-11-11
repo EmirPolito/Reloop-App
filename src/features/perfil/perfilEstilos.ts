@@ -3,15 +3,15 @@ import { StyleSheet } from "react-native";
 import { APP_BACKGROUND } from "@/features/shared/constants";
 
 /** Colores fijos de los iconos de las estadísticas */
-export const COLOR_ICONO_PUBLICACIONES = "#545454ff";
-export const COLOR_ICONO_SEGUIDORES = "#545454ff";
+export const COLOR_ICONO_PUBLICACIONES = "#ff3762ff";
+export const COLOR_ICONO_SEGUIDORES = "#296ffaff";
 export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 
 /** Alto de la portada (imagen de fondo), sin contar la barra de estado */
 export const ALTO_PORTADA = 175;
 
 /** Lado del avatar cuadrado redondeado */
-export const LADO_AVATAR = 90;
+export const LADO_AVATAR = 87;
 
 /** Cuánto sube el avatar sobre la portada */
 export const SOLAPE_AVATAR = 47;
@@ -40,7 +40,7 @@ export const estilosPerfil = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     marginTop: -SOLAPE_AVATAR,
     zIndex: 20,
   },
@@ -60,49 +60,51 @@ export const estilosPerfil = StyleSheet.create({
 
   /* Nombre, etiquetas y descripción: alineados a la izquierda */
   profileInfoSection: {
-    paddingHorizontal: 20,
-    paddingTop: 1,
+    paddingHorizontal: 16,
+    paddingTop: 0,
     paddingBottom: 30,
   },
   /* Inter: la fuente libre más parecida a las de X, Instagram o Facebook.
      Cada grosor es un archivo; fontWeight se ignora (ver Text.tsx) */
   profileName: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
+    fontSize: 18.5,
     letterSpacing: -1,
     lineHeight: 34,
     includeFontPadding: false,
   },
-  profileSubtitle: {
-    fontFamily: "Inter_400Regular",
-    marginTop: -1.5,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: "400",
-  },
+
   tagsRow: {
-    marginTop: 10,
+    marginTop: 0.5,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 7.5,
   },
 
+  profileSubtitle: {
+    fontFamily: "Inter_400Regular",
+    marginTop: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "400",
+  },
+
   /* Estadísticas: una sola tarjeta con 3 columnas separadas por divisores */
-  /* Sin fondo: las 3 columnas se reparten de orilla a orilla, con los divisores al centro */
+  /* Sin fondo: los 3 datos en una línea, repartidos de orilla a orilla */
   statsContainer: {
-    marginTop: 25,
+    marginTop: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 4,
-    paddingVertical: 6,
+    paddingHorizontal: 2,
+    paddingVertical: 5,
+    marginBottom: -10,
   },
-  statColumna: { alignItems: "center", gap: 3 },
-  statDivisor: { width: StyleSheet.hairlineWidth * 2, height: 30 },
-  statValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  statValue: { fontSize: 17, fontWeight: "600" },
-  statLabel: { fontSize: 11.5, fontWeight: "500" },
+  statItem: { flexDirection: "row", alignItems: "center", gap: 3.53 },
+  // Número en negrita y texto ligero gris, mismo tamaño (estilo X / Instagram)
+  statValue: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  statLabel: { fontFamily: "Inter_400Regular", fontSize: 13 },
 
   // Tarjeta de una sola acción (cerrar sesión, enviar mensaje)
   tarjetaAccion: {

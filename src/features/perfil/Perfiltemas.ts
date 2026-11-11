@@ -61,45 +61,88 @@ export const COLORES_PERFIL: ColorPerfil[] = [
 export const TEMAS: Record<ColorPerfil, TemaColor> = {
   azul: {
     label: "Azul",
-    accent: "#0EA5E9",
+    accent: "#757575ff",
     gradientLight: ["#15a5ffff", "#3eb5ffff", "#9ad8ffff"],
     gradientDark: ["#1E3A8A", "#2563EB", "#38BDF8"],
-    pillBg: "#f3fbffff",
-    pillBorder: "#006eff1c",
+    pillBg: "#e1e1e1ff",
+    pillBorder: "#e1e1e1ff",
   },
   naranja: {
     label: "Naranja",
-    accent: "#ff7919ff",
+    accent: "#757575ff",
     gradientLight: ["#ff8725ff", "#ff9d4cff", "#ffcea6ff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
-    pillBg: "#fff6efff",
-    pillBorder: "#ff6a002b",
+    pillBg: "#e1e1e1ff",
+    pillBorder: "#e1e1e1ff",
   },
   rosa: {
     label: "Rosa",
-    accent: "#EC4899",
+    accent: "#757575ff",
     gradientLight: ["#ff208cff", "#ff3d9bff", "#ffacd4ff"],
     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
-    pillBg: "#fff6fbff",
-    pillBorder: "#ff00801c",
+    pillBg: "#e1e1e1ff",
+    pillBorder: "#e1e1e1ff",
   },
   verde: {
     label: "Verde",
-    accent: "#4ac88954",
+    accent: "#757575ff",
     gradientLight: ["#2cb844ff", "#4ade80", "#a0ffc3ff"],
     gradientDark: ["#166534", "#16A34A", "#4ADE80"],
-    pillBg: "#f5fffaff",
-    pillBorder: "#59cf9420",
+    pillBg: "#e1e1e1ff",
+    pillBorder: "#e1e1e1ff",
   },
   amarillo: {
     label: "Amarillo",
-    accent: "#EAB308",
+    accent: "#757575ff",
     gradientLight: ["#facc15", "#fde047", "#fff6afff"],
     gradientDark: ["#854D0E", "#CA8A04", "#FACC15"],
-    pillBg: "#fff8ebff", // Corregido de '1a' a 'ff'
-    pillBorder: "#fbbf0b3f",
+    pillBg: "#e1e1e1ff",
+    pillBorder: "#e1e1e1ff",
   },
 };
+
+// export const TEMAS: Record<ColorPerfil, TemaColor> = {
+//   azul: {
+//     label: "Azul",
+//     accent: "#0EA5E9",
+//     gradientLight: ["#15a5ffff", "#3eb5ffff", "#9ad8ffff"],
+//     gradientDark: ["#1E3A8A", "#2563EB", "#38BDF8"],
+//     pillBg: "#f3fbffff",
+//     pillBorder: "#006eff1c",
+//   },
+//   naranja: {
+//     label: "Naranja",
+//     accent: "#ff7919ff",
+//     gradientLight: ["#ff8725ff", "#ff9d4cff", "#ffcea6ff"],
+//     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
+//     pillBg: "#fff6efff",
+//     pillBorder: "#ff6a002b",
+//   },
+//   rosa: {
+//     label: "Rosa",
+//     accent: "#EC4899",
+//     gradientLight: ["#ff208cff", "#ff3d9bff", "#ffacd4ff"],
+//     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
+//     pillBg: "#fff6fbff",
+//     pillBorder: "#ff00801c",
+//   },
+//   verde: {
+//     label: "Verde",
+//     accent: "#4ac88954",
+//     gradientLight: ["#2cb844ff", "#4ade80", "#a0ffc3ff"],
+//     gradientDark: ["#166534", "#16A34A", "#4ADE80"],
+//     pillBg: "#f5fffaff",
+//     pillBorder: "#59cf9420",
+//   },
+//   amarillo: {
+//     label: "Amarillo",
+//     accent: "#EAB308",
+//     gradientLight: ["#facc15", "#fde047", "#fff6afff"],
+//     gradientDark: ["#854D0E", "#CA8A04", "#FACC15"],
+//     pillBg: "#fff8ebff", // Corregido de '1a' a 'ff'
+//     pillBorder: "#fbbf0b3f",
+//   },
+// };
 
 /** Colores del header: 3 del tema y un cuarto transparente, para que se funda con el fondo de la app */
 export function gradienteHeader(

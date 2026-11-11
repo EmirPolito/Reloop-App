@@ -27,9 +27,6 @@ const PESTANAS: { id: Pestana; label: string }[] = [
   { id: "anuncios", label: "Anuncios" },
 ];
 
-/** Ancho de la rayita bajo la pestaña activa */
-const ANCHO_INDICADOR = 132;
-
 /**
  * Rayita: ease-out fuerte y corto. Arranca rápido (responde al toque al instante) y frena
  * suave al llegar. withTiming se puede interrumpir: si tocas otra pestaña a medio camino,
@@ -88,7 +85,8 @@ export function PublicacionesPerfil({
 
   const indice = PESTANAS.findIndex((p) => p.id === activa);
   const columna = ancho / PESTANAS.length;
-  const destino = indice * columna + (columna - ANCHO_INDICADOR) / 2;
+  // La línea cubre toda la columna de borde a borde
+  const destino = indice * columna;
 
   // La primera vez se coloca directo; después se desliza al cambiar de pestaña
   const x = useSharedValue<number | null>(null);
@@ -164,7 +162,7 @@ export function PublicacionesPerfil({
           <Animated.View
             style={[
               styles.indicador,
-              { backgroundColor: texto },
+              { backgroundColor: texto, width: columna },
               estiloIndicador,
             ]}
           />
@@ -172,9 +170,7 @@ export function PublicacionesPerfil({
       </View>
       <View style={[styles.divisor, { backgroundColor: divisor }]} />
 
-      {/* Las dos pestañas quedan montadas y la inactiva solo se vuelve invisible. Sin
-          display: "none": en la nueva arquitectura quita las vistas y al volver se repintan
-          las imágenes (parpadeo). El cambio es instantáneo; la rayita ya da la transición. */}
+      {/* Las dos pestañas quedan montadas y la inactiva solo se vuelve invisible. */}
       <View>
         {PESTANAS.map((p) => {
           const visible = p.id === activa;
@@ -198,26 +194,29 @@ export function PublicacionesPerfil({
 }
 
 const styles = StyleSheet.create({
-  fila: { flexDirection: "row" },
+  fila: {
+    flexDirection: "row",
+    width: "100%",
+  },
   pestana: {
     flex: 1,
     flexDirection: "row",
-    gap: 7,
+    gap: 8,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
   indicador: {
     position: "absolute",
     left: 0,
     bottom: 0,
-    width: ANCHO_INDICADOR,
     height: 2,
     borderRadius: 2,
   },
   /** Separación entre las pestañas y las imágenes de las publicaciones */
   abanico: { marginTop: 30 },
-  etiqueta: { fontFamily: "Inter_600SemiBold", fontSize: 14, top: 2 },
+  etiqueta: { fontFamily: "Inter_600SemiBold", fontSize: 14, top: 1 },
   divisor: { height: StyleSheet.hairlineWidth },
   /** Pestaña inactiva: fuera del flujo (no ocupa alto) e invisible, pero montada */
   oculta: { position: "absolute", top: 0, left: 0, right: 0, opacity: 0 },
