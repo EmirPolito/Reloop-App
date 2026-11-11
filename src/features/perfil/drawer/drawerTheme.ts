@@ -9,23 +9,6 @@ export type Modo = "claro" | "oscuro";
 
 export const PELIGRO = "#EF4444";
 
-/** Radio único para tarjetas, inputs, botones, paneles y celdas */
-export const RADIO = 12;
-
-/** Altura fija del sheet (también con el teclado abierto) */
-export const SNAP_POINTS = ["92%"];
-
-export const MEDIDAS = {
-  altoInput: 45, // h-11
-  altoDescripcion: 60, // h-15
-  padH: 14,
-  avatar: 85,
-  celdaIcono: 40,
-  altoBoton: 48,
-  gapSecciones: 20,
-  padTarjeta: 15,
-} as const;
-
 export const TIPO = {
   titulo: 15,
   input: 13.5,
@@ -77,21 +60,14 @@ export const PALETA = {
 } as const;
 
 export const ICONOS_ELEGIBLES = Object.keys(PERFIL_ICONS) as IconPerfilKey[];
-export const ICONOS_EN_FILA = ICONOS_ELEGIBLES.length <= 5;
 export const TINTE_ICONO = 0.22;
 
 /* Movimiento */
 export const DURACION = 180;
 export const EASE = Easing.out(Easing.cubic);
-export const ENTRADA_BASE = 60;
-export const ENTRADA_PASO = 35;
-export const ENTRADA_DURACION = 220;
 export const LAYOUT = LinearTransition.duration(DURACION).easing(EASE);
 
 export const FUENTE_INPUT = { fontFamily: "Poppins_400Regular" } as const;
-
-/** Espacio libre que se deja entre el input enfocado y el teclado */
-export const MARGEN_TECLADO = 16;
 
 /* -------------------------------- Utilidades -------------------------------- */
 

@@ -2,7 +2,11 @@ import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Switch, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { coloresTarjeta, fondoPerfil } from "@/features/perfil/perfilEstilos";
+import {
+  ESPACIO_SUPERIOR_PERFIL,
+  coloresTarjeta,
+  fondoPerfil,
+} from "@/features/perfil/perfilEstilos";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
@@ -16,13 +20,11 @@ import { FilaAjuste } from "./components/FilaAjuste";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
-import { PerfilPortada } from "./components/PerfilPortada";
 import {
   PublicacionesPerfil,
   SIN_ANUNCIOS,
 } from "./components/PublicacionesPerfil";
 import { TarjetaAccion } from "./components/TarjetaAccion";
-import { DrawerEditarPerfil } from "./drawer/DrawerEditarPerfil";
 import { useFollowers } from "./hooks/useFollowers";
 import {
   IconoCampana,
@@ -44,18 +46,14 @@ const ACCION = "#101010";
 export function PantallaPerfil() {
   const { styles: baseStyles, isDark, setIsDark } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { profile, saveProfile } = useProfile();
+  const { profile } = useProfile();
   const { uid } = useSessionUser();
   const { products: mine, status: mineStatus } = useUserProducts(uid);
   const { followersCount } = useFollowers(uid);
-  const { openProduct } = useAppNavigation();
+  const { openProduct, openEditProfile } = useAppNavigation();
   const { signOut } = useAuth();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  const abrirDrawer = useCallback(() => setDrawerOpen(true), []);
-  const cerrarDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const handleSignOut = useCallback(() => {
     signOut().catch((error) =>
@@ -78,12 +76,8 @@ export function PantallaPerfil() {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ======================= PORTADA + AVATAR ======================= */}
-        <PerfilPortada
-          cover={profile.cover}
-          isDark={isDark}
-          topInset={insets.top}
-        />
+        {/* Sin portada por ahora: avatar, nombre, etiquetas, descripción y estadísticas */}
+        <View style={{ height: insets.top + ESPACIO_SUPERIOR_PERFIL }} />
 
         <PerfilCabecera
           isDark={isDark}
@@ -132,7 +126,7 @@ export function PantallaPerfil() {
               icon={<IconoEditar size={23} color="#5d5d5d7d" />}
               label="Editar perfil"
               textColor={textoFila}
-              onPress={abrirDrawer}
+              onPress={openEditProfile}
               right={<IconoFlecha size={22} color={flecha} />}
             />
             <FilaAjuste
@@ -233,14 +227,6 @@ export function PantallaPerfil() {
           />
         </View>
       </ScrollView>
-
-      <DrawerEditarPerfil
-        visible={drawerOpen}
-        initialData={profile}
-        isDark={isDark}
-        onClose={cerrarDrawer}
-        onSave={saveProfile}
-      />
     </View>
   );
 }

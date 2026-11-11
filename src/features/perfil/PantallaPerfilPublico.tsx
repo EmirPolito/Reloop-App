@@ -8,7 +8,11 @@ import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import { coloresTarjeta, fondoPerfil } from "@/features/perfil/perfilEstilos";
+import {
+  ESPACIO_SUPERIOR_PERFIL,
+  coloresTarjeta,
+  fondoPerfil,
+} from "@/features/perfil/perfilEstilos";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -16,7 +20,6 @@ import { BotonSeguir } from "./components/BotonSeguir";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
-import { PerfilPortada } from "./components/PerfilPortada";
 import {
   PublicacionesPerfil,
   SIN_ANUNCIOS,
@@ -63,21 +66,24 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* La portada llega hasta arriba, detrás de la barra de estado */}
-        <PerfilPortada
-          cover={profile.cover}
-          isDark={isDark}
-          topInset={insets.top}
-        >
+        {/* Mismo espacio superior que el perfil propio; el botón de volver flota dentro */}
+        <View style={{ height: insets.top + ESPACIO_SUPERIOR_PERFIL }}>
           <PressableSuave
             accessibilityRole="button"
             accessibilityLabel="Volver"
             onPress={back}
-            style={[styles.backBtn, { top: insets.top + 8 }]}
+            style={[
+              styles.backBtn,
+              { top: insets.top + 8, backgroundColor: fondoTarjeta },
+            ]}
           >
-            <AppIcon name="back" size={22} color="#101010" />
+            <AppIcon
+              name="back"
+              size={22}
+              color={isDark ? "#F1F5F9" : "#101010"}
+            />
           </PressableSuave>
-        </PerfilPortada>
+        </View>
 
         <PerfilCabecera
           isDark={isDark}
@@ -89,6 +95,17 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
               placeholder="iniciales"
             />
           }
+        />
+
+        <PerfilInformacion
+          profile={profile}
+          stats={{
+            publicaciones: String(userProducts.length),
+            seguidores: String(followersCount),
+            reputacion: averageRatingLabel(userProducts),
+          }}
+          isDark={isDark}
+          // Seguir: a la derecha, a la altura del nombre
           accion={
             isOwn ? null : (
               <BotonSeguir
@@ -100,16 +117,6 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
               />
             )
           }
-        />
-
-        <PerfilInformacion
-          profile={profile}
-          stats={{
-            publicaciones: String(userProducts.length),
-            seguidores: String(followersCount),
-            reputacion: averageRatingLabel(userProducts),
-          }}
-          isDark={isDark}
         />
 
         <View style={{ paddingHorizontal: 15 }}>
@@ -149,6 +156,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFFD9",
   },
 });

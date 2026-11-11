@@ -1,24 +1,26 @@
-import { createContext, useContext, useRef, type ComponentRef } from "react";
-import { TextInput, type TextInputProps } from "react-native";
+import { createContext, useContext } from "react";
+import { TextInput, type BlurEvent, type FocusEvent, type TextInputProps } from "react-native";
 import { FUENTE_INPUT } from "./drawerTheme";
 
-type TextInputInstance = ComponentRef<typeof TextInput>;
+/** Avisos de foco para un BottomSheet que debe subir con el teclado (opcional) */
+export const TecladoSheetCtx = createContext<{
+  onFocus?: (e: FocusEvent) => void;
+  onBlur?: (e: BlurEvent) => void;
+}>({});
 
-/** Los inputs avisan al contenido cuál quedó enfocado para hacerlo visible */
-export const AsegurarVisibleCtx = createContext<(input: TextInputInstance) => void>(() => {});
-
-/** TextInput que, al enfocarse, pide al contenido que lo deje visible
- *  por encima del teclado. */
-export function InputSheet({ style, onFocus, ...props }: TextInputProps) {
-  const ref = useRef<TextInputInstance>(null);
-  const asegurarVisible = useContext(AsegurarVisibleCtx);
+/** TextInput que avisa al BottomSheet al enfocarse, para que suba con el teclado */
+export function InputSheet({ style, onFocus, onBlur, ...props }: TextInputProps) {
+  const teclado = useContext(TecladoSheetCtx);
   return (
     <TextInput
       {...props}
-      ref={ref}
       onFocus={(e) => {
-        if (ref.current) asegurarVisible(ref.current);
+        teclado.onFocus?.(e);
         onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        teclado.onBlur?.(e);
+        onBlur?.(e);
       }}
       style={[FUENTE_INPUT, style]}
     />

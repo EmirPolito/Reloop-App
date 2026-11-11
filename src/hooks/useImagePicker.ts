@@ -84,6 +84,30 @@ export function useImagePicker() {
     }
   }, []);
 
+  /** Una foto sin recortar, con sus medidas, para ajustarla después en la app. `null` si se cancela. */
+  const pickImageWithSize = useCallback(async (): Promise<{
+    uri: string;
+    width: number;
+    height: number;
+  } | null> => {
+    setIsPicking(true);
+    try {
+      if (!(await ensureLibraryPermission())) return null;
+      const result = await ImagePicker.launchImageLibraryAsync(
+        SINGLE_GALLERY_OPTIONS,
+      );
+      const asset = result.canceled ? undefined : result.assets[0];
+      return asset
+        ? { uri: asset.uri, width: asset.width, height: asset.height }
+        : null;
+    } catch (error) {
+      showGalleryError(error);
+      return null;
+    } finally {
+      setIsPicking(false);
+    }
+  }, []);
+
   /** Varias fotos sin recortar (chat). Si la selección múltiple falla, pide una sola. */
   const pickImages = useCallback(async (): Promise<string[]> => {
     setIsPicking(true);
@@ -112,5 +136,11 @@ export function useImagePicker() {
     }
   }, []);
 
-  return { isPicking, pickSquareImage, pickCoverImage, pickImages };
+  return {
+    isPicking,
+    pickSquareImage,
+    pickCoverImage,
+    pickImageWithSize,
+    pickImages,
+  };
 }

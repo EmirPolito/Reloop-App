@@ -18,7 +18,8 @@ export function useAppNavigation() {
         router.push({ pathname: "/product/[id]", params: { id: productId } }),
       openUserProfile: (userId: string) =>
         router.push({ pathname: "/user/[id]", params: { id: userId } }),
-      openThread: (chatId: string) =>
+      openEditProfile: () => router.push("/editar-perfil"),
+      openThread:(chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */
       back: () => (router.canGoBack() ? router.back() : router.replace("/")),

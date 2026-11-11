@@ -18,6 +18,7 @@ export default function AppLayout() {
         <Stack.Screen name="product/[id]" />
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="user/[id]" />
+        <Stack.Screen name="editar-perfil" />
       </Stack>
     </SessionProviders>
   );

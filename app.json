@@ -52,6 +52,14 @@
           "imageWidth": 240
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ReLoop necesita acceso a tu cámara para tomar tu foto de perfil.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-video",
       "expo-font",
       "expo-image",

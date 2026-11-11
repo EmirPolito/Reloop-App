@@ -8,13 +8,13 @@ export const COLOR_ICONO_SEGUIDORES = "#296ffaff";
 export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 
 /** Alto de la portada (imagen de fondo), sin contar la barra de estado */
-export const ALTO_PORTADA = 175;
+export const ALTO_PORTADA = 190;
+
+/** Espacio sobre el avatar (además de la barra de estado), igual en el perfil propio y el público */
+export const ESPACIO_SUPERIOR_PERFIL = 90;
 
 /** Lado del avatar cuadrado redondeado */
-export const LADO_AVATAR = 87;
-
-/** Cuánto sube el avatar sobre la portada */
-export const SOLAPE_AVATAR = 47;
+export const LADO_AVATAR = 90;
 
 /** Fondo de la pantalla del perfil (gris tipo Apple en claro) */
 export function fondoPerfil(isDark: boolean) {
@@ -35,20 +35,18 @@ export function coloresTarjeta(isDark: boolean) {
 
 /** Estilos compartidos por el perfil propio y el perfil público */
 export const estilosPerfil = StyleSheet.create({
-  /* Fila del avatar (izquierda) y la acción (derecha), montada sobre la portada */
+  /* Fila del avatar (izquierda) y la acción (derecha), arriba del nombre */
   filaAvatar: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    marginTop: -SOLAPE_AVATAR,
-    zIndex: 20,
+    paddingHorizontal: 13,
   },
   avatarMarco: {
     width: LADO_AVATAR,
     height: LADO_AVATAR,
-    borderRadius: 27,
-    padding: 3,
+    borderRadius: 20,
+    // padding: 2.5,
   },
   avatarPlaceholder: {
     width: "100%",
@@ -66,45 +64,54 @@ export const estilosPerfil = StyleSheet.create({
   },
   /* Inter: la fuente libre más parecida a las de X, Instagram o Facebook.
      Cada grosor es un archivo; fontWeight se ignora (ver Text.tsx) */
-  profileName: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 18.5,
-    letterSpacing: -1,
-    lineHeight: 34,
-    includeFontPadding: false,
-  },
-
-  tagsRow: {
-    marginTop: 0.5,
+  /* Fila del nombre: el nombre a la izquierda y, opcional, una acción (Seguir) a la derecha */
+  filaNombre: {
+    top: -9,
+    marginTop: 15,
+    marginBottom: 6,
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 7.5,
+    alignItems: "center",
+    gap: 12,
+  },
+  profileName: {
+    flex: 1,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 26,
+    letterSpacing: -0.9,
+    lineHeight: 32,
+    includeFontPadding: false,
   },
 
   profileSubtitle: {
     fontFamily: "Inter_400Regular",
-    marginTop: 5,
-    fontSize: 13,
-    lineHeight: 18,
+    marginTop: -14,
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: "400",
   },
 
+  tagsRow: {
+    marginTop: 7,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+
   /* Estadísticas: una sola tarjeta con 3 columnas separadas por divisores */
-  /* Sin fondo: los 3 datos en una línea, repartidos de orilla a orilla */
   statsContainer: {
-    marginTop: 20,
+    marginTop: 25,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 2,
-    paddingVertical: 5,
+    paddingVertical: 14,
     marginBottom: -10,
   },
-  statItem: { flexDirection: "row", alignItems: "center", gap: 3.53 },
-  // Número en negrita y texto ligero gris, mismo tamaño (estilo X / Instagram)
-  statValue: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  statLabel: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  // Cada columna: texto arriba en gris y número grande abajo
+  statItem: { flex: 1, alignItems: "center", gap: 4 },
+  statValueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  statDivider: { width: 1, height: 28 },
+  statValue: { fontFamily: "Inter_600SemiBold", fontSize: 18 },
+  statLabel: { fontFamily: "Inter_400Regular", fontSize: 12 },
 
   // Tarjeta de una sola acción (cerrar sesión, enviar mensaje)
   tarjetaAccion: {
