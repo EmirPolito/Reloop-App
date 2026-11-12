@@ -15,6 +15,7 @@ import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showErrorAlert } from "@/utils/alerts";
 import { getInitials } from "@/utils/text";
+import { BrilloAvatar } from "../components/BrilloAvatar";
 import { fondoPerfil } from "../perfilEstilos";
 import { IconoFlecha } from "../Perfiliconos";
 import {
@@ -142,14 +143,18 @@ export function PantallaEditarPerfil() {
           >
             <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
               {profile.photo ? (
-                <Image
-                  source={{
-                    uri: optimizedImageUrl(profile.photo, 400) ?? profile.photo,
-                  }}
-                  contentFit="cover"
-                  transition={200}
-                  style={StyleSheet.absoluteFill}
-                />
+                <>
+                  <Image
+                    source={{
+                      uri:
+                        optimizedImageUrl(profile.photo, 400) ?? profile.photo,
+                    }}
+                    contentFit="cover"
+                    transition={200}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <BrilloAvatar id="editar-avatar" />
+                </>
               ) : (
                 <Text style={[INTER.medium, { fontSize: 38, color: c.texto }]}>
                   {getInitials(profile.name)}

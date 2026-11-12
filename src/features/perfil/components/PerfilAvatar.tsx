@@ -7,6 +7,7 @@ import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
 import { estilosPerfil } from "../perfilEstilos";
 import { type ColorPerfil, TEMAS } from "../Perfiltemas";
+import { BrilloAvatar } from "./BrilloAvatar";
 
 /** Ancho al que se pide la foto de perfil a Cloudinary. */
 const ANCHO_FOTO = 400;
@@ -30,14 +31,17 @@ export function PerfilAvatar({
 
   if (photo) {
     return (
-      <Image
-        source={{ uri: optimizedImageUrl(photo, ANCHO_FOTO) ?? photo }}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        priority="high"
-        transition={200}
-        style={styles.image}
-      />
+      <View style={styles.marco}>
+        <Image
+          source={{ uri: optimizedImageUrl(photo, ANCHO_FOTO) ?? photo }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          priority="high"
+          transition={200}
+          style={StyleSheet.absoluteFill}
+        />
+        <BrilloAvatar id="perfil-avatar" />
+      </View>
     );
   }
 
@@ -57,6 +61,11 @@ export function PerfilAvatar({
 }
 
 const styles = StyleSheet.create({
-  image: { width: "100%", height: "100%", borderRadius: 26 },
+  marco: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 26,
+    overflow: "hidden",
+  },
   initials: { fontSize: 34, fontWeight: "800" },
 });

@@ -33,6 +33,8 @@ export function SheetEditar({
   const insets = useSafeAreaInsets();
   const { height: altoVentana } = useWindowDimensions();
   const p = PALETA[isDark ? "oscuro" : "claro"];
+  // Baja ~22 px en iPhone con Face ID sin pegarse a 0 en Android; usa 6 u 8 fijo si la quieres aún más abajo
+  const margenInferior = Math.max(insets.bottom - 22, 6);
 
   return (
     <BottomSheet
@@ -48,10 +50,10 @@ export function SheetEditar({
         <BottomSheet.Content
           enablePanDownToClose
           enableContentPanningGesture={permitirArrastrarContenido}
-          // Card flotante: separada de los lados y de abajo, con todas las esquinas redondas
+          // Card flotante: separada de los lados y más cerca del borde inferior
           detached
-          bottomInset={insets.bottom + 6}
-          className="mx-1.5"
+          bottomInset={margenInferior}
+          className="mx-2"
           // El radio y el color van por style: el CSS de HeroUI solo redondea las esquinas de arriba
           backgroundStyle={{
             borderRadius: RADIO_CARD,
@@ -65,7 +67,7 @@ export function SheetEditar({
           enableOverDrag={false}
           // Al bajar el teclado el drawer vuelve a su alto (antes se quedaba estirado)
           keyboardBlurBehavior="restore"
-          maxDynamicContentSize={altoVentana - insets.top - insets.bottom - 40}
+          maxDynamicContentSize={altoVentana - insets.top - margenInferior - 34}
         >
           <View style={styles.header}>
             {onBack ? (
@@ -103,20 +105,20 @@ export function SheetEditar({
             />
           </View>
 
-          <View style={{ paddingBottom: 18 }}>{children}</View>
+          <View style={{ paddingBottom: 14 }}>{children}</View>
         </BottomSheet.Content>
       </BottomSheet.Portal>
     </BottomSheet>
   );
 }
 
-const RADIO_CARD = 30;
+const RADIO_CARD = 35;
 /** Fondo de la card: [claro, oscuro] (mismos colores que PALETA.sheet) */
 const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
 
 const styles = StyleSheet.create({
   header: {
-    height: 40,
+    height: 45,
     marginBottom: 8,
     alignItems: "center",
     justifyContent: "center",

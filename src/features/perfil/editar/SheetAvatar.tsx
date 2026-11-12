@@ -8,6 +8,7 @@ import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
 import { getInitials } from "@/utils/text";
+import { BrilloAvatar } from "../components/BrilloAvatar";
 import { AjustarFoto } from "./AjustarFoto";
 import { CamaraCircular, type FotoTomada } from "./CamaraCircular";
 import { DURACION_EDITAR, INTER, coloresEditar } from "./editarTema";
@@ -95,12 +96,15 @@ export function SheetAvatar({
           <View style={styles.inicio}>
             <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
               {photo ? (
-                <Image
-                  source={{ uri: photo }}
-                  contentFit="cover"
-                  transition={200}
-                  style={StyleSheet.absoluteFill}
-                />
+                <>
+                  <Image
+                    source={{ uri: photo }}
+                    contentFit="cover"
+                    transition={200}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <BrilloAvatar id="sheet-avatar" />
+                </>
               ) : (
                 <Text style={[INTER.medium, { fontSize: 40, color: c.texto }]}>
                   {getInitials(name)}
@@ -193,11 +197,11 @@ function Opcion({
 }
 
 const styles = StyleSheet.create({
-  inicio: { alignItems: "center", gap: 26, paddingTop: 15 },
+  inicio: { alignItems: "center", gap: 26, paddingTop: 9 },
   avatar: {
-    width: 125,
-    height: 125,
-    borderRadius: 60,
+    width: 133,
+    height: 133,
+    borderRadius: 75,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",

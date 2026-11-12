@@ -5,7 +5,6 @@ import {
   IconoAnuncios,
   IconoPublicaciones,
 } from "@/features/perfil/Perfiliconos";
-import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { BlurView } from "expo-blur";
@@ -23,7 +22,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 export interface NavegacionProps {
   activeTab: Tab;
@@ -213,24 +211,19 @@ const MENU_BLUR = 30;
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-/** Fondo del botón de crear: centro más claro que se oscurece hacia el borde (en modo oscuro se invierte) */
-const FONDO_CREAR = {
-  light: { centro: "#4a4a4a", medio: "#2b2b2b", borde: "#0a0a0a", icono: "#FFFFFF" },
-  dark: { centro: "#FFFFFF", medio: "#f1f1f1", borde: "#cfcfcf", icono: "#000000" },
-};
+/** Color del icono de cada opción del menú */
+const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
+const COLOR_ICONO_PUBLICACION = "#ff3762";
 
 const CreateButton = React.memo(function CreateButton({
   onPress,
   label,
-  isDark,
   styles,
 }: {
   onPress: () => void;
   label: string;
-  isDark: boolean;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const fondo = isDark ? FONDO_CREAR.dark : FONDO_CREAR.light;
   const pressScale = useSharedValue(1);
 
   const scaleStyle = useAnimatedStyle(() => ({
@@ -243,26 +236,24 @@ const CreateButton = React.memo(function CreateButton({
         accessibilityRole="button"
         accessibilityLabel={label}
         onPressIn={() => {
-          pressScale.set(withTiming(0.92, { duration: 60 }));
+          pressScale.set(withTiming(1, { duration: 60 }));
         }}
         onPressOut={() => {
           pressScale.set(withTiming(1, { duration: 100 }));
         }}
         onPress={onPress}
       >
-        <View style={styles.createButton}>
-          <Svg style={StyleSheet.absoluteFill} viewBox="0 0 54 54">
-            <Defs>
-              <RadialGradient id="fondoCrear" cx="50%" cy="45%" r="55%">
-                <Stop offset="0" stopColor={fondo.centro} />
-                <Stop offset="0.6" stopColor={fondo.medio} />
-                <Stop offset="1" stopColor={fondo.borde} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx="27" cy="27" r="27" fill="url(#fondoCrear)" />
-          </Svg>
-
-          <NavigationIcon name="add" size={25} color={fondo.icono} />
+        <View
+          className="bg-gradient-to-br from-black/95 to-black/85 h-[54px] w-[54px] items-center justify-center rounded-full border border-white/30"
+          style={{
+            shadowColor: "#2a2a2aff",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 4,
+          }}
+        >
+          <NavigationIcon name="add" size={25} color="#FFFFFF" />
         </View>
       </Pressable>
     </Animated.View>
@@ -300,10 +291,16 @@ function MenuCrear({
   }));
 
   const opciones = [
-    { label: "Crear anuncio", Icono: IconoAnuncios, onPress: onAnuncio },
+    {
+      label: "Crear anuncio",
+      Icono: IconoAnuncios,
+      color: COLOR_ICONO_ANUNCIO,
+      onPress: onAnuncio,
+    },
     {
       label: "Crear publicación",
       Icono: IconoPublicaciones,
+      color: COLOR_ICONO_PUBLICACION,
       onPress: onPublicacion,
     },
   ];
@@ -337,18 +334,13 @@ function MenuCrear({
 
       {/* El botón sigue a la vista, encima del velo, y cierra el menú */}
       <View style={[styles.menuBoton, { bottom }]}>
-        <CreateButton
-          onPress={onClose}
-          label="Cerrar"
-          isDark={isDark}
-          styles={styles}
-        />
+        <CreateButton onPress={onClose} label="Cerrar" styles={styles} />
       </View>
 
       <Animated.View
         style={[styles.menuCrear, { bottom: bottom + 64 }, opcionesStyle]}
       >
-        {opciones.map(({ label, Icono, onPress }) => (
+        {opciones.map(({ label, Icono, color, onPress }) => (
           <PressableSuave
             key={label}
             accessibilityRole="button"
@@ -358,7 +350,7 @@ function MenuCrear({
             style={styles.menuOpcion}
           >
             <Text style={styles.menuEtiqueta}>{label}</Text>
-            <Icono size={24} color={ESTILO_BOTON_ACCION.colors[2]} />
+            <Icono size={24} color={color} />
           </PressableSuave>
         ))}
       </Animated.View>
@@ -430,7 +422,6 @@ export function Navegacion({
       <CreateButton
         onPress={abrirMenu}
         label="Publicar producto"
-        isDark={isDark}
         styles={styles}
       />
 
@@ -560,20 +551,6 @@ function createStyles(isDark: boolean) {
     createWrap: {
       alignItems: "center",
       justifyContent: "center",
-    },
-
-    createButton: {
-      width: 54,
-      height: 54,
-      borderRadius: 27,
-      alignItems: "center",
-      justifyContent: "center",
-      shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 3,
-      overflow: "hidden",
     },
 
     /** Misma posición que el botón de la barra (navigationRow deja 15 a la derecha) */

@@ -33,7 +33,12 @@ export function CamaraCircular({
   if (!permiso.granted) {
     return (
       <View style={styles.permiso}>
-        <Text style={[INTER.regular, { fontSize: 13.5, color: c.suave, textAlign: "center" }]}>
+        <Text
+          style={[
+            INTER.regular,
+            { fontSize: 13.5, color: c.suave, textAlign: "center" },
+          ]}
+        >
           Permite el acceso a la cámara para tomar tu foto de perfil.
         </Text>
         <Pressable
@@ -41,7 +46,12 @@ export function CamaraCircular({
           onPress={() => void pedirPermiso()}
           style={[styles.botonPermiso, { backgroundColor: c.texto }]}
         >
-          <Text style={[INTER.semibold, { fontSize: 14, color: isDark ? "#101010" : "#FFFFFF" }]}>
+          <Text
+            style={[
+              INTER.semibold,
+              { fontSize: 14, color: isDark ? "#101010" : "#FFFFFF" },
+            ]}
+          >
             Permitir cámara
           </Text>
         </Pressable>
@@ -54,7 +64,8 @@ export function CamaraCircular({
     setTomando(true);
     try {
       const foto = await camaraRef.current?.takePictureAsync({ quality: 0.85 });
-      if (foto) onTomada({ uri: foto.uri, width: foto.width, height: foto.height });
+      if (foto)
+        onTomada({ uri: foto.uri, width: foto.width, height: foto.height });
     } catch (error) {
       console.warn("No se pudo tomar la foto.", error);
     } finally {
@@ -72,7 +83,9 @@ export function CamaraCircular({
           style={StyleSheet.absoluteFill}
           onCameraReady={() => setLista(true)}
         />
-        {!lista ? <ActivityIndicator style={StyleSheet.absoluteFill} color={c.suave} /> : null}
+        {!lista ? (
+          <ActivityIndicator style={StyleSheet.absoluteFill} color={c.suave} />
+        ) : null}
       </View>
 
       <PressableScale
@@ -82,11 +95,11 @@ export function CamaraCircular({
         onPress={() => void tomar()}
         style={[styles.disparo, { borderColor: c.texto }]}
       >
-          {tomando ? (
-            <ActivityIndicator color={c.texto} />
-          ) : (
-            <View style={[styles.disparoCentro, { backgroundColor: c.texto }]} />
-          )}
+        {tomando ? (
+          <ActivityIndicator color={c.texto} />
+        ) : (
+          <View style={[styles.disparoCentro, { backgroundColor: c.texto }]} />
+        )}
       </PressableScale>
     </View>
   );
@@ -110,6 +123,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   disparoCentro: { width: 50, height: 50, borderRadius: 25 },
-  permiso: { alignItems: "center", gap: 16, paddingHorizontal: 30, paddingVertical: 30 },
-  botonPermiso: { height: 46, paddingHorizontal: 22, borderRadius: 23, justifyContent: "center" },
+  permiso: {
+    alignItems: "center",
+    gap: 16,
+    paddingHorizontal: 30,
+    paddingVertical: 30,
+  },
+  botonPermiso: {
+    height: 46,
+    paddingHorizontal: 22,
+    borderRadius: 23,
+    justifyContent: "center",
+  },
 });
