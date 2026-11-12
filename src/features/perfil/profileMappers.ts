@@ -1,5 +1,6 @@
 import type { DocumentData } from "firebase/firestore";
 
+import { isOrb } from "@/constants/orbes";
 import {
   COLORES_PERFIL,
   MAX_NOMBRE,
@@ -11,6 +12,7 @@ import {
 export function defaultProfile(name: string): DatosPerfil {
   return {
     photo: null,
+    orb: null,
     cover: null,
     name: name.slice(0, MAX_NOMBRE),
     description: "",
@@ -45,6 +47,7 @@ export function mapProfile(data: DocumentData, fallbackName: string): DatosPerfi
     typeof data.nombre === "string" && data.nombre ? data.nombre : fallbackName;
   return {
     photo: typeof data.fotoUrl === "string" ? data.fotoUrl : null,
+    orb: isOrb(data.orbe) ? data.orbe : null,
     cover: typeof data.fondoUrl === "string" ? data.fondoUrl : null,
     name: name.slice(0, MAX_NOMBRE),
     description: typeof data.descripcion === "string" ? data.descripcion : "",
@@ -61,7 +64,8 @@ export function toProfileDocument(data: DatosPerfil) {
   return {
     nombre: data.name,
     fotoUrl: data.photo,
-    // Sin portada no se escribe el campo (al quitarla, saveProfileData lo borra)
+    // Sin orbe o sin portada no se escribe el campo (al quitarlos, saveProfileData lo borra)
+    ...(data.orb !== null ? { orbe: data.orb } : {}),
     ...(data.cover ? { fondoUrl: data.cover } : {}),
     descripcion: data.description,
     color: data.color,

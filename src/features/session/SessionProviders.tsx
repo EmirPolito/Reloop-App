@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 import type { SessionUser } from "@/features/auth/AuthProvider";
 import { ChatProvider } from "@/features/chats/ChatProvider";
 import { MarketplaceProvider } from "@/features/marketplace/MarketplaceProvider";
+import { NotificationsProvider } from "@/features/notificaciones/NotificationsProvider";
 import { ProfileProvider } from "@/features/perfil/ProfileProvider";
 import { DraftsProvider } from "@/features/shared/DraftsProvider";
 import { SessionUserProvider } from "./SessionUserProvider";
@@ -22,7 +23,9 @@ export function SessionProviders({
       <ProfileProvider>
         <MarketplaceProvider>
           <ChatProvider>
-            <DraftsProvider>{children}</DraftsProvider>
+            <NotificationsProvider>
+              <DraftsProvider>{children}</DraftsProvider>
+            </NotificationsProvider>
           </ChatProvider>
         </MarketplaceProvider>
       </ProfileProvider>

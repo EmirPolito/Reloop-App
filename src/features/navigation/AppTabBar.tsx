@@ -3,13 +3,17 @@ import { useCallback } from "react";
 
 import { Navegacion } from "@/components/navbar/Navegacion";
 import { useChats } from "@/features/chats/ChatProvider";
+import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { TAB_ROUTE_NAMES, tabFromRouteName, type Tab } from "./routes";
+import { useAppNavigation } from "./useAppNavigation";
 
 /** Conecta el navegador de pestañas con la barra animada de la app. */
 export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const { isDark } = useAppTheme();
   const { chats } = useChats();
+  const { unreadCount } = useNotifications();
+  const { openNotifications } = useAppNavigation();
   const activeTab = tabFromRouteName(state.routes[state.index].name) ?? "home";
 
   const handleNavigate = useCallback(
@@ -27,8 +31,10 @@ export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
     <Navegacion
       activeTab={activeTab}
       onNavigate={handleNavigate}
+      onOpenNotifications={openNotifications}
       isDark={isDark}
       hasUnreadChats={chats.some((chat) => chat.unread)}
+      unreadNotifications={unreadCount}
     />
   );
 }

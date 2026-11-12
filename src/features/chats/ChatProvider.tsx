@@ -7,9 +7,11 @@ import {
 } from "react";
 
 import type { Chat } from "@/features/marketplace/types";
+import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { uploadImages } from "@/lib/cloudinary";
 import { describeFirestoreError } from "@/lib/firestoreValues";
+import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 import {
   markChatRead,
@@ -43,6 +45,8 @@ const ChatActionsContext = createContext<ChatActions | null>(null);
 export function ChatProvider({ children }: PropsWithChildren) {
   const { uid } = useSessionUser();
   const [state, setState] = useState<ChatsState>(LOADING);
+  const chatsRef = useLatestRef(state.chats);
+  const notify = useNotify();
 
   useEffect(
     () =>
@@ -62,10 +66,18 @@ export function ChatProvider({ children }: PropsWithChildren) {
       sendMessage: async (chatId, { text, images }) => {
         const urls = await uploadImages(images);
         await saveMessage(chatId, uid, { text, images: urls });
+        const chat = chatsRef.current.find((item) => item.id === chatId);
+        if (chat) {
+          notify(chat.otherId, {
+            type: "mensaje",
+            chatId,
+            text: text || "📷 Foto",
+          });
+        }
       },
       markRead: (chatId) => markChatRead(chatId, uid),
     }),
-    [uid],
+    [uid, chatsRef, notify],
   );
 
   return (

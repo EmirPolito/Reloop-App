@@ -194,10 +194,11 @@ Hazlo con dos cuentas, por ejemplo en dos dispositivos o un dispositivo y el nav
 
 | Colección | Contenido | Quién lee | Quién escribe |
 |-----------|-----------|-----------|---------------|
-| `usuarios/{uid}` | Perfil: nombre, foto, descripción, color, etiquetas, stickers. Sin correo. | Cualquier persona con sesión | Solo su dueña |
+| `usuarios/{uid}` | Perfil: nombre, foto, avatar orbe (`orbe`, de 0 a 9), descripción, color, etiquetas, stickers. Sin correo. | Cualquier persona con sesión | Solo su dueña |
 | `cuentas/{uid}` | El correo de la cuenta. Tiene el mismo id que su perfil en `usuarios`, así se ve en la consola de qué correo es cada perfil. | Solo su dueña | Solo su dueña, y solo con el correo de su propia sesión |
 | `usuarios/{uid}/favoritos/{productId}` | Favoritos | Solo su dueña | Solo su dueña |
 | `usuarios/{uid}/calificaciones/{productId}` | La nota que esa persona dio | Solo su dueña | Solo su dueña |
+| `usuarios/{uid}/notificaciones/{id}` | Avisos recibidos: te siguen, guardan o comentan tu publicación, te escriben. El id es fijo por persona y motivo (`seguidor_{uid}`, `mensaje_{uid}`, `favorito_{uid}_{productId}`, `comentario_{uid}_{productId}`). | Solo su dueña | La crea o renueva quien la provoca, a su propio nombre. Su dueña solo la marca como leída o la borra. |
 | `productos/{id}` | Publicación y su promedio (`ratingTotal`, `ratingCount`) | Cualquier persona con sesión | Crea su dueña. Solo su dueña cambia el nombre de vendedor. Las demás personas solo cambian el promedio al calificar. |
 | `productos/{id}/comentarios/{id}` | Comentarios | Cualquier persona con sesión | Cualquier persona, como autora. No se editan ni se borran. |
 | `reportes/{uid}_{productId}` | Reportes de publicaciones | Solo quien reportó | Quien reporta |

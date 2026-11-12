@@ -28,10 +28,6 @@ export function showAlert(
   buttons?.[0]?.onPress?.();
 }
 
-export function showNoNotificationsAlert(): void {
-  showAlert("Notificaciones", "No tienes notificaciones nuevas.");
-}
-
 export function showComingSoonAlert(title: string): void {
   showAlert(title, "Esta función estará disponible próximamente.");
 }

@@ -5,6 +5,7 @@ import {
   type PropsWithChildren,
 } from "react";
 
+import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
@@ -62,6 +63,8 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
   const data = useMarketplaceData(uid);
   const [filters, dispatchFilters] = useReducer(filtersReducer, NO_FILTERS);
   const favoritesRef = useLatestRef(data.favorites);
+  const productsRef = useLatestRef(data.products);
+  const notify = useNotify();
   const { reload } = data;
 
   const state = useMemo<MarketplaceState>(
@@ -85,8 +88,19 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
 
   const actions = useMemo<MarketplaceActions>(
     () => ({
-      toggleFavorite: (productId) =>
-        saveFavorite(uid, productId, !favoritesRef.current.includes(productId)),
+      toggleFavorite: async (productId) => {
+        const favorite = !favoritesRef.current.includes(productId);
+        await saveFavorite(uid, productId, favorite);
+        // Se avisa a quien publicó; de una publicación que ya no está en el inicio no se sabe quién es
+        const product = productsRef.current.find((item) => item.id === productId);
+        if (favorite && product) {
+          notify(product.ownerId, {
+            type: "favorito",
+            productId,
+            productName: product.name,
+          });
+        }
+      },
       rateProduct: (productId, rating) => saveRating(uid, productId, rating),
       reportProduct: (productId) => saveReport(uid, productId),
       setQuery: (query) => dispatchFilters({ type: "queryChanged", query }),
@@ -96,7 +110,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       clearFilters: () => dispatchFilters({ type: "filtersCleared" }),
       reload,
     }),
-    [uid, favoritesRef, reload],
+    [uid, favoritesRef, productsRef, notify, reload],
   );
 
   return (

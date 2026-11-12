@@ -265,23 +265,24 @@ export default function RuedaOrbitalImagenes({
         .enabled(draggable)
         .onBegin((e) => {
           "worklet";
-          dragging.value = true;
-          velocity.value = 0;
-          lastTouchAngle.value =
-            (Math.atan2(e.x - center, -(e.y - center)) * 180) / Math.PI;
+          dragging.set(true);
+          velocity.set(0);
+          lastTouchAngle.set(
+            (Math.atan2(e.x - center, -(e.y - center)) * 180) / Math.PI,
+          );
         })
         .onUpdate((e) => {
           "worklet";
           const actual =
             (Math.atan2(e.x - center, -(e.y - center)) * 180) / Math.PI;
-          let delta = actual - lastTouchAngle.value;
+          let delta = actual - lastTouchAngle.get();
           if (delta > 180) delta -= 360;
           if (delta < -180) delta += 360;
-          lastTouchAngle.value = actual;
+          lastTouchAngle.set(actual);
 
-          let next = (rotation.value + delta) % 360;
+          let next = (rotation.get() + delta) % 360;
           if (next < 0) next += 360;
-          rotation.value = next;
+          rotation.set(next);
         })
         .onEnd((e) => {
           "worklet";
@@ -290,16 +291,16 @@ export default function RuedaOrbitalImagenes({
           const ry = e.y - center;
           const r2 = rx * rx + ry * ry;
           if (r2 < 400) {
-            velocity.value = 0;
+            velocity.set(0);
             return;
           }
           const w =
             ((rx * e.velocityY - ry * e.velocityX) / r2) * (180 / Math.PI);
-          velocity.value = Math.max(-MAX_VELOCIDAD, Math.min(MAX_VELOCIDAD, w));
+          velocity.set(Math.max(-MAX_VELOCIDAD, Math.min(MAX_VELOCIDAD, w)));
         })
         .onFinalize(() => {
           "worklet";
-          dragging.value = false;
+          dragging.set(false);
         }),
     [center, draggable, dragging, lastTouchAngle, rotation, velocity],
   );

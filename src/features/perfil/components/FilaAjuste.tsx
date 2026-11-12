@@ -59,8 +59,8 @@ const styles = StyleSheet.create({
     minHeight: 55,
     borderRadius: 17,
     paddingHorizontal: 15,
-    gap: 11,
+    gap: 13.5,
   },
   rowIcon: { width: 20, alignItems: "center", justifyContent: "center" },
-  rowLabel: { flex: 1, fontSize: 13.5, fontWeight: "500" },
+  rowLabel: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
 });

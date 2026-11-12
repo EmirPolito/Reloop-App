@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useProfile } from "@/features/perfil/ProfileProvider";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { addComment, subscribeComments } from "../productRepository";
-import type { ProductComment } from "../types";
+import type { Product, ProductComment } from "../types";
 import type { FeedStatus } from "./useMarketplaceData";
 
 const NO_COMMENTS: ProductComment[] = [];
@@ -15,11 +16,20 @@ interface Thread {
   status: FeedStatus;
 }
 
-/** Comentarios de una publicación en tiempo real, y la acción de escribir uno nuevo. */
-export function useProductComments(productId: string) {
+/**
+ * Comentarios de una publicación en tiempo real, y la acción de escribir uno nuevo.
+ * Con `product` (cuando ya cargó) se avisa a quien publicó de cada comentario.
+ */
+export function useProductComments(
+  productId: string,
+  product: Pick<Product, "ownerId" | "name"> | null = null,
+) {
   const { uid } = useSessionUser();
   const { profile } = useProfile();
   const [thread, setThread] = useState<Thread | null>(null);
+  const notify = useNotify();
+  const ownerId = product?.ownerId;
+  const productName = product?.name;
 
   useEffect(
     () =>
@@ -35,9 +45,13 @@ export function useProductComments(productId: string) {
   );
 
   const send = useCallback(
-    (text: string) =>
-      addComment(productId, { authorId: uid, author: profile.name, text }),
-    [productId, uid, profile.name],
+    async (text: string) => {
+      await addComment(productId, { authorId: uid, author: profile.name, text });
+      if (ownerId && productName) {
+        notify(ownerId, { type: "comentario", productId, productName, text });
+      }
+    },
+    [productId, uid, profile.name, ownerId, productName, notify],
   );
 
   // Si la publicación cambia, lo guardado es de la anterior y se ignora hasta que llegue lo nuevo

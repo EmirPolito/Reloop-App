@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { showErrorAlert } from "@/utils/alerts";
@@ -18,6 +19,7 @@ export function useFollowers(userId: string) {
   const { uid } = useSessionUser();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [pending, setPending] = useState(false);
+  const notify = useNotify();
 
   useEffect(
     () =>
@@ -41,7 +43,12 @@ export function useFollowers(userId: string) {
     if (pending || userId === uid) return;
     setPending(true);
     try {
-      await (isFollowing ? unfollow(userId, uid) : follow(userId, uid));
+      if (isFollowing) {
+        await unfollow(userId, uid);
+      } else {
+        await follow(userId, uid);
+        notify(userId, { type: "seguidor" });
+      }
     } catch (error) {
       showErrorAlert(
         isFollowing ? "No se pudo dejar de seguir" : "No se pudo seguir",
@@ -50,7 +57,7 @@ export function useFollowers(userId: string) {
     } finally {
       setPending(false);
     }
-  }, [pending, userId, uid, isFollowing]);
+  }, [pending, userId, uid, isFollowing, notify]);
 
   return {
     followersCount: followerIds.length,

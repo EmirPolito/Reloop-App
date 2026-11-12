@@ -41,7 +41,7 @@ export function DetailScreen({ productId }: { productId: string }) {
   const openChat = useOpenChat();
   const reportProduct = useReportProduct();
   const { product, loading } = useProduct(productId);
-  const { comments, addComment } = useProductComments(productId);
+  const { comments, addComment } = useProductComments(productId, product);
   const [commentDraft, setCommentDraft] = useDraft(`comment:${productId}`);
 
   if (!product) {

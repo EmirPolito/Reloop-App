@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -7,10 +6,10 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
-import { getInitials } from "@/utils/text";
-import { BrilloAvatar } from "../components/BrilloAvatar";
+import type { DatosPerfil } from "../Perfiltemas";
 import { AjustarFoto } from "./AjustarFoto";
 import { CamaraCircular, type FotoTomada } from "./CamaraCircular";
+import { CarruselAvatares, indiceDeAvatar } from "./CarruselAvatares";
 import { DURACION_EDITAR, INTER, coloresEditar } from "./editarTema";
 import { SheetEditar } from "./SheetEditar";
 
@@ -22,10 +21,14 @@ const TITULOS: Record<Paso, string> = {
   ajustar: "Ajustar foto",
 };
 
-/** Cambiar avatar: elegir cómo (Tomar / Elegir), la cámara y el ajuste, en un solo drawer */
+/**
+ * Cambiar avatar: un carrusel con los avatares orbe, elegir una foto (Tomar / Elegir), la
+ * cámara y el ajuste, en un solo drawer
+ */
 export function SheetAvatar({
   visible,
   photo,
+  orb,
   name,
   isDark,
   onClose,
@@ -33,17 +36,22 @@ export function SheetAvatar({
 }: {
   visible: boolean;
   photo: string | null;
+  orb: number | null;
   name: string;
   isDark: boolean;
   onClose: () => void;
-  /** Recibe la foto ya recortada; si lanza error, el drawer se queda abierto */
-  onGuardar: (uri: string) => Promise<void>;
+  /** Recibe la foto ya recortada o el orbe elegido; si lanza error, el drawer se queda abierto */
+  onGuardar: (cambios: Pick<DatosPerfil, "photo" | "orb">) => Promise<void>;
 }) {
   const c = coloresEditar(isDark);
   const { pickImageWithSize, isPicking } = useImagePicker();
   const [paso, setPaso] = useState<Paso>("inicio");
   const [origen, setOrigen] = useState<"camara" | "galeria">("camara");
   const [foto, setFoto] = useState<FotoTomada | null>(null);
+  // Posición del carrusel: 0 es la foto actual (o las iniciales) y de 1 a 10 son los orbes
+  const guardado = indiceDeAvatar(photo, orb);
+  const [centrado, setCentrado] = useState(guardado);
+  const [guardando, setGuardando] = useState(false);
 
   // Cada vez que se abre empieza desde el principio (ajuste de estado durante el render)
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
@@ -52,6 +60,7 @@ export function SheetAvatar({
     if (visible) {
       setPaso("inicio");
       setFoto(null);
+      setCentrado(guardado);
     }
   }
 
@@ -62,12 +71,31 @@ export function SheetAvatar({
     if (!elegida) return;
     setOrigen("galeria");
     setFoto(elegida);
+    setCentrado(guardado);
     setPaso("ajustar");
   };
 
   const tomar = () => {
     setOrigen("camara");
+    setCentrado(guardado);
     setPaso("camara");
+  };
+
+  // Elegir un orbe quita la foto; volver a la posición 0 sin foto deja solo las iniciales
+  const usarAvatar = async () => {
+    if (guardando) return;
+    setGuardando(true);
+    try {
+      await onGuardar({
+        photo: centrado === 0 ? photo : null,
+        orb: centrado === 0 ? null : centrado - 1,
+      });
+      onClose();
+    } catch {
+      // El aviso ya lo mostró quien guarda; el drawer sigue abierto para reintentar
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const volver =
@@ -94,23 +122,15 @@ export function SheetAvatar({
       >
         {paso === "inicio" ? (
           <View style={styles.inicio}>
-            <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
-              {photo ? (
-                <>
-                  <Image
-                    source={{ uri: photo }}
-                    contentFit="cover"
-                    transition={200}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <BrilloAvatar id="sheet-avatar" />
-                </>
-              ) : (
-                <Text style={[INTER.medium, { fontSize: 40, color: c.texto }]}>
-                  {getInitials(name)}
-                </Text>
-              )}
-            </View>
+            <CarruselAvatares
+              photo={photo}
+              name={name}
+              isDark={isDark}
+              // Al reabrir el drawer el carrusel vuelve al avatar guardado
+              key={visible ? "abierto" : "cerrado"}
+              inicial={guardado}
+              onCambio={setCentrado}
+            />
 
             <View style={styles.opciones}>
               <Opcion
@@ -127,6 +147,36 @@ export function SheetAvatar({
                 onPress={() => void elegir()}
               />
             </View>
+
+            {centrado !== guardado ? (
+              <Animated.View
+                entering={FadeIn.duration(DURACION_EDITAR)}
+                exiting={FadeOut.duration(120)}
+                style={styles.confirmar}
+              >
+                <PressableSuave
+                  accessibilityRole="button"
+                  accessibilityLabel="Usar este avatar"
+                  accessibilityState={{ disabled: guardando, busy: guardando }}
+                  disabled={guardando}
+                  onPress={() => void usarAvatar()}
+                  style={[
+                    styles.confirmarBoton,
+                    { backgroundColor: c.texto },
+                    guardando && { opacity: 0.6 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      INTER.medium,
+                      { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+                    ]}
+                  >
+                    {guardando ? "Guardando…" : "Usar este avatar"}
+                  </Text>
+                </PressableSuave>
+              </Animated.View>
+            ) : null}
           </View>
         ) : null}
 
@@ -153,7 +203,7 @@ export function SheetAvatar({
                 : () => void elegir()
             }
             onGuardar={async (uri) => {
-              await onGuardar(uri);
+              await onGuardar({ photo: uri, orb });
               onClose();
             }}
           />
@@ -197,12 +247,11 @@ function Opcion({
 }
 
 const styles = StyleSheet.create({
-  inicio: { alignItems: "center", gap: 26, paddingTop: 9 },
-  avatar: {
-    width: 133,
-    height: 133,
-    borderRadius: 75,
-    overflow: "hidden",
+  inicio: { alignItems: "center", gap: 22, paddingTop: 9 },
+  confirmar: { alignSelf: "stretch", paddingHorizontal: 17, marginTop: -7 },
+  confirmarBoton: {
+    height: 50,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },

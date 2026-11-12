@@ -73,19 +73,19 @@ export function subscribeMessages(
 /**
  * Crea el chat con la otra persona (o reutiliza el existente). Si viene un producto y
  * aún no se le había escrito sobre él, envía el mensaje de interés y lo deja como
- * contexto del chat. Devuelve el id del chat.
+ * contexto del chat. Devuelve el id del chat y, si se envió, el mensaje de interés.
  */
 export async function openChat(input: {
   me: ChatParty;
   other: ChatParty;
   product: Pick<Product, "id" | "name"> | null;
-}): Promise<string> {
+}): Promise<{ chatId: string; intro: string | null }> {
   const { me, other, product } = input;
   const id = chatIdFor(me.id, other.id);
   const chatRef = doc(db, CHATS, id);
   const [firstId, secondId] = [me.id, other.id].sort();
 
-  await runTransaction(db, async (transaction) => {
+  const sentIntro = await runTransaction(db, async (transaction) => {
     const existing = await transaction.get(chatRef);
     const now = serverTimestamp();
     const intro = product ? introMessageFor(product) : null;
@@ -108,12 +108,12 @@ export async function openChat(input: {
       if (intro) {
         transaction.set(introRef, { from: me.id, text: intro, images: [], creadoEn: now });
       }
-      return;
+      return intro;
     }
 
     const introduced: unknown = existing.data().introducedProducts;
     const alreadyIntroduced = Array.isArray(introduced) && product && introduced.includes(product.id);
-    if (!product || !intro || alreadyIntroduced) return;
+    if (!product || !intro || alreadyIntroduced) return null;
 
     transaction.update(chatRef, {
       productId: product.id,
@@ -123,9 +123,10 @@ export async function openChat(input: {
       actualizadoEn: now,
     });
     transaction.set(introRef, { from: me.id, text: intro, images: [], creadoEn: now });
+    return intro;
   });
 
-  return id;
+  return { chatId: id, intro: sentIntro };
 }
 
 export async function sendMessage(

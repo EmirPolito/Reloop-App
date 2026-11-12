@@ -18,7 +18,7 @@ service cloud.firestore {
     // puede crearlos y editarlos. El correo no se guarda aquí (lo ve cualquiera con sesión):
     // vive en Authentication y, en privado, en `cuentas/{uid}`.
     function validProfile(d) {
-      return d.keys().hasOnly(['uid', 'nombre', 'fotoUrl', 'fondoUrl', 'descripcion', 'color',
+      return d.keys().hasOnly(['uid', 'nombre', 'fotoUrl', 'orbe', 'fondoUrl', 'descripcion', 'color',
                                'etiquetas', 'stickers', 'creadoEn', 'actualizadoEn'])
         && d.nombre is string && d.nombre.size() > 0 && d.nombre.size() <= 30
         && d.descripcion is string && d.descripcion.size() <= 80
@@ -26,9 +26,29 @@ service cloud.firestore {
         && d.etiquetas is list && d.etiquetas.size() <= 4
         && d.stickers is list && d.stickers.size() <= 4
         && (d.fotoUrl == null || (d.fotoUrl is string && d.fotoUrl.matches('https://.*')))
+        // Avatar orbe predeterminado: índice de 0 a 9
+        && (!('orbe' in d) || (d.orbe is int && d.orbe >= 0 && d.orbe <= 9))
         && (!('fondoUrl' in d) || d.fondoUrl == null
               || (d.fondoUrl is string && d.fondoUrl.matches('https://.*')))
         && d.actualizadoEn == request.time;
+    }
+
+    function validNotification(uid, notifId, d) {
+      return d.keys().hasOnly(['tipo', 'actorId', 'actorNombre', 'actorFoto', 'actorOrbe', 'productId',
+                               'productName', 'chatId', 'texto', 'leida', 'creadoEn'])
+        && d.actorId == request.auth.uid
+        && uid != request.auth.uid
+        && d.actorNombre is string && d.actorNombre.size() > 0 && d.actorNombre.size() <= 30
+        && (d.actorFoto == null || (d.actorFoto is string && d.actorFoto.matches('https://.*')))
+        && (d.actorOrbe == null || (d.actorOrbe is int && d.actorOrbe >= 0 && d.actorOrbe <= 9))
+        && (!('productName' in d) || (d.productName is string && d.productName.size() <= 40))
+        && (!('texto' in d) || (d.texto is string && d.texto.size() <= 120))
+        && d.leida == false
+        && d.creadoEn == request.time
+        && ((d.tipo == 'seguidor' && notifId == 'seguidor_' + request.auth.uid)
+          || (d.tipo == 'mensaje' && d.chatId is string && notifId == 'mensaje_' + request.auth.uid)
+          || (d.tipo in ['favorito', 'comentario'] && d.productId is string
+                && notifId == d.tipo + '_' + request.auth.uid + '_' + d.productId));
     }
 
     match /usuarios/{uid} {
@@ -62,6 +82,21 @@ service cloud.firestore {
           && followerId != uid
           && request.resource.data.keys().hasOnly(['creadoEn'])
           && request.resource.data.creadoEn == request.time;
+      }
+
+      // Notificaciones: las escribe quien las provoca (seguir, guardar, comentar o escribir) y
+      // solo las lee su destinataria. El id es fijo por persona y motivo, así que nadie puede
+      // acumularle copias: repetir la acción renueva la misma notificación.
+      match /notificaciones/{notifId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if signedIn() && validNotification(uid, notifId, request.resource.data);
+        // La destinataria solo puede marcarla como leída; quien la envió puede renovarla
+        allow update: if (isOwner(uid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leida'])
+            && request.resource.data.leida == true)
+          || (signedIn()
+            && resource.data.actorId == request.auth.uid
+            && validNotification(uid, notifId, request.resource.data));
       }
 
       // Calificaciones propias (la nota que esta persona dio a cada producto)

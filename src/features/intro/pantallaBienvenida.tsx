@@ -1,7 +1,7 @@
 import RuedaOrbitalImagenes, {
   type ItemRuedaOrbital,
 } from "@/features/intro/imagenesGirando";
-import MarcoIphone, { VistaPreviaChat } from "@/features/intro/iphone";
+import { MarcoIphone, VistaPreviaChat } from "@/features/intro/iphone";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";

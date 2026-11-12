@@ -62,11 +62,11 @@ export function PantallaPerfil() {
   }, [signOut]);
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-  const rowBg = isDark ? "#273449" : "#ffffffff";
-  const mutedColor = isDark ? "#94A3B8" : "#9CA3AF";
+  const rowBg = isDark ? "#1b1b1b0e" : "#ffffffff";
+  const mutedColor = isDark ? "#8b8b8bff" : "#9CA3AF";
   const switchTrack = {
-    false: isDark ? "#334155" : "#E5E7EB",
-    true: isDark ? "#38BDF8" : ACCION,
+    false: isDark ? "#828282ff" : "#E5E7EB",
+    true: isDark ? "#ffffff0e" : ACCION,
   };
 
   return (
@@ -84,6 +84,7 @@ export function PantallaPerfil() {
           avatar={
             <PerfilAvatar
               photo={profile.photo}
+              orb={profile.orb}
               color={profile.color}
               name={profile.name}
               placeholder="icono"
@@ -218,9 +219,9 @@ export function PantallaPerfil() {
 
           {/* ======================= CERRAR SESIÓN ======================= */}
           <TarjetaAccion
-            icon={<IconoLogin size={25} color="#ff000090" />}
+            icon={<IconoLogin size={25} color="#ff0202ff" />}
             label="Cerrar sesión"
-            labelColor="#ff000092"
+            labelColor="#ff2424ff"
             backgroundColor={fondoTarjeta}
             arrowColor={flecha}
             onPress={handleSignOut}
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     paddingHorizontal: 6,
-    fontSize: 13.5,
+    fontFamily: "Inter_400Regular",
     fontWeight: "500",
     marginBottom: 5,
   },

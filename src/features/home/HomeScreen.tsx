@@ -9,7 +9,6 @@ import {
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import { useProfile } from "@/features/perfil/ProfileProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { memo, useCallback, useMemo } from "react";
@@ -25,20 +24,17 @@ const STICKY_HEADER_INDICES = [2];
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
   const { styles } = useAppTheme();
-  const { profile } = useProfile();
   const { products, status, favorites, filters } = useMarketplaceState();
   const { setQuery, toggleCategory, clearCategory, reload } =
     useMarketplaceActions();
   const toggleFavorite = useToggleFavorite();
-  const { navigate, openProduct, openUserProfile } = useAppNavigation();
+  const { openProduct, openUserProfile } = useAppNavigation();
   const cardWidth = useProductCardWidth();
 
   const rows = useMemo(
     () => buildHomeFeedRows(filterProducts(products, filters), status),
     [products, filters, status],
   );
-  const openProfileTab = useCallback(() => navigate("profile"), [navigate]);
-
   const { query, category: activeCategory } = filters;
 
   const renderItem = useCallback(

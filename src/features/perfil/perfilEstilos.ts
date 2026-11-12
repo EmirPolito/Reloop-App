@@ -24,8 +24,8 @@ export function fondoPerfil(isDark: boolean) {
 /** Colores de las tarjetas según el tema (estadísticas, ajustes y acciones) */
 export function coloresTarjeta(isDark: boolean) {
   return {
-    fondoTarjeta: isDark ? "#1E293B" : "#fefefeff",
-    texto: isDark ? "#F1F5F9" : "#101010",
+    fondoTarjeta: isDark ? "#8d8d8d0e" : "#fefefeff",
+    texto: isDark ? "#f1f5f947" : "#101010",
     textoFila: isDark ? "#CBD5E1" : "#424242ff",
     flecha: isDark ? "#8391A7" : "#424242ff",
     suave: isDark ? "#94A3B8" : "#8a8a8aff",

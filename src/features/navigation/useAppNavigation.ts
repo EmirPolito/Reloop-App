@@ -19,7 +19,8 @@ export function useAppNavigation() {
       openUserProfile: (userId: string) =>
         router.push({ pathname: "/user/[id]", params: { id: userId } }),
       openEditProfile: () => router.push("/editar-perfil"),
-      openThread:(chatId: string) =>
+      openNotifications: () => router.push("/notificaciones"),
+      openThread: (chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */
       back: () => (router.canGoBack() ? router.back() : router.replace("/")),

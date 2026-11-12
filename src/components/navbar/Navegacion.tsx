@@ -1,33 +1,43 @@
+import { PressableScale } from "@/components/PressableScale";
 import { PressableSuave } from "@/components/PressableSuave";
 import { NavigationIcon } from "@/components/iconos";
 import type { Tab } from "@/features/navigation/routes";
+import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import {
   IconoAnuncios,
+  IconoCampana,
   IconoPublicaciones,
 } from "@/features/perfil/Perfiliconos";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { BlurView } from "expo-blur";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from "react-native";
 import Animated, {
   Easing,
-  Extrapolation,
-  Keyframe,
-  type SharedValue,
-  interpolate,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scheduleOnRN } from "react-native-worklets";
 
 export interface NavegacionProps {
   activeTab: Tab;
   onNavigate: (tab: Tab) => void;
+  onOpenNotifications: () => void;
   isDark?: boolean;
   hasUnreadChats?: boolean;
+  unreadNotifications?: number;
 }
 
 interface NavTabItem {
@@ -43,166 +53,28 @@ const NAV_TABS: NavTabItem[] = [
   { id: "profile", label: "Perfil", icon: "person" },
 ];
 
+/** Lugares de la cápsula: las pestañas y la campana */
+const HUECOS = NAV_TABS.length + 1;
+
+/** Hueco que ocupa la campana: entre Chats y Perfil */
+const HUECO_CAMPANA = 3;
+
+/** Hueco de la cápsula en el que va cada pestaña (las que van tras la campana se corren uno) */
+const huecoDeTab = (indice: number) =>
+  indice >= HUECO_CAMPANA ? indice + 1 : indice;
+
+const ALTO_CAPSULA = 62;
+/** Espacio entre el borde de la cápsula y el indicador */
+const MARGEN_CAPSULA = 5;
+const TAMANO_ICONO = 23;
+
 /* -------------------------------------------------------------------------- */
 /*  Animaciones (todo corre en el hilo de UI con Reanimated)                  */
 /* -------------------------------------------------------------------------- */
 
-const FLEX_NORMAL = 1;
-const FLEX_SELECTED = 1.42;
-const FLEX_FAV_SELECTED = 1.62;
-const FLEX_EASING = Easing.out(Easing.cubic);
-const FLEX_DUR = 200;
-
-/** El texto entra y sale ágilmente sin demoras artificiales */
-const LABEL_ENTERING = new Keyframe({
-  0: { opacity: 0, transform: [{ translateX: 4 }] },
-  100: {
-    opacity: 1,
-    transform: [{ translateX: 0 }],
-    easing: Easing.out(Easing.cubic),
-  },
-}).duration(160);
-
-const LABEL_EXITING = new Keyframe({
-  0: { opacity: 1, transform: [{ translateX: 0 }] },
-  100: {
-    opacity: 0,
-    transform: [{ translateX: 4 }],
-    easing: Easing.in(Easing.quad),
-  },
-}).duration(90);
-
-const TabButton = React.memo(function TabButton({
-  tab,
-  selected,
-  isDark,
-  showChatBadge,
-  onPress,
-  styles,
-}: {
-  tab: NavTabItem;
-  selected: boolean;
-  isDark: boolean;
-  showChatBadge: boolean;
-  onPress: (tab: Tab) => void;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  const isFavorite = tab.id === "favorites";
-  const extraFlex =
-    (isFavorite ? FLEX_FAV_SELECTED : FLEX_SELECTED) - FLEX_NORMAL;
-
-  // Un único valor compartido (0 → 1) mueve todo: ancho, pill e iconos
-  const progress = useSharedValue(selected ? 1 : 0);
-
-  useEffect(() => {
-    progress.value = withTiming(selected ? 1 : 0, {
-      duration: FLEX_DUR,
-      easing: FLEX_EASING,
-    });
-  }, [selected, progress]);
-
-  const wrapperStyle = useAnimatedStyle(() => ({
-    flex: FLEX_NORMAL + extraFlex * progress.value,
-  }));
-
-  const pillStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      progress.value,
-      [0, 0.83],
-      [0, 1],
-      Extrapolation.CLAMP,
-    ),
-  }));
-
-  const iconSelectedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      progress.value,
-      [0, 0.67],
-      [0, 1],
-      Extrapolation.CLAMP,
-    ),
-  }));
-
-  const iconUnselectedStyle = useAnimatedStyle(() => ({
-    opacity:
-      1 - interpolate(progress.value, [0, 0.67], [0, 1], Extrapolation.CLAMP),
-  }));
-
-  const iconWrapStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: isFavorite ? 1.5 * progress.value : 0 }],
-  }));
-
-  const selectedIconColor = isDark ? "#FFFFFF" : "#1a1a1aff";
-  const unselectedIconColor = isDark ? "#8A8994" : "#9a9a9aff";
-
-  return (
-    <Animated.View style={[styles.tabButtonWrapper, wrapperStyle]}>
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityState={{ selected }}
-        accessibilityLabel={tab.label}
-        onPress={() => onPress(tab.id)}
-        style={styles.tabButton}
-      >
-        <Animated.View
-          style={[styles.tabButtonPill, pillStyle]}
-          pointerEvents="none"
-        />
-
-        <View style={styles.tabContent}>
-          <Animated.View style={[styles.tabIconWrap, iconWrapStyle]}>
-            <Animated.View
-              style={[
-                StyleSheet.absoluteFill,
-                styles.iconCenter,
-                iconUnselectedStyle,
-              ]}
-              pointerEvents="none"
-            >
-              <NavigationIcon
-                name={tab.icon}
-                selected={false}
-                size={21}
-                color={unselectedIconColor}
-              />
-            </Animated.View>
-            <Animated.View
-              style={[
-                StyleSheet.absoluteFill,
-                styles.iconCenter,
-                iconSelectedStyle,
-              ]}
-              pointerEvents="none"
-            >
-              <NavigationIcon
-                name={tab.icon}
-                selected={true}
-                size={21}
-                color={selectedIconColor}
-              />
-            </Animated.View>
-            {tab.id === "chats" && showChatBadge && (
-              <View style={styles.tabBadge} />
-            )}
-          </Animated.View>
-
-          {selected && (
-            <Animated.View
-              // En web Reanimated deja el contenedor en position:absolute tras animarlo y el icono pisa el texto
-              entering={Platform.OS === "web" ? undefined : LABEL_ENTERING}
-              exiting={Platform.OS === "web" ? undefined : LABEL_EXITING}
-              style={styles.textContainer}
-            >
-              <Text numberOfLines={1} style={styles.tabLabelSelected}>
-                {tab.label}
-              </Text>
-            </Animated.View>
-          )}
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-});
+/** El indicador arranca rápido y frena suave, sin rebote */
+const DESLIZAR = { duration: 280, easing: Easing.bezier(0.23, 1, 0.32, 1) };
+const APARECER = { duration: 160, easing: Easing.out(Easing.cubic) };
 
 /** Menú de crear: abre rápido y frena suave; cierra más corto */
 const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.23, 1, 0.32, 1) };
@@ -215,50 +87,170 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
 const COLOR_ICONO_PUBLICACION = "#ff3762";
 
-const CreateButton = React.memo(function CreateButton({
+type Estilos = ReturnType<typeof createStyles>;
+
+/**
+ * Fondo de cristal de la cápsula y del botón de crear. En iOS y web desenfoca lo que hay
+ * detrás; en Android el desenfoque no está activo en la app y lo suple un tinte más opaco,
+ * con el mismo borde y la misma sombra.
+ */
+function Cristal({ isDark, styles }: { isDark: boolean; styles: Estilos }) {
+  return (
+    <>
+      {Platform.OS !== "android" && (
+        <BlurView
+          intensity={40}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <View style={[StyleSheet.absoluteFill, styles.cristalTinte]} />
+    </>
+  );
+}
+
+/**
+ * Pestaña de la cápsula: solo el icono. El icono activo y el inactivo se funden según lo
+ * cerca que esté el indicador, así el cambio acompaña al deslizamiento sin estado propio.
+ */
+function TabButton({
+  tab,
+  indice,
+  selected,
+  posicion,
+  indicadorVisible,
+  showBadge,
+  isDark,
+  onPress,
+  styles,
+}: {
+  tab: NavTabItem;
+  indice: number;
+  selected: boolean;
+  posicion: SharedValue<number>;
+  indicadorVisible: SharedValue<number>;
+  showBadge: boolean;
+  isDark: boolean;
+  onPress: (tab: Tab) => void;
+  styles: Estilos;
+}) {
+  const iconSelectedStyle = useAnimatedStyle(() => ({
+    opacity:
+      Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
+      indicadorVisible.get(),
+  }));
+  const iconUnselectedStyle = useAnimatedStyle(() => ({
+    opacity:
+      1 -
+      Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
+        indicadorVisible.get(),
+  }));
+
+  return (
+    <PressableScale
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+      accessibilityLabel={tab.label}
+      onPress={() => onPress(tab.id)}
+      scaleTo={0.88}
+      style={styles.hueco}
+    >
+      <View style={styles.icono}>
+        <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
+          <NavigationIcon
+            name={tab.icon}
+            selected={false}
+            size={TAMANO_ICONO}
+            color={isDark ? "#A1A1AA" : "#404040ff"}
+          />
+        </Animated.View>
+        <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
+          <NavigationIcon
+            name={tab.icon}
+            selected
+            size={TAMANO_ICONO}
+            color={isDark ? "#FFFFFF" : "#1A1A1A"}
+          />
+        </Animated.View>
+        {showBadge ? <View style={styles.punto} /> : null}
+      </View>
+    </PressableScale>
+  );
+}
+
+/** Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer */
+function BellButton({
+  unread,
+  isDark,
+  onPress,
+  styles,
+}: {
+  unread: number;
+  isDark: boolean;
+  onPress: () => void;
+  styles: Estilos;
+}) {
+  const color = isDark ? "#A1A1AA" : "#5F6066";
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={
+        unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"
+      }
+      onPress={onPress}
+      scaleTo={0.88}
+      style={styles.hueco}
+    >
+      <View style={styles.icono}>
+        <IconoCampana
+          size={TAMANO_ICONO + 1}
+          color={`${color}66`}
+          secondaryColor={color}
+        />
+        {unread > 0 ? (
+          <View style={styles.contador}>
+            <Text style={styles.contadorTexto}>{unreadBadgeLabel(unread)}</Text>
+          </View>
+        ) : null}
+      </View>
+    </PressableScale>
+  );
+}
+
+/** Botón circular de la acción principal, con el mismo cristal que la cápsula */
+function CreateButton({
   onPress,
   label,
+  isDark,
   styles,
 }: {
   onPress: () => void;
   label: string;
-  styles: ReturnType<typeof createStyles>;
+  isDark: boolean;
+  styles: Estilos;
 }) {
-  const pressScale = useSharedValue(1);
-
-  const scaleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
   return (
-    <Animated.View style={[styles.createWrap, scaleStyle]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        onPressIn={() => {
-          pressScale.set(withTiming(1, { duration: 60 }));
-        }}
-        onPressOut={() => {
-          pressScale.set(withTiming(1, { duration: 100 }));
-        }}
-        onPress={onPress}
-      >
-        <View
-          className="bg-gradient-to-br from-black/95 to-black/85 h-[54px] w-[54px] items-center justify-center rounded-full border border-white/30"
-          style={{
-            shadowColor: "#2a2a2aff",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 4,
-          }}
-        >
-          <NavigationIcon name="add" size={25} color="#FFFFFF" />
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      scaleTo={0.92}
+      style={styles.sombra}
+    >
+      <View style={styles.crear}>
+        <Cristal isDark={isDark} styles={styles} />
+        {/* En su propia vista: en web, un SVG suelto quedaría debajo del tinte del cristal */}
+        <View>
+          <NavigationIcon
+            name="add"
+            size={26}
+            color={isDark ? "#FFFFFF" : "#1A1A1A"}
+          />
         </View>
-      </Pressable>
-    </Animated.View>
+      </View>
+    </PressableScale>
   );
-});
+}
 
 /** Opciones que salen del botón de crear, sobre el contenido difuminado */
 function MenuCrear({
@@ -276,7 +268,7 @@ function MenuCrear({
   onClose: () => void;
   onAnuncio: () => void;
   onPublicacion: () => void;
-  styles: ReturnType<typeof createStyles>;
+  styles: Estilos;
 }) {
   const blurProps = useAnimatedProps(() => ({
     intensity: MENU_BLUR * menu.value,
@@ -334,11 +326,20 @@ function MenuCrear({
 
       {/* El botón sigue a la vista, encima del velo, y cierra el menú */}
       <View style={[styles.menuBoton, { bottom }]}>
-        <CreateButton onPress={onClose} label="Cerrar" styles={styles} />
+        <CreateButton
+          onPress={onClose}
+          label="Cerrar"
+          isDark={isDark}
+          styles={styles}
+        />
       </View>
 
       <Animated.View
-        style={[styles.menuCrear, { bottom: bottom + 64 }, opcionesStyle]}
+        style={[
+          styles.menuCrear,
+          { bottom: bottom + ALTO_CAPSULA + 10 },
+          opcionesStyle,
+        ]}
       >
         {opciones.map(({ label, Icono, color, onPress }) => (
           <PressableSuave
@@ -362,66 +363,115 @@ function MenuCrear({
 /*  Navegación                                                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Barra de navegación flotante: una cápsula de cristal con los iconos de las pestañas y la
+ * campana, y a su derecha el botón circular de crear. Un indicador se desliza detrás del
+ * icono de la pestaña activa.
+ */
 export function Navegacion({
   activeTab,
   onNavigate,
+  onOpenNotifications,
   isDark = false,
   hasUnreadChats = false,
+  unreadNotifications = 0,
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
-  const showChatBadge = hasUnreadChats;
   const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 12);
 
-  const handleTabPress = useCallback(
-    (tabId: Tab) => {
-      if (tabId === activeTab) return;
-      onNavigate(tabId);
-    },
-    [activeTab, onNavigate],
-  );
+  // -1 en "create": no es un icono de la cápsula, así que el indicador se oculta
+  const indiceTab = NAV_TABS.findIndex((tab) => tab.id === activeTab);
+  const huecoActivo = indiceTab >= 0 ? huecoDeTab(indiceTab) : -1;
+  const posicion = useSharedValue(Math.max(huecoActivo, 0));
+  const indicadorVisible = useSharedValue(huecoActivo >= 0 ? 1 : 0);
+  const anchoHueco = useSharedValue(0);
+
+  // Con "Reducir movimiento", Reanimated lleva el indicador a su sitio sin animar
+  useEffect(() => {
+    if (huecoActivo >= 0) posicion.set(withTiming(huecoActivo, DESLIZAR));
+    indicadorVisible.set(withTiming(huecoActivo >= 0 ? 1 : 0, APARECER));
+  }, [huecoActivo, posicion, indicadorVisible]);
+
+  const medirCapsula = (e: LayoutChangeEvent) => {
+    anchoHueco.set((e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / HUECOS);
+  };
+
+  const indicadorStyle = useAnimatedStyle(() => ({
+    width: anchoHueco.get(),
+    opacity: anchoHueco.get() > 0 ? indicadorVisible.get() : 0,
+    transform: [{ translateX: posicion.get() * anchoHueco.get() }],
+  }));
+
+  const handleTabPress = (tabId: Tab) => {
+    if (tabId !== activeTab) onNavigate(tabId);
+  };
 
   const [menuVisible, setMenuVisible] = useState(false);
   const menu = useSharedValue(0);
 
-  const abrirMenu = useCallback(() => {
+  const abrirMenu = () => {
     setMenuVisible(true);
     menu.set(withTiming(1, MENU_ABRIR));
-  }, [menu]);
+  };
 
   // El modal se desmonta cuando termina la animación de salida
-  const cerrarMenu = useCallback(() => {
-    menu.set(withTiming(0, MENU_CERRAR));
-    setTimeout(() => setMenuVisible(false), MENU_CERRAR.duration);
-  }, [menu]);
+  const cerrarMenu = () => {
+    menu.set(
+      withTiming(0, MENU_CERRAR, () => {
+        scheduleOnRN(setMenuVisible, false);
+      }),
+    );
+  };
 
-  const handleCrearPublicacion = useCallback(() => {
+  const handleCrearPublicacion = () => {
     cerrarMenu();
     onNavigate("create");
-  }, [cerrarMenu, onNavigate]);
+  };
 
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[styles.navigationRow, { bottom: bottomInset }]}
-    >
-      <View style={styles.navigation}>
-        {NAV_TABS.map((tab) => (
-          <TabButton
-            key={tab.id}
-            tab={tab}
-            selected={activeTab === tab.id}
-            isDark={isDark}
-            showChatBadge={showChatBadge}
-            onPress={handleTabPress}
-            styles={styles}
+    <View style={[styles.navigationRow, { bottom: bottomInset }]}>
+      <View style={[styles.sombra, styles.capsulaSombra]}>
+        <View
+          accessibilityRole="tablist"
+          onLayout={medirCapsula}
+          style={styles.capsula}
+        >
+          <Cristal isDark={isDark} styles={styles} />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.indicador, indicadorStyle]}
           />
-        ))}
+          {NAV_TABS.map((tab, indice) => (
+            <Fragment key={tab.id}>
+              {indice === HUECO_CAMPANA && (
+                <BellButton
+                  unread={unreadNotifications}
+                  isDark={isDark}
+                  onPress={onOpenNotifications}
+                  styles={styles}
+                />
+              )}
+              <TabButton
+                tab={tab}
+                indice={huecoDeTab(indice)}
+                selected={activeTab === tab.id}
+                posicion={posicion}
+                indicadorVisible={indicadorVisible}
+                showBadge={tab.id === "chats" && hasUnreadChats}
+                isDark={isDark}
+                onPress={handleTabPress}
+                styles={styles}
+              />
+            </Fragment>
+          ))}
+        </View>
       </View>
 
       <CreateButton
         onPress={abrirMenu}
         label="Publicar producto"
+        isDark={isDark}
         styles={styles}
       />
 
@@ -442,32 +492,35 @@ export function Navegacion({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Estilos (sin cambios)                                                     */
+/*  Estilos                                                                   */
 /* -------------------------------------------------------------------------- */
 
 function createStyles(isDark: boolean) {
+  const android = Platform.OS === "android";
   const colors = isDark
     ? {
-        glass: "rgba(30, 30, 34, 0.95)",
-        outerBorder: "rgba(255, 255, 255, 0.12)",
-        selectedPill: "rgba(255, 255, 255, 0.15)",
-        pillBorder: "rgba(255, 255, 255, 0.18)",
+        cristal: android ? "rgba(34, 34, 38, 0.96)" : "rgba(34, 34, 38, 0.62)",
+        borde: "rgba(255, 255, 255, 0.14)",
+        indicador: "rgba(255, 255, 255, 0.16)",
+        sombra: "0 8px 24px rgba(0, 0, 0, 0.35)",
+        sombraIndicador: "0 1px 4px rgba(0, 0, 0, 0.25)",
+        fondoContador: "#222226",
         text: "#FFFFFF",
-        velo:
-          Platform.OS === "android"
-            ? "rgba(16, 16, 18, 0.94)"
-            : "rgba(16, 16, 18, 0.8)",
+        velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.8)",
       }
     : {
-        glass: "rgba(241, 241, 241, 1)",
-        outerBorder: "#ffffff",
-        selectedPill: "#FFFFFF",
-        pillBorder: "#ffffffff",
+        cristal: android
+          ? "rgba(235, 235, 239, 0.96)"
+          : "rgba(235, 235, 239, 0.62)",
+        borde: "rgba(255, 255, 255, 0.9)",
+        indicador: "#FFFFFF",
+        sombra: "0 8px 24px rgba(0, 0, 0, 0.1)",
+        sombraIndicador: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        fondoContador: "#EBEBEF",
         text: "#101010",
-        velo:
-          Platform.OS === "android"
-            ? "rgba(255, 255, 255, 0.94)"
-            : "rgba(255, 255, 255, 0.8)",
+        velo: android
+          ? "rgba(255, 255, 255, 0.94)"
+          : "rgba(255, 255, 255, 0.8)",
       };
 
   return StyleSheet.create({
@@ -477,78 +530,96 @@ function createStyles(isDark: boolean) {
       right: 15,
       flexDirection: "row",
       alignItems: "center",
-      gap: 5,
-      backgroundColor: "transparent",
+      gap: 8,
       zIndex: 999,
     },
 
-    navigation: {
-      flex: 1,
-      height: 54,
+    /** La sombra va en una vista aparte: la cápsula recorta su contenido (overflow) */
+    sombra: {
+      borderRadius: ALTO_CAPSULA / 2,
+      boxShadow: colors.sombra,
+    },
+    capsulaSombra: { flex: 1 },
+
+    capsula: {
+      height: ALTO_CAPSULA,
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 4,
-      borderRadius: 30,
-      backgroundColor: colors.glass,
-      borderWidth: 2,
-      borderColor: colors.outerBorder,
-      elevation: 0.1,
-    },
-
-    tabButtonWrapper: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    tabButton: {
-      width: "99%",
-      height: 42.5,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 30,
-    },
-
-    tabButtonPill: {
-      ...StyleSheet.absoluteFill,
-      borderRadius: 30,
-      backgroundColor: colors.selectedPill,
+      paddingHorizontal: MARGEN_CAPSULA,
+      borderRadius: ALTO_CAPSULA / 2,
       borderWidth: 1,
-      borderColor: colors.pillBorder,
-    },
-
-    iconCenter: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    tabContent: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    tabIconWrap: {
-      width: 22,
-      height: 22,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    textContainer: {
-      marginLeft: 3,
-      justifyContent: "center",
+      borderColor: colors.borde,
       overflow: "hidden",
     },
 
-    tabLabelSelected: {
-      color: colors.text,
-      fontSize: 11,
-      fontWeight: "600",
+    cristalTinte: { backgroundColor: colors.cristal },
+
+    indicador: {
+      position: "absolute",
+      left: MARGEN_CAPSULA,
+      top: MARGEN_CAPSULA - 1,
+      bottom: MARGEN_CAPSULA - 1,
+      borderRadius: ALTO_CAPSULA / 2,
+      backgroundColor: colors.indicador,
+      boxShadow: colors.sombraIndicador,
     },
 
-    createWrap: {
+    hueco: {
+      flex: 1,
+      height: "100%",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    icono: {
+      width: TAMANO_ICONO + 3,
+      height: TAMANO_ICONO + 3,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    iconoCapa: {
+      ...StyleSheet.absoluteFill,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    punto: {
+      position: "absolute",
+      top: -1,
+      right: -2,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: "#FF3366",
+      borderWidth: 1,
+      borderColor: colors.fondoContador,
+    },
+
+    contador: {
+      position: "absolute",
+      top: -6,
+      right: -8,
+      minWidth: 17,
+      height: 17,
+      paddingHorizontal: 4,
+      borderRadius: 9,
+      backgroundColor: "#FF3366",
+      borderWidth: 1.5,
+      borderColor: colors.fondoContador,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    contadorTexto: { color: "#FFFFFF", fontSize: 9.5, fontWeight: "700" },
+
+    crear: {
+      width: ALTO_CAPSULA,
+      height: ALTO_CAPSULA,
+      borderRadius: ALTO_CAPSULA / 2,
+      borderWidth: 1,
+      borderColor: colors.borde,
+      overflow: "hidden",
       alignItems: "center",
       justifyContent: "center",
     },
@@ -566,7 +637,7 @@ function createStyles(isDark: boolean) {
     /** Alineado a la derecha, con los iconos sobre el eje del botón de crear */
     menuCrear: {
       position: "absolute",
-      right: 30,
+      right: 33,
       alignItems: "flex-end",
       transformOrigin: "right bottom",
     },
@@ -582,18 +653,6 @@ function createStyles(isDark: boolean) {
       color: colors.text,
       fontFamily: "Inter_600SemiBold",
       fontSize: 16,
-    },
-
-    tabBadge: {
-      position: "absolute",
-      top: -1,
-      right: -2,
-      width: 7,
-      height: 7,
-      borderRadius: 3.5,
-      backgroundColor: "#FF3366",
-      borderWidth: 1,
-      borderColor: colors.glass,
     },
   });
 }

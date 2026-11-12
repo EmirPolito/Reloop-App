@@ -90,6 +90,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
           avatar={
             <PerfilAvatar
               photo={profile.photo}
+              orb={profile.orb}
               color={profile.color}
               name={profile.name}
               placeholder="iniciales"

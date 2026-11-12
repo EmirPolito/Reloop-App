@@ -138,6 +138,10 @@ await expectOk("B lee el perfil de A", async () => { const s = await getDoc(doc(
 await expectOk("el perfil de A no contiene correo", async () => { const s = await getDoc(doc(B.db, "usuarios", A.uid)); if ("correo" in s.data()) throw new Error("hay correo"); });
 await expectOk("A guarda imagen de fondo https", () => saveProfile(A, profileDoc("Ana Pérez", { fondoUrl: "https://res.cloudinary.com/demo/image/upload/v1/f.png" })));
 await expectOk("A quita su imagen de fondo", () => saveProfile(A, profileDoc("Ana Pérez", { fondoUrl: null })));
+await expectOk("A elige un avatar orbe (0 a 9)", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: 9 })));
+await expectDenied("A guarda un avatar orbe fuera de rango", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: 10 })));
+await expectDenied("A guarda un avatar orbe que no es entero", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: "3" })));
+await expectOk("A quita su avatar orbe", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: deleteField() })));
 await expectDenied("A guarda imagen de fondo http (no https)", () => saveProfile(A, profileDoc("Ana", { fondoUrl: "http://x.com/f.png" })));
 
 // ── SEGUIDORES ──────────────────────────────────────────────────────────────
@@ -234,6 +238,42 @@ await expectDenied("B reporta a nombre de A", () => setDoc(doc(B.db, "reportes",
 await expectDenied("B reporta con id que no cuadra", () => setDoc(doc(B.db, "reportes", "cualquiera"), { productId: "p-dona", reporterId: B.uid, creadoEn: serverTimestamp() }));
 await expectDenied("B edita su reporte", () => updateDoc(doc(B.db, "reportes", `${B.uid}_p-venta`), { productId: "otro" }));
 await expectDenied("B borra su reporte", () => deleteDoc(doc(B.db, "reportes", `${B.uid}_p-venta`)));
+
+// ── NOTIFICACIONES ──────────────────────────────────────────────────────────
+// Como sendNotification: el id es fijo por persona y motivo, y la escribe quien la provoca.
+const notifRef = (to, by, id) => doc(by.db, "usuarios", to.uid, "notificaciones", id);
+const notif = (by, tipo, extra = {}) => ({ tipo, actorId: by.uid, actorNombre: by.label, actorFoto: null, actorOrbe: null, leida: false, creadoEn: serverTimestamp(), ...extra });
+const followNotif = `seguidor_${B.uid}`;
+await expectOk("B avisa a A de que la sigue", () => setDoc(notifRef(A, B, followNotif), notif(B, "seguidor")));
+await expectOk("B renueva el mismo aviso (volvió a seguir)", () => setDoc(notifRef(A, B, followNotif), notif(B, "seguidor", { actorOrbe: 3 })));
+await expectOk("B avisa de un favorito", () => setDoc(notifRef(A, B, `favorito_${B.uid}_p-venta`), notif(B, "favorito", { productId: "p-venta", productName: "Calculadora" })));
+await expectOk("B avisa de un comentario con extracto", () => setDoc(notifRef(A, B, `comentario_${B.uid}_p-venta`), notif(B, "comentario", { productId: "p-venta", productName: "Calculadora", texto: "Hola" })));
+await expectOk("B avisa de un mensaje", () => setDoc(notifRef(A, B, `mensaje_${B.uid}`), notif(B, "mensaje", { chatId: chatIdFor(A.uid, B.uid), texto: "Hola", actorFoto: "https://res.cloudinary.com/demo/image/upload/v1/b.png" })));
+await expectOk("A lee sus notificaciones", async () => { if ((await getDocs(collection(A.db, "usuarios", A.uid, "notificaciones"))).size !== 4) throw new Error("cantidad"); });
+await expectDenied("C lee las notificaciones de A", () => getDocs(collection(C.db, "usuarios", A.uid, "notificaciones")));
+await expectDenied("B lee la notificación que envió a A", () => getDoc(notifRef(A, B, followNotif)));
+await expectDenied("B se notifica a sí mismo", () => setDoc(notifRef(B, B, followNotif), notif(B, "seguidor")));
+await expectDenied("B notifica a nombre de C", () => setDoc(notifRef(A, B, `seguidor_${C.uid}`), notif(C, "seguidor")));
+await expectDenied("B usa un id libre (acumular copias)", () => setDoc(notifRef(A, B, "cualquiera"), notif(B, "seguidor")));
+await expectDenied("B usa un id de otro producto", () => setDoc(notifRef(A, B, `favorito_${B.uid}_p-dona`), notif(B, "favorito", { productId: "p-venta", productName: "Calculadora" })));
+await expectDenied("B envía un tipo desconocido", () => setDoc(notifRef(A, B, `oferta_${B.uid}`), notif(B, "oferta")));
+await expectDenied("B envía una ya leída", () => setDoc(notifRef(A, C, `seguidor_${C.uid}`), { ...notif(C, "seguidor"), leida: true }));
+await expectDenied("C envía un texto de 121 caracteres", () => setDoc(notifRef(A, C, `mensaje_${C.uid}`), notif(C, "mensaje", { chatId: "x", texto: "x".repeat(121) })));
+await expectDenied("C envía una foto http (no https)", () => setDoc(notifRef(A, C, `seguidor_${C.uid}`), notif(C, "seguidor", { actorFoto: "http://x.com/a.png" })));
+await expectDenied("C envía un campo extra", () => setDoc(notifRef(A, C, `seguidor_${C.uid}`), notif(C, "seguidor", { enlace: "https://x.com" })));
+await expectDenied("C pisa la notificación de B", () => setDoc(notifRef(A, C, followNotif), notif(C, "seguidor")));
+await expectOk("A marca una como leída", () => updateDoc(notifRef(A, A, followNotif), { leida: true }));
+await expectDenied("A cambia el texto de una notificación", () => updateDoc(notifRef(A, A, `mensaje_${B.uid}`), { texto: "otro" }));
+await expectDenied("A la vuelve a marcar como no leída", () => updateDoc(notifRef(A, A, followNotif), { leida: false }));
+await expectOk("A marca todas como leídas (lote)", async () => {
+  const b = writeBatch(A.db);
+  for (const id of [`favorito_${B.uid}_p-venta`, `comentario_${B.uid}_p-venta`, `mensaje_${B.uid}`]) b.update(notifRef(A, A, id), { leida: true });
+  await b.commit();
+});
+await expectOk("B renueva una notificación ya leída (vuelve a quedar sin leer)", () => setDoc(notifRef(A, B, `mensaje_${B.uid}`), notif(B, "mensaje", { chatId: chatIdFor(A.uid, B.uid), texto: "¿Sigue disponible?" })));
+await expectDenied("B marca como leída la notificación de A", () => updateDoc(notifRef(A, B, followNotif), { leida: true }));
+await expectOk("A borra una notificación", () => deleteDoc(notifRef(A, A, followNotif)));
+await expectDenied("B borra una notificación de A", () => deleteDoc(notifRef(A, B, `mensaje_${B.uid}`)));
 
 // ── CHATS ───────────────────────────────────────────────────────────────────
 const productInfo = { id: "p-venta", name: "Calculadora" };

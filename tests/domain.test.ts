@@ -32,6 +32,17 @@ import {
   gradienteHeader,
   TEMAS,
 } from "@/features/perfil/Perfiltemas";
+import { isOrb, ORBES } from "@/constants/orbes";
+import { mapNotification, toNotificationDocument } from "@/features/notificaciones/notificationMappers";
+import {
+  formatNotificationTime,
+  groupNotifications,
+  notificationIdFor,
+  notificationMessage,
+  notificationTarget,
+  unreadBadgeLabel,
+} from "@/features/notificaciones/notificationRules";
+import type { AppNotification } from "@/features/notificaciones/types";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
 import { parsePrice } from "@/utils/price";
 import { getInitials } from "@/utils/text";
@@ -141,18 +152,18 @@ describe("borrador de publicación", () => {
 
 describe("filas del inicio", () => {
   const two = [product({ id: "a" }), product({ id: "b" }), product({ id: "c" })];
-  it("cargando: categorías, banner y espera", () => {
-    assert.deepEqual(buildHomeFeedRows([], "loading").map((r) => r.type), ["categories", "banner", "loading"]);
+  it("cargando: banner, categorías, título y espera", () => {
+    assert.deepEqual(buildHomeFeedRows([], "loading").map((r) => r.type), ["banner", "categories", "sectionTitle", "loading"]);
   });
   it("sin publicaciones: vacío; con error: error", () => {
-    assert.deepEqual(buildHomeFeedRows([], "ready").map((r) => r.type), ["categories", "banner", "empty"]);
-    assert.deepEqual(buildHomeFeedRows([], "error").map((r) => r.type), ["categories", "banner", "error"]);
+    assert.deepEqual(buildHomeFeedRows([], "ready").map((r) => r.type), ["banner", "categories", "sectionTitle", "empty"]);
+    assert.deepEqual(buildHomeFeedRows([], "error").map((r) => r.type), ["banner", "categories", "sectionTitle", "error"]);
   });
   it("con publicaciones: de dos en dos, aunque haya habido un error después", () => {
     const rows = buildHomeFeedRows(two, "error");
-    assert.deepEqual(rows.map((r) => r.type), ["categories", "banner", "products", "products"]);
-    assert.deepEqual(homeRowKey(rows[2], 2), "products-a");
-    assert.equal(homeRowKey(rows[0], 0), "categories");
+    assert.deepEqual(rows.map((r) => r.type), ["banner", "categories", "sectionTitle", "products", "products"]);
+    assert.deepEqual(homeRowKey(rows[3], 3), "products-a");
+    assert.equal(homeRowKey(rows[1], 1), "categories");
   });
 });
 
@@ -258,7 +269,7 @@ describe("mapeo de chats", () => {
 describe("mapeo de perfiles", () => {
   it("el perfil por defecto usa el nombre (máx. 30)", () => {
     assert.equal(defaultProfile("x".repeat(40)).name.length, 30);
-    assert.deepEqual(defaultProfile("Ana"), { photo: null, cover: null, name: "Ana", description: "", color: "azul", pills: [], stickers: [] });
+    assert.deepEqual(defaultProfile("Ana"), { photo: null, orb: null, cover: null, name: "Ana", description: "", color: "azul", pills: [], stickers: [] });
   });
   it("valores seguros para campos que faltan o están mal", () => {
     const p = mapProfile({ nombre: "", color: "negro", etiquetas: [{ id: "1", text: "Mate", color: "rosa", icon: "work" }, { id: 2 }, "x"], stickers: ["sticker-1", 3] }, "Respaldo");
@@ -279,6 +290,13 @@ describe("mapeo de perfiles", () => {
     const doc = toProfileDocument({ ...defaultProfile("Ana"), pills: [{ id: "1", text: "Mate", color: "azul", icon: undefined }] });
     assert.deepEqual(doc.etiquetas, [{ id: "1", text: "Mate", color: "azul" }]);
     assert.equal("icon" in doc.etiquetas[0], false);
+  });
+  it("el avatar orbe se lee solo si es un índice válido y se escribe solo si existe", () => {
+    assert.equal(mapProfile({ orbe: 3 }, "Ana").orb, 3);
+    assert.equal(mapProfile({ orbe: 10 }, "Ana").orb, null);
+    assert.equal(mapProfile({ orbe: "3" }, "Ana").orb, null);
+    assert.equal(toProfileDocument({ ...defaultProfile("Ana"), orb: 9 }).orbe, 9);
+    assert.equal("orbe" in toProfileDocument(defaultProfile("Ana")), false);
   });
   it("detecta fichas antiguas (con correo o incompletas)", () => {
     const current = { ...toProfileDocument(defaultProfile("Ana")), uid: "a" };
@@ -334,5 +352,87 @@ describe("utilidades", () => {
     assert.equal(isValidEmail("a@b"), false);
     assert.match(validateCredentials("a@b.co", "123") ?? "", /al menos 6/);
     assert.equal(validateCredentials("a@b.co", "123456"), null);
+  });
+});
+
+describe("avatares orbe", () => {
+  it("hay 10 y solo sus índices son válidos", () => {
+    assert.equal(ORBES.length, 10);
+    assert.equal(isOrb(0), true);
+    assert.equal(isOrb(9), true);
+    assert.equal(isOrb(10), false);
+    assert.equal(isOrb(-1), false);
+    assert.equal(isOrb(1.5), false);
+    assert.equal(isOrb(null), false);
+  });
+});
+
+describe("notificaciones", () => {
+  const actor = { id: "b", name: "Beto", photo: null, orb: 2 };
+  const notification = (over: Partial<AppNotification> = {}): AppNotification => ({
+    id: "seguidor_b", type: "seguidor", actorId: "b", actorName: "Beto", actorPhoto: null,
+    actorOrb: null, read: false, createdAt: 0, ...over,
+  });
+
+  it("el id es fijo por persona y motivo", () => {
+    assert.equal(notificationIdFor("b", { type: "seguidor" }), "seguidor_b");
+    assert.equal(notificationIdFor("b", { type: "mensaje", chatId: "a_b", text: "Hola" }), "mensaje_b");
+    assert.equal(notificationIdFor("b", { type: "favorito", productId: "p1", productName: "Calculadora" }), "favorito_b_p1");
+    assert.equal(notificationIdFor("b", { type: "comentario", productId: "p1", productName: "Calculadora" }), "comentario_b_p1");
+  });
+  it("cada tipo lleva a su destino", () => {
+    assert.deepEqual(notificationTarget(notification()), { screen: "user", id: "b" });
+    assert.deepEqual(notificationTarget(notification({ type: "favorito", productId: "p1" })), { screen: "product", id: "p1" });
+    assert.deepEqual(notificationTarget(notification({ type: "comentario", productId: "p1" })), { screen: "product", id: "p1" });
+    assert.deepEqual(notificationTarget(notification({ type: "mensaje", chatId: "a_b" })), { screen: "chat", id: "a_b" });
+    assert.equal(notificationTarget(notification({ type: "mensaje" })), null);
+  });
+  it("el texto describe lo que pasó", () => {
+    assert.equal(notificationMessage(notification()), "empezó a seguirte");
+    assert.equal(notificationMessage(notification({ type: "favorito", productName: "Calculadora" })), 'guardó "Calculadora" en sus favoritos');
+    assert.equal(notificationMessage(notification({ type: "comentario", productName: "Calculadora", text: "¿Precio?" })), 'comentó en "Calculadora": ¿Precio?');
+    assert.equal(notificationMessage(notification({ type: "mensaje", text: "Hola" })), "Hola");
+    assert.equal(notificationMessage(notification({ type: "mensaje" })), "te envió un mensaje");
+  });
+  it("el contador muestra 9+ a partir de diez", () => {
+    assert.equal(unreadBadgeLabel(1), "1");
+    assert.equal(unreadBadgeLabel(9), "9");
+    assert.equal(unreadBadgeLabel(10), "9+");
+  });
+  it("agrupa por antigüedad y omite las secciones vacías", () => {
+    const now = new Date(2026, 10, 12, 15, 0).getTime();
+    const hour = 60 * 60 * 1000;
+    const sections = groupNotifications(
+      [
+        notification({ id: "hoy", createdAt: now - hour }),
+        notification({ id: "ayer", createdAt: now - 20 * hour }),
+        notification({ id: "vieja", createdAt: now - 30 * 24 * hour }),
+      ],
+      now,
+    );
+    assert.deepEqual(sections.map((s) => [s.title, s.data.map((n) => n.id)]), [["Hoy", ["hoy"]], ["Ayer", ["ayer"]], ["Anteriores", ["vieja"]]]);
+    assert.deepEqual(groupNotifications([], now), []);
+  });
+  it("antigüedad corta", () => {
+    const now = 1_000_000_000_000;
+    assert.equal(formatNotificationTime(now - 20_000, now), "ahora");
+    assert.equal(formatNotificationTime(now - 5 * 60_000, now), "5 min");
+    assert.equal(formatNotificationTime(now - 3 * 3_600_000, now), "3 h");
+    assert.equal(formatNotificationTime(now - 2 * 86_400_000, now), "2 d");
+  });
+  it("al enviar recorta el texto y solo guarda fotos https", () => {
+    const doc = toNotificationDocument({ ...actor, photo: "file:///a.jpg" }, { type: "mensaje", chatId: "a_b", text: "x".repeat(200) });
+    assert.equal(doc.texto?.length, 120);
+    assert.equal(doc.actorFoto, null);
+    assert.equal(doc.actorOrbe, 2);
+    assert.equal(doc.chatId, "a_b");
+    const follow = toNotificationDocument({ ...actor, photo: "https://res.cloudinary.com/demo/a.png" }, { type: "seguidor" });
+    assert.deepEqual(follow, { tipo: "seguidor", actorId: "b", actorNombre: "Beto", actorFoto: "https://res.cloudinary.com/demo/a.png", actorOrbe: 2 });
+  });
+  it("lee un documento y descarta los que no tienen la forma esperada", () => {
+    const n = mapNotification(snap("favorito_b_p1", { tipo: "favorito", actorId: "b", actorNombre: "Beto", actorFoto: null, actorOrbe: 12, productId: "p1", productName: "Calculadora", leida: false, creadoEn: ts(5000) }));
+    assert.deepEqual(n, { id: "favorito_b_p1", type: "favorito", actorId: "b", actorName: "Beto", actorPhoto: null, actorOrb: null, productId: "p1", productName: "Calculadora", read: false, createdAt: 5000 });
+    assert.equal(mapNotification(snap("x", { tipo: "oferta", actorId: "b" })), null);
+    assert.equal(mapNotification(snap("x", undefined)), null);
   });
 });

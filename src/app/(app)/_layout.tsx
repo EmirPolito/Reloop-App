@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
+import { NotificationBannerHost } from "@/features/notificaciones/components/NotificationBannerHost";
 import { SessionProviders } from "@/features/session/SessionProviders";
 
 export const unstable_settings = { initialRouteName: "(tabs)" };
@@ -19,7 +20,10 @@ export default function AppLayout() {
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="user/[id]" />
         <Stack.Screen name="editar-perfil" />
+        <Stack.Screen name="notificaciones" />
       </Stack>
+      {/* Después de la pila: el banner flota encima de cualquier pantalla */}
+      <NotificationBannerHost />
     </SessionProviders>
   );
 }

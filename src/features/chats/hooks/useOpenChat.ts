@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 
 import type { Product } from "@/features/marketplace/types";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useProfile } from "@/features/perfil/ProfileProvider";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
@@ -16,6 +17,7 @@ export function useOpenChat() {
   const { profile } = useProfile();
   const { openThread } = useAppNavigation();
   const opening = useRef(false);
+  const notify = useNotify();
 
   return useCallback(
     async (
@@ -33,11 +35,12 @@ export function useOpenChat() {
       if (opening.current) return;
       opening.current = true;
       try {
-        const chatId = await openChat({
+        const { chatId, intro } = await openChat({
           me: { id: uid, name: profile.name },
           other,
           product,
         });
+        if (intro) notify(other.id, { type: "mensaje", chatId, text: intro });
         openThread(chatId);
       } catch (error) {
         showErrorAlert("No se pudo abrir el chat", error);
@@ -45,6 +48,6 @@ export function useOpenChat() {
         opening.current = false;
       }
     },
-    [uid, profile.name, openThread],
+    [uid, profile.name, openThread, notify],
   );
 }

@@ -75,6 +75,7 @@ export async function saveProfileData(
     doc(db, USERS, uid),
     {
       ...toProfileDocument(data),
+      orbe: data.orb ?? deleteField(),
       fondoUrl: data.cover ?? deleteField(),
       correo: deleteField(),
       actualizadoEn: serverTimestamp(),

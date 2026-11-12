@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
 import { PressableSuave } from "@/components/PressableSuave";
+import { OrbAvatar } from "@/components/ui/OrbAvatar";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -155,6 +156,12 @@ export function PantallaEditarPerfil() {
                   />
                   <BrilloAvatar id="editar-avatar" />
                 </>
+              ) : profile.orb !== null ? (
+                <OrbAvatar
+                  orb={profile.orb}
+                  name={profile.name}
+                  size={LADO_AVATAR}
+                />
               ) : (
                 <Text style={[INTER.medium, { fontSize: 38, color: c.texto }]}>
                   {getInitials(profile.name)}
@@ -241,10 +248,11 @@ export function PantallaEditarPerfil() {
       <SheetAvatar
         visible={sheet === "avatar"}
         photo={profile.photo}
+        orb={profile.orb}
         name={profile.name}
         isDark={isDark}
         onClose={cerrarSheet}
-        onGuardar={(photo) => guardar({ photo })}
+        onGuardar={guardar}
       />
       <SheetEtiquetas
         visible={sheet === "etiquetas"}

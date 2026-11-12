@@ -1,11 +1,12 @@
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
+import { OrbAvatar } from "@/components/ui/OrbAvatar";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
-import { estilosPerfil } from "../perfilEstilos";
+import { LADO_AVATAR, estilosPerfil } from "../perfilEstilos";
 import { type ColorPerfil, TEMAS } from "../Perfiltemas";
 import { BrilloAvatar } from "./BrilloAvatar";
 
@@ -13,16 +14,18 @@ import { BrilloAvatar } from "./BrilloAvatar";
 const ANCHO_FOTO = 400;
 
 /**
- * Avatar dentro del marco de la cabecera: la foto de perfil o, si no hay, un cuadro del
- * color del perfil con un icono (perfil propio) o las iniciales (perfil de otra persona).
+ * Avatar dentro del marco de la cabecera: la foto de perfil; si no hay, el avatar orbe
+ * elegido; y si tampoco, un icono (perfil propio) o las iniciales (perfil de otra persona).
  */
 export function PerfilAvatar({
   photo,
+  orb,
   color,
   name,
   placeholder,
 }: {
   photo: string | null;
+  orb: number | null;
   color: ColorPerfil;
   name: string;
   placeholder: "icono" | "iniciales";
@@ -43,6 +46,10 @@ export function PerfilAvatar({
         <BrilloAvatar id="perfil-avatar" />
       </View>
     );
+  }
+
+  if (orb !== null) {
+    return <OrbAvatar orb={orb} name={name} size={LADO_AVATAR} />;
   }
 
   return (
