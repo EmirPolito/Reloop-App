@@ -1,21 +1,29 @@
+import { PressableSuave } from "@/components/PressableSuave";
 import { NavigationIcon } from "@/components/iconos";
 import type { Tab } from "@/features/navigation/routes";
+import {
+  IconoAnuncios,
+  IconoPublicaciones,
+} from "@/features/perfil/Perfiliconos";
 import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useMemo } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { BlurView } from "expo-blur";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
   Extrapolation,
   Keyframe,
+  type SharedValue,
   interpolate,
+  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 export interface NavegacionProps {
   activeTab: Tab;
@@ -198,14 +206,31 @@ const TabButton = React.memo(function TabButton({
   );
 });
 
+/** Menú de crear: abre rápido y frena suave; cierra más corto */
+const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.23, 1, 0.32, 1) };
+const MENU_CERRAR = { duration: 160, easing: Easing.out(Easing.cubic) };
+const MENU_BLUR = 30;
+
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
+/** Fondo del botón de crear: centro más claro que se oscurece hacia el borde (en modo oscuro se invierte) */
+const FONDO_CREAR = {
+  light: { centro: "#4a4a4a", medio: "#2b2b2b", borde: "#0a0a0a", icono: "#FFFFFF" },
+  dark: { centro: "#FFFFFF", medio: "#f1f1f1", borde: "#cfcfcf", icono: "#000000" },
+};
+
 const CreateButton = React.memo(function CreateButton({
   onPress,
+  label,
+  isDark,
   styles,
 }: {
   onPress: () => void;
+  label: string;
+  isDark: boolean;
   styles: ReturnType<typeof createStyles>;
 }) {
-  const botonTema = ESTILO_BOTON_ACCION;
+  const fondo = isDark ? FONDO_CREAR.dark : FONDO_CREAR.light;
   const pressScale = useSharedValue(1);
 
   const scaleStyle = useAnimatedStyle(() => ({
@@ -216,7 +241,7 @@ const CreateButton = React.memo(function CreateButton({
     <Animated.View style={[styles.createWrap, scaleStyle]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Publicar producto"
+        accessibilityLabel={label}
         onPressIn={() => {
           pressScale.set(withTiming(0.92, { duration: 60 }));
         }}
@@ -225,29 +250,121 @@ const CreateButton = React.memo(function CreateButton({
         }}
         onPress={onPress}
       >
-        <LinearGradient
-          colors={botonTema.colors}
-          locations={[0, 0.54, 1]}
-          style={[
-            styles.createButton,
-            {
-              borderColor: botonTema.borderColor,
-              shadowColor: botonTema.shadowColor,
-            },
-          ]}
-        >
-          {/* Reflejo superior Glossy */}
-          <LinearGradient
-            colors={["#ffffff5d", "#ffffff17"]}
-            style={styles.glossyOverlay}
-          />
+        <View style={styles.createButton}>
+          <Svg style={StyleSheet.absoluteFill} viewBox="0 0 54 54">
+            <Defs>
+              <RadialGradient id="fondoCrear" cx="50%" cy="45%" r="55%">
+                <Stop offset="0" stopColor={fondo.centro} />
+                <Stop offset="0.6" stopColor={fondo.medio} />
+                <Stop offset="1" stopColor={fondo.borde} />
+              </RadialGradient>
+            </Defs>
+            <Circle cx="27" cy="27" r="27" fill="url(#fondoCrear)" />
+          </Svg>
 
-          <NavigationIcon name="add" size={25} color="#FFFFFF" />
-        </LinearGradient>
+          <NavigationIcon name="add" size={25} color={fondo.icono} />
+        </View>
       </Pressable>
     </Animated.View>
   );
 });
+
+/** Opciones que salen del botón de crear, sobre el contenido difuminado */
+function MenuCrear({
+  menu,
+  isDark,
+  bottom,
+  onClose,
+  onAnuncio,
+  onPublicacion,
+  styles,
+}: {
+  menu: SharedValue<number>;
+  isDark: boolean;
+  bottom: number;
+  onClose: () => void;
+  onAnuncio: () => void;
+  onPublicacion: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  const blurProps = useAnimatedProps(() => ({
+    intensity: MENU_BLUR * menu.value,
+  }));
+
+  const veloStyle = useAnimatedStyle(() => ({ opacity: menu.value }));
+
+  // Crece desde la esquina del botón (transformOrigin en styles.menuCrear)
+  const opcionesStyle = useAnimatedStyle(() => ({
+    opacity: menu.value,
+    transform: [{ scale: 0.2 + 0.8 * menu.value }],
+  }));
+
+  const opciones = [
+    { label: "Crear anuncio", Icono: IconoAnuncios, onPress: onAnuncio },
+    {
+      label: "Crear publicación",
+      Icono: IconoPublicaciones,
+      onPress: onPublicacion,
+    },
+  ];
+
+  return (
+    <Modal
+      transparent
+      visible
+      animationType="none"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}
+    >
+      {/* En Android el desenfoque no está activo en la app: lo suple un velo más opaco */}
+      {Platform.OS !== "android" && (
+        <AnimatedBlurView
+          animatedProps={blurProps}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, styles.menuVelo, veloStyle]}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Cerrar"
+        onPress={onClose}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* El botón sigue a la vista, encima del velo, y cierra el menú */}
+      <View style={[styles.menuBoton, { bottom }]}>
+        <CreateButton
+          onPress={onClose}
+          label="Cerrar"
+          isDark={isDark}
+          styles={styles}
+        />
+      </View>
+
+      <Animated.View
+        style={[styles.menuCrear, { bottom: bottom + 64 }, opcionesStyle]}
+      >
+        {opciones.map(({ label, Icono, onPress }) => (
+          <PressableSuave
+            key={label}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            onPress={onPress}
+            scaleTo={0.96}
+            style={styles.menuOpcion}
+          >
+            <Text style={styles.menuEtiqueta}>{label}</Text>
+            <Icono size={24} color={ESTILO_BOTON_ACCION.colors[2]} />
+          </PressableSuave>
+        ))}
+      </Animated.View>
+    </Modal>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Navegación                                                                */
@@ -272,9 +389,24 @@ export function Navegacion({
     [activeTab, onNavigate],
   );
 
-  const handleCreatePress = useCallback(() => {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const menu = useSharedValue(0);
+
+  const abrirMenu = useCallback(() => {
+    setMenuVisible(true);
+    menu.set(withTiming(1, MENU_ABRIR));
+  }, [menu]);
+
+  // El modal se desmonta cuando termina la animación de salida
+  const cerrarMenu = useCallback(() => {
+    menu.set(withTiming(0, MENU_CERRAR));
+    setTimeout(() => setMenuVisible(false), MENU_CERRAR.duration);
+  }, [menu]);
+
+  const handleCrearPublicacion = useCallback(() => {
+    cerrarMenu();
     onNavigate("create");
-  }, [onNavigate]);
+  }, [cerrarMenu, onNavigate]);
 
   return (
     <View
@@ -295,7 +427,25 @@ export function Navegacion({
         ))}
       </View>
 
-      <CreateButton onPress={handleCreatePress} styles={styles} />
+      <CreateButton
+        onPress={abrirMenu}
+        label="Publicar producto"
+        isDark={isDark}
+        styles={styles}
+      />
+
+      {menuVisible && (
+        <MenuCrear
+          menu={menu}
+          isDark={isDark}
+          bottom={bottomInset}
+          onClose={cerrarMenu}
+          // Todavía no existe el flujo de crear anuncio: por ahora solo cierra el menú
+          onAnuncio={cerrarMenu}
+          onPublicacion={handleCrearPublicacion}
+          styles={styles}
+        />
+      )}
     </View>
   );
 }
@@ -312,6 +462,10 @@ function createStyles(isDark: boolean) {
         selectedPill: "rgba(255, 255, 255, 0.15)",
         pillBorder: "rgba(255, 255, 255, 0.18)",
         text: "#FFFFFF",
+        velo:
+          Platform.OS === "android"
+            ? "rgba(16, 16, 18, 0.94)"
+            : "rgba(16, 16, 18, 0.8)",
       }
     : {
         glass: "rgba(241, 241, 241, 1)",
@@ -319,6 +473,10 @@ function createStyles(isDark: boolean) {
         selectedPill: "#FFFFFF",
         pillBorder: "#ffffffff",
         text: "#101010",
+        velo:
+          Platform.OS === "android"
+            ? "rgba(255, 255, 255, 0.94)"
+            : "rgba(255, 255, 255, 0.8)",
       };
 
   return StyleSheet.create({
@@ -410,26 +568,43 @@ function createStyles(isDark: boolean) {
       borderRadius: 27,
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: 0,
-      borderColor: "#7dbaffff",
-      shadowColor: "#2563EB",
+      shadowColor: "#000000",
       shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 3,
       overflow: "hidden",
     },
 
-    glossyOverlay: {
+    /** Misma posición que el botón de la barra (navigationRow deja 15 a la derecha) */
+    menuBoton: {
       position: "absolute",
-      top: 0,
-      left: 2,
-      right: 2,
-      height: 25,
-      borderTopLeftRadius: 25,
-      borderTopRightRadius: 25,
-      borderBottomLeftRadius: 12,
-      borderBottomRightRadius: 12,
+      right: 15,
+    },
+
+    menuVelo: {
+      backgroundColor: colors.velo,
+    },
+
+    /** Alineado a la derecha, con los iconos sobre el eje del botón de crear */
+    menuCrear: {
+      position: "absolute",
+      right: 30,
+      alignItems: "flex-end",
+      transformOrigin: "right bottom",
+    },
+
+    menuOpcion: {
+      height: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+
+    menuEtiqueta: {
+      color: colors.text,
+      fontFamily: "Inter_600SemiBold",
+      fontSize: 16,
     },
 
     tabBadge: {
