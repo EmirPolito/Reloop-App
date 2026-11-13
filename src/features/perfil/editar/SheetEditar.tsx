@@ -19,6 +19,7 @@ export function SheetEditar({
   onClose,
   onBack,
   permitirArrastrarContenido = true,
+  bloqueado = false,
   children,
 }: {
   visible: boolean;
@@ -28,6 +29,8 @@ export function SheetEditar({
   onBack?: () => void;
   /** En false, solo la línea de arriba arrastra el sheet (para gestos dentro del contenido) */
   permitirArrastrarContenido?: boolean;
+  /** No se puede cerrar (sin X, sin arrastrar ni tocar fuera): configuración inicial */
+  bloqueado?: boolean;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -40,7 +43,7 @@ export function SheetEditar({
     <BottomSheet
       isOpen={visible}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open && !bloqueado) onClose();
       }}
     >
       {/* En iOS, sin la ventana nativa de HeroUI (FullWindowOverlay): esa ventana tapa a la
@@ -48,7 +51,7 @@ export function SheetEditar({
       <BottomSheet.Portal disableFullWindowOverlay>
         <BottomSheet.Overlay />
         <BottomSheet.Content
-          enablePanDownToClose
+          enablePanDownToClose={!bloqueado}
           enableContentPanningGesture={permitirArrastrarContenido}
           // Card flotante: separada de los lados y más cerca del borde inferior
           detached
@@ -94,17 +97,19 @@ export function SheetEditar({
               {titulo}
             </BottomSheet.Title>
 
-            <BottomSheet.Close
-              accessibilityLabel="Cerrar"
-              // Sin el resaltado oscuro de HeroUI al presionar
-              feedbackVariant="scale"
-              iconProps={{ size: 16, color: p.texto }}
-              style={[
-                styles.boton,
-                styles.derecha,
-                { backgroundColor: p.cerrarFondo },
-              ]}
-            />
+            {bloqueado ? null : (
+              <BottomSheet.Close
+                accessibilityLabel="Cerrar"
+                // Sin el resaltado oscuro de HeroUI al presionar
+                feedbackVariant="scale"
+                iconProps={{ size: 16, color: p.texto }}
+                style={[
+                  styles.boton,
+                  styles.derecha,
+                  { backgroundColor: p.cerrarFondo },
+                ]}
+              />
+            )}
           </View>
 
           <View style={{ paddingBottom: 14 }}>{children}</View>

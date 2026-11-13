@@ -1,6 +1,7 @@
 import type { DocumentData } from "firebase/firestore";
 
 import { isOrb } from "@/constants/orbes";
+import { PATRON_USERNAME, normalizarNombre } from "./username";
 import {
   COLORES_PERFIL,
   MAX_NOMBRE,
@@ -15,10 +16,12 @@ export function defaultProfile(name: string): DatosPerfil {
     orb: null,
     cover: null,
     name: name.slice(0, MAX_NOMBRE),
+    username: null,
     description: "",
     color: "azul",
     pills: [],
     stickers: [],
+    onboardingPendiente: false,
   };
 }
 
@@ -50,19 +53,30 @@ export function mapProfile(data: DocumentData, fallbackName: string): DatosPerfi
     orb: isOrb(data.orbe) ? data.orbe : null,
     cover: typeof data.fondoUrl === "string" ? data.fondoUrl : null,
     name: name.slice(0, MAX_NOMBRE),
+    username:
+      typeof data.usernameNormalized === "string" &&
+      PATRON_USERNAME.test(data.usernameNormalized)
+        ? data.usernameNormalized
+        : null,
     description: typeof data.descripcion === "string" ? data.descripcion : "",
     color: isColor(data.color) ? data.color : "azul",
     pills: mapPills(data.etiquetas),
     stickers: Array.isArray(data.stickers)
       ? data.stickers.filter((id): id is string => typeof id === "string")
       : [],
+    onboardingPendiente: data.onboardingPendiente === true,
   };
 }
 
-/** Los campos editables del perfil, tal como se guardan en Firestore. */
+/**
+ * Los campos editables del perfil, tal como se guardan en Firestore. El username no va
+ * aquí: solo lo escribe `claimUsername`, junto con su reserva.
+ */
 export function toProfileDocument(data: DatosPerfil) {
   return {
     nombre: data.name,
+    // Para buscar personas por nombre (prefijo, sin mayúsculas ni acentos)
+    nombreNormalizado: normalizarNombre(data.name),
     fotoUrl: data.photo,
     // Sin orbe o sin portada no se escribe el campo (al quitarlos, saveProfileData lo borra)
     ...(data.orb !== null ? { orbe: data.orb } : {}),
@@ -85,6 +99,7 @@ export function isCurrentProfileDocument(data: DocumentData): boolean {
   return (
     data.correo === undefined &&
     data.fotoUrl !== undefined &&
+    typeof data.nombreNormalizado === "string" &&
     typeof data.descripcion === "string" &&
     isColor(data.color) &&
     Array.isArray(data.etiquetas) &&

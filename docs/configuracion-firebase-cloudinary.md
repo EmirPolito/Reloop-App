@@ -234,7 +234,7 @@ Notas:
 | Cloudinary responde "Upload preset not found" o "must be whitelisted for unsigned uploads" | El nombre del preset está mal escrito o el preset no es de tipo **Unsigned** (paso 2.2). |
 | Las fotos suben pero no se ven | Revisa que no estén activadas las transformaciones estrictas de Cloudinary (paso 2.2). |
 | Con emuladores en Android no conecta | Usa `10.0.2.2` como host. En teléfono físico, la IP de tu computadora y `"host": "0.0.0.0"` en `firebase.json`. |
-| `npm run emulators` falla al iniciar | Falta Java 21 o superior, o los puertos 8080 o 9099 están ocupados. |
+| `npm run emulators` falla al iniciar | Falta Java 21 o superior, o los puertos 8085 o 9099 están ocupados. |
 
 ## Pruebas automáticas
 

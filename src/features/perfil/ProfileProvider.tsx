@@ -15,6 +15,7 @@ import type { DatosPerfil } from "./Perfiltemas";
 import { defaultProfile } from "./profileMappers";
 import { ensureProfile, subscribeProfile } from "./profileRepository";
 import { saveOwnProfile } from "./saveOwnProfile";
+import { ensureUsername } from "./usernameRepository";
 
 interface ProfileValue {
   profile: DatosPerfil;
@@ -34,9 +35,12 @@ export function ProfileProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     // Cuentas creadas antes de existir las fichas: se completan al iniciar sesión
-    ensureProfile(user.uid, user.name).catch((error) =>
-      console.warn("No se pudo preparar el perfil.", describeFirestoreError(error)),
-    );
+    // El username se asigna después: necesita la ficha ya creada y al día
+    ensureProfile(user.uid, user.name)
+      .then(() => ensureUsername(user.uid, user.name))
+      .catch((error) =>
+        console.warn("No se pudo preparar el perfil.", describeFirestoreError(error)),
+      );
     ensureAccountEmail(user.uid, user.email).catch((error) =>
       console.warn("No se pudo guardar el correo.", describeFirestoreError(error)),
     );

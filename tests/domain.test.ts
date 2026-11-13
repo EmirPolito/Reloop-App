@@ -12,6 +12,16 @@ import { filterChats } from "@/features/chats/chatSelectors";
 import { buildNewProduct, validateDraft, EMPTY_DRAFT } from "@/features/crear-publicacion/draftRules";
 import { buildHomeFeedRows, homeRowKey } from "@/features/home/feedRows";
 import { filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
+import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
+import { pasoDesdeIndice, PASOS_ONBOARDING, puedeFinalizar } from "@/features/onboarding/onboardingRules";
+import { isMembershipActive, mapMembership } from "@/features/premium/membershipRules";
+import {
+  normalizarNombre,
+  normalizarUsername,
+  PATRON_USERNAME,
+  sugerirUsername,
+  validarUsername,
+} from "@/features/perfil/username";
 import { mapComment, mapProduct } from "@/features/marketplace/productMappers";
 import {
   allowsProductRating,
@@ -91,6 +101,84 @@ describe("filtros del inicio", () => {
     assert.deepEqual(filterProducts(list, { query: "", category: "venta" }).map((p) => p.id), ["a"]);
     assert.deepEqual(filterProducts(list, { query: "bata", category: "venta" }), []);
     assert.equal(filterProducts(list, NO_FILTERS).length, 3);
+  });
+  it("busca también por la categoría y no filtra productos cuando el texto empieza con @", () => {
+    const list = [
+      product({ id: "a", name: "Calculadora", seller: "Ana" }),
+      product({ id: "c", name: "Galletas", seller: "Carla", category: "comida" }),
+    ];
+    assert.deepEqual(filterProducts(list, { query: "comidas", category: null }).map((p) => p.id), ["c"]);
+    assert.equal(filterProducts(list, { query: "@ana", category: null }).length, 2);
+    assert.deepEqual(filterProducts(list, { query: " @", category: "comida" }).map((p) => p.id), ["c"]);
+  });
+});
+
+describe("modo del buscador", () => {
+  it("con @ al inicio busca personas; sin @ vuelve a productos", () => {
+    assert.deepEqual(modoDeBusqueda("bici"), { modo: "productos", termino: "bici" });
+    assert.deepEqual(modoDeBusqueda("@"), { modo: "usuarios", termino: "" });
+    assert.deepEqual(modoDeBusqueda("  @José_P "), { modo: "usuarios", termino: "jose_p" });
+    assert.deepEqual(modoDeBusqueda("hola @ana"), { modo: "productos", termino: "hola @ana" });
+  });
+});
+
+describe("onboarding", () => {
+  it("son tres pasos: portada, avatar e identidad", () => {
+    assert.deepEqual([...PASOS_ONBOARDING], ["portada", "avatar", "identidad"]);
+  });
+  it("retoma el paso guardado y vuelve al primero si el valor no sirve", () => {
+    assert.equal(pasoDesdeIndice("2"), 2);
+    assert.equal(pasoDesdeIndice(null), 0);
+    assert.equal(pasoDesdeIndice("7"), 0);
+    assert.equal(pasoDesdeIndice("1.5"), 0);
+  });
+  it("solo termina con un @username asignado", () => {
+    assert.equal(puedeFinalizar("ana_p"), true);
+    assert.equal(puedeFinalizar(null), false);
+    assert.equal(puedeFinalizar(""), false);
+  });
+});
+
+describe("membresía Premium", () => {
+  it("solo se lee con plan premium y fecha de vencimiento", () => {
+    assert.deepEqual(mapMembership({ plan: "premium", venceEn: ts(5000) }), { plan: "premium", expiresAt: 5000 });
+    assert.equal(mapMembership({ plan: "gratis", venceEn: ts(5000) }), null);
+    assert.equal(mapMembership({ plan: "premium" }), null);
+    assert.equal(mapMembership(undefined), null);
+  });
+  it("está vigente hasta su vencimiento y vencida deja de contar", () => {
+    const membresia = { plan: "premium" as const, expiresAt: 5000 };
+    assert.equal(isMembershipActive(membresia, 4999), true);
+    assert.equal(isMembershipActive(membresia, 5000), false);
+    assert.equal(isMembershipActive(null, 0), false);
+  });
+});
+
+describe("@username", () => {
+  it("normaliza: sin @ inicial, sin espacios a los lados y en minúsculas", () => {
+    assert.equal(normalizarUsername("  @@Emir_Polito "), "emir_polito");
+    assert.equal(normalizarNombre(" Ángel Núñez "), "angel nunez");
+  });
+  it("valida formato, largo, letras, reservados e inapropiados", () => {
+    assert.equal(validarUsername("emir_01"), null);
+    assert.equal(validarUsername("ab"), "corto");
+    assert.equal(validarUsername("a".repeat(21)), "largo");
+    assert.equal(validarUsername("emir polito"), "caracteres");
+    assert.equal(validarUsername("Emir"), "caracteres");
+    assert.equal(validarUsername("emir.p"), "caracteres");
+    assert.equal(validarUsername("1234_"), "sinLetras");
+    assert.equal(validarUsername("admin"), "reservado");
+    assert.equal(validarUsername("reloop"), "reservado");
+    assert.equal(validarUsername("elputo1"), "inapropiado");
+    assert.ok(PATRON_USERNAME.test("emir_01"));
+  });
+  it("sugiere un username válido a partir del nombre", () => {
+    assert.equal(sugerirUsername("José Pérez"), "joseperez");
+    assert.equal(sugerirUsername("José Pérez", "1234"), "joseperez1234");
+    assert.equal(sugerirUsername("x".repeat(40), "1234").length, 20);
+    assert.equal(validarUsername(sugerirUsername("Al")), null);
+    assert.equal(validarUsername(sugerirUsername("Admin")), null);
+    assert.equal(validarUsername(sugerirUsername("😀")), null);
   });
 });
 
@@ -269,7 +357,7 @@ describe("mapeo de chats", () => {
 describe("mapeo de perfiles", () => {
   it("el perfil por defecto usa el nombre (máx. 30)", () => {
     assert.equal(defaultProfile("x".repeat(40)).name.length, 30);
-    assert.deepEqual(defaultProfile("Ana"), { photo: null, orb: null, cover: null, name: "Ana", description: "", color: "azul", pills: [], stickers: [] });
+    assert.deepEqual(defaultProfile("Ana"), { photo: null, orb: null, cover: null, name: "Ana", username: null, description: "", color: "azul", pills: [], stickers: [], onboardingPendiente: false });
   });
   it("valores seguros para campos que faltan o están mal", () => {
     const p = mapProfile({ nombre: "", color: "negro", etiquetas: [{ id: "1", text: "Mate", color: "rosa", icon: "work" }, { id: 2 }, "x"], stickers: ["sticker-1", 3] }, "Respaldo");
@@ -298,11 +386,27 @@ describe("mapeo de perfiles", () => {
     assert.equal(toProfileDocument({ ...defaultProfile("Ana"), orb: 9 }).orbe, 9);
     assert.equal("orbe" in toProfileDocument(defaultProfile("Ana")), false);
   });
+  it("lee el username solo si tiene formato válido y nunca lo escribe al guardar el perfil", () => {
+    assert.equal(mapProfile({ usernameNormalized: "ana_p" }, "Ana").username, "ana_p");
+    assert.equal(mapProfile({ usernameNormalized: "Ana P" }, "Ana").username, null);
+    assert.equal(mapProfile({}, "Ana").username, null);
+    const doc = toProfileDocument({ ...defaultProfile("Ángela Ruiz"), username: "angela" });
+    assert.equal("username" in doc, false);
+    assert.equal("usernameNormalized" in doc, false);
+    assert.equal(doc.nombreNormalizado, "angela ruiz");
+  });
+  it("el onboarding solo está pendiente si la ficha lo marca (las antiguas no lo tienen)", () => {
+    assert.equal(mapProfile({ onboardingPendiente: true }, "Ana").onboardingPendiente, true);
+    assert.equal(mapProfile({}, "Ana").onboardingPendiente, false);
+    assert.equal("onboardingPendiente" in toProfileDocument({ ...defaultProfile("Ana"), onboardingPendiente: true }), false);
+  });
   it("detecta fichas antiguas (con correo o incompletas)", () => {
     const current = { ...toProfileDocument(defaultProfile("Ana")), uid: "a" };
     assert.equal(isCurrentProfileDocument(current), true);
     assert.equal(isCurrentProfileDocument({ ...current, correo: "a@b.c" }), false);
     assert.equal(isCurrentProfileDocument({ uid: "a", nombre: "Ana", correo: "a@b.c" }), false);
+    const { nombreNormalizado: _omitido, ...sinNombreNormalizado } = current;
+    assert.equal(isCurrentProfileDocument(sinNombreNormalizado), false);
   });
   it("gradiente de cabecera usa el color específico de cada perfil y termina transparente", () => {
     const cabeceraVerde = gradienteHeader("verde", false);

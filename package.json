@@ -61,11 +61,11 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
-    "emulators": "npx --yes firebase-tools emulators:start --only auth,firestore --project demo-reloop",
+    "emulators": "node tests/run-emulators.mjs emulators:start --only auth,firestore --project demo-reloop",
     "test": "npm run test:domain && npm run test:rules",
     "build:apk": "npx --yes eas-cli@latest build --platform android --profile preview",
     "test:domain": "tsx --test tests/domain.test.ts",
-    "test:rules": "npx --yes firebase-tools emulators:exec --only auth,firestore --project demo-reloop \"node tests/firestore-rules.test.mjs\""
+    "test:rules": "node tests/run-emulators.mjs emulators:exec --only auth,firestore --project demo-reloop \"node tests/firestore-rules.test.mjs\""
   },
   "private": true
 }

@@ -11,19 +11,28 @@ import {
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
+import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
+import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { memo, useCallback, useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { CategoryRow } from "./components/CategoryRow";
 import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
-import { buildHomeFeedRows, homeRowKey, type HomeFeedRow } from "./feedRows";
+import {
+  buildHomeFeedRows,
+  buildUserSearchRows,
+  homeRowKey,
+  type HomeFeedRow,
+} from "./feedRows";
 /** Posición de la fila de categorías (cabecera = 0, banner = 1): queda fija al hacer scroll. */
 const STICKY_HEADER_INDICES = [2];
+/** En el modo "@" no hay fila de categorías que fijar */
+const SIN_STICKY: number[] = [];
 
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
-  const { styles } = useAppTheme();
+  const { styles, isDark } = useAppTheme();
   const { products, status, favorites, filters } = useMarketplaceState();
   const { setQuery, toggleCategory, clearCategory, reload } =
     useMarketplaceActions();
@@ -31,9 +40,14 @@ export const HomeScreen = memo(function HomeScreen() {
   const { openProduct, openUserProfile } = useAppNavigation();
   const cardWidth = useProductCardWidth();
 
+  const busqueda = modoDeBusqueda(filters.query);
+  const buscaUsuarios = busqueda.modo === "usuarios";
   const rows = useMemo(
-    () => buildHomeFeedRows(filterProducts(products, filters), status),
-    [products, filters, status],
+    () =>
+      buscaUsuarios
+        ? buildUserSearchRows(busqueda.termino)
+        : buildHomeFeedRows(filterProducts(products, filters), status),
+    [buscaUsuarios, busqueda.termino, products, filters, status],
   );
   const { query, category: activeCategory } = filters;
 
@@ -54,6 +68,14 @@ export const HomeScreen = memo(function HomeScreen() {
             <SectionTitle
               activeCategory={activeCategory}
               onClearCategory={clearCategory}
+            />
+          );
+        case "users":
+          return (
+            <ResultadosUsuarios
+              termino={item.term}
+              isDark={isDark}
+              onOpenUser={openUserProfile}
             />
           );
         case "loading":
@@ -108,6 +130,7 @@ export const HomeScreen = memo(function HomeScreen() {
     },
     [
       styles,
+      isDark,
       activeCategory,
       query,
       cardWidth,
@@ -126,7 +149,8 @@ export const HomeScreen = memo(function HomeScreen() {
       style={styles.homeList}
       data={rows}
       keyExtractor={homeRowKey}
-      stickyHeaderIndices={STICKY_HEADER_INDICES}
+      stickyHeaderIndices={buscaUsuarios ? SIN_STICKY : STICKY_HEADER_INDICES}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.productsContent}
       ListHeaderComponent={
         <HomeHeader

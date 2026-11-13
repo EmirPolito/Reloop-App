@@ -20,6 +20,11 @@ export interface DatosPerfil {
   /** Imagen de fondo (portada) detrás de la foto de perfil */
   cover: string | null;
   name: string;
+  /**
+   * @username único, sin "@" y en minúsculas; `null` mientras no tiene (cuentas anteriores).
+   * Solo lo cambia `claimUsername` (reserva en `usernames`): guardar el perfil no lo escribe.
+   */
+  username: string | null;
   description: string;
   /** Color del fondo del header */
   color: ColorPerfil;
@@ -27,6 +32,11 @@ export interface DatosPerfil {
   pills: PildoraPerfilData[];
   /** Ya no se muestran; se conserva porque las reglas de Firestore exigen la lista */
   stickers: string[];
+  /**
+   * Cuenta nueva que aún no termina la configuración inicial (onboarding). Las fichas
+   * anteriores a esta función no lo tienen y nunca lo ven. Guardar el perfil no lo escribe.
+   */
+  onboardingPendiente: boolean;
 }
 
 export const MAX_PILDORAS = 4;

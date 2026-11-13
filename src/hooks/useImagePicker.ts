@@ -41,12 +41,24 @@ async function ensureLibraryPermission(): Promise<boolean> {
   return permission.granted;
 }
 
+async function ensureCameraPermission(): Promise<boolean> {
+  if (Platform.OS === "web") return true;
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (!permission.granted) {
+    showAlert(
+      "Permiso necesario",
+      "Permite el acceso a la cámara para tomar una foto.",
+    );
+  }
+  return permission.granted;
+}
+
 function showGalleryError(error: unknown): void {
   showAlert("No se pudo abrir la galería", String(error));
 }
 
 /**
- * Acceso a la galería del dispositivo. Centraliza permisos, opciones y errores
+ * Acceso a la galería (y a la cámara, para la portada) del dispositivo. Centraliza permisos, opciones y errores
  * para que las pantallas solo pidan "una foto cuadrada" o "varias fotos".
  */
 export function useImagePicker() {
@@ -78,6 +90,21 @@ export function useImagePicker() {
       return result.canceled ? null : (result.assets[0]?.uri ?? null);
     } catch (error) {
       showGalleryError(error);
+      return null;
+    } finally {
+      setIsPicking(false);
+    }
+  }, []);
+
+  /** Foto horizontal (4:3) tomada con la cámara, para la portada. `null` si se cancela. */
+  const takeCoverPhoto = useCallback(async (): Promise<string | null> => {
+    setIsPicking(true);
+    try {
+      if (!(await ensureCameraPermission())) return null;
+      const result = await ImagePicker.launchCameraAsync(COVER_IMAGE_OPTIONS);
+      return result.canceled ? null : (result.assets[0]?.uri ?? null);
+    } catch (error) {
+      showAlert("No se pudo abrir la cámara", String(error));
       return null;
     } finally {
       setIsPicking(false);
@@ -140,6 +167,7 @@ export function useImagePicker() {
     isPicking,
     pickSquareImage,
     pickCoverImage,
+    takeCoverPhoto,
     pickImageWithSize,
     pickImages,
   };

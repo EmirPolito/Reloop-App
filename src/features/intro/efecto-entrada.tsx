@@ -1,5 +1,10 @@
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import {
   Image,
   Pressable,
@@ -87,6 +92,21 @@ const SALIDA_SUAVE = Easing.out(Easing.cubic);
 // La animación se ve una vez por arranque de la app: si el árbol raíz se vuelve a montar
 // en la misma sesión (p. ej. recarga en caliente), no se repite.
 let hasPlayed = false;
+const oyentesFin = new Set<() => void>();
+
+/**
+ * `true` cuando la animación de entrada ya terminó (o ya se vio en este arranque). Sirve
+ * para presentar algo encima de la app sin que quede debajo de la animación (onboarding).
+ */
+export function useIntroTerminada(): boolean {
+  return useSyncExternalStore(
+    (avisar) => {
+      oyentesFin.add(avisar);
+      return () => oyentesFin.delete(avisar);
+    },
+    () => hasPlayed,
+  );
+}
 
 type Props = {
   children: ReactNode;
@@ -117,6 +137,7 @@ export function AnimatedSplash({
   const handleFinish = () => {
     hasPlayed = true;
     setShowOverlay(false);
+    oyentesFin.forEach((avisar) => avisar());
   };
 
   return (

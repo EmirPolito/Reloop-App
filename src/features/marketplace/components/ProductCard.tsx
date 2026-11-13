@@ -3,6 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { PRODUCT_COLORS, PRODUCT_ICONS } from "@/features/shared/constants";
@@ -11,6 +13,8 @@ import { optimizedImageUrl } from "@/lib/imageUrl";
 import { categoryFor } from "../data";
 import { allowsProductRating, productBadgeLabel } from "../rules";
 import type { Product } from "../types";
+
+const LADO_AVATAR_VENDEDOR = 18;
 
 export interface ProductCardProps {
   item: Product;
@@ -36,6 +40,9 @@ export const ProductCard = memo(function ProductCard({
   const category = categoryFor(item.category);
   const shownRating = (item.rating ?? 0).toFixed(1);
   const imageUri = optimizedImageUrl(item.imageUri, cardWidth * 2);
+  // Avatar y nombre actuales de quien vende (la publicación solo guarda una copia del nombre)
+  const seller = usePerfilDe(item.ownerId);
+  const sellerName = seller?.name ?? item.seller;
 
   return (
     <View style={[styles.productCard, { width: cardWidth }]}>
@@ -79,11 +86,21 @@ export const ProductCard = memo(function ProductCard({
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Ver perfil de ${item.seller}`}
+          accessibilityLabel={`Ver perfil de ${sellerName}`}
           onPress={() => onOpenSeller?.(item.ownerId)}
+          style={local.vendedor}
         >
-          <Text numberOfLines={1} style={styles.productSellerLink}>
-            {item.seller}
+          <UserAvatar
+            photo={seller?.photo ?? null}
+            orb={seller?.orb ?? null}
+            name={sellerName}
+            size={LADO_AVATAR_VENDEDOR}
+          />
+          <Text
+            numberOfLines={1}
+            style={[styles.productSellerLink, local.vendedorNombre]}
+          >
+            {sellerName}
           </Text>
         </Pressable>
         <View style={styles.productMetaRow}>
@@ -118,4 +135,15 @@ export const ProductCard = memo(function ProductCard({
       ) : null}
     </View>
   );
+});
+
+const local = StyleSheet.create({
+  vendedor: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 4,
+  },
+  // El avatar ya da el espacio de arriba
+  vendedorNombre: { flexShrink: 1, marginTop: 0 },
 });

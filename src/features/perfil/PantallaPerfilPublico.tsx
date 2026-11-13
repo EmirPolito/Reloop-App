@@ -1,5 +1,5 @@
-import { ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -9,33 +9,24 @@ import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { StackNavBar } from "@/features/navigation/StackNavBar";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import {
-  ALTO_PORTADA,
-  ESPACIO_SUPERIOR_PERFIL,
-  coloresTarjeta,
-  fondoPerfil,
-} from "@/features/perfil/perfilEstilos";
+import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
-import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { BotonSeguir } from "./components/BotonSeguir";
-import { PerfilAvatar } from "./components/PerfilAvatar";
-import { PerfilCabecera } from "./components/PerfilCabecera";
-import { PerfilInformacion } from "./components/PerfilInformacion";
-import { PerfilPortada } from "./components/PerfilPortada";
 import {
-  PublicacionesPerfil,
-  SIN_ANUNCIOS,
-} from "./components/PublicacionesPerfil";
-import { TarjetaAccion } from "./components/TarjetaAccion";
+  BotonHeaderPerfil,
+  PerfilDesplazable,
+} from "./components/PerfilDesplazable";
 import { useFollowers } from "./hooks/useFollowers";
 import { usePublicProfile } from "./hooks/usePublicProfile";
 import { IconoMensaje } from "./Perfiliconos";
 import { defaultProfile } from "./profileMappers";
 
-/** Perfil de otra persona (o el propio, visto como lo ven las demás), con el mismo estilo del perfil propio. */
+/**
+ * Perfil de otra persona (o el propio, visto como lo ven las demás), con la misma
+ * estructura animada del perfil propio. La insignia Premium va junto al nombre.
+ */
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
-  const insets = useSafeAreaInsets();
   const { styles: baseStyles, isDark } = useAppTheme();
   const { uid } = useSessionUser();
   const { profile: storedProfile, status } = usePublicProfile(userId);
@@ -45,9 +36,8 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   const openChat = useOpenChat();
   const { followersCount, isFollowing, pending, toggleFollow } =
     useFollowers(userId);
+  const premium = useIsPremium(userId);
   const isOwn = userId === uid;
-
-  const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
 
   // Sin ficha de perfil (o si no se pudo leer) se muestra lo que se sabe de la persona
   const profile =
@@ -64,67 +54,34 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: fondoPerfil(isDark) }}>
-      <ScrollView
-        style={baseStyles.screenScroll}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Igual que el perfil propio (portada o espacio superior); el botón de volver flota dentro */}
-        <View
-          style={{
-            height:
-              insets.top +
-              (profile.cover ? ALTO_PORTADA : ESPACIO_SUPERIOR_PERFIL),
-          }}
-        >
-          {profile.cover ? (
-            <PerfilPortada cover={profile.cover} isDark={isDark} />
-          ) : null}
-          <PressableSuave
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-            onPress={back}
-            style={[
-              styles.backBtn,
-              { top: insets.top + 8, backgroundColor: fondoTarjeta },
-              // Sobre la foto: cristal claro con borde, legible sobre cualquier imagen
-              profile.cover ? styles.backBtnPortada : null,
-            ]}
-          >
-            <AppIcon
-              name="back"
-              size={22}
-              color={isDark ? "#F1F5F9" : "#101010"}
-            />
-          </PressableSuave>
-        </View>
-
-        <PerfilCabecera
-          isDark={isDark}
-          solapar={Boolean(profile.cover)}
-          avatar={
-            <PerfilAvatar
-              photo={profile.photo}
-              orb={profile.orb}
-              color={profile.color}
-              name={profile.name}
-              placeholder="iniciales"
-            />
-          }
-        />
-
-        <PerfilInformacion
-          profile={profile}
-          stats={{
-            publicaciones: String(userProducts.length),
-            seguidores: String(followersCount),
-            reputacion: averageRatingLabel(userProducts),
-          }}
-          isDark={isDark}
-          // Seguir: a la derecha, a la altura del nombre
-          accion={
-            isOwn ? null : (
+    <View style={{ flex: 1 }}>
+      <PerfilDesplazable
+        profile={profile}
+        isDark={isDark}
+        placeholder="iniciales"
+        premium={premium}
+        izquierda={
+          <BotonHeaderPerfil etiqueta="Volver" onPress={back}>
+            <Ionicons name="chevron-back" size={21} color="#FFFFFF" />
+          </BotonHeaderPerfil>
+        }
+        acciones={
+          isOwn ? null : (
+            <>
+              <PressableSuave
+                accessibilityRole="button"
+                accessibilityLabel={`Enviar mensaje a ${profile.name}`}
+                onPress={() => openChat({ id: userId, name: profile.name })}
+                style={[
+                  styles.mensaje,
+                  { borderColor: isDark ? "#334155" : "#D4D4D8" },
+                ]}
+              >
+                <IconoMensaje
+                  size={20}
+                  color={isDark ? "#F1F5F9" : "#101010"}
+                />
+              </PressableSuave>
               <BotonSeguir
                 isFollowing={isFollowing}
                 pending={pending}
@@ -132,53 +89,33 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
                 name={profile.name}
                 onPress={() => void toggleFollow()}
               />
-            )
-          }
-        />
-
-        <View style={{ paddingHorizontal: 15 }}>
-          {/* Publicaciones y anuncios, en pestañas */}
-          <PublicacionesPerfil
-            publicaciones={userProducts}
-            anuncios={SIN_ANUNCIOS}
-            status={productsStatus}
-            isOwn={isOwn}
-            isDark={isDark}
-            onOpen={openProduct}
-          />
-
-          {!isOwn ? (
-            <TarjetaAccion
-              icon={<IconoMensaje size={25} color="#0062ff75" />}
-              label="Enviar mensaje"
-              labelColor={textoFila}
-              backgroundColor={fondoTarjeta}
-              arrowColor={flecha}
-              accessibilityLabel={`Enviar mensaje a ${profile.name}`}
-              onPress={() => openChat({ id: userId, name: profile.name })}
-            />
-          ) : null}
-        </View>
-      </ScrollView>
+            </>
+          )
+        }
+        stats={{
+          publicaciones: userProducts.length,
+          seguidores: followersCount,
+          reputacion: averageRatingLabel(userProducts),
+        }}
+        publicaciones={{
+          items: userProducts,
+          status: productsStatus,
+          isOwn,
+          onOpen: openProduct,
+        }}
+      />
       <StackNavBar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backBtn: {
-    position: "absolute",
-    left: 15,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  mensaje: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  backBtnPortada: {
-    backgroundColor: "rgba(255, 255, 255, 0.78)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255, 255, 255, 0.9)",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.12)",
   },
 });

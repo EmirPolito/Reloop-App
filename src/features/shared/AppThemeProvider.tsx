@@ -21,7 +21,11 @@ interface AppThemeValue {
   styles: AppStyles;
 }
 
-const AppThemeContext = createContext<AppThemeValue | null>(null);
+/**
+ * Exportado para volver a proveer el tema dentro de un portal (los drawers de HeroUI se
+ * dibujan fuera de este proveedor). En lo demás se usa `useAppTheme`.
+ */
+export const AppThemeContext = createContext<AppThemeValue | null>(null);
 
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const [isDark, setIsDarkState] = useState(false);

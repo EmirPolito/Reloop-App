@@ -78,5 +78,6 @@ if (emulatorHost && !globalFlags.__reloopEmulatorsConnected) {
   FirebaseAuth.connectAuthEmulator(auth, `http://${emulatorHost}:9099`, {
     disableWarnings: true,
   });
-  connectFirestoreEmulator(db, emulatorHost, 8080);
+  // Mismo puerto que `emulators.firestore.port` en firebase.json
+  connectFirestoreEmulator(db, emulatorHost, 8085);
 }

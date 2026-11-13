@@ -38,6 +38,7 @@ import { PildoraPerfil } from "../Pildoraperfil";
 import { useProfile } from "../ProfileProvider";
 import { CampoDescripcion } from "./CampoDescripcion";
 import { CampoEnLinea } from "./CampoEnLinea";
+import { CampoUsername } from "./CampoUsername";
 import {
   DURACION_EDITAR,
   EASE_EDITAR,
@@ -221,6 +222,8 @@ export function PantallaEditarPerfil() {
             accessibilityLabel="nombre"
             onSave={(name) => guardar({ name })}
           />
+
+          <CampoUsername username={profile.username} isDark={isDark} />
 
           {profile.pills.length > 0 ? (
             <View style={styles.pildoras}>

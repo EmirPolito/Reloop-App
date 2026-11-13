@@ -7,6 +7,8 @@ export type HomeFeedRow =
   | { type: "categories" }
   | { type: "sectionTitle" }
   | { type: "products"; products: Product[] }
+  /** Modo "@" del buscador: resultados de personas en lugar del feed */
+  | { type: "users"; term: string }
   | { type: "empty" }
   | { type: "loading" }
   | { type: "error" };
@@ -37,6 +39,11 @@ export function buildHomeFeedRows(
     });
   }
   return rows;
+}
+
+/** Filas del modo "@": solo los resultados de personas (sin banner ni categorías). */
+export function buildUserSearchRows(term: string): HomeFeedRow[] {
+  return [{ type: "users", term }];
 }
 
 export function homeRowKey(row: HomeFeedRow, index: number): string {

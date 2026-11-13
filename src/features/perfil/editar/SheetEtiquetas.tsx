@@ -1,5 +1,5 @@
 import { useBottomSheetAwareHandlers } from "heroui-native";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import { Text } from "@/features/shared/Text";
@@ -42,6 +42,31 @@ export function SheetEtiquetas({
   );
 }
 
+/**
+ * Cambios sobre un borrador de etiquetas (agregar, color, icono, quitar), con el máximo y
+ * los colores de Editar perfil. Lo comparten este drawer y el onboarding.
+ */
+export function accionesBorradorEtiquetas(
+  setBorrador: Dispatch<SetStateAction<PildoraPerfilData[]>>,
+) {
+  return {
+    agregar: (text: string, icon?: string) =>
+      setBorrador((curr) => {
+        if (curr.length >= MAX_PILDORAS) return curr;
+        const color = COLORES_PERFIL[curr.length % COLORES_PERFIL.length];
+        return [...curr, { id: nuevoId(), text, color, icon }];
+      }),
+    cambiarColor: (id: string, color: ColorPerfil) =>
+      setBorrador((curr) =>
+        curr.map((x) => (x.id === id ? { ...x, color } : x)),
+      ),
+    cambiarIcono: (id: string, icon?: string) =>
+      setBorrador((curr) => curr.map((x) => (x.id === id ? { ...x, icon } : x))),
+    quitar: (id: string) =>
+      setBorrador((curr) => curr.filter((x) => x.id !== id)),
+  };
+}
+
 /** Va dentro del sheet para poder avisarle del teclado */
 function Contenido({
   visible,
@@ -67,17 +92,8 @@ function Contenido({
     if (visible) setBorrador(pills);
   }
 
-  const agregar = (text: string, icon?: string) =>
-    setBorrador((curr) => {
-      if (curr.length >= MAX_PILDORAS) return curr;
-      const color = COLORES_PERFIL[curr.length % COLORES_PERFIL.length];
-      return [...curr, { id: nuevoId(), text, color, icon }];
-    });
-  const cambiarColor = (id: string, color: ColorPerfil) =>
-    setBorrador((curr) => curr.map((x) => (x.id === id ? { ...x, color } : x)));
-  const cambiarIcono = (id: string, icon?: string) =>
-    setBorrador((curr) => curr.map((x) => (x.id === id ? { ...x, icon } : x)));
-  const quitar = (id: string) => setBorrador((curr) => curr.filter((x) => x.id !== id));
+  const { agregar, cambiarColor, cambiarIcono, quitar } =
+    accionesBorradorEtiquetas(setBorrador);
 
   const guardar = async () => {
     if (guardando) return;

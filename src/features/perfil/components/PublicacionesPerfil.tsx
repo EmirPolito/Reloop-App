@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 
 import { PressableSuave } from "@/components/PressableSuave";
@@ -15,7 +16,7 @@ import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData
 import type { Product } from "@/features/marketplace/types";
 import { Text } from "@/features/shared/Text";
 import { IconoAnuncios, IconoPublicaciones } from "../Perfiliconos";
-import { coloresTarjeta } from "../perfilEstilos";
+import { coloresTarjeta, fondoPerfil } from "../perfilEstilos";
 
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];
@@ -61,7 +62,11 @@ const VACIO: Record<
   },
 };
 
-/** Pestañas Publicaciones / Anuncios del perfil, con su contenido o su estado vacío. */
+/**
+ * Pestañas Publicaciones / Anuncios del perfil, con su contenido o su estado vacío. Con
+ * `fijar`, la fila de pestañas se queda pegada bajo el header al hacer scroll (el
+ * componente debe ser hijo directo del contenido del scroll para medir su posición).
+ */
 export function PublicacionesPerfil({
   publicaciones,
   anuncios,
@@ -69,6 +74,8 @@ export function PublicacionesPerfil({
   isOwn,
   isDark,
   onOpen,
+  fijar,
+  style,
 }: {
   publicaciones: Product[];
   anuncios: Product[];
@@ -76,6 +83,12 @@ export function PublicacionesPerfil({
   isOwn: boolean;
   isDark: boolean;
   onOpen: (productId: string) => void;
+  /**
+   * Scroll de la pantalla, alto del header bajo el que se pegan las pestañas y margen
+   * lateral del componente (el fondo de la fila pegada lo cubre de borde a borde)
+   */
+  fijar?: { scrollY: SharedValue<number>; altoHeader: number; margen: number };
+  style?: StyleProp<ViewStyle>;
 }) {
   const [activa, setActiva] = useState<Pestana>("publicaciones");
   const [ancho, setAncho] = useState(0);
@@ -98,6 +111,20 @@ export function PublicacionesPerfil({
   const estiloIndicador = useAnimatedStyle(() => ({
     transform: [{ translateX: x.value ?? 0 }],
   }));
+
+  // Pestañas pegadas: bajan lo mismo que sube el scroll una vez que tocan el header, y
+  // se sueltan al terminar la sección (no tapan lo que viene después)
+  const inicio = useSharedValue(0);
+  const altoSeccion = useSharedValue(0);
+  const altoFila = useSharedValue(0);
+  const estiloFila = useAnimatedStyle(() => {
+    if (!fijar) return {};
+    const pegado = fijar.scrollY.get() - (inicio.get() - fijar.altoHeader);
+    const maximo = Math.max(0, altoSeccion.get() - altoFila.get());
+    return {
+      transform: [{ translateY: Math.min(Math.max(0, pegado), maximo) }],
+    };
+  });
 
   const colorIconoVacio = isDark ? "#475569" : "#e4e4e4ff";
 
@@ -130,45 +157,64 @@ export function PublicacionesPerfil({
   };
 
   return (
-    <View>
-      <View
-        accessibilityRole="tablist"
-        style={styles.fila}
-        onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+    <View
+      style={style}
+      onLayout={(e) => {
+        inicio.set(e.nativeEvent.layout.y);
+        altoSeccion.set(e.nativeEvent.layout.height);
+      }}
+    >
+      <Animated.View
+        style={[
+          styles.filaFija,
+          fijar && {
+            backgroundColor: fondoPerfil(isDark),
+            marginHorizontal: -fijar.margen,
+            paddingHorizontal: fijar.margen,
+          },
+          estiloFila,
+        ]}
+        onLayout={(e) => altoFila.set(e.nativeEvent.layout.height)}
       >
-        {PESTANAS.map((p) => {
-          const seleccionada = p.id === activa;
-          const color = seleccionada ? texto : inactivo;
-          return (
-            <PressableSuave
-              key={p.id}
-              accessibilityRole="tab"
-              accessibilityLabel={p.label}
-              accessibilityState={{ selected: seleccionada }}
-              onPress={() => setActiva(p.id)}
-              style={styles.pestana}
-            >
-              {p.id === "publicaciones" ? (
-                <IconoPublicaciones size={22} color={color} />
-              ) : (
-                <IconoAnuncios size={20} color={color} />
-              )}
-              <Text style={[styles.etiqueta, { color }]}>{p.label}</Text>
-            </PressableSuave>
-          );
-        })}
+        <View
+          accessibilityRole="tablist"
+          style={styles.fila}
+          onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+        >
+          {PESTANAS.map((p) => {
+            const seleccionada = p.id === activa;
+            const color = seleccionada ? texto : inactivo;
+            return (
+              <PressableSuave
+                key={p.id}
+                accessibilityRole="tab"
+                accessibilityLabel={p.label}
+                accessibilityState={{ selected: seleccionada }}
+                onPress={() => setActiva(p.id)}
+                style={styles.pestana}
+              >
+                {p.id === "publicaciones" ? (
+                  <IconoPublicaciones size={22} color={color} />
+                ) : (
+                  <IconoAnuncios size={20} color={color} />
+                )}
+                <Text style={[styles.etiqueta, { color }]}>{p.label}</Text>
+              </PressableSuave>
+            );
+          })}
 
-        {ancho > 0 ? (
-          <Animated.View
-            style={[
-              styles.indicador,
-              { backgroundColor: texto, width: columna },
-              estiloIndicador,
-            ]}
-          />
-        ) : null}
-      </View>
-      <View style={[styles.divisor, { backgroundColor: divisor }]} />
+          {ancho > 0 ? (
+            <Animated.View
+              style={[
+                styles.indicador,
+                { backgroundColor: texto, width: columna },
+                estiloIndicador,
+              ]}
+            />
+          ) : null}
+        </View>
+        <View style={[styles.divisor, { backgroundColor: divisor }]} />
+      </Animated.View>
 
       {/* Las dos pestañas quedan montadas y la inactiva solo se vuelve invisible. */}
       <View>
@@ -194,6 +240,8 @@ export function PublicacionesPerfil({
 }
 
 const styles = StyleSheet.create({
+  // Encima del contenido que pasa por debajo cuando la fila está pegada
+  filaFija: { zIndex: 2 },
   fila: {
     flexDirection: "row",
     width: "100%",

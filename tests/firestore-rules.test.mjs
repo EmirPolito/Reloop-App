@@ -6,16 +6,18 @@ import { initializeApp, setLogLevel } from "firebase/app";
 import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, sendEmailVerification } from "firebase/auth";
 import {
   addDoc, arrayUnion, collection, connectFirestoreEmulator, deleteDoc, deleteField, doc, getDoc,
-  getDocs, getFirestore, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch,
+  getDocs, getFirestore, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch,
 } from "firebase/firestore";
 
 setLogLevel("silent"); // los rechazos esperados no deben llenar la consola
 const PROJECT = "demo-reloop";
+// Mismo puerto que `emulators.firestore.port` en firebase.json (8080 suele estar ocupado por Apache/XAMPP)
+const FIRESTORE_PORT = 8085;
 const config = { apiKey: "demo", authDomain: "demo", projectId: PROJECT, appId: "1:1:web:1" };
 const run = Date.now().toString(36);
 
 // Limpia datos de ejecuciones anteriores
-await fetch(`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT}/databases/(default)/documents`, { method: "DELETE" });
+await fetch(`http://127.0.0.1:${FIRESTORE_PORT}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`, { method: "DELETE" });
 await fetch(`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT}/accounts`, { method: "DELETE" });
 
 // Confirma el correo como lo haría la persona al abrir el enlace: el emulador guarda el código del
@@ -38,7 +40,7 @@ async function client(label, { verified = true } = {}) {
   const cred = await createUserWithEmailAndPassword(auth, `${label}-${run}@test.mx`, "secreto1");
   if (verified) await verifyEmail(cred.user);
   const db = getFirestore(app);
-  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectFirestoreEmulator(db, "127.0.0.1", FIRESTORE_PORT);
   return { uid: cred.user.uid, db, label, user: cred.user };
 }
 
@@ -69,6 +71,18 @@ const ensureProfile = (u, name) => runTransaction(u.db, async (t) => {
   t.set(ref, { uid: u.uid, ...profileDoc(name), creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() });
 });
 const saveProfile = (u, data) => setDoc(doc(u.db, "usuarios", u.uid), { ...data, correo: deleteField(), actualizadoEn: serverTimestamp() }, { merge: true });
+// Igual que claimUsername: reserva el nuevo, libera el anterior y actualiza el perfil en una transacción
+const claimUsername = (u, name) => runTransaction(u.db, async (t) => {
+  const perfilRef = doc(u.db, "usuarios", u.uid);
+  const nuevaRef = doc(u.db, "usernames", name);
+  const [perfil, reserva] = await Promise.all([t.get(perfilRef), t.get(nuevaRef)]);
+  if (reserva.exists() && reserva.data().uid !== u.uid) throw Object.assign(new Error("ocupado"), { code: "permission-denied" });
+  const anterior = perfil.data().usernameNormalized;
+  if (anterior === name) return;
+  if (!reserva.exists()) t.set(nuevaRef, { uid: u.uid, creadoEn: serverTimestamp() });
+  if (anterior) t.delete(doc(u.db, "usernames", anterior));
+  t.update(perfilRef, { username: name, usernameNormalized: name, actualizadoEn: serverTimestamp() });
+});
 
 const newProduct = (u, over = {}) => ({
   ownerId: u.uid, seller: u.label, name: "Calculadora", description: "Buena", category: "venta", price: 280,
@@ -143,6 +157,69 @@ await expectDenied("A guarda un avatar orbe fuera de rango", () => saveProfile(A
 await expectDenied("A guarda un avatar orbe que no es entero", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: "3" })));
 await expectOk("A quita su avatar orbe", () => saveProfile(A, profileDoc("Ana Pérez", { orbe: deleteField() })));
 await expectDenied("A guarda imagen de fondo http (no https)", () => saveProfile(A, profileDoc("Ana", { fondoUrl: "http://x.com/f.png" })));
+
+// ── ONBOARDING ──────────────────────────────────────────────────────────────
+await expectOk("C marca su configuración inicial como pendiente", () => saveProfile(C, profileDoc("Carla", { onboardingPendiente: true })));
+await expectOk("C termina la configuración inicial (borra la marca)", () => updateDoc(doc(C.db, "usuarios", C.uid), { onboardingPendiente: deleteField(), actualizadoEn: serverTimestamp() }));
+await expectDenied("C guarda la marca con un tipo inválido", () => saveProfile(C, profileDoc("Carla", { onboardingPendiente: "si" })));
+await expectDenied("B toca la marca de C", () => updateDoc(doc(B.db, "usuarios", C.uid), { onboardingPendiente: true, actualizadoEn: serverTimestamp() }));
+
+// ── USERNAMES ───────────────────────────────────────────────────────────────
+await expectOk("A guarda su perfil con nombre normalizado (para buscar)", () => saveProfile(A, profileDoc("Ana Pérez", { nombreNormalizado: "ana perez" })));
+await expectOk("A reserva @ana_p (reserva + perfil en una transacción)", () => claimUsername(A, "ana_p"));
+await expectOk("B consulta si @ana_p está libre", async () => { const s = await getDoc(doc(B.db, "usernames", "ana_p")); if (s.data()?.uid !== A.uid) throw new Error("reserva distinta"); });
+await expectDenied("B intenta reservar @ana_p (ya es de A)", () => claimUsername(B, "ana_p"));
+await expectDenied("B sobrescribe la reserva de A", () => setDoc(doc(B.db, "usernames", "ana_p"), { uid: B.uid, creadoEn: serverTimestamp() }));
+await expectDenied("B borra la reserva de A", () => deleteDoc(doc(B.db, "usernames", "ana_p")));
+await expectDenied("B se pone @ana_p en su perfil sin reservarlo", () => updateDoc(doc(B.db, "usuarios", B.uid), { username: "ana_p", usernameNormalized: "ana_p", actualizadoEn: serverTimestamp() }));
+await expectDenied("B se pone un username que nadie reservó", () => updateDoc(doc(B.db, "usuarios", B.uid), { username: "beto", usernameNormalized: "beto", actualizadoEn: serverTimestamp() }));
+await expectDenied("B reserva un username sin ponerlo en su perfil", () => setDoc(doc(B.db, "usernames", "beto_suelto"), { uid: B.uid, creadoEn: serverTimestamp() }));
+await expectDenied("B reserva a nombre de A", () => runTransaction(B.db, async (t) => {
+  t.set(doc(B.db, "usernames", "beto_x"), { uid: A.uid, creadoEn: serverTimestamp() });
+  t.update(doc(B.db, "usuarios", B.uid), { username: "beto_x", usernameNormalized: "beto_x", actualizadoEn: serverTimestamp() });
+}));
+await expectDenied("B reserva con mayúsculas", () => claimUsername(B, "Beto"));
+await expectDenied("B reserva con espacios", () => claimUsername(B, "be to"));
+await expectDenied("B reserva un nombre reservado (admin)", () => claimUsername(B, "admin"));
+await expectDenied("B reserva uno de 2 caracteres", () => claimUsername(B, "bb"));
+await expectDenied("B reserva uno sin letras", () => claimUsername(B, "1234"));
+await expectOk("B reserva @beto", () => claimUsername(B, "beto"));
+await expectOk("A cambia a @ana_perez y libera @ana_p", async () => {
+  await claimUsername(A, "ana_perez");
+  if ((await getDoc(doc(A.db, "usernames", "ana_p"))).exists()) throw new Error("no se liberó");
+});
+await expectOk("C toma @ana_p, que quedó libre", () => claimUsername(C, "ana_p"));
+await expectDenied("A quita su username del perfil", () => updateDoc(doc(A.db, "usuarios", A.uid), { username: deleteField(), usernameNormalized: deleteField(), actualizadoEn: serverTimestamp() }));
+await expectDenied("A cambia solo el username visible (distinto del normalizado)", () => updateDoc(doc(A.db, "usuarios", A.uid), { username: "Ana_Perez", actualizadoEn: serverTimestamp() }));
+await expectDenied("A libera su reserva sin cambiar de username", () => deleteDoc(doc(A.db, "usernames", "ana_perez")));
+await expectOk("guardar el perfil no toca el username", async () => {
+  await saveProfile(A, profileDoc("Ana P.", { nombreNormalizado: "ana p." }));
+  if ((await getDoc(doc(A.db, "usuarios", A.uid))).data().usernameNormalized !== "ana_perez") throw new Error("se perdió");
+});
+await expectOk("B busca personas por prefijo de username", async () => {
+  const r = await getDocs(query(collection(B.db, "usuarios"), where("usernameNormalized", ">=", "ana"), where("usernameNormalized", "<=", "ana"), orderBy("usernameNormalized"), limit(12)));
+  if (r.size !== 2) throw new Error(`encontró ${r.size}`);
+});
+await expectOk("B busca personas por prefijo de nombre", async () => {
+  const r = await getDocs(query(collection(B.db, "usuarios"), where("nombreNormalizado", ">=", "ana"), where("nombreNormalizado", "<=", "ana"), orderBy("nombreNormalizado"), limit(12)));
+  if (r.size !== 1) throw new Error(`encontró ${r.size}`);
+});
+await expectDenied("B guarda un nombre normalizado de 31 caracteres", () => saveProfile(B, profileDoc("Beto", { nombreNormalizado: "x".repeat(31) })));
+
+// ── MEMBRESÍAS ──────────────────────────────────────────────────────────────
+const membresia = { plan: "premium", venceEn: new Date("2030-01-01") };
+await expectDenied("A se da Premium a sí misma", () => setDoc(doc(A.db, "membresias", A.uid), membresia));
+await expectDenied("A le da Premium a B", () => setDoc(doc(A.db, "membresias", B.uid), membresia));
+await expectOk("un admin concede Premium a A (consola, sin reglas)", async () => {
+  const res = await fetch(`http://127.0.0.1:${FIRESTORE_PORT}/v1/projects/${PROJECT}/databases/(default)/documents/membresias/${A.uid}`, {
+    method: "PATCH", headers: { "content-type": "application/json", Authorization: "Bearer owner" },
+    body: JSON.stringify({ fields: { plan: { stringValue: "premium" }, venceEn: { timestampValue: "2030-01-01T00:00:00Z" } } }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+});
+await expectOk("B ve la membresía de A (para la insignia)", async () => { if ((await getDoc(doc(B.db, "membresias", A.uid))).data()?.plan !== "premium") throw new Error("no se ve"); });
+await expectDenied("A extiende su propia membresía", () => updateDoc(doc(A.db, "membresias", A.uid), { venceEn: new Date("2099-01-01") }));
+await expectDenied("B revoca la membresía de A", () => deleteDoc(doc(B.db, "membresias", A.uid)));
 
 // ── SEGUIDORES ──────────────────────────────────────────────────────────────
 const follower = (owner, by) => doc(by.db, "usuarios", owner.uid, "seguidores", by.uid);
@@ -319,7 +396,7 @@ await expectOk("A abre chat con C sin producto (sin mensaje)", () => openChat(A,
 
 // ── FICHA ANTIGUA (versión anterior guardaba el correo) ──────────────────────
 const D = await client("dani");
-await fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents/usuarios/${D.uid}`, {
+await fetch(`http://127.0.0.1:${FIRESTORE_PORT}/v1/projects/${PROJECT}/databases/(default)/documents/usuarios/${D.uid}`, {
   method: "PATCH", headers: { "content-type": "application/json", authorization: "Bearer owner" },
   body: JSON.stringify({ fields: { uid: { stringValue: D.uid }, nombre: { stringValue: "Dani" }, correo: { stringValue: "dani@test.mx" }, creadoEn: { timestampValue: "2026-01-01T00:00:00Z" } } }),
 });
@@ -334,7 +411,7 @@ await expectOk("la ficha antigua ya no tiene correo y quedó completa", async ()
   if ("correo" in d || d.color !== "azul" || !Array.isArray(d.etiquetas)) throw new Error(JSON.stringify(d));
 });
 const E = await client("eli");
-await fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents/usuarios/${E.uid}`, {
+await fetch(`http://127.0.0.1:${FIRESTORE_PORT}/v1/projects/${PROJECT}/databases/(default)/documents/usuarios/${E.uid}`, {
   method: "PATCH", headers: { "content-type": "application/json", authorization: "Bearer owner" },
   body: JSON.stringify({ fields: { uid: { stringValue: E.uid }, nombre: { stringValue: "Eli" }, correo: { stringValue: "eli@test.mx" }, creadoEn: { timestampValue: "2026-01-01T00:00:00Z" } } }),
 });
@@ -365,7 +442,7 @@ await expectDenied("A borra su cuenta", () => deleteDoc(doc(A.db, "cuentas", A.u
 await expectDenied("sin sesión: leer cuentas", async () => {
   const anonApp = initializeApp(config, `anon-cuentas-${run}`);
   const anonCuentasDb = getFirestore(anonApp);
-  connectFirestoreEmulator(anonCuentasDb, "127.0.0.1", 8080);
+  connectFirestoreEmulator(anonCuentasDb, "127.0.0.1", FIRESTORE_PORT);
   await getDoc(doc(anonCuentasDb, "cuentas", A.uid));
 });
 
@@ -384,7 +461,7 @@ await expectOk("al verificar el correo ya puede crear su perfil", async () => {
 // ── SIN SESIÓN ──────────────────────────────────────────────────────────────
 const anon = initializeApp(config, `anon-${run}`);
 const anonDb = getFirestore(anon);
-connectFirestoreEmulator(anonDb, "127.0.0.1", 8080);
+connectFirestoreEmulator(anonDb, "127.0.0.1", FIRESTORE_PORT);
 await expectDenied("sin sesión: leer publicaciones", () => getDocs(collection(anonDb, "productos")));
 await expectDenied("sin sesión: leer perfiles", () => getDoc(doc(anonDb, "usuarios", A.uid)));
 await expectDenied("sin sesión: crear publicación", () => setDoc(doc(anonDb, "productos", "anon"), newProduct(A, {})));

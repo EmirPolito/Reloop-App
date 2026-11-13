@@ -1,3 +1,4 @@
+import { categoryFor } from "./data";
 import type { CategoryId, Product } from "./types";
 
 export interface FeedFilters {
@@ -37,17 +38,24 @@ export function filtersReducer(
   }
 }
 
-/** Productos que coinciden con la categoría activa y con el texto buscado. */
+/**
+ * Productos que coinciden con la categoría activa y con el texto buscado (título,
+ * descripción, vendedor y categoría). Un texto que empieza con "@" busca personas, no
+ * productos, así que no filtra el feed.
+ */
 export function filterProducts(
   products: Product[],
   { query, category }: FeedFilters,
 ): Product[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const trimmed = query.trim();
+  const normalizedQuery = trimmed.startsWith("@")
+    ? ""
+    : trimmed.toLocaleLowerCase();
   return products.filter((product) => {
     if (category && product.category !== category) return false;
     return (
       !normalizedQuery ||
-      `${product.name} ${product.description} ${product.seller}`
+      `${product.name} ${product.description} ${product.seller} ${categoryFor(product.category).label}`
         .toLocaleLowerCase()
         .includes(normalizedQuery)
     );

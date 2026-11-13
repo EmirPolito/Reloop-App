@@ -5,6 +5,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  updateDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 
@@ -47,6 +48,8 @@ export async function ensureProfile(uid: string, name: string): Promise<void> {
       transaction.set(ref, {
         uid,
         ...toProfileDocument(defaultProfile(name)),
+        // Cuenta nueva: al entrar verá la configuración inicial
+        onboardingPendiente: true,
         creadoEn: serverTimestamp(),
         actualizadoEn: serverTimestamp(),
       });
@@ -82,4 +85,12 @@ export async function saveProfileData(
     },
     { merge: true },
   );
+}
+
+/** Termina la configuración inicial: el onboarding no vuelve a mostrarse en ningún dispositivo. */
+export async function completeOnboarding(uid: string): Promise<void> {
+  await updateDoc(doc(db, USERS, uid), {
+    onboardingPendiente: deleteField(),
+    actualizadoEn: serverTimestamp(),
+  });
 }
