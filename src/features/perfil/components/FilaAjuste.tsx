@@ -62,5 +62,5 @@ const styles = StyleSheet.create({
     gap: 13.5,
   },
   rowIcon: { width: 20, alignItems: "center", justifyContent: "center" },
-  rowLabel: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
+  rowLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
 });

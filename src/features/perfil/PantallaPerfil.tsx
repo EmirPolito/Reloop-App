@@ -122,7 +122,7 @@ export function PantallaPerfil() {
 
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoEditar size={23} color="#5d5d5d7d" />}
+              icon={<IconoEditar size={22.5} color="#101010" />}
               label="Editar perfil"
               textColor={textoFila}
               onPress={openEditProfile}
@@ -130,7 +130,7 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoMensaje size={23} color="#5d5d5d7d" />}
+              icon={<IconoMensaje size={22.5} color="#101010" />}
               label="Cambiar correo"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Cambiar correo")}
@@ -138,7 +138,7 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoCandado size={23} color="#5d5d5d7d" />}
+              icon={<IconoCandado size={23} color="#101010" />}
               label="Cambiar contraseña"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Cambiar contraseña")}
@@ -150,8 +150,8 @@ export function PantallaPerfil() {
               icon={
                 <IconoCampana
                   size={24}
-                  color="#5d5d5d7d"
-                  secondaryColor="#757575ff"
+                  color="#101010"
+                  secondaryColor="#909090ff"
                 />
               }
               label="Notificaciones"
@@ -199,7 +199,7 @@ export function PantallaPerfil() {
 
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#7676767d" />}
+              icon={<IconoDocumento size={24.5} color="#101010" />}
               label="Términos y condiciones"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Términos y condiciones")}
@@ -207,17 +207,17 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#7676767d" />}
-              label="Política de privacidad"
+              icon={<IconoDocumento size={24.5} color="#101010" />}
+              label="Términos y condiciones"
               textColor={textoFila}
-              onPress={() => showComingSoonAlert("Política de privacidad")}
+              onPress={() => showComingSoonAlert("Términos y condiciones")}
               right={<IconoFlecha size={22} color={flecha} />}
             />
           </View>
 
           {/* ======================= CERRAR SESIÓN ======================= */}
           <TarjetaAccion
-            icon={<IconoLogin size={25} color="#ff0202ff" />}
+            icon={<IconoLogin size={25} color="#f20000ff" />}
             label="Cerrar sesión"
             labelColor="#ff2424ff"
             backgroundColor={fondoTarjeta}

@@ -54,7 +54,10 @@ export function PerfilAvatar({
 
   return (
     <View
-      style={[estilosPerfil.avatarPlaceholder, { backgroundColor: tema.pillBg }]}
+      style={[
+        estilosPerfil.avatarPlaceholder,
+        { backgroundColor: tema.pillBg },
+      ]}
     >
       {placeholder === "icono" ? (
         <AppIcon name="person" size={44} color={tema.accent} />

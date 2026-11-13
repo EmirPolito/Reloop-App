@@ -164,7 +164,7 @@ function TabButton({
         indicadorVisible.get(),
   }));
 
-  const colorInactivo = isDark ? "#A1A1AA" : "#767676ff";
+  const colorInactivo = isDark ? "#A1A1AA" : "#1A1A1A";
   const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
@@ -223,7 +223,7 @@ function BellButton({
   onPress: () => void;
   styles: Estilos;
 }) {
-  const colorInactivo = isDark ? "#A1A1AA" : "#767676ff";
+  const colorInactivo = isDark ? "#A1A1AA" : "#1A1A1A";
   const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
   return (
     <PressableScale
@@ -546,9 +546,9 @@ function createStyles(isDark: boolean) {
         velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.8)",
       }
     : {
-        cristal: android ? "#f2f2f2ff" : "#f2f2f2ff",
+        cristal: android ? "#f8f8f8ff" : "#f8f8f8ff",
         borde: "#ffffffff",
-        indicador: "#e9e9e9ff",
+        indicador: "#ffffffff",
         sombra: "0 8px 24px rgba(0, 0, 0, 0.1)",
         sombraIndicador: "0 1px 4px rgba(0, 0, 0, 0.08)",
         fondoContador: "#EBEBEF",
