@@ -1,12 +1,13 @@
 import { useFonts } from "expo-font";
-import { Stack, ThemeProvider } from "expo-router";
+import { Stack, ThemeProvider, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native";
-import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
+import { AnimatedSplash } from "@/features/intro/efecto-entrada";
 import {
   STACK_SCREEN_OPTIONS,
   TRANSPARENT_NAVIGATION_THEME,
@@ -27,6 +28,7 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
+  Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
 
 export { ErrorBoundary } from "expo-router";
@@ -44,24 +46,38 @@ const FONTS = {
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
+  Inter_800ExtraBold,
 };
 
 export const unstable_settings = {
   anchor: "(app)",
 };
 
-/** Bienvenida para quien no tiene sesión y la app para quien sí; Expo Router redirige al cambiar la sesión. */
+/**
+ * Animación de entrada. Se monta sobre toda la app y espera a que se sepa si hay
+ * sesión (status !== "loading") antes de expandirse. Con sesión sale sola hacia el inicio;
+ * sin ella espera a que se toque Entrar y lleva al registro. La splash nativa la oculta
+ * el propio AnimatedSplash cuando el logo está listo.
+ */
+function SplashGate({ children }: { children: ReactNode }) {
+  const { status } = useAuth();
+  const router = useRouter();
+  return (
+    <AnimatedSplash
+      isAppReady={status !== "loading"}
+      requiereEntrar={status === "unauthenticated"}
+      onEntrar={() => router.replace("/register")}
+    >
+      {children}
+    </AnimatedSplash>
+  );
+}
+
+/** Inicio de sesión para quien no tiene sesión y la app (inicio) para quien sí; Expo Router redirige al cambiar la sesión. */
 function RootNavigator() {
   const { status } = useAuth();
 
-  // La splash nativa sigue visible hasta que se sabe si hay sesión,
-  // así la pantalla de bienvenida (o la app) aparece sin parpadeos.
-  useEffect(() => {
-    if (status !== "loading") {
-      SplashScreen.hideAsync();
-    }
-  }, [status]);
-
+  // Mientras se resuelve la sesión no se monta nada: la animación sigue en pantalla.
   if (status === "loading") return null;
   const isAuthenticated = status === "authenticated";
 
@@ -69,7 +85,7 @@ function RootNavigator() {
     <Stack screenOptions={STACK_SCREEN_OPTIONS}>
       <Stack.Protected
         guard={isAuthenticated}
-        redirectTo={status === "unverified" ? "/verify" : "/bienvenida"}
+        redirectTo={status === "unverified" ? "/verify" : "/login"}
       >
         <Stack.Screen name="(app)" />
       </Stack.Protected>
@@ -93,9 +109,11 @@ export default function RootLayout() {
         <ThemeProvider value={TRANSPARENT_NAVIGATION_THEME}>
           <AppThemeProvider>
             <AuthProvider>
-              <AppFrame>
-                <RootNavigator />
-              </AppFrame>
+              <SplashGate>
+                <AppFrame>
+                  <RootNavigator />
+                </AppFrame>
+              </SplashGate>
             </AuthProvider>
           </AppThemeProvider>
         </ThemeProvider>

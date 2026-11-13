@@ -96,6 +96,8 @@ export function SheetEditar({
 
             <BottomSheet.Close
               accessibilityLabel="Cerrar"
+              // Sin el resaltado oscuro de HeroUI al presionar
+              feedbackVariant="scale"
               iconProps={{ size: 16, color: p.texto }}
               style={[
                 styles.boton,
@@ -117,15 +119,17 @@ const RADIO_CARD = 35;
 const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
 
 const styles = StyleSheet.create({
+  // Mismo alto que los botones y subido 7 px: el título queda a la altura de la X
   header: {
-    height: 45,
-    marginBottom: 8,
+    height: 33,
+    marginTop: -7,
+    marginBottom: 20,
     alignItems: "center",
     justifyContent: "center",
   },
   boton: {
     position: "absolute",
-    top: -7,
+    top: 0,
     width: 33,
     height: 33,
     borderRadius: 17,

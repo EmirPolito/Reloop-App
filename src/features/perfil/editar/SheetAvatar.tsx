@@ -48,7 +48,7 @@ export function SheetAvatar({
   const [paso, setPaso] = useState<Paso>("inicio");
   const [origen, setOrigen] = useState<"camara" | "galeria">("camara");
   const [foto, setFoto] = useState<FotoTomada | null>(null);
-  // Posición del carrusel: 0 es la foto actual (o las iniciales) y de 1 a 10 son los orbes
+  // Avatar centrado en el carrusel: 0 es la foto actual (o las iniciales) y de 1 a 10 son los orbes
   const guardado = indiceDeAvatar(photo, orb);
   const [centrado, setCentrado] = useState(guardado);
   const [guardando, setGuardando] = useState(false);

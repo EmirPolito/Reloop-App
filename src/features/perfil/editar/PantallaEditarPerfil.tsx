@@ -2,7 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef, useState, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -13,10 +19,12 @@ import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showErrorAlert } from "@/utils/alerts";
 import { getInitials } from "@/utils/text";
 import { BrilloAvatar } from "../components/BrilloAvatar";
+import { PerfilPortada } from "../components/PerfilPortada";
 import { fondoPerfil } from "../perfilEstilos";
 import { IconoFlecha } from "../Perfiliconos";
 import {
@@ -54,6 +62,8 @@ export function PantallaEditarPerfil() {
   const fondo = fondoPerfil(isDark);
 
   const [sheet, setSheet] = useState<"avatar" | "etiquetas" | null>(null);
+  const { pickCoverImage, isPicking } = useImagePicker();
+  const [guardandoFondo, setGuardandoFondo] = useState(false);
 
   // Si se abre un drawer mientras el anterior aún termina de cerrarse, su animación de cierre
   // lo vuelve a cerrar (por eso a veces "no entraba"). Se espera a que termine.
@@ -78,6 +88,21 @@ export function PantallaEditarPerfil() {
     }
   };
 
+  /** Elegir, cambiar o quitar el fondo de perfil (`null` lo quita) */
+  const cambiarFondo = async (quitar = false) => {
+    if (guardandoFondo || isPicking) return;
+    const cover = quitar ? null : await pickCoverImage();
+    if (!quitar && !cover) return;
+    setGuardandoFondo(true);
+    try {
+      await guardar({ cover });
+    } catch {
+      // guardar ya mostró el aviso
+    } finally {
+      setGuardandoFondo(false);
+    }
+  };
+
   const textoNombre = {
     ...INTER.semibold,
     fontSize: 22,
@@ -98,15 +123,20 @@ export function PantallaEditarPerfil() {
         pointerEvents="none"
         style={[styles.fondo, { height: ALTO_FONDO + insets.top }]}
       >
-        <LinearGradient
-          colors={
-            isDark
-              ? ["#2A3446", "#1A2130", fondo]
-              : ["#dbdbdbff", "#E2E3E7", fondo]
-          }
-          locations={[0, 0.5, 1]}
-          style={StyleSheet.absoluteFill}
-        />
+        {/* Con portada, la imagen elegida; sin ella, el degradado gris de siempre */}
+        {profile.cover ? (
+          <PerfilPortada cover={profile.cover} isDark={isDark} />
+        ) : (
+          <LinearGradient
+            colors={
+              isDark
+                ? ["#2A3446", "#1A2130", fondo]
+                : ["#dbdbdbff", "#E2E3E7", fondo]
+            }
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
       </View>
 
       <ScrollView
@@ -229,6 +259,31 @@ export function PantallaEditarPerfil() {
             texto="Foto de perfil"
             isDark={isDark}
             onPress={() => abrir("avatar")}
+          />
+          <View style={[styles.divisor, { backgroundColor: c.divisor }]} />
+          <Fila
+            icono="image-outline"
+            texto="Fondo de perfil"
+            isDark={isDark}
+            onPress={() => void cambiarFondo()}
+            derecha={
+              guardandoFondo ? (
+                <ActivityIndicator size="small" color={c.suave} />
+              ) : profile.cover ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Quitar fondo de perfil"
+                  hitSlop={10}
+                  onPress={() => void cambiarFondo(true)}
+                >
+                  <Text
+                    style={[INTER.medium, { fontSize: 13.5, color: "#FF3B30" }]}
+                  >
+                    Quitar
+                  </Text>
+                </Pressable>
+              ) : null
+            }
           />
           <View style={[styles.divisor, { backgroundColor: c.divisor }]} />
           <Fila

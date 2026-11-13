@@ -1,3 +1,4 @@
+import { usePathname } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { useCallback } from "react";
 
@@ -15,6 +16,8 @@ export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const { unreadCount } = useNotifications();
   const { openNotifications } = useAppNavigation();
   const activeTab = tabFromRouteName(state.routes[state.index].name) ?? "home";
+  // Al abrir notificaciones el indicador se desliza a la campana mientras entra la pantalla
+  const notificacionesActivas = usePathname() === "/notificaciones";
 
   const handleNavigate = useCallback(
     (tab: Tab) => {
@@ -32,6 +35,7 @@ export function AppTabBar({ state, navigateToTab }: BottomTabBarProps) {
       activeTab={activeTab}
       onNavigate={handleNavigate}
       onOpenNotifications={openNotifications}
+      notificacionesActivas={notificacionesActivas}
       isDark={isDark}
       hasUnreadChats={chats.some((chat) => chat.unread)}
       unreadNotifications={unreadCount}

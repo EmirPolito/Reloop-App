@@ -9,6 +9,7 @@ import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
+import { StackNavBar } from "@/features/navigation/StackNavBar";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { IconoMensaje } from "@/features/perfil/Perfiliconos";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -121,7 +122,8 @@ export function PantallaNotificaciones() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: 15,
-              paddingBottom: insets.bottom + 24,
+              // Espacio para que la barra de navegación no tape la última tarjeta
+              paddingBottom: insets.bottom + 110,
             }}
             renderSectionHeader={({ section }) => (
               <Text style={[styles.seccion, { color: suave }]}>
@@ -159,6 +161,7 @@ export function PantallaNotificaciones() {
           />
         </Animated.View>
       )}
+      <StackNavBar />
     </View>
   );
 }

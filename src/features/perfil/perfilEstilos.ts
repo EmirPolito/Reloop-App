@@ -8,7 +8,10 @@ export const COLOR_ICONO_SEGUIDORES = "#296ffaff";
 export const COLOR_ICONO_REPUTACION = "#ffb638ff";
 
 /** Alto de la portada (imagen de fondo), sin contar la barra de estado */
-export const ALTO_PORTADA = 190;
+export const ALTO_PORTADA = 230;
+
+/** Cuánto sube la fila del avatar sobre la parte desvanecida de la portada */
+export const SOLAPE_PORTADA = 58;
 
 /** Espacio sobre el avatar (además de la barra de estado), igual en el perfil propio y el público */
 export const ESPACIO_SUPERIOR_PERFIL = 90;

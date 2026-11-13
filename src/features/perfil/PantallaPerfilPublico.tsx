@@ -7,8 +7,10 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
+import { StackNavBar } from "@/features/navigation/StackNavBar";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import {
+  ALTO_PORTADA,
   ESPACIO_SUPERIOR_PERFIL,
   coloresTarjeta,
   fondoPerfil,
@@ -20,6 +22,7 @@ import { BotonSeguir } from "./components/BotonSeguir";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
+import { PerfilPortada } from "./components/PerfilPortada";
 import {
   PublicacionesPerfil,
   SIN_ANUNCIOS,
@@ -55,6 +58,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
       <View style={baseStyles.fill}>
         <BackHeader title="Perfil" onBack={back} />
         <LoadingState />
+        <StackNavBar />
       </View>
     );
   }
@@ -66,8 +70,17 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Mismo espacio superior que el perfil propio; el botón de volver flota dentro */}
-        <View style={{ height: insets.top + ESPACIO_SUPERIOR_PERFIL }}>
+        {/* Igual que el perfil propio (portada o espacio superior); el botón de volver flota dentro */}
+        <View
+          style={{
+            height:
+              insets.top +
+              (profile.cover ? ALTO_PORTADA : ESPACIO_SUPERIOR_PERFIL),
+          }}
+        >
+          {profile.cover ? (
+            <PerfilPortada cover={profile.cover} isDark={isDark} />
+          ) : null}
           <PressableSuave
             accessibilityRole="button"
             accessibilityLabel="Volver"
@@ -75,6 +88,8 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
             style={[
               styles.backBtn,
               { top: insets.top + 8, backgroundColor: fondoTarjeta },
+              // Sobre la foto: cristal claro con borde, legible sobre cualquier imagen
+              profile.cover ? styles.backBtnPortada : null,
             ]}
           >
             <AppIcon
@@ -87,6 +102,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
 
         <PerfilCabecera
           isDark={isDark}
+          solapar={Boolean(profile.cover)}
           avatar={
             <PerfilAvatar
               photo={profile.photo}
@@ -144,6 +160,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
           ) : null}
         </View>
       </ScrollView>
+      <StackNavBar />
     </View>
   );
 }
@@ -157,5 +174,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+  },
+  backBtnPortada: {
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255, 255, 255, 0.9)",
+    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.12)",
   },
 });

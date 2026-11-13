@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Switch, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  ALTO_PORTADA,
   ESPACIO_SUPERIOR_PERFIL,
   coloresTarjeta,
   fondoPerfil,
@@ -20,6 +21,7 @@ import { FilaAjuste } from "./components/FilaAjuste";
 import { PerfilAvatar } from "./components/PerfilAvatar";
 import { PerfilCabecera } from "./components/PerfilCabecera";
 import { PerfilInformacion } from "./components/PerfilInformacion";
+import { PerfilPortada } from "./components/PerfilPortada";
 import {
   PublicacionesPerfil,
   SIN_ANUNCIOS,
@@ -74,11 +76,22 @@ export function PantallaPerfil() {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Sin portada por ahora: avatar, nombre, etiquetas, descripción y estadísticas */}
-        <View style={{ height: insets.top + ESPACIO_SUPERIOR_PERFIL }} />
+        {/* Portada (si la eligió) detrás de la hora; sin ella, solo el espacio superior */}
+        <View
+          style={{
+            height:
+              insets.top +
+              (profile.cover ? ALTO_PORTADA : ESPACIO_SUPERIOR_PERFIL),
+          }}
+        >
+          {profile.cover ? (
+            <PerfilPortada cover={profile.cover} isDark={isDark} />
+          ) : null}
+        </View>
 
         <PerfilCabecera
           isDark={isDark}
+          solapar={Boolean(profile.cover)}
           avatar={
             <PerfilAvatar
               photo={profile.photo}
@@ -199,7 +212,13 @@ export function PantallaPerfil() {
 
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#101010" />}
+              icon={
+                <IconoDocumento
+                  size={24.5}
+                  color="#101010"
+                  lineColor="#909090ff"
+                />
+              }
               label="Términos y condiciones"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Términos y condiciones")}
@@ -207,7 +226,13 @@ export function PantallaPerfil() {
             />
             <FilaAjuste
               bg={rowBg}
-              icon={<IconoDocumento size={24.5} color="#101010" />}
+              icon={
+                <IconoDocumento
+                  size={24.5}
+                  color="#101010"
+                  lineColor="#909090ff"
+                />
+              }
               label="Términos y condiciones"
               textColor={textoFila}
               onPress={() => showComingSoonAlert("Términos y condiciones")}

@@ -38,9 +38,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
 export interface NavegacionProps {
-  activeTab: Tab;
+  /** `null` en pantallas fuera de las pestañas: ningún icono queda marcado */
+  activeTab: Tab | null;
   onNavigate: (tab: Tab) => void;
   onOpenNotifications: () => void;
+  /** En la pantalla de notificaciones: la campana queda marcada (rellena y con el indicador) */
+  notificacionesActivas?: boolean;
   isDark?: boolean;
   hasUnreadChats?: boolean;
   unreadNotifications?: number;
@@ -210,24 +213,43 @@ function TabButton({
 
 /**
  * Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer.
- * De contorno normalmente; rellena cuando hay notificaciones sin leer.
+ * De contorno normalmente (rellena si hay sin leer). En la pantalla de notificaciones se
+ * marca como una pestaña más: el indicador se desliza detrás y el icono pasa a relleno.
  */
 function BellButton({
   unread,
+  selected,
+  posicion,
+  indicadorVisible,
   isDark,
   onPress,
   styles,
 }: {
   unread: number;
+  selected: boolean;
+  posicion: SharedValue<number>;
+  indicadorVisible: SharedValue<number>;
   isDark: boolean;
   onPress: () => void;
   styles: Estilos;
 }) {
   const colorInactivo = isDark ? "#A1A1AA" : "#1A1A1A";
   const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
+  const iconSelectedStyle = useAnimatedStyle(() => ({
+    opacity:
+      Math.max(0, 1 - Math.abs(posicion.get() - HUECO_CAMPANA)) *
+      indicadorVisible.get(),
+  }));
+  const iconUnselectedStyle = useAnimatedStyle(() => ({
+    opacity:
+      1 -
+      Math.max(0, 1 - Math.abs(posicion.get() - HUECO_CAMPANA)) *
+        indicadorVisible.get(),
+  }));
   return (
     <PressableScale
       accessibilityRole="button"
+      accessibilityState={{ selected }}
       accessibilityLabel={
         unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"
       }
@@ -236,11 +258,16 @@ function BellButton({
       style={styles.hueco}
     >
       <View style={styles.icono}>
-        {unread > 0 ? (
+        <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
+          {unread > 0 ? (
+            <IconoCampana size={TAMANO_ICONO} color={colorActivo} />
+          ) : (
+            <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
+          )}
+        </Animated.View>
+        <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
           <IconoCampana size={TAMANO_ICONO} color={colorActivo} />
-        ) : (
-          <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
-        )}
+        </Animated.View>
         {unread > 0 ? (
           <View style={styles.contador}>
             <Text style={styles.contadorTexto}>{unreadBadgeLabel(unread)}</Text>
@@ -408,6 +435,7 @@ export function Navegacion({
   activeTab,
   onNavigate,
   onOpenNotifications,
+  notificacionesActivas = false,
   isDark = false,
   hasUnreadChats = false,
   unreadNotifications = 0,
@@ -416,9 +444,13 @@ export function Navegacion({
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 12);
 
-  // -1 en "create": no es un icono de la cápsula, así que el indicador se oculta
+  // -1 en "create" o fuera de las pestañas: no hay icono marcado y el indicador se oculta
   const indiceTab = NAV_TABS.findIndex((tab) => tab.id === activeTab);
-  const huecoActivo = indiceTab >= 0 ? huecoDeTab(indiceTab) : -1;
+  const huecoActivo = notificacionesActivas
+    ? HUECO_CAMPANA
+    : indiceTab >= 0
+      ? huecoDeTab(indiceTab)
+      : -1;
   const posicion = useSharedValue(Math.max(huecoActivo, 0));
   const indicadorVisible = useSharedValue(huecoActivo >= 0 ? 1 : 0);
   const anchoHueco = useSharedValue(0);
@@ -483,6 +515,9 @@ export function Navegacion({
               {indice === HUECO_CAMPANA && (
                 <BellButton
                   unread={unreadNotifications}
+                  selected={notificacionesActivas}
+                  posicion={posicion}
+                  indicadorVisible={indicadorVisible}
                   isDark={isDark}
                   onPress={onOpenNotifications}
                   styles={styles}
@@ -491,7 +526,7 @@ export function Navegacion({
               <TabButton
                 tab={tab}
                 indice={huecoDeTab(indice)}
-                selected={activeTab === tab.id}
+                selected={!notificacionesActivas && activeTab === tab.id}
                 posicion={posicion}
                 indicadorVisible={indicadorVisible}
                 showBadge={tab.id === "chats" && hasUnreadChats}

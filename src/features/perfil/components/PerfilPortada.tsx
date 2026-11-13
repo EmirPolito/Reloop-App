@@ -1,85 +1,77 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { optimizedImageUrl } from "@/lib/imageUrl";
-import { ALTO_PORTADA } from "../perfilEstilos";
+import { fondoPerfil } from "../perfilEstilos";
 
 /** Ancho al que se pide la portada a Cloudinary */
 const ANCHO_PORTADA = 900;
 
-/** Redondeo de las esquinas inferiores de la portada */
-const RADIO_PORTADA = 21;
+/** Curva de opacidad del desvanecido inferior: seis paradas, sin cortes ni bandas */
+const ALFAS_DESVANECIDO = [0, 0.08, 0.28, 0.62, 0.9, 1] as const;
+const PARADAS_DESVANECIDO = [0, 0.25, 0.5, 0.72, 0.88, 1] as const;
+/** Parte inferior de la imagen que cubre el desvanecido */
+const ALTO_DESVANECIDO = "55%";
+
+/** `#rrggbb[aa]` → `rgba(r, g, b, alfa)` */
+function conAlfa(hex: string, alfa: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alfa})`;
+}
 
 /**
- * Portada del perfil: la imagen de fondo elegida, como una tarjeta que llega hasta arriba
- * (detrás de la hora) y termina con las esquinas inferiores redondeadas.
+ * Fondo (portada) del perfil: la imagen ocupa todo su contenedor y la mitad inferior se
+ * disuelve en el color de la pantalla, así el avatar y el texto que se montan encima
+ * quedan sobre una transición limpia. Arriba, un velo muy suave mantiene legibles la
+ * hora y los botones flotantes sobre cualquier foto.
  */
 export function PerfilPortada({
   cover,
   isDark,
-  topInset = 0,
-  children,
 }: {
-  cover: string | null;
+  cover: string;
   isDark: boolean;
-  /** Alto extra para dibujar la portada también detrás de la barra de estado */
-  topInset?: number;
-  /** Navegación que va encima de la portada */
-  children?: ReactNode;
 }) {
-  // Sin imagen: tarjeta gris lisa
-  const vacio = isDark ? "#1E293B" : "#DADCE2";
+  const fondo = fondoPerfil(isDark);
+  const desvanecido = ALFAS_DESVANECIDO.map((alfa) => conAlfa(fondo, alfa)) as [
+    string,
+    string,
+    ...string[],
+  ];
 
   return (
-    <View style={{ height: ALTO_PORTADA + topInset }}>
-      {/* Extensión superior para el rebote al estirar hacia abajo */}
-      <View
-        pointerEvents="none"
-        style={[styles.rebote, { backgroundColor: vacio }]}
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Image
+        source={{ uri: optimizedImageUrl(cover, ANCHO_PORTADA) ?? cover }}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        priority="high"
+        transition={200}
+        style={StyleSheet.absoluteFill}
       />
-
-      <View style={[styles.tarjeta, { backgroundColor: vacio }]}>
-        {cover ? (
-          <Image
-            source={{ uri: optimizedImageUrl(cover, ANCHO_PORTADA) ?? cover }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            priority="high"
-            transition={200}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
-
-        {/* Sombra suave arriba para que la hora se lea sobre cualquier foto */}
-        {cover && topInset > 0 ? (
-          <LinearGradient
-            pointerEvents="none"
-            colors={["#00000040", "#00000000"]}
-            style={[styles.sombraSuperior, { height: topInset + 50 }]}
-          />
-        ) : null}
-      </View>
-
-      {children}
+      <LinearGradient
+        colors={[conAlfa(fondo, 0.5), conAlfa(fondo, 0)]}
+        style={styles.veloSuperior}
+      />
+      <LinearGradient
+        colors={desvanecido}
+        locations={[...PARADAS_DESVANECIDO]}
+        style={styles.desvanecido}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  rebote: {
+  veloSuperior: { position: "absolute", top: 0, left: 0, right: 0, height: 110 },
+  desvanecido: {
     position: "absolute",
-    top: -500,
     left: 0,
     right: 0,
-    height: 500,
+    bottom: 0,
+    height: ALTO_DESVANECIDO,
   },
-  tarjeta: {
-    ...StyleSheet.absoluteFill,
-    borderBottomLeftRadius: RADIO_PORTADA,
-    borderBottomRightRadius: RADIO_PORTADA,
-    overflow: "hidden",
-  },
-  sombraSuperior: { position: "absolute", top: 0, left: 0, right: 0 },
 });

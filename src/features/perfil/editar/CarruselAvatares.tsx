@@ -55,7 +55,7 @@ export function CarruselAvatares({
   photo: string | null;
   name: string;
   isDark: boolean;
-  /** Posición centrada al abrir */
+  /** Avatar guardado (ver indiceDeAvatar): va primero en la fila y centrado al abrir */
   inicial: number;
   onCambio: (indice: number) => void;
 }) {
@@ -63,8 +63,16 @@ export function CarruselAvatares({
   const reduceMotion = useReducedMotion();
   const [ancho, setAncho] = useState(0);
   const scrollRef = useRef<ComponentRef<typeof AnimatedScrollView>>(null);
-  const scrollX = useSharedValue(inicial * PASO);
+  const scrollX = useSharedValue(0);
   const ultimo = ORBES.length;
+  // Orden de la fila: el avatar guardado va primero y el resto conserva su orden. Cada
+  // valor es un índice de avatar (0 = foto o iniciales, 1 a 10 = orbes). Se fija al montar.
+  const [orden] = useState(() => [
+    inicial,
+    ...Array.from({ length: ultimo + 1 }, (_, i) => i).filter(
+      (i) => i !== inicial,
+    ),
+  ]);
 
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollX.set(e.contentOffset.x);
@@ -72,9 +80,9 @@ export function CarruselAvatares({
 
   useAnimatedReaction(
     () => Math.min(ultimo, Math.max(0, Math.round(scrollX.get() / PASO))),
-    (indice, anterior) => {
-      if (anterior !== null && indice !== anterior) {
-        scheduleOnRN(onCambio, indice);
+    (posicion, anterior) => {
+      if (anterior !== null && posicion !== anterior) {
+        scheduleOnRN(onCambio, orden[posicion]);
       }
     },
   );
@@ -96,48 +104,54 @@ export function CarruselAvatares({
           decelerationRate="fast"
           scrollEventThrottle={16}
           onScroll={onScroll}
-          contentOffset={{ x: inicial * PASO, y: 0 }}
           contentContainerStyle={{
             paddingHorizontal: (ancho - PASO) / 2,
             alignItems: "center",
           }}
         >
-          <Hueco
-            indice={0}
-            scrollX={scrollX}
-            etiqueta={photo ? "Foto actual" : "Sin avatar"}
-            onPress={centrar}
-          >
-            <View style={[styles.neutro, { backgroundColor: c.avatarFondo }]}>
-              {photo ? (
-                <>
-                  <Image
-                    source={{ uri: optimizedImageUrl(photo, 400) ?? photo }}
-                    contentFit="cover"
-                    transition={200}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <BrilloAvatar id="sheet-avatar" />
-                </>
-              ) : (
-                <Text style={[INTER.medium, { fontSize: 40, color: c.texto }]}>
-                  {getInitials(name)}
-                </Text>
-              )}
-            </View>
-          </Hueco>
-
-          {ORBES.map((orbe, orb) => (
-            <Hueco
-              key={orbe.nombre}
-              indice={orb + 1}
-              scrollX={scrollX}
-              etiqueta={`Avatar ${orbe.nombre}`}
-              onPress={centrar}
-            >
-              <OrbAvatar orb={orb} name={name} size={LADO} />
-            </Hueco>
-          ))}
+          {orden.map((avatar, posicion) =>
+            avatar === 0 ? (
+              <Hueco
+                key="neutro"
+                indice={posicion}
+                scrollX={scrollX}
+                etiqueta={photo ? "Foto actual" : "Sin avatar"}
+                onPress={centrar}
+              >
+                <View
+                  style={[styles.neutro, { backgroundColor: c.avatarFondo }]}
+                >
+                  {photo ? (
+                    <>
+                      <Image
+                        source={{ uri: optimizedImageUrl(photo, 400) ?? photo }}
+                        contentFit="cover"
+                        transition={200}
+                        style={StyleSheet.absoluteFill}
+                      />
+                      <BrilloAvatar id="sheet-avatar" />
+                    </>
+                  ) : (
+                    <Text
+                      style={[INTER.medium, { fontSize: 40, color: c.texto }]}
+                    >
+                      {getInitials(name)}
+                    </Text>
+                  )}
+                </View>
+              </Hueco>
+            ) : (
+              <Hueco
+                key={ORBES[avatar - 1].nombre}
+                indice={posicion}
+                scrollX={scrollX}
+                etiqueta={`Avatar ${ORBES[avatar - 1].nombre}`}
+                onPress={centrar}
+              >
+                <OrbAvatar orb={avatar - 1} name={name} size={LADO} />
+              </Hueco>
+            ),
+          )}
         </AnimatedScrollView>
       ) : null}
     </View>
