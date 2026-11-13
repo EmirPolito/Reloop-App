@@ -6,6 +6,12 @@ import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import {
   IconoAnuncios,
   IconoCampana,
+  IconoCampanaLinea,
+  IconoChatLinea,
+  IconoFavoritoLinea,
+  IconoInicioLinea,
+  IconoPerfil,
+  IconoPerfilLinea,
   IconoPublicaciones,
 } from "@/features/perfil/Perfiliconos";
 import { Text } from "@/features/shared/Text";
@@ -68,6 +74,17 @@ const ALTO_CAPSULA = 62;
 const MARGEN_CAPSULA = 5;
 const TAMANO_ICONO = 23;
 
+/** Iconos de contorno de las pestañas sin seleccionar */
+const ICONOS_LINEA: Record<
+  Tab,
+  ((props: { size?: number; color?: string }) => React.JSX.Element) | undefined
+> = {
+  home: IconoInicioLinea,
+  favorites: IconoFavoritoLinea,
+  chats: IconoChatLinea,
+  profile: IconoPerfilLinea,
+} as Record<Tab, any>;
+
 /* -------------------------------------------------------------------------- */
 /*  Animaciones (todo corre en el hilo de UI con Reanimated)                  */
 /* -------------------------------------------------------------------------- */
@@ -110,8 +127,9 @@ function Cristal({ isDark, styles }: { isDark: boolean; styles: Estilos }) {
 }
 
 /**
- * Pestaña de la cápsula: solo el icono. El icono activo y el inactivo se funden según lo
- * cerca que esté el indicador, así el cambio acompaña al deslizamiento sin estado propio.
+ * Pestaña de la cápsula: solo el icono. Sin seleccionar se dibuja de contorno; el activo,
+ * relleno. Ambos se funden según lo cerca que esté el indicador, así el cambio acompaña al
+ * deslizamiento sin estado propio.
  */
 function TabButton({
   tab,
@@ -146,6 +164,10 @@ function TabButton({
         indicadorVisible.get(),
   }));
 
+  const colorInactivo = isDark ? "#A1A1AA" : "#767676ff";
+  const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
+  const IconoLinea = ICONOS_LINEA[tab.id];
+
   return (
     <PressableScale
       accessibilityRole="tab"
@@ -157,20 +179,28 @@ function TabButton({
     >
       <View style={styles.icono}>
         <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
-          <NavigationIcon
-            name={tab.icon}
-            selected={false}
-            size={TAMANO_ICONO}
-            color={isDark ? "#A1A1AA" : "#404040ff"}
-          />
+          {IconoLinea ? (
+            <IconoLinea size={TAMANO_ICONO} color={colorInactivo} />
+          ) : (
+            <NavigationIcon
+              name={tab.icon}
+              selected={false}
+              size={TAMANO_ICONO}
+              color={colorInactivo}
+            />
+          )}
         </Animated.View>
         <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
-          <NavigationIcon
-            name={tab.icon}
-            selected
-            size={TAMANO_ICONO}
-            color={isDark ? "#FFFFFF" : "#1A1A1A"}
-          />
+          {tab.id === "profile" ? (
+            <IconoPerfil size={TAMANO_ICONO} color={colorActivo} />
+          ) : (
+            <NavigationIcon
+              name={tab.icon}
+              selected
+              size={TAMANO_ICONO}
+              color={colorActivo}
+            />
+          )}
         </Animated.View>
         {showBadge ? <View style={styles.punto} /> : null}
       </View>
@@ -178,7 +208,10 @@ function TabButton({
   );
 }
 
-/** Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer */
+/**
+ * Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer.
+ * De contorno normalmente; rellena cuando hay notificaciones sin leer.
+ */
 function BellButton({
   unread,
   isDark,
@@ -190,7 +223,8 @@ function BellButton({
   onPress: () => void;
   styles: Estilos;
 }) {
-  const color = isDark ? "#A1A1AA" : "#5F6066";
+  const colorInactivo = isDark ? "#A1A1AA" : "#767676ff";
+  const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
   return (
     <PressableScale
       accessibilityRole="button"
@@ -202,11 +236,11 @@ function BellButton({
       style={styles.hueco}
     >
       <View style={styles.icono}>
-        <IconoCampana
-          size={TAMANO_ICONO + 1}
-          color={`${color}66`}
-          secondaryColor={color}
-        />
+        {unread > 0 ? (
+          <IconoCampana size={TAMANO_ICONO} color={colorActivo} />
+        ) : (
+          <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
+        )}
         {unread > 0 ? (
           <View style={styles.contador}>
             <Text style={styles.contadorTexto}>{unreadBadgeLabel(unread)}</Text>
@@ -223,23 +257,24 @@ function CreateButton({
   label,
   isDark,
   styles,
+  sinSombra = false,
 }: {
   onPress: () => void;
   label: string;
   isDark: boolean;
   styles: Estilos;
+  sinSombra?: boolean;
 }) {
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      scaleTo={0.92}
-      style={styles.sombra}
+      scaleTo={0.97}
+      style={sinSombra ? styles.sinSombra : styles.sombra}
     >
       <View style={styles.crear}>
         <Cristal isDark={isDark} styles={styles} />
-        {/* En su propia vista: en web, un SVG suelto quedaría debajo del tinte del cristal */}
         <View>
           <NavigationIcon
             name="add"
@@ -331,6 +366,7 @@ function MenuCrear({
           label="Cerrar"
           isDark={isDark}
           styles={styles}
+          sinSombra
         />
       </View>
 
@@ -473,6 +509,7 @@ export function Navegacion({
         label="Publicar producto"
         isDark={isDark}
         styles={styles}
+        sinSombra={menuVisible}
       />
 
       {menuVisible && (
@@ -509,13 +546,11 @@ function createStyles(isDark: boolean) {
         velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.8)",
       }
     : {
-        cristal: android
-          ? "rgba(235, 235, 239, 0.96)"
-          : "rgba(235, 235, 239, 0.62)",
-        borde: "rgba(255, 255, 255, 0.9)",
-        indicador: "#FFFFFF",
+        cristal: android ? "#f2f2f2ff" : "#f2f2f2ff",
+        borde: "#ffffffff",
+        indicador: "#e9e9e9ff",
         sombra: "0 8px 24px rgba(0, 0, 0, 0.1)",
-        sombraIndicador: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        sombraIndicador: "0 1px 4px rgba(0, 0, 0, 0.08)",
         fondoContador: "#EBEBEF",
         text: "#101010",
         velo: android
@@ -539,6 +574,10 @@ function createStyles(isDark: boolean) {
       borderRadius: ALTO_CAPSULA / 2,
       boxShadow: colors.sombra,
     },
+    sinSombra: {
+      borderRadius: ALTO_CAPSULA / 2,
+    },
+
     capsulaSombra: { flex: 1 },
 
     capsula: {

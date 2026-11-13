@@ -33,9 +33,7 @@ import {
   IconoEditar,
   IconoFlecha,
   IconoLogin,
-  IconoLuna,
   IconoMensaje,
-  IconoSol,
 } from "./Perfiliconos";
 import { useProfile } from "./ProfileProvider";
 
@@ -169,7 +167,7 @@ export function PantallaPerfil() {
                 />
               }
             />
-            <FilaAjuste
+            {/* <FilaAjuste
               bg={rowBg}
               icon={
                 isDark ? (
@@ -190,7 +188,7 @@ export function PantallaPerfil() {
                   thumbColor="#FFFFFF"
                 />
               }
-            />
+            /> */}
           </View>
 
           {/* =========================== LEGAL =========================== */}

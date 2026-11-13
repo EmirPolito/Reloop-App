@@ -19,7 +19,7 @@ export const ORBES: readonly ColoresOrbe[] = [
   },
   {
     nombre: "Violeta",
-    claro: "#E8CBFA",
+    claro: "#e8c2ffff",
     medio: "#BB5BDD",
     profundo: "#A12A9C",
     texto: "#FFFFFF",
@@ -34,8 +34,8 @@ export const ORBES: readonly ColoresOrbe[] = [
   {
     nombre: "Verde",
     claro: "#CFF8D6",
-    medio: "#5CD58B",
-    profundo: "#12915F",
+    medio: "#5cc37dff",
+    profundo: "#12913aff",
     texto: "#FFFFFF",
   },
   {
