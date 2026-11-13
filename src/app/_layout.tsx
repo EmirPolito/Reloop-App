@@ -47,7 +47,7 @@ const FONTS = {
 };
 
 export const unstable_settings = {
-  initialRouteName: "(app)",
+  anchor: "(app)",
 };
 
 /** Bienvenida para quien no tiene sesión y la app para quien sí; Expo Router redirige al cambiar la sesión. */
