@@ -1,6 +1,12 @@
+import { StyleSheet, View } from "react-native";
+import { useFollowers } from "./hooks/useFollowers";
+import { IconoEditar } from "./Perfiliconos";
+import { useProfile } from "./ProfileProvider";
+
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+
 import { TarjetaPremium } from "@/features/premium/components/TarjetaPremium";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
@@ -11,14 +17,11 @@ import {
   BotonHeaderPerfil,
   PerfilDesplazable,
 } from "./components/PerfilDesplazable";
-import { useFollowers } from "./hooks/useFollowers";
-import { IconoEditar } from "./Perfiliconos";
-import { useProfile } from "./ProfileProvider";
 
 /**
  * Perfil propio: portada que colapsa en header, avatar, nombre con la insignia Premium,
- * @username, acceso a Premium, publicaciones y, al final, General, Legal y Cerrar sesión.
- * Editar perfil está arriba a la derecha.
+ * @username y publicaciones. Debajo de las publicaciones: el banner de ReLoop Premium y,
+ * después, General, Legal y Cerrar sesión. Editar perfil está arriba a la derecha.
  */
 export function PantallaPerfil() {
   const { isDark } = useAppTheme();
@@ -45,21 +48,30 @@ export function PantallaPerfil() {
         seguidores: followersCount,
         reputacion: averageRatingLabel(mine),
       }}
-      tarjeta={
-        // La pantalla de ReLoop Premium llega con la fase de pagos y promociones
-        <TarjetaPremium
-          activa={premium}
-          isDark={isDark}
-          onPress={() => showComingSoonAlert("ReLoop Premium")}
-        />
-      }
       publicaciones={{
         items: mine,
         status: mineStatus,
         isOwn: true,
         onOpen: openProduct,
       }}
-      pie={<AjustesPerfil isDark={isDark} />}
+      pie={
+        <>
+          <View style={styles.premium}>
+            {/* La pantalla de ReLoop Premium llega con la fase de pagos y promociones */}
+            <TarjetaPremium
+              activa={premium}
+              isDark={isDark}
+              onPress={() => showComingSoonAlert("ReLoop Premium")}
+            />
+          </View>
+          <AjustesPerfil isDark={isDark} />
+        </>
+      }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  // Mismo margen lateral que las tarjetas de General y Legal, y la separación entre tarjetas
+  premium: { paddingHorizontal: 15, marginTop: 21 },
+});

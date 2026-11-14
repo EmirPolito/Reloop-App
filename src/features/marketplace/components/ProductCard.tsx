@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
+import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { PRODUCT_COLORS, PRODUCT_ICONS } from "@/features/shared/constants";
@@ -14,7 +15,7 @@ import { categoryFor } from "../data";
 import { allowsProductRating, productBadgeLabel } from "../rules";
 import type { Product } from "../types";
 
-const LADO_AVATAR_VENDEDOR = 18;
+const LADO_AVATAR_VENDEDOR = 24;
 
 export interface ProductCardProps {
   item: Product;
@@ -43,6 +44,7 @@ export const ProductCard = memo(function ProductCard({
   // Avatar y nombre actuales de quien vende (la publicación solo guarda una copia del nombre)
   const seller = usePerfilDe(item.ownerId);
   const sellerName = seller?.name ?? item.seller;
+  const sellerPremium = useIsPremium(item.ownerId);
 
   return (
     <View style={[styles.productCard, { width: cardWidth }]}>
@@ -95,6 +97,7 @@ export const ProductCard = memo(function ProductCard({
             orb={seller?.orb ?? null}
             name={sellerName}
             size={LADO_AVATAR_VENDEDOR}
+            premium={sellerPremium}
           />
           <Text
             numberOfLines={1}
@@ -141,7 +144,7 @@ const local = StyleSheet.create({
   vendedor: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
     marginTop: 4,
   },
   // El avatar ya da el espacio de arriba

@@ -1,15 +1,17 @@
-import { useEffect, useId } from "react";
+import { createContext, useContext, useEffect, useId } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   cancelAnimation,
   useAnimatedProps,
+  useAnimatedReaction,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
   withSequence,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import Svg, {
   ClipPath,
@@ -39,6 +41,30 @@ const FIN = 26;
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 /**
+ * Una pantalla con scroll pone aquí `1` mientras se desplaza: el brillo se detiene (cada
+ * cuadro del barrido actualiza el SVG) y vuelve a empezar cuando termina el movimiento.
+ */
+export const PausaBrilloContext = createContext<SharedValue<number> | null>(
+  null,
+);
+
+/** Un barrido de la franja y su descanso, en bucle */
+function barrido() {
+  "worklet";
+  return withRepeat(
+    withSequence(
+      withTiming(FIN, {
+        duration: BARRIDO_MS,
+        easing: Easing.inOut(Easing.quad),
+      }),
+      // Vuelve al inicio sin verse (está fuera de la forma) y espera
+      withDelay(PAUSA_MS, withTiming(INICIO, { duration: 0 })),
+    ),
+    -1,
+  );
+}
+
+/**
  * Insignia Premium: festoneada, dorada, con palomita blanca y un brillo que la cruza en
  * diagonal cada pocos segundos, recortado a su forma. Con "reducir movimiento" (o
  * `variant="static"`) queda quieta. Alrededor lleva un resplandor dorado muy suave.
@@ -60,27 +86,31 @@ export function PremiumBadge({
   const reduceMotion = useReducedMotion();
   const anima = variant === "shimmer" && !reduceMotion;
   const x = useSharedValue(INICIO);
+  const desplazando = useContext(PausaBrilloContext);
 
   useEffect(() => {
     if (!anima) {
       x.set(INICIO);
       return;
     }
-    x.set(
-      withRepeat(
-        withSequence(
-          withTiming(FIN, {
-            duration: BARRIDO_MS,
-            easing: Easing.inOut(Easing.quad),
-          }),
-          // Vuelve al inicio sin verse (está fuera de la forma) y espera
-          withDelay(PAUSA_MS, withTiming(INICIO, { duration: 0 })),
-        ),
-        -1,
-      ),
-    );
+    x.set(barrido());
     return () => cancelAnimation(x);
   }, [anima, x]);
+
+  // Mientras la pantalla se desplaza el brillo se detiene; al parar, vuelve a empezar
+  useAnimatedReaction(
+    () => (desplazando ? desplazando.get() : 0),
+    (actual, anterior) => {
+      if (!anima || anterior === null) return;
+      if (actual === 1) {
+        cancelAnimation(x);
+        x.set(INICIO);
+      } else if (anterior === 1) {
+        x.set(barrido());
+      }
+    },
+    [anima],
+  );
 
   const franja = useAnimatedProps(() => ({ x: x.get() }));
   // Ids propios por instancia: dos insignias de distinto color no comparten degradados

@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
@@ -7,16 +6,12 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
-import { StackNavBar } from "@/features/navigation/StackNavBar";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { BotonSeguir } from "./components/BotonSeguir";
-import {
-  BotonHeaderPerfil,
-  PerfilDesplazable,
-} from "./components/PerfilDesplazable";
+import { PerfilDesplazable } from "./components/PerfilDesplazable";
 import { useFollowers } from "./hooks/useFollowers";
 import { usePublicProfile } from "./hooks/usePublicProfile";
 import { IconoMensaje } from "./Perfiliconos";
@@ -24,7 +19,8 @@ import { defaultProfile } from "./profileMappers";
 
 /**
  * Perfil de otra persona (o el propio, visto como lo ven las demás), con la misma
- * estructura animada del perfil propio. La insignia Premium va junto al nombre.
+ * estructura animada del perfil propio y sin botón de volver (la barra de abajo y el gesto
+ * del sistema ya llevan atrás). La insignia Premium va junto al nombre.
  */
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
   const { styles: baseStyles, isDark } = useAppTheme();
@@ -48,7 +44,6 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
       <View style={baseStyles.fill}>
         <BackHeader title="Perfil" onBack={back} />
         <LoadingState />
-        <StackNavBar />
       </View>
     );
   }
@@ -60,11 +55,6 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
         isDark={isDark}
         placeholder="iniciales"
         premium={premium}
-        izquierda={
-          <BotonHeaderPerfil etiqueta="Volver" onPress={back}>
-            <Ionicons name="chevron-back" size={21} color="#FFFFFF" />
-          </BotonHeaderPerfil>
-        }
         acciones={
           isOwn ? null : (
             <>
@@ -104,7 +94,6 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
           onOpen: openProduct,
         }}
       />
-      <StackNavBar />
     </View>
   );
 }

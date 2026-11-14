@@ -3,17 +3,48 @@ import { useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { OrbAvatar } from "@/components/ui/OrbAvatar";
+import { PremiumBadge } from "@/components/ui/PremiumBadge";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
 
+/** La insignia mide un poco más de la mitad del avatar y sobresale por la esquina */
+const ESCALA_INSIGNIA = 0.58;
+
 /**
  * Avatar circular de una persona, en el orden en que lo elige en Editar perfil: su foto;
  * si no tiene, el avatar orbe; y si tampoco, sus iniciales. Si la foto no carga, cae a lo
- * siguiente sin dejar el círculo vacío.
+ * siguiente sin dejar el círculo vacío. Con `premium` lleva la insignia en la esquina
+ * inferior derecha (quieta: en listas largas no se anima cada una); no cambia su tamaño.
  */
 export function UserAvatar({
+  premium = false,
+  ...props
+}: {
+  photo: string | null;
+  orb: number | null;
+  name: string;
+  size: number;
+  style?: StyleProp<ViewStyle>;
+  premium?: boolean;
+}) {
+  if (!premium) return <AvatarBase {...props} />;
+  const insignia = Math.round(props.size * ESCALA_INSIGNIA);
+  return (
+    <View style={{ width: props.size, height: props.size }}>
+      <AvatarBase {...props} />
+      <View
+        pointerEvents="none"
+        style={[estilos.insignia, { width: insignia, height: insignia }]}
+      >
+        <PremiumBadge size={insignia} variant="static" />
+      </View>
+    </View>
+  );
+}
+
+function AvatarBase({
   photo,
   orb,
   name,
@@ -66,3 +97,8 @@ export function UserAvatar({
     </View>
   );
 }
+
+const estilos = StyleSheet.create({
+  // Sobresale unos píxeles por la esquina para que no tape la cara del avatar
+  insignia: { position: "absolute", right: -3, bottom: -3 },
+});

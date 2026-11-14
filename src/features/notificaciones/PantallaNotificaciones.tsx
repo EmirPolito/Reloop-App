@@ -9,7 +9,6 @@ import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { StackNavBar } from "@/features/navigation/StackNavBar";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { IconoMensaje } from "@/features/perfil/Perfiliconos";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -140,7 +139,12 @@ export function PantallaNotificaciones() {
             )}
             ListEmptyComponent={
               <IllustratedEmptyState
-                icon={<IconoMensaje size={80} color={isDark ? "#334155" : "#D9D9DE"} />}
+                icon={
+                  <IconoMensaje
+                    size={80}
+                    color={isDark ? "#334155" : "#D9D9DE"}
+                  />
+                }
                 title={
                   status === "error"
                     ? "No pudimos cargar tus notificaciones"
@@ -161,7 +165,6 @@ export function PantallaNotificaciones() {
           />
         </Animated.View>
       )}
-      <StackNavBar />
     </View>
   );
 }

@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
 import { NotificationBannerHost } from "@/features/notificaciones/components/NotificationBannerHost";
+import { BarraNavegacion } from "@/features/navigation/BarraNavegacion";
 import { SheetBienvenida } from "@/features/onboarding/SheetBienvenida";
 import { SessionProviders } from "@/features/session/SessionProviders";
 
@@ -23,6 +24,9 @@ export default function AppLayout() {
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="notificaciones" />
       </Stack>
+      {/* La barra de navegación: una sola, fuera de la pila, así no se duplica ni se anima por
+          separado al ir y volver de notificaciones o de un perfil */}
+      <BarraNavegacion />
       {/* Después de la pila: el banner flota encima de cualquier pantalla */}
       <NotificationBannerHost />
       {/* Configuración inicial de las cuentas nuevas (no se puede cerrar hasta terminar) */}

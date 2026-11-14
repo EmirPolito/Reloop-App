@@ -2,7 +2,6 @@ import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppTabBar } from "@/features/navigation/AppTabBar";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { APP_BACKGROUND } from "@/features/shared/constants";
 
@@ -14,12 +13,16 @@ export default function TabsLayout() {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDark ? APP_BACKGROUND.dark : APP_BACKGROUND.light },
+        {
+          backgroundColor: isDark ? APP_BACKGROUND.dark : APP_BACKGROUND.light,
+        },
       ]}
     >
       <View style={styles.inner}>
         <Tabs
-          tabBar={(props) => <AppTabBar {...props} />}
+          // La barra de navegación es una sola para toda la app (BarraNavegacion, en el
+          // layout de (app)): las pestañas no dibujan la suya
+          tabBar={() => null}
           screenOptions={{
             headerShown: false,
             // Cada pestaña deja libre el espacio de la barra de estado...

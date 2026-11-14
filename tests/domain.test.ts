@@ -13,6 +13,7 @@ import { buildNewProduct, validateDraft, EMPTY_DRAFT } from "@/features/crear-pu
 import { buildHomeFeedRows, homeRowKey } from "@/features/home/feedRows";
 import { filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
+import { estadoBarraParaRuta } from "@/features/navigation/routes";
 import { pasoDesdeIndice, PASOS_ONBOARDING, puedeFinalizar } from "@/features/onboarding/onboardingRules";
 import { isMembershipActive, mapMembership } from "@/features/premium/membershipRules";
 import {
@@ -119,6 +120,27 @@ describe("modo del buscador", () => {
     assert.deepEqual(modoDeBusqueda("@"), { modo: "usuarios", termino: "" });
     assert.deepEqual(modoDeBusqueda("  @José_P "), { modo: "usuarios", termino: "jose_p" });
     assert.deepEqual(modoDeBusqueda("hola @ana"), { modo: "productos", termino: "hola @ana" });
+  });
+});
+
+describe("barra de navegación por ruta", () => {
+  it("marca la pestaña de cada ruta de pestañas", () => {
+    assert.deepEqual(estadoBarraParaRuta("/"), { visible: true, activeTab: "home", notificaciones: false });
+    assert.deepEqual(estadoBarraParaRuta("/profile"), { visible: true, activeTab: "profile", notificaciones: false });
+    assert.equal(estadoBarraParaRuta("/chats").activeTab, "chats");
+    assert.equal(estadoBarraParaRuta("/favorites").activeTab, "favorites");
+    assert.equal(estadoBarraParaRuta("/create").activeTab, "create");
+  });
+  it("en notificaciones marca la campana y ninguna pestaña", () => {
+    assert.deepEqual(estadoBarraParaRuta("/notificaciones"), { visible: true, activeTab: null, notificaciones: true });
+  });
+  it("en el perfil de otra persona se ve sin marcar nada", () => {
+    assert.deepEqual(estadoBarraParaRuta("/user/abc123"), { visible: true, activeTab: null, notificaciones: false });
+  });
+  it("se oculta en conversación, publicación y editar perfil", () => {
+    for (const ruta of ["/chat/uidA_uidB", "/product/p1", "/editar-perfil"]) {
+      assert.equal(estadoBarraParaRuta(ruta).visible, false, ruta);
+    }
   });
 });
 
