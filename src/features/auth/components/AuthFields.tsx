@@ -129,21 +129,19 @@ export function AuthButton({
   );
 }
 
-/** Contenedor del formulario por correo: campos, error, botón de envío y, si hay `onBack`, regreso a las otras opciones. */
+/** Contenedor del formulario por correo: campos, error y botón de envío. */
 export function AuthEmailForm({
   children,
   error,
   submitLabel,
   onSubmit,
   loading,
-  onBack,
 }: {
   children: ReactNode;
   error: string;
   submitLabel: string;
   onSubmit: () => void;
   loading: boolean;
-  onBack?: () => void;
 }) {
   return (
     <View style={authStyles.emailFormContainer}>
@@ -152,19 +150,6 @@ export function AuthEmailForm({
       {error ? <Text style={authStyles.authError}>{error}</Text> : null}
 
       <AuthButton label={submitLabel} onPress={onSubmit} disabled={loading} />
-
-      {/* Volver a las 3 opciones */}
-      {onBack ? (
-        <Pressable
-          onPress={onBack}
-          style={authStyles.backToSocialRow}
-          hitSlop={TOGGLE_HIT_SLOP}
-        >
-          <Text style={authStyles.backToSocialText}>
-            ← Volver a otras opciones
-          </Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }

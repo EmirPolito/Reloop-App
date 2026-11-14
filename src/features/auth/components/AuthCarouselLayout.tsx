@@ -73,6 +73,7 @@ export function AuthCarouselLayout({
   footerPrompt,
   footerAction,
   onFooterPress,
+  afterFooter,
   children,
 }: {
   slides: AuthSlide[];
@@ -82,6 +83,8 @@ export function AuthCarouselLayout({
   footerPrompt: string;
   footerAction: string;
   onFooterPress: () => void;
+  /** Contenido opcional debajo del enlace final (p. ej. la leyenda legal del registro). */
+  afterFooter?: ReactNode;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -219,6 +222,8 @@ export function AuthCarouselLayout({
                 <Text style={authStyles.footerLink}>{footerAction}</Text>
               </Pressable>
             </View>
+
+            {afterFooter}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

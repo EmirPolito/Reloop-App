@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack, ThemeProvider, useRouter } from "expo-router";
+import { Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native";
 import type { ReactNode } from "react";
@@ -55,19 +55,14 @@ export const unstable_settings = {
 
 /**
  * Animación de entrada. Se monta sobre toda la app y espera a que se sepa si hay
- * sesión (status !== "loading") antes de expandirse. Con sesión sale sola hacia el inicio;
- * sin ella espera a que se toque Entrar y lleva al registro. La splash nativa la oculta
- * el propio AnimatedSplash cuando el logo está listo.
+ * sesión (status !== "loading") antes de expandirse; al terminar, la app ya está en la
+ * pantalla que le corresponde. La splash nativa la oculta el propio AnimatedSplash cuando
+ * el logo está listo.
  */
 function SplashGate({ children }: { children: ReactNode }) {
   const { status } = useAuth();
-  const router = useRouter();
   return (
-    <AnimatedSplash
-      isAppReady={status !== "loading"}
-      requiereEntrar={status === "unauthenticated"}
-      onEntrar={() => router.replace("/register")}
-    >
+    <AnimatedSplash isAppReady={status !== "loading"}>
       {children}
     </AnimatedSplash>
   );

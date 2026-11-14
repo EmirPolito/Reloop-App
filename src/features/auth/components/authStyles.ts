@@ -121,10 +121,6 @@ export const authStyles = StyleSheet.create({
   },
 
   // ── BOTONES LARGOS (Google, Apple, Email) ───────────────────────────────────
-  buttonsContainer: {
-    width: "100%",
-    gap: 9,
-  },
   primaryPillButton: {
     width: "100%",
     height: 50,
@@ -133,12 +129,6 @@ export const authStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
-  },
-  buttonIconLeft: {
-    position: "absolute",
-    left: 20,
-    justifyContent: "center",
-    alignItems: "center",
   },
   buttonPressed: {
     opacity: 0.88,
@@ -156,16 +146,6 @@ export const authStyles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#FFFFFF",
-  },
-
-  // 2. Apple (Gris suave)
-  appleButton: {
-    backgroundColor: "#ECEEF2",
-  },
-  appleButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#181A1F",
   },
 
   // 3. Email (Blanco con borde)
@@ -233,15 +213,6 @@ export const authStyles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 4,
-  },
-  backToSocialRow: {
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  backToSocialText: {
-    fontSize: 13.5,
-    color: "#4B5563",
-    fontWeight: "500",
   },
 
   // ── FOOTER ────────────────────────────────────────────────────────────────
