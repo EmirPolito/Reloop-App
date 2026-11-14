@@ -230,7 +230,7 @@ export function PerfilDesplazable({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingTop: altoPortada,
-            paddingBottom: 110,
+            paddingBottom: 115,
           }}
         >
           {/* Portada: dentro del scroll y detrás del avatar (que se dibuja después) */}
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
     gap: 12,
   },
   botonHeader: {
@@ -549,22 +549,21 @@ const styles = StyleSheet.create({
   },
   // Aro claro: el avatar se lee sobre cualquier portada
   avatarHeader: {
-    borderRadius: 99,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.9)",
+    borderRadius: 100,
+    borderWidth: 0,
     overflow: "hidden",
   },
   textoTitulo: { flex: 1, minWidth: 0 },
   filaTitulo: { flexDirection: "row", alignItems: "center", gap: 5 },
   tituloNombre: {
     flexShrink: 1,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 17,
+    fontFamily: "Inter_500Medium",
+    fontSize: 14.5,
     color: "#FFFFFF",
   },
   tituloSub: {
     fontFamily: "Inter_400Regular",
-    fontSize: 12.5,
+    fontSize: 12,
     color: "rgba(255,255,255,0.82)",
   },
   derecha: { flexDirection: "row", alignItems: "center", gap: 10 },
