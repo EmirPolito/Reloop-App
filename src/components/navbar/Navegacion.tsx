@@ -5,8 +5,8 @@ import type { Tab } from "@/features/navigation/routes";
 import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import {
   IconoAnuncios,
-  IconoCampana,
   IconoCampanaLinea,
+  IconoCampanaSolida,
   IconoChatLinea,
   IconoFavoritoLinea,
   IconoInicioLinea,
@@ -212,9 +212,10 @@ function TabButton({
 }
 
 /**
- * Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer.
- * De contorno normalmente (rellena si hay sin leer). En la pantalla de notificaciones se
- * marca como una pestaña más: el indicador se desliza detrás y el icono pasa a relleno.
+ * Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer (con el
+ * contador). Es de contorno siempre, aunque haya sin leer; solo en la pantalla de
+ * notificaciones se marca como una pestaña más: el indicador se desliza detrás y el icono
+ * pasa a sólido.
  */
 function BellButton({
   unread,
@@ -259,14 +260,10 @@ function BellButton({
     >
       <View style={styles.icono}>
         <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
-          {unread > 0 ? (
-            <IconoCampana size={TAMANO_ICONO} color={colorActivo} />
-          ) : (
-            <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
-          )}
+          <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
         </Animated.View>
         <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
-          <IconoCampana size={TAMANO_ICONO} color={colorActivo} />
+          <IconoCampanaSolida size={TAMANO_ICONO} color={colorActivo} />
         </Animated.View>
         {unread > 0 ? (
           <View style={styles.contador}>

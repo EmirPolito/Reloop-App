@@ -345,19 +345,29 @@ function Fila({
 }) {
   const c = coloresEditar(isDark);
   return (
-    <PressableSuave
-      accessibilityRole="button"
-      accessibilityLabel={texto}
-      onPress={onPress}
-      style={styles.fila}
-    >
-      <Ionicons name={icono} size={21} color={c.icono} />
-      <Text style={[INTER.medium, { flex: 1, fontSize: 14.5, color: c.texto }]}>
-        {texto}
-      </Text>
+    <View style={styles.fila}>
+      {/* El botón cubre toda la fila por detrás, y lo de encima deja pasar el toque. Así lo
+          de la derecha (como "Quitar") no queda dentro de otro botón: en web eso sería un
+          <button> dentro de otro <button>, que no es válido */}
+      <PressableSuave
+        accessibilityRole="button"
+        accessibilityLabel={texto}
+        onPress={onPress}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none">
+        <Ionicons name={icono} size={21} color={c.icono} />
+      </View>
+      <View pointerEvents="none" style={styles.filaTexto}>
+        <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>
+          {texto}
+        </Text>
+      </View>
       {derecha}
-      <IconoFlecha size={20} color={c.suave} />
-    </PressableSuave>
+      <View pointerEvents="none">
+        <IconoFlecha size={20} color={c.suave} />
+      </View>
+    </View>
   );
 }
 
@@ -407,5 +417,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
   },
+  filaTexto: { flex: 1 },
   divisor: { height: StyleSheet.hairlineWidth, marginLeft: 49 },
 });
