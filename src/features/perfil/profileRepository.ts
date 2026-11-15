@@ -17,8 +17,11 @@ import {
   mapProfile,
   toProfileDocument,
 } from "./profileMappers";
+import { sugerirUsername } from "./username";
 
 const USERS = "usuarios";
+/** Índice de unicidad de los @username (lo protege `firestore.rules`) */
+const USERNAMES = "usernames";
 
 /** Perfil de una persona en tiempo real; `null` si todavía no tiene ficha. */
 export function subscribeProfile(
@@ -30,7 +33,9 @@ export function subscribeProfile(
   return onSnapshot(
     doc(db, USERS, uid),
     (snapshot) =>
-      onData(snapshot.exists() ? mapProfile(snapshot.data(), fallbackName) : null),
+      onData(
+        snapshot.exists() ? mapProfile(snapshot.data(), fallbackName) : null,
+      ),
     onError,
   );
 }
@@ -39,24 +44,46 @@ export function subscribeProfile(
  * Crea la ficha de la persona si aún no existe (registro, o cuentas anteriores a esta
  * versión). Una ficha antigua se completa y se le retira el correo: las fichas las puede
  * leer cualquier persona con sesión, así que el correo no debe estar ahí.
+ *
+ * Una ficha nueva nace ya con su @username (el sugerido a partir del nombre) y su reserva
+ * en `usernames`, en la misma operación: así no hay que esperar a una segunda vuelta al
+ * servidor para tenerlo. Devuelve `true` si la ficha ya tiene username; si no (el sugerido
+ * estaba ocupado, o es una ficha antigua sin él), lo asigna `ensureUsername`.
  */
-export async function ensureProfile(uid: string, name: string): Promise<void> {
+export async function ensureProfile(
+  uid: string,
+  name: string,
+): Promise<boolean> {
   const ref = doc(db, USERS, uid);
-  await runTransaction(db, async (transaction) => {
-    const existing = await transaction.get(ref);
+  const candidato = sugerirUsername(name);
+  const reservaRef = doc(db, USERNAMES, candidato);
+  return runTransaction(db, async (transaction) => {
+    // Las dos lecturas van juntas: no suman tiempo de espera
+    const [existing, reserva] = await Promise.all([
+      transaction.get(ref),
+      transaction.get(reservaRef),
+    ]);
     if (!existing.exists()) {
+      const libre = !reserva.exists();
       transaction.set(ref, {
         uid,
         ...toProfileDocument(defaultProfile(name)),
+        ...(libre
+          ? { username: candidato, usernameNormalized: candidato }
+          : {}),
         // Cuenta nueva: al entrar verá la configuración inicial
         onboardingPendiente: true,
         creadoEn: serverTimestamp(),
         actualizadoEn: serverTimestamp(),
       });
-      return;
+      if (libre) {
+        transaction.set(reservaRef, { uid, creadoEn: serverTimestamp() });
+      }
+      return libre;
     }
     const data = existing.data();
-    if (isCurrentProfileDocument(data)) return;
+    const tieneUsername = Boolean(data.usernameNormalized);
+    if (isCurrentProfileDocument(data)) return tieneUsername;
     transaction.set(
       ref,
       {
@@ -66,6 +93,7 @@ export async function ensureProfile(uid: string, name: string): Promise<void> {
       },
       { merge: true },
     );
+    return tieneUsername;
   });
 }
 

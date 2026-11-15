@@ -40,8 +40,7 @@ const PASO_PERFIL = PASOS_ONBOARDING.indexOf("perfil");
  * 3. Perfil: todo organizado, con lápices para editar y una card con el fondo, el avatar
  *    y las etiquetas (que vuelven a abrir su drawer y regresan aquí).
  *
- * Solo dibuja: quien lo usa decide dónde se guarda cada cambio (Firestore en la app, o el
- * teléfono durante el registro).
+ * Solo dibuja: quien lo usa decide cómo se guarda cada cambio.
  */
 export function DrawerOnboarding({
   visible,
@@ -51,7 +50,6 @@ export function DrawerOnboarding({
   onGuardar,
   onFinalizar,
   usuario,
-  usernameLocal,
 }: {
   visible: boolean;
   profile: DatosPerfil;
@@ -63,8 +61,6 @@ export function DrawerOnboarding({
   onFinalizar: (pills: PildoraPerfilData[]) => Promise<void>;
   /** Sesión para validar el @username en vivo (dentro de la app) */
   usuario?: SessionUser;
-  /** @username escrito a mano, sin consultar disponibilidad (registro) */
-  usernameLocal?: { valor: string; onCambiar: (username: string) => void };
 }) {
   const tema = useAppTheme();
   const { isDark } = tema;
@@ -184,6 +180,10 @@ export function DrawerOnboarding({
                 setDesdePerfil(true);
                 ir(PASO_PERFIL);
               }}
+              onSaltar={() => {
+                setDesdePerfil(true);
+                ir(PASO_PERFIL);
+              }}
             />
           ) : null,
         )}
@@ -210,7 +210,6 @@ export function DrawerOnboarding({
               setDesdePerfil(true);
               ir(PASO_ETIQUETAS);
             }}
-            usernameLocal={usernameLocal}
           />,
         )}
       </HojaOnboarding>

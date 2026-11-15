@@ -21,13 +21,13 @@ const POLL_MS = 5000;
 
 /**
  * Pantalla para quien tiene cuenta pero aún no verificó su correo. Se comprueba sola cada
- * pocos segundos y al volver a la app, así que basta con abrir el enlace del correo y regresar.
+ * pocos segundos y al volver a la app (no hace falta un botón para comprobarlo): basta con
+ * abrir el enlace del correo y regresar.
  */
 export function VerificarCorreoPage() {
   const { user, resendVerification, checkVerification, signOut } = useAuth();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [checking, setChecking] = useState(false);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(0);
   const email = user?.email ?? null;
@@ -49,24 +49,6 @@ export function VerificarCorreoPage() {
   }, [checkVerification]);
 
   const secondsLeft = Math.max(0, Math.ceil((resendAt - now) / 1000));
-
-  async function handleCheck() {
-    setChecking(true);
-    setError("");
-    setNotice("");
-    try {
-      const verified = await checkVerification();
-      if (!verified) {
-        setError(
-          "Todavía no aparece como verificado. Abre el enlace del correo y vuelve a intentarlo.",
-        );
-      }
-    } catch (e) {
-      setError(mensajeDeError(e));
-    } finally {
-      setChecking(false);
-    }
-  }
 
   async function handleResend() {
     if (secondsLeft > 0) return;
@@ -92,30 +74,14 @@ export function VerificarCorreoPage() {
     >
       <PressableScale
         scaleTo={0.97}
-        disabled={checking}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: checking }}
-        onPress={handleCheck}
-        style={[
-          estilosCristal.boton,
-          estilosCristal.botonPrimero,
-          checking && estilosCristal.botonDeshabilitado,
-        ]}
-      >
-        <Text style={estilosCristal.botonTexto}>
-          {checking ? "Comprobando..." : "Ya verifiqué mi correo"}
-        </Text>
-      </PressableScale>
-
-      <PressableScale
-        scaleTo={0.97}
         disabled={secondsLeft > 0}
         accessibilityRole="button"
         accessibilityState={{ disabled: secondsLeft > 0 }}
         onPress={handleResend}
         style={[
           estilosCristal.boton,
-          estilosCristal.botonCerca,
+          estilosCristal.botonAlto,
+          estilosCristal.botonPrimero,
           estilosCristal.botonSecundario,
           secondsLeft > 0 && estilosCristal.botonDeshabilitado,
         ]}

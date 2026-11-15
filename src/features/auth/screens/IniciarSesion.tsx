@@ -117,6 +117,7 @@ export function IniciarSesionPage({
           autoComplete="email"
           returnKeyType="next"
           error={emailError}
+          onQuitarError={() => setEmailError("")}
         />
         <CampoCristal
           icon={<LockFilledIcon color={TINTA_TENUE} />}
@@ -130,6 +131,7 @@ export function IniciarSesionPage({
           returnKeyType="go"
           onSubmitEditing={handleSubmit}
           error={passwordError}
+          onQuitarError={() => setPasswordError("")}
           accion={
             <Pressable
               accessibilityRole="button"

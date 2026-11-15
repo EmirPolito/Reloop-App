@@ -6,18 +6,9 @@ import type {
 } from "@/features/perfil/Perfiltemas";
 import { useProfile } from "@/features/perfil/ProfileProvider";
 import { completeOnboarding } from "@/features/perfil/profileRepository";
-import {
-  UsernameError,
-  claimUsername,
-} from "@/features/perfil/usernameRepository";
 import { useIntroTerminada } from "@/features/intro/efecto-entrada";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
-import { showAlert, showErrorAlert } from "@/utils/alerts";
-import {
-  borrarBorrador,
-  leerBorrador,
-  type BorradorOnboarding,
-} from "./borradorOnboarding";
+import { showErrorAlert } from "@/utils/alerts";
 import {
   CIERRE_ONBOARDING_MS,
   DrawerOnboarding,
@@ -26,58 +17,28 @@ import {
 import { borrarPaso, guardarPaso, leerPaso } from "./progresoOnboarding";
 
 /**
- * Configuración inicial de una cuenta nueva. Aparece la primera vez que la persona entra
- * con su cuenta ya verificada (la ficha nueva trae `onboardingPendiente`); las cuentas
- * anteriores nunca lo ven.
- *
- * Si ya la llenó al registrarse en este teléfono, lo elegido se sube solo y el drawer no
- * aparece. Si no (o si subirlo falla), se muestra el drawer, que guarda con la misma
- * lógica de Editar perfil, paso a paso, y recuerda en qué paso iba.
+ * Configuración inicial de una cuenta nueva: aparece la primera vez que la persona entra
+ * ya con el correo verificado (la ficha nueva trae `onboardingPendiente`); las cuentas
+ * anteriores nunca la ven. Guarda con la misma lógica de Editar perfil, paso a paso, y
+ * recuerda en qué paso iba.
  */
 export function SheetBienvenida() {
-  const { profile, saveProfile } = useProfile();
+  const { profile } = useProfile();
   const { uid } = useSessionUser();
   const [paso, setPaso] = useState<number | null>(null);
-
-  // `null` mientras se revisa si hay algo elegido al registrarse
-  const [mostrarDrawer, setMostrarDrawer] = useState<boolean | null>(null);
-  const [borrador, setBorrador] = useState<BorradorOnboarding | null>(null);
 
   useEffect(() => {
     if (!profile.onboardingPendiente) return;
     let vigente = true;
-    Promise.all([leerPaso(uid), leerBorrador(uid)]).then(
-      ([guardado, elegido]) => {
-        if (!vigente) return;
-        setPaso(guardado);
-        if (elegido) setBorrador(elegido);
-        else setMostrarDrawer(false);
-      },
-    );
+    leerPaso(uid).then((guardado) => {
+      if (vigente) setPaso(guardado);
+    });
     return () => {
       vigente = false;
     };
   }, [uid, profile.onboardingPendiente]);
 
-  // El username automático se asigna justo después de crear la ficha: se espera a que
-  // exista para poder cambiarlo por el elegido
-  const listoParaSubir =
-    borrador !== null && mostrarDrawer === null && profile.username !== null;
-  useEffect(() => {
-    if (!listoParaSubir || !borrador) return;
-    let vigente = true;
-    aplicarBorrador(uid, profile, saveProfile, borrador).then((aplicado) => {
-      if (vigente && !aplicado) setMostrarDrawer(false);
-    });
-    return () => {
-      vigente = false;
-    };
-    // Solo una vez, al estar lista la ficha: después el perfil cambia al subir el borrador
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listoParaSubir]);
-
-  if (!profile.onboardingPendiente || paso === null || mostrarDrawer !== false)
-    return null;
+  if (!profile.onboardingPendiente || paso === null) return null;
   return (
     <Contenido
       profile={profile}
@@ -89,54 +50,6 @@ export function SheetBienvenida() {
       }}
     />
   );
-}
-
-/**
- * Sube lo elegido al registrarse y termina la configuración. Devuelve `false` si no se
- * pudo (entonces se muestra el drawer para hacerlo ahí).
- */
-async function aplicarBorrador(
-  uid: string,
-  profile: DatosPerfil,
-  saveProfile: (data: DatosPerfil) => Promise<void>,
-  borrador: BorradorOnboarding,
-): Promise<boolean> {
-  const { username, ...datos } = borrador;
-  try {
-    // Primero la ficha (con el username que ya tiene) y después el username elegido: así
-    // guardar la ficha no pisa el cambio de username
-    await saveProfile({ ...profile, ...datos });
-  } catch (error) {
-    console.warn("No se pudo subir la configuración del registro.", error);
-    borrarBorrador(uid);
-    return false;
-  }
-
-  if (username && username !== profile.username) {
-    try {
-      await claimUsername(uid, username);
-    } catch (error) {
-      if (error instanceof UsernameError) {
-        showAlert(
-          `@${username} ya no está disponible`,
-          `Te asignamos @${profile.username}. Puedes cambiarlo en Editar perfil.`,
-        );
-      } else {
-        console.warn("No se pudo asignar el usuario elegido.", error);
-      }
-    }
-  }
-
-  try {
-    await completeOnboarding(uid);
-    borrarBorrador(uid);
-    borrarPaso(uid);
-    return true;
-  } catch (error) {
-    console.warn("No se pudo terminar la configuración.", error);
-    borrarBorrador(uid);
-    return false;
-  }
 }
 
 function Contenido({

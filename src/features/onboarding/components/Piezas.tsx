@@ -14,12 +14,15 @@ export function BotonPalomita({
   cargando = false,
   deshabilitado = false,
   etiqueta = "Listo",
+  tamano = 36,
 }: {
   isDark: boolean;
   onPress: () => void;
   cargando?: boolean;
   deshabilitado?: boolean;
   etiqueta?: string;
+  /** Lado del círculo (chico para usarlo dentro de una línea de texto) */
+  tamano?: number;
 }) {
   const c = coloresOnboarding(isDark);
   return (
@@ -39,17 +42,55 @@ export function BotonPalomita({
         onPress={onPress}
         style={({ pressed }) => [
           styles.palomita,
-          { backgroundColor: c.palomitaFondo },
+          {
+            width: tamano,
+            height: tamano,
+            borderRadius: tamano / 2,
+            backgroundColor: c.palomitaFondo,
+          },
           (pressed || deshabilitado) && { opacity: 0.55 },
         ]}
       >
         {cargando ? (
           <ActivityIndicator size="small" color={c.palomitaIcono} />
         ) : (
-          <Ionicons name="checkmark" size={19} color={c.palomitaIcono} />
+          <Ionicons
+            name="checkmark"
+            size={Math.round(tamano * 0.53)}
+            color={c.palomitaIcono}
+          />
         )}
       </Pressable>
     </Animated.View>
+  );
+}
+
+/** Botón secundario (Saltar): mismo tamaño que el principal, con fondo claro */
+export function BotonSecundario({
+  texto,
+  isDark,
+  onPress,
+}: {
+  texto: string;
+  isDark: boolean;
+  onPress: () => void;
+}) {
+  const c = coloresOnboarding(isDark);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={texto}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.secundario,
+        { backgroundColor: c.chip },
+        pressed && { opacity: 0.6 },
+      ]}
+    >
+      <Text style={[LETRA.medium, { fontSize: 14.5, color: c.texto }]}>
+        {texto}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -122,10 +163,13 @@ export function ChipEtiqueta({
 }
 
 const styles = StyleSheet.create({
+  secundario: {
+    height: 50,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   palomita: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
   },

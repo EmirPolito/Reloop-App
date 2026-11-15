@@ -38,13 +38,7 @@ interface AuthSession {
 
 interface AuthContextValue extends AuthSession {
   signIn: (email: string, password: string) => Promise<void>;
-  /**
-   * Crea la cuenta sin publicar la sesión (la pantalla de registro sigue visible para la
-   * configuración inicial) y devuelve su uid. Hay que llamar a `finishSignUp` después.
-   */
-  signUp: (name: string, email: string, password: string) => Promise<string>;
-  /** Publica la sesión de la cuenta recién creada (y con eso se pasa a verificar el correo). */
-  finishSignUp: () => void;
+  signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendVerification: () => Promise<void>;
@@ -72,9 +66,9 @@ async function signIn(email: string, password: string): Promise<void> {
 
 /**
  * Mantiene la sesión de Firebase sincronizada con React.
- * Mientras se registra una cuenta se ignoran los avisos de Firebase (el usuario aparece
- * antes de guardar su nombre, y después sigue la configuración inicial en la pantalla de
- * registro): la sesión se publica una sola vez, con `finishSignUp`.
+ * Mientras se registra una cuenta se ignora el aviso intermedio de Firebase
+ * (el usuario aparece antes de guardar su nombre) y la sesión se publica una
+ * sola vez, ya completa.
  */
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<AuthSession>({
@@ -96,23 +90,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     async (name: string, email: string, password: string) => {
       isRegistering.current = true;
       try {
-        const user = await registrarUsuario(name, email, password);
-        return user.uid;
-      } catch (error) {
-        // Sin cuenta creada no hay nada que esperar: se vuelve a escuchar a Firebase
+        await registrarUsuario(name, email, password);
+      } finally {
         isRegistering.current = false;
         setSession(toSession(auth.currentUser));
-        throw error;
       }
     },
     [],
   );
-
-  const finishSignUp = useCallback(() => {
-    if (!isRegistering.current) return;
-    isRegistering.current = false;
-    setSession(toSession(auth.currentUser));
-  }, []);
 
   const checkVerification = useCallback(async () => {
     const verified = await comprobarVerificacion();
@@ -126,13 +111,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       ...session,
       signIn,
       signUp,
-      finishSignUp,
       signOut: cerrarSesion,
       sendPasswordReset: enviarRecuperacion,
       resendVerification: reenviarVerificacion,
       checkVerification,
     }),
-    [session, signUp, finishSignUp, checkVerification],
+    [session, signUp, checkVerification],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

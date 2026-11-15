@@ -84,6 +84,7 @@ export function RecuperacionPage({
         returnKeyType="send"
         onSubmitEditing={handleSendReset}
         error={error}
+        onQuitarError={() => setError("")}
         estiloCampo={estilosCristal.campoClaro}
       />
 
@@ -95,6 +96,7 @@ export function RecuperacionPage({
         onPress={handleSendReset}
         style={[
           estilosCristal.boton,
+          estilosCristal.botonAlto,
           estilosCristal.botonCerca,
           loading && estilosCristal.botonDeshabilitado,
         ]}

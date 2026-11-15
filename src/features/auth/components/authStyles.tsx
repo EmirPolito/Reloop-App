@@ -66,6 +66,8 @@ export const BLANCO = "#FFFFFF";
 export const TINTA_TENUE = "#00000087";
 /** Placeholder de los campos: más suave que los iconos. */
 const TINTA_PLACEHOLDER = "#00000070";
+/** Cursor y selección de los campos (blancos): oscuros para que se vean */
+const TINTA_CURSOR = "#101010";
 export const ROJO_ERROR = "#ff463cff";
 const LINK_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 const ANCHO_MAXIMO = 420;
@@ -528,8 +530,8 @@ function AbanicoTarjetas({
 
 /**
  * Campo de altura fija: mantiene siempre su borde blanco translúcido.
- * El mensaje de error en rojo se superpone al texto y solo desaparece
- * (con un desvanecido suave) cuando el usuario empieza a escribir.
+ * El mensaje de error en rojo se superpone al texto y desaparece (con un desvanecido
+ * suave) al tocar el campo o al empezar a escribir.
  * El valor nunca se borra: al escribir se continúa sobre lo que ya había.
  */
 export function CampoCristal({
@@ -537,6 +539,7 @@ export function CampoCristal({
   accion,
   error,
   estiloCampo,
+  onQuitarError,
   ...inputProps
 }: TextInputProps & {
   icon: ReactNode;
@@ -544,6 +547,8 @@ export function CampoCristal({
   error?: string;
   /** Ajustes del contenedor del campo (p. ej. otro fondo sobre una card blanca). */
   estiloCampo?: StyleProp<ViewStyle>;
+  /** Quita el error; se llama al tocar el campo mientras se muestra */
+  onQuitarError?: () => void;
 }) {
   const hayError = Boolean(error);
   // En iOS una vista con opacidad 0 no recibe toques: mientras se ve el error, el input
@@ -578,9 +583,16 @@ export function CampoCristal({
             <TextInput
               ref={inputRef}
               placeholderTextColor={TINTA_PLACEHOLDER}
-              selectionColor={BLANCO}
+              // El cursor y la selección en oscuro: sobre el campo blanco no se veían
+              selectionColor={TINTA_CURSOR}
+              cursorColor={TINTA_CURSOR}
               style={styles.campoTexto}
               {...inputProps}
+              onFocus={(e) => {
+                // Al tocar el campo se quita el error para escribir de nuevo
+                if (hayError) onQuitarError?.();
+                inputProps.onFocus?.(e);
+              }}
             />
           </Animated.View>
 
@@ -635,6 +647,8 @@ export const estilosCristal = StyleSheet.create({
     backgroundColor: "#101010",
   },
   botonDeshabilitado: { opacity: 0.6 },
+  // Un poco más alto: los botones de la card blanca (Verificar correo y Recuperar contraseña)
+  botonAlto: { height: 56 },
   // Botón blanco con borde para la acción secundaria
   botonSecundario: {
     backgroundColor: BLANCO,

@@ -1,5 +1,12 @@
+import { useBottomSheetAwareHandlers } from "heroui-native";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -18,7 +25,11 @@ import {
 } from "@/features/perfil/Perfiltemas";
 import { Text, TextInput } from "@/features/shared/Text";
 import { BotonPaso } from "../components/BotonPaso";
-import { BotonPalomita, ChipEtiqueta } from "../components/Piezas";
+import {
+  BotonPalomita,
+  BotonSecundario,
+  ChipEtiqueta,
+} from "../components/Piezas";
 import { LETRA, coloresOnboarding } from "../temaOnboarding";
 
 /** Largo máximo de una etiqueta */
@@ -32,28 +43,35 @@ export const ETIQUETAS_EJEMPLO: PildoraPerfilData[] = [
 
 /** Iconos que se pueden poner a una etiqueta nueva (los mismos que muestra el perfil) */
 const ICONOS = Object.keys(PERFIL_ICONS) as IconPerfilKey[];
+/** Icono puesto de entrada, para que se note que se puede elegir uno */
+const ICONO_INICIAL = ICONOS[0];
 
 const nuevoId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 /**
  * Paso de etiquetas: un campo redondo para escribir (la palomita aparece al escribir), los
  * iconos para elegir el de la etiqueta nueva y las etiquetas debajo, con una × para
- * quitarlas. Máximo `MAX_PILDORAS`. Se guardan al continuar.
+ * quitarlas. Máximo `MAX_PILDORAS`. Al escribir, el drawer sube con el teclado y al
+ * confirmar la etiqueta vuelve a su alto. Abajo, Saltar (sin guardar) y Confirmar.
  */
 export function PasoEtiquetas({
   inicial,
   isDark,
   onContinuar,
+  onSaltar,
 }: {
   inicial: PildoraPerfilData[];
   isDark: boolean;
   /** Guarda las etiquetas; si falla lanza (y ya avisó) */
   onContinuar: (etiquetas: PildoraPerfilData[]) => Promise<void>;
+  /** Sigue sin guardar cambios */
+  onSaltar: () => void;
 }) {
   const c = coloresOnboarding(isDark);
+  const teclado = useBottomSheetAwareHandlers();
   const [etiquetas, setEtiquetas] = useState(inicial);
   const [texto, setTexto] = useState("");
-  const [icono, setIcono] = useState<IconPerfilKey | undefined>();
+  const [icono, setIcono] = useState<IconPerfilKey | undefined>(ICONO_INICIAL);
   const [guardando, setGuardando] = useState(false);
   const llenas = etiquetas.length >= MAX_PILDORAS;
   const limpio = texto.trim();
@@ -75,7 +93,9 @@ export function PasoEtiquetas({
       },
     ]);
     setTexto("");
-    setIcono(undefined);
+    setIcono(ICONO_INICIAL);
+    // Al confirmar baja el teclado y el drawer vuelve a su alto
+    Keyboard.dismiss();
   };
 
   const continuar = async () => {
@@ -108,6 +128,7 @@ export function PasoEtiquetas({
       <View style={[styles.campo, { backgroundColor: c.campo }]}>
         {icono ? renderPerfilIcon(icono, 17, c.icono) : null}
         <TextInput
+          {...teclado}
           value={texto}
           onChangeText={setTexto}
           editable={!llenas}
@@ -156,7 +177,7 @@ export function PasoEtiquetas({
                 (pressed || llenas) && { opacity: 0.5 },
               ]}
             >
-              {renderPerfilIcon(clave, 19, c.icono)}
+              {renderPerfilIcon(clave, 24, c.icono)}
             </Pressable>
           );
         })}
@@ -186,12 +207,19 @@ export function PasoEtiquetas({
 
       <View style={styles.espacio} />
 
-      <BotonPaso
-        texto="Continuar"
-        isDark={isDark}
-        cargando={guardando}
-        onPress={() => void continuar()}
-      />
+      <View style={styles.botones}>
+        <View style={styles.boton}>
+          <BotonSecundario texto="Saltar" isDark={isDark} onPress={onSaltar} />
+        </View>
+        <View style={styles.boton}>
+          <BotonPaso
+            texto="Confirmar"
+            isDark={isDark}
+            cargando={guardando}
+            onPress={() => void continuar()}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -216,14 +244,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: { flex: 1, minWidth: 0, fontSize: 15, paddingVertical: 0 },
-  iconos: { gap: 6, paddingHorizontal: 2 },
+  iconos: { gap: 12, paddingHorizontal: 2 },
   icono: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  etiquetas: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  etiquetas: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
+  botones: { flexDirection: "row", gap: 10 },
+  boton: { flex: 1 },
   espacio: { flex: 1 },
 });
