@@ -1,7 +1,9 @@
+import type { Ref } from "react";
 import {
   Text as NativeText,
   TextInput as NativeTextInput,
   StyleSheet,
+  type TextInputInstance,
   type TextInputProps,
   type TextProps,
   type TextStyle,
@@ -98,7 +100,10 @@ export function Text({ style, ...props }: TextProps & { className?: string }) {
 export function TextInput({
   style,
   ...props
-}: TextInputProps & { className?: string }) {
+}: TextInputProps & {
+  className?: string;
+  ref?: Ref<TextInputInstance>;
+}) {
   const weight = resolveWeight(style, props.className);
   return (
     <NativeTextInput
