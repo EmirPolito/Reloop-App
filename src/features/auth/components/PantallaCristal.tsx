@@ -10,8 +10,10 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type StyleProp,
   type TextInputInstance,
   type TextInputProps,
+  type ViewStyle,
 } from "react-native";
 import Animated, {
   Easing,
@@ -27,7 +29,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text, TextInput } from "@/features/shared/Text";
-import { validateCredentials } from "@/utils/validation";
+import { isValidEmail, MIN_PASSWORD_LENGTH } from "@/utils/validation";
 
 /** Imagen de fondo: se puede cambiar reemplazando este archivo. */
 const FONDO = require("@/assets/images/auth/fondo.jpeg");
@@ -50,8 +52,10 @@ export type TarjetaAbanico = {
 const DESENFOQUE_IMAGEN = Platform.OS === "android" ? 16 : 12;
 
 export const BLANCO = "#FFFFFF";
-export const TINTA_TENUE = "rgba(255, 255, 255, 0.9)";
-export const ROJO_ERROR = "#ef1f14ff";
+export const TINTA_TENUE = "#00000087";
+/** Placeholder de los campos: más suave que los iconos. */
+const TINTA_PLACEHOLDER = "#00000070";
+export const ROJO_ERROR = "#ff463cff";
 const TINTA_OSCURA = "#18181B";
 const LINK_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 const ANCHO_MAXIMO = 420;
@@ -84,51 +88,7 @@ function useReducirTransparencia(): boolean {
   return reducir;
 }
 
-/**
- * Convierte los mensajes largos de validación en versiones cortas
- * que quepan en una sola línea dentro del campo.
- */
-export function acortarMensaje(
-  mensaje: string,
-  campo: "correo" | "password",
-): string {
-  if (!mensaje) return "";
-  const msg = mensaje.toLowerCase();
-
-  const vacio =
-    msg.includes("ingresa") ||
-    msg.includes("obligatori") ||
-    msg.includes("requerid") ||
-    msg.includes("vací") ||
-    msg.includes("vaci");
-
-  if (campo === "correo") {
-    if (vacio) return "Ingresa tu correo";
-    if (msg.includes("institucional") || msg.includes("dominio"))
-      return "Usa tu correo institucional";
-    if (
-      msg.includes("no existe") ||
-      msg.includes("no encontr") ||
-      msg.includes("no registrad")
-    )
-      return "Correo no registrado";
-    return "Correo no válido";
-  }
-
-  if (vacio) return "Ingresa tu contraseña";
-  const minimo = msg.match(/\d+/);
-  if (minimo && msg.includes("caracter"))
-    return `Mínimo ${minimo[0]} caracteres`;
-  if (
-    msg.includes("incorrect") ||
-    msg.includes("inválid") ||
-    msg.includes("invalid")
-  )
-    return "Contraseña incorrecta";
-  return mensaje.length > 32 ? "Contraseña no válida" : mensaje;
-}
-
-/** Separa las validaciones de correo y contraseña para mostrarlas dentro de cada input. */
+/** Valida correo y contraseña por separado, con mensajes cortos que caben dentro de cada campo. */
 export function validarPorCampo(
   email: string,
   password: string,
@@ -136,36 +96,17 @@ export function validarPorCampo(
   emailError: string;
   passwordError: string;
 } {
-  let emailError = "";
-  let passwordError = "";
-
-  const general = validateCredentials(email, password);
-  if (!general) {
-    return { emailError: "", passwordError: "" };
-  }
-
-  const msg = general.toLowerCase();
-  const esDeCorreo =
-    msg.includes("correo") ||
-    msg.includes("email") ||
-    msg.includes("@") ||
-    msg.includes("institucional");
-  const esDePassword =
-    msg.includes("contraseña") ||
-    msg.includes("password") ||
-    msg.includes("clave") ||
-    msg.includes("caracter");
-
-  if (esDeCorreo) {
-    emailError = general;
-    const soloPass = validateCredentials("usuario@campus.edu.mx", password);
-    if (soloPass) passwordError = soloPass;
-  } else if (esDePassword) {
-    passwordError = general;
-  } else {
-    emailError = general;
-  }
-
+  const correo = email.trim();
+  const emailError = !correo
+    ? "Ingresa tu correo"
+    : !isValidEmail(correo)
+      ? "Correo no válido"
+      : "";
+  const passwordError = !password
+    ? "Ingresa tu contraseña"
+    : password.length < MIN_PASSWORD_LENGTH
+      ? `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`
+      : "";
   return { emailError, passwordError };
 }
 
@@ -337,16 +278,23 @@ export function EnlaceCristal({
   prefijo,
   texto,
   onPress,
+  oscuro = false,
 }: {
   prefijo?: string;
   texto: string;
   onPress: () => void;
+  /** Texto oscuro, para usarlo sobre fondo claro. */
+  oscuro?: boolean;
 }) {
   const [hover, setHover] = useState(false);
 
   return (
     <View style={styles.enlaceFila}>
-      {prefijo ? <Text style={styles.olvidoTexto}>{prefijo} </Text> : null}
+      {prefijo ? (
+        <Text style={[styles.olvidoTexto, oscuro && styles.enlaceOscuro]}>
+          {prefijo}{" "}
+        </Text>
+      ) : null}
       <Pressable
         accessibilityRole="link"
         onPress={onPress}
@@ -359,6 +307,8 @@ export function EnlaceCristal({
             style={[
               styles.olvidoTexto,
               prefijo && styles.enlaceAccion,
+              oscuro && styles.enlaceOscuro,
+              oscuro && prefijo && styles.enlaceAccionOscura,
               (pressed || hover) && { opacity: 0.6 },
             ]}
           >
@@ -487,11 +437,14 @@ export function CampoCristal({
   icon,
   accion,
   error,
+  estiloCampo,
   ...inputProps
 }: TextInputProps & {
   icon: ReactNode;
   accion?: ReactNode;
   error?: string;
+  /** Ajustes del contenedor del campo (p. ej. otro fondo sobre una card blanca). */
+  estiloCampo?: StyleProp<ViewStyle>;
 }) {
   const hayError = Boolean(error);
   // En iOS una vista con opacidad 0 no recibe toques: mientras se ve el error, el input
@@ -517,7 +470,7 @@ export function CampoCristal({
     <Pressable
       accessible={false}
       onPress={() => inputRef.current?.focus()}
-      style={styles.campo}
+      style={[styles.campo, estiloCampo]}
     >
       <View style={styles.campoFila}>
         {icon}
@@ -525,7 +478,7 @@ export function CampoCristal({
           <Animated.View style={[styles.campoCapaTexto, estiloTexto]}>
             <TextInput
               ref={inputRef}
-              placeholderTextColor={TINTA_TENUE}
+              placeholderTextColor={TINTA_PLACEHOLDER}
               selectionColor={BLANCO}
               style={styles.campoTexto}
               {...inputProps}
@@ -571,16 +524,16 @@ const BORDE_LUZ = {
 
 /** Estilos que cada pantalla usa dentro de la card (formulario y botón). */
 export const estilosCristal = StyleSheet.create({
-  formulario: { gap: 14 },
+  formulario: { gap: 13.5 },
 
   // Botón píldora blanca
   boton: {
-    height: 46,
-    marginTop: 22,
+    height: 50,
+    marginTop: 28,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BLANCO,
+    backgroundColor: "#101010",
   },
   botonDeshabilitado: { opacity: 0.6 },
   botonTexto: {
@@ -589,7 +542,7 @@ export const estilosCristal = StyleSheet.create({
     lineHeight: 20,
     includeFontPadding: false,
     textAlign: "center",
-    color: TINTA_OSCURA,
+    color: "#ffffff",
   },
 });
 
@@ -714,11 +667,11 @@ const styles = StyleSheet.create({
   tarjeta: {
     zIndex: 0,
     overflow: "hidden",
-    paddingHorizontal: 17,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 22,
     borderRadius: 28,
-    backgroundColor: "#ffffff2e",
+    backgroundColor: "#ffffff42",
   },
   tarjetaSolida: { backgroundColor: "rgba(30, 35, 45, 0.95)" },
 
@@ -728,7 +681,7 @@ const styles = StyleSheet.create({
     height: 53,
     paddingHorizontal: 16,
     borderRadius: 999,
-    backgroundColor: "#ffffff1e",
+    backgroundColor: "#ffffffff",
     ...BORDE_LUZ,
   },
   campoFila: {
@@ -761,13 +714,13 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 14.5,
     letterSpacing: 0.2,
-    color: BLANCO,
+    color: "#000000ff",
     ...SOMBRA_TEXTO,
   },
   campoTextoError: {
     includeFontPadding: false,
-    fontFamily: "Inter_500Medium",
-    fontSize: 13.5,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14.5,
     letterSpacing: 0.2,
     color: ROJO_ERROR,
     ...SOMBRA_TEXTO,
@@ -788,4 +741,10 @@ const styles = StyleSheet.create({
     ...SOMBRA_TEXTO,
   },
   enlaceAccion: { fontFamily: "Inter_600SemiBold", color: BLANCO },
+  enlaceOscuro: {
+    color: TINTA_TENUE,
+    textShadowColor: "transparent",
+    textShadowRadius: 0,
+  },
+  enlaceAccionOscura: { color: "#101010" },
 });

@@ -7,14 +7,18 @@ import {
   POLITICA_PRIVACIDAD,
   TERMINOS_CONDICIONES,
 } from "@/features/legal/textosLegales";
-import { IconoCheck, IconoPerfilLinea } from "@/features/perfil/Perfiliconos";
+import { IconoCheck } from "@/features/perfil/Perfiliconos";
 import { MAX_NOMBRE } from "@/features/perfil/Perfiltemas";
 import { Text } from "@/features/shared/Text";
 import { useAuth } from "../AuthProvider";
-import { mensajeDeError } from "../authService";
-import { EyeIcon, LockIcon, MailIcon } from "../components/AuthIcons";
+import { campoDeError, mensajeDeError } from "../authService";
 import {
-  acortarMensaje,
+  EyeIcon,
+  FaceIcon,
+  LockFilledIcon,
+  MessageIcon,
+} from "../components/AuthIcons";
+import {
   BLANCO,
   CampoCristal,
   EnlaceCristal,
@@ -110,8 +114,8 @@ export function RegistrarsePage({
     if (!aceptoTodo) setIntentoSinAceptar(true);
     if (errNombre || errCorreo || errPass || !aceptoTodo) {
       setNameError(errNombre);
-      setEmailError(acortarMensaje(errCorreo, "correo"));
-      setPasswordError(acortarMensaje(errPass, "password"));
+      setEmailError(errCorreo);
+      setPasswordError(errPass);
       return;
     }
 
@@ -123,15 +127,8 @@ export function RegistrarsePage({
       await signUp(name, email, password);
     } catch (e) {
       const msg = mensajeDeError(e);
-      if (
-        msg.toLowerCase().includes("correo") ||
-        msg.toLowerCase().includes("usuario") ||
-        msg.toLowerCase().includes("email")
-      ) {
-        setEmailError(acortarMensaje(msg, "correo"));
-      } else {
-        setPasswordError(acortarMensaje(msg, "password"));
-      }
+      if (campoDeError(e) === "correo") setEmailError(msg);
+      else setPasswordError(msg);
     } finally {
       setLoading(false);
     }
@@ -153,7 +150,7 @@ export function RegistrarsePage({
       >
         <View style={estilosCristal.formulario}>
           <CampoCristal
-            icon={<IconoPerfilLinea size={20} color={TINTA_TENUE} />}
+            icon={<FaceIcon color={TINTA_TENUE} />}
             accessibilityLabel="Nombre"
             value={name}
             onChangeText={handleNameChange}
@@ -164,11 +161,11 @@ export function RegistrarsePage({
             error={nameError}
           />
           <CampoCristal
-            icon={<MailIcon stroke={TINTA_TENUE} strokeWidth={1.8} />}
-            accessibilityLabel="Correo institucional"
+            icon={<MessageIcon color={TINTA_TENUE} />}
+            accessibilityLabel="Correo electrónico"
             value={email}
             onChangeText={handleEmailChange}
-            placeholder="Correo electronico"
+            placeholder="Correo electrónico"
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
@@ -176,7 +173,7 @@ export function RegistrarsePage({
             error={emailError}
           />
           <CampoCristal
-            icon={<LockIcon color={TINTA_TENUE} />}
+            icon={<LockFilledIcon color={TINTA_TENUE} />}
             accessibilityLabel="Contraseña"
             value={password}
             onChangeText={handlePasswordChange}
@@ -354,7 +351,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 13.5,
     lineHeight: 21,
-    color: TINTA_TENUE,
+    color: "#ffffffeb",
     ...SOMBRA_TEXTO,
   },
   enlace: {
@@ -365,7 +362,7 @@ const styles = StyleSheet.create({
     ...SOMBRA_TEXTO,
   },
   enlaceError: {
-    color: ROJO_ERROR,
+    color: "#e13b3bff",
   },
   boton: { marginTop: 16 },
 });

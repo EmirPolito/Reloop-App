@@ -49,7 +49,7 @@ const SAFE_RADIUS = 330;
 /* ------------------------------------------------------------------ */
 /* Ajustes                                                            */
 /* ------------------------------------------------------------------ */
-const FONDO = "#dededeff";
+const FONDO = "#f8f8f8ff";
 const LOGO_WIDTH = 150; // ancho en dp del isotipo
 const INTRO_FROM = 0.82;
 const ANTICIPATION = 0.92; // pequeño "encogimiento" antes de entrar
