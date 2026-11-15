@@ -141,15 +141,14 @@ export function RecuperacionPage({
               </Text>
             </Animated.View>
 
-            <Animated.View entering={aparecer(120)}>
-              <Image
-                source={IMAGEN_CARTA}
-                contentFit="contain"
-                transition={0}
-                accessibilityLabel="Carta de correo"
-                style={styles.imagenCarta}
-              />
-            </Animated.View>
+            {/* Sin animación de entrada: la carta aparece de inmediato */}
+            <Image
+              source={IMAGEN_CARTA}
+              contentFit="contain"
+              transition={0}
+              accessibilityLabel="Carta de correo"
+              style={styles.imagenCarta}
+            />
           </View>
 
           {/* ── Card blanca con borde superior curvo ── */}
