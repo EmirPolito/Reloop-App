@@ -2,13 +2,13 @@
 /*  Configuración inicial (onboarding): reglas puras                          */
 /* -------------------------------------------------------------------------- */
 
-export const PASOS_ONBOARDING = ["portada", "avatar", "identidad"] as const;
+export const PASOS_ONBOARDING = ["avatar", "etiquetas", "perfil"] as const;
 export type PasoOnboarding = (typeof PASOS_ONBOARDING)[number];
 
 export const TITULOS_ONBOARDING: Record<PasoOnboarding, string> = {
-  portada: "Elige tu portada",
   avatar: "Elige tu avatar",
-  identidad: "Tu identidad",
+  etiquetas: "Tus etiquetas",
+  perfil: "Tu perfil",
 };
 
 /** Índice guardado → paso; cualquier valor inválido vuelve al primero */
@@ -23,7 +23,7 @@ export function pasoDesdeIndice(valor: unknown): number {
 
 /**
  * Solo se puede terminar con un @username asignado (se asigna solo al entrar, y se puede
- * cambiar en el paso de identidad).
+ * cambiar en el último paso).
  */
 export function puedeFinalizar(username: string | null): boolean {
   return username !== null && username.length > 0;

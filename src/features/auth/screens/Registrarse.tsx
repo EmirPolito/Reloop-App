@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { PressableScale } from "@/components/PressableScale";
@@ -7,9 +7,22 @@ import {
   POLITICA_PRIVACIDAD,
   TERMINOS_CONDICIONES,
 } from "@/features/legal/textosLegales";
+import { guardarBorrador } from "@/features/onboarding/borradorOnboarding";
+import {
+  CIERRE_ONBOARDING_MS,
+  DrawerOnboarding,
+  ESPERA_APERTURA_ONBOARDING_MS,
+} from "@/features/onboarding/DrawerOnboarding";
 import { IconoCheck } from "@/features/perfil/Perfiliconos";
-import { MAX_NOMBRE } from "@/features/perfil/Perfiltemas";
+import {
+  MAX_NOMBRE,
+  type DatosPerfil,
+  type PildoraPerfilData,
+} from "@/features/perfil/Perfiltemas";
+import { defaultProfile } from "@/features/perfil/profileMappers";
+import { sugerirUsername } from "@/features/perfil/username";
 import { Text } from "@/features/shared/Text";
+import { showErrorAlert } from "@/utils/alerts";
 import { useAuth } from "../AuthProvider";
 import { campoDeError, mensajeDeError } from "../authService";
 import {
@@ -29,7 +42,7 @@ import {
   TINTA_TENUE,
   validarPorCampo,
   type TarjetaAbanico,
-} from "../components/PantallaCristal";
+} from "../components/authStyles";
 
 /**
  * Imágenes de las 3 tarjetas en abanico de registro (izquierda, centro, derecha).
@@ -59,7 +72,7 @@ export function RegistrarsePage({
   onChangePassword: (password: string) => void;
   onNavigateLogin: () => void;
 }) {
-  const { signUp } = useAuth();
+  const { signUp, finishSignUp } = useAuth();
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -77,6 +90,19 @@ export function RegistrarsePage({
   // Se activa al intentar registrarse sin aceptar: la casilla se marca en rojo hasta que se acepte
   const [intentoSinAceptar, setIntentoSinAceptar] = useState(false);
   const casillaError = intentoSinAceptar && !aceptoTodo;
+
+  // Configuración inicial: al crear la cuenta se abre aquí mismo el drawer de bienvenida.
+  // Lo elegido se queda en el teléfono y se sube al verificar el correo (antes, las reglas
+  // de Firestore no dejan guardarlo)
+  const [cuentaNueva, setCuentaNueva] = useState<string | null>(null);
+  const [perfil, setPerfil] = useState<DatosPerfil | null>(null);
+  const [usernameElegido, setUsernameElegido] = useState("");
+  const [pasoBienvenida, setPasoBienvenida] = useState(0);
+  const [bienvenidaAbierta, setBienvenidaAbierta] = useState(false);
+
+  // Si se sale de la pantalla a medias, la cuenta ya existe: se publica la sesión (pasa a
+  // verificar el correo y la configuración inicial saldrá al entrar a la app)
+  useEffect(() => finishSignUp, [finishSignUp]);
 
   const marcarTodo = () => {
     const valor = !aceptoTodo;
@@ -124,7 +150,15 @@ export function RegistrarsePage({
     setPasswordError("");
     setLoading(true);
     try {
-      await signUp(name, email, password);
+      const uid = await signUp(name, email, password);
+      setCuentaNueva(uid);
+      setPerfil(defaultProfile(name.trim()));
+      setUsernameElegido(sugerirUsername(name));
+      // El drawer se monta cerrado y se abre después: solo se presenta al pasar a abierto
+      setTimeout(
+        () => setBienvenidaAbierta(true),
+        ESPERA_APERTURA_ONBOARDING_MS,
+      );
     } catch (e) {
       const msg = mensajeDeError(e);
       if (campoDeError(e) === "correo") setEmailError(msg);
@@ -133,6 +167,32 @@ export function RegistrarsePage({
       setLoading(false);
     }
   }
+
+  const guardarCambio = async (cambios: Partial<DatosPerfil>) => {
+    setPerfil((actual) => (actual ? { ...actual, ...cambios } : actual));
+  };
+
+  const terminarBienvenida = async (pills: PildoraPerfilData[]) => {
+    if (!cuentaNueva || !perfil) return;
+    try {
+      await guardarBorrador(cuentaNueva, {
+        photo: perfil.photo,
+        orb: perfil.orb,
+        cover: perfil.cover,
+        name: perfil.name,
+        description: perfil.description,
+        pills,
+        username: usernameElegido,
+      });
+    } catch (error) {
+      showErrorAlert("No se pudo guardar tu perfil", error);
+      throw error;
+    }
+    // Primero baja el drawer y después se pasa a verificar el correo
+    setBienvenidaAbierta(false);
+    await new Promise((listo) => setTimeout(listo, CIERRE_ONBOARDING_MS));
+    finishSignUp();
+  };
 
   return (
     <>
@@ -252,6 +312,21 @@ export function RegistrarsePage({
         onClose={() => setLegal(null)}
         onAceptar={() => aceptar("terminos")}
       />
+
+      {perfil ? (
+        <DrawerOnboarding
+          visible={bienvenidaAbierta}
+          profile={perfil}
+          paso={pasoBienvenida}
+          onPaso={setPasoBienvenida}
+          onGuardar={guardarCambio}
+          onFinalizar={terminarBienvenida}
+          usernameLocal={{
+            valor: usernameElegido,
+            onCambiar: setUsernameElegido,
+          }}
+        />
+      ) : null}
     </>
   );
 }

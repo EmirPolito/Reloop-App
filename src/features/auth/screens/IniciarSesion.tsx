@@ -14,7 +14,7 @@ import {
   TINTA_TENUE,
   validarPorCampo,
   type TarjetaAbanico,
-} from "../components/PantallaCristal";
+} from "../components/authStyles";
 
 /**
  * Imágenes de las 3 tarjetas en abanico de inicio de sesión (izquierda, centro, derecha).

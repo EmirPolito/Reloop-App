@@ -1,3 +1,9 @@
+/**
+ * Piezas y estilos compartidos por las pantallas de acceso:
+ * - `PantallaCristal`: Iniciar sesión y Registrarse (fondo desenfocado y card de cristal).
+ * - `PantallaCurva`: Recuperar contraseña y Verificar correo (parte oscura y card blanca curva).
+ * - `CampoCristal`, `EnlaceCristal`, `estilosCristal` y `validarPorCampo`: los usan todas.
+ */
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
@@ -9,6 +15,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type TextInputInstance,
@@ -18,6 +25,7 @@ import {
 import Animated, {
   Easing,
   FadeIn,
+  FadeInDown,
   FadeOut,
   interpolate,
   useAnimatedStyle,
@@ -27,9 +35,13 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 
 import { Text, TextInput } from "@/features/shared/Text";
-import { isValidEmail, MIN_PASSWORD_LENGTH } from "@/utils/validation";
+import { validarPorCampo } from "@/utils/validation";
+
+// La validación vive en utils (sin React Native, se puede probar); se reexporta para las pantallas
+export { validarPorCampo };
 
 /** Imagen de fondo: se puede cambiar reemplazando este archivo. */
 const FONDO = require("@/assets/images/auth/fondo.jpeg");
@@ -38,8 +50,7 @@ const FONDO = require("@/assets/images/auth/fondo.jpeg");
 const LOGO = require("@/assets/images/auth/logo.png");
 const LOGO_TAMANO = 78;
 
-/**
- * Imágenes de las 3 tarjetas en /** Imagen de una de las 3 tarjetas del abanico; cada pantalla define las suyas. */
+/** Imagen de una de las 3 tarjetas del abanico; cada pantalla define las suyas. */
 export type TarjetaAbanico = {
   source: number;
   position?: "left top" | "center" | "right bottom";
@@ -56,7 +67,6 @@ export const TINTA_TENUE = "#00000087";
 /** Placeholder de los campos: más suave que los iconos. */
 const TINTA_PLACEHOLDER = "#00000070";
 export const ROJO_ERROR = "#ff463cff";
-const TINTA_OSCURA = "#18181B";
 const LINK_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 const ANCHO_MAXIMO = 420;
 const CURVA_SUAVE = Easing.bezier(0.22, 1, 0.36, 1);
@@ -86,28 +96,6 @@ function useReducirTransparencia(): boolean {
     return () => suscripcion.remove();
   }, []);
   return reducir;
-}
-
-/** Valida correo y contraseña por separado, con mensajes cortos que caben dentro de cada campo. */
-export function validarPorCampo(
-  email: string,
-  password: string,
-): {
-  emailError: string;
-  passwordError: string;
-} {
-  const correo = email.trim();
-  const emailError = !correo
-    ? "Ingresa tu correo"
-    : !isValidEmail(correo)
-      ? "Correo no válido"
-      : "";
-  const passwordError = !password
-    ? "Ingresa tu contraseña"
-    : password.length < MIN_PASSWORD_LENGTH
-      ? `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`
-      : "";
-  return { emailError, passwordError };
 }
 
 /**
@@ -270,9 +258,120 @@ export function PantallaCristal({
   );
 }
 
+/** Color de la parte de arriba de `PantallaCurva`. */
+const COLOR_FONDO_CURVA = "#181818ff";
+const IMAGEN_CURVA_TAMANO = 145;
+const ALTO_CURVA = 60;
+
 /**
- * Enlace de texto blanco que va debajo de la card. * y solo la acción (en semibold) responde al toque y al hover.
-edium) responde al toque y al hover.
+ * Pantalla con la parte de arriba oscura (logo, título, descripción e imagen)
+ * y una card blanca con el borde superior curvo donde va el formulario.
+ * La imagen no se anima para que aparezca de inmediato.
+ */
+export function PantallaCurva({
+  titulo,
+  descripcion,
+  imagen,
+  imagenLabel,
+  children,
+}: {
+  titulo: string;
+  descripcion: string;
+  imagen: number;
+  imagenLabel: string;
+  children: ReactNode;
+}) {
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const sinMovimiento = useReducedMotion();
+
+  const aparecer = (delayMs: number) =>
+    sinMovimiento
+      ? undefined
+      : FadeIn.duration(520).delay(delayMs).easing(CURVA_SUAVE);
+
+  return (
+    <View style={styles.curvaRoot}>
+      <StatusBar style="light" />
+
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.curvaContenido}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {/* ── Parte oscura: logo, título, descripción e imagen ── */}
+          <View style={[styles.curvaArriba, { paddingTop: insets.top + 4 }]}>
+            <Animated.View entering={aparecer(0)}>
+              <Image
+                source={LOGO}
+                contentFit="contain"
+                transition={0}
+                accessibilityLabel="Logo de ReLoop"
+                style={styles.logo}
+              />
+            </Animated.View>
+
+            <View style={styles.flex} />
+
+            <Animated.View entering={aparecer(60)} style={styles.curvaTextos}>
+              <Text accessibilityRole="header" style={styles.curvaTitulo}>
+                {titulo}
+              </Text>
+              <Text style={styles.curvaDescripcion}>{descripcion}</Text>
+            </Animated.View>
+
+            <Image
+              source={imagen}
+              contentFit="contain"
+              transition={0}
+              accessibilityLabel={imagenLabel}
+              style={styles.curvaImagen}
+            />
+          </View>
+
+          {/* ── Card blanca con borde superior curvo ── */}
+          <Animated.View
+            entering={
+              sinMovimiento
+                ? undefined
+                : FadeInDown.duration(600).delay(110).easing(CURVA_SUAVE)
+            }
+            style={[styles.curvaCard, { minHeight: height * 0.46 }]}
+          >
+            <Svg
+              width="100%"
+              height={ALTO_CURVA}
+              viewBox="0 0 100 20"
+              preserveAspectRatio="none"
+              style={styles.curvaBorde}
+            >
+              <Path d="M0 20 Q50 -20 100 20 Z" fill={BLANCO} />
+            </Svg>
+
+            <View
+              style={[
+                styles.curvaCardContenido,
+                { paddingBottom: insets.bottom + 20 },
+              ]}
+            >
+              {children}
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+/**
+ * Enlace de texto que va debajo de la card: un prefijo opcional
+ * y la acción (en semibold), que es lo único que responde al toque y al hover.
  */
 export function EnlaceCristal({
   prefijo,
@@ -536,6 +635,29 @@ export const estilosCristal = StyleSheet.create({
     backgroundColor: "#101010",
   },
   botonDeshabilitado: { opacity: 0.6 },
+  // Botón blanco con borde para la acción secundaria
+  botonSecundario: {
+    backgroundColor: BLANCO,
+    borderWidth: 1.2,
+    borderColor: "#E5E7EB",
+  },
+  botonSecundarioTexto: { color: "#101010" },
+  // Separación corta entre el campo y el botón dentro de la card blanca
+  botonCerca: { marginTop: 15 },
+  // Primer botón de la card blanca cuando no hay campo arriba
+  botonPrimero: { marginTop: 0 },
+  // Campo gris para que se distinga sobre la card blanca
+  campoClaro: { backgroundColor: "#F2F2F4", borderColor: "#E7E7EA" },
+  // Avisos bajo los botones en la card blanca
+  aviso: {
+    marginTop: 14,
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    color: TINTA_TENUE,
+  },
+  avisoError: { color: ROJO_ERROR },
   botonTexto: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
@@ -747,4 +869,58 @@ const styles = StyleSheet.create({
     textShadowRadius: 0,
   },
   enlaceAccionOscura: { color: "#101010" },
+
+  // PantallaCurva
+  curvaRoot: { flex: 1, backgroundColor: COLOR_FONDO_CURVA },
+  curvaContenido: { flexGrow: 1 },
+  curvaArriba: {
+    flex: 1,
+    alignItems: "center",
+    // Por encima de la card para que la curva blanca no tape la imagen
+    zIndex: 1,
+    gap: 19,
+    paddingHorizontal: 20,
+  },
+  curvaTextos: {
+    width: "100%",
+    maxWidth: ANCHO_MAXIMO,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  curvaTitulo: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 24,
+    lineHeight: 32,
+    letterSpacing: -0.8,
+    textAlign: "center",
+    color: BLANCO,
+  },
+  curvaDescripcion: {
+    marginTop: 7,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+    color: "#ffffffe0",
+  },
+  curvaImagen: {
+    width: IMAGEN_CURVA_TAMANO,
+    height: IMAGEN_CURVA_TAMANO,
+    // Un poco más abajo sin mover la card
+    transform: [{ translateY: 12 }],
+  },
+  curvaCard: { backgroundColor: BLANCO },
+  curvaBorde: {
+    position: "absolute",
+    top: -ALTO_CURVA + 1,
+    left: 0,
+    right: 0,
+  },
+  curvaCardContenido: {
+    width: "100%",
+    maxWidth: ANCHO_MAXIMO,
+    alignSelf: "center",
+    paddingHorizontal: 22,
+    paddingTop: 40,
+  },
 });
