@@ -13,7 +13,6 @@ export function TarjetaAccion({
   backgroundColor,
   arrowColor,
   onPress,
-  accessibilityLabel,
 }: {
   icon: ReactNode;
   label: string;
@@ -21,12 +20,11 @@ export function TarjetaAccion({
   backgroundColor: string;
   arrowColor: string;
   onPress: () => void;
-  accessibilityLabel?: string;
 }) {
   return (
     <PressableSuave
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={label}
       onPress={onPress}
       style={[estilosPerfil.tarjetaAccion, { backgroundColor }]}
     >

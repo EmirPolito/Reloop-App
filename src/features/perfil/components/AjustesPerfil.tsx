@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Switch, View } from "react-native";
 
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { showComingSoonAlert } from "@/utils/alerts";
@@ -29,6 +30,7 @@ const ACCION = "#101010";
 export function AjustesPerfil({ isDark }: { isDark: boolean }) {
   const { signOut } = useAuth();
   const { setIsDark } = useAppTheme();
+  const { openLegal } = useAppNavigation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleSignOut = useCallback(() => {
@@ -130,7 +132,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           }
           label="Términos y condiciones"
           textColor={textoFila}
-          onPress={() => showComingSoonAlert("Términos y condiciones")}
+          onPress={() => openLegal("terminos")}
           right={<IconoFlecha size={22} color={flecha} />}
         />
         <FilaAjuste
@@ -142,9 +144,9 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
               lineColor="#585858ff"
             />
           }
-          label="Términos y condiciones"
+          label="Política de privacidad"
           textColor={textoFila}
-          onPress={() => showComingSoonAlert("Términos y condiciones")}
+          onPress={() => openLegal("privacidad")}
           right={<IconoFlecha size={22} color={flecha} />}
         />
       </View>

@@ -12,7 +12,6 @@ export function FilaAjuste({
   onPress,
   bg,
   textColor,
-  iconWidth,
 }: {
   icon: ReactNode;
   label: string;
@@ -20,14 +19,10 @@ export function FilaAjuste({
   onPress?: () => void;
   bg: string;
   textColor: string;
-  /** Ancho del contenedor del icono (por defecto 20). Súbelo si el icono se corta */
-  iconWidth?: number;
 }) {
   const content = (
     <>
-      <View style={[styles.rowIcon, iconWidth ? { width: iconWidth } : null]}>
-        {icon}
-      </View>
+      <View style={styles.rowIcon}>{icon}</View>
       <Text style={[styles.rowLabel, { color: textColor }]} numberOfLines={1}>
         {label}
       </Text>

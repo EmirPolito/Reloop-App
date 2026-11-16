@@ -256,8 +256,8 @@ export function SelectorAvatar({
   );
 }
 
-/** Botón Tomar / Elegir (también lo usa la portada del onboarding) */
-export function Opcion({
+/** Botón Tomar / Elegir */
+function Opcion({
   icono,
   texto,
   isDark,

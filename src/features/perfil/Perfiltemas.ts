@@ -133,9 +133,6 @@ export function gradienteCieloPerfil(
   return isDark ? tema.gradientDark : tema.gradientLight;
 }
 
-/** Puntos de parada del degradado: los 3 tonos del tema terminan un poco antes de la mitad de la pantalla (0.45) */
-export const LOCATIONS_APP_BACKGROUND = [0, 0.12, 0.26, 0.45] as const;
-
 /** Botón de acción principal (crear publicación, enviar mensaje): un solo estilo fijo */
 export const ESTILO_BOTON_ACCION = {
   colors: ["#72b4ffff", "#4fa1ffff", "#3493ffff"] as [string, string, string],

@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 
+import type { DocumentoLegalId } from "@/features/legal/textosLegales";
 import { TAB_HREFS, type Tab } from "./routes";
 
 /**
@@ -20,6 +21,9 @@ export function useAppNavigation() {
         router.push({ pathname: "/user/[id]", params: { id: userId } }),
       openEditProfile: () => router.push("/editar-perfil"),
       openNotifications: () => router.push("/notificaciones"),
+      /** Política de privacidad o términos, en su propia pantalla */
+      openLegal: (documento: DocumentoLegalId) =>
+        router.push({ pathname: "/legal/[documento]", params: { documento } }),
       openThread: (chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */

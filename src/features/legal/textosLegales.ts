@@ -100,3 +100,16 @@ export const TERMINOS_CONDICIONES: DocumentoLegal = {
     },
   ],
 };
+
+/** Documentos que se pueden abrir en su propia pantalla (`/legal/[documento]`) */
+export const DOCUMENTOS_LEGALES = {
+  privacidad: POLITICA_PRIVACIDAD,
+  terminos: TERMINOS_CONDICIONES,
+} as const satisfies Record<string, DocumentoLegal>;
+
+export type DocumentoLegalId = keyof typeof DOCUMENTOS_LEGALES;
+
+/** `true` si el texto es el id de un documento legal (para validar la ruta) */
+export function esDocumentoLegal(id: string): id is DocumentoLegalId {
+  return Object.hasOwn(DOCUMENTOS_LEGALES, id);
+}
