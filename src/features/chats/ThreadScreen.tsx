@@ -5,8 +5,12 @@ import {
   useState,
   type ComponentRef,
 } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import { Keyboard, Platform, ScrollView, View } from "react-native";
+import Animated, {
+  FadeIn,
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -55,6 +59,11 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const [sending, setSending] = useState(false);
   const [viewer, setViewer] = useState({ images: NO_IMAGES, initialIndex: 0 });
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  // El teclado achica la lista (el composer sube con él, ver MessageComposer)
+  const keyboard = useAnimatedKeyboard();
+  const listStyle = useAnimatedStyle(() => ({
+    marginBottom: keyboard.height.value,
+  }));
 
   const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { product: relatedProduct } = useProduct(activeChat?.productId);
@@ -67,6 +76,15 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
       console.warn("No se pudo marcar el chat como leído.", error),
     );
   }, [unread, chatId, markRead]);
+
+  // Al abrir el teclado la lista se achica: mantener visible el último mensaje
+  useEffect(() => {
+    const event = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const sub = Keyboard.addListener(event, () =>
+      scrollRef.current?.scrollToEnd({ animated: true }),
+    );
+    return () => sub.remove();
+  }, []);
 
   async function handleSend() {
     const text = messageDraft.trim();
@@ -140,15 +158,12 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const fixedTop = threadFixedHeight(headerHeight, Boolean(relatedProduct));
 
   return (
-    <KeyboardAvoidingView
-      style={styles.fill}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <View style={styles.fill}>
       {/* 1. Los mensajes van PRIMERO y sin marginTop:
           ocupan toda la pantalla y pasan por detrás del header */}
-      <ScrollView
+      <Animated.ScrollView
         ref={scrollRef}
-        style={{ flex: 1 }}
+        style={[{ flex: 1 }, listStyle]}
         contentContainerStyle={[
           styles.threadMessages,
           {
@@ -175,7 +190,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
             onOpenImages={openImageViewer}
           />
         ))}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* 2. Tarjeta del producto, encima de la lista y debajo del header */}
       {relatedProduct ? (
@@ -212,6 +227,6 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
         onRemoveImage={removeSelectedImage}
         onOpenImage={openImageViewer}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 }

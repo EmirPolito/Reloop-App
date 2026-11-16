@@ -8,6 +8,8 @@ import Animated, {
   FadeOut,
   FadeOutDown,
   LinearTransition,
+  useAnimatedKeyboard,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -66,18 +68,29 @@ export function MessageComposer({
   const insets = useSafeAreaInsets();
   const { isDark, styles } = useAppTheme();
   const previewKeys = usePreviewKeys(images);
+  // Sube el composer sobre el teclado (iOS y Android edge-to-edge); sin teclado no se mueve
+  const keyboard = useAnimatedKeyboard();
+  const bottomInset = insets.bottom;
+  const liftStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: -Math.max(keyboard.height.value - bottomInset, 0) },
+    ],
+  }));
 
   return (
-    <View
-      style={{
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        paddingHorizontal: 12,
-        paddingBottom: Math.max(insets.bottom, 10),
-        paddingTop: 2,
-      }}
+    <Animated.View
+      style={[
+        {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 5,
+          paddingHorizontal: 12,
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 2,
+        },
+        liftStyle,
+      ]}
     >
       {/* Previsualizador horizontal de imágenes seleccionadas (aparición suave) */}
       {images.length > 0 && (
@@ -212,6 +225,6 @@ export function MessageComposer({
 
         <SendButton onPress={onSendPress} sending={sending} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
