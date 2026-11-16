@@ -38,17 +38,19 @@ import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
 const ALTO_PORTADA = 136;
-const ALTO_HEADER = 52;
+const ALTO_HEADER = 56;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
 /** Cuánto sobresale el avatar por encima del borde inferior de la portada */
-const SOLAPE_AVATAR = 42;
+const SOLAPE_AVATAR = 44;
 /** Tamaño final del avatar al colapsar (se esconde bajo el header) */
 const ESCALA_AVATAR_MIN = 0.6;
 /** Borde del color de la pantalla alrededor del avatar */
 const BORDE_AVATAR = 3;
 /** Recorrido con el que el título pequeño entra al header */
 const ENTRADA_TITULO = 28;
+/** Píxeles de anticipación para que el desenfoque y el título salgan un poco antes */
+const ADELANTO_HEADER = 12;
 const ANCHO_PORTADA = 900;
 /** Avatar pequeño que entra al header junto al nombre */
 const LADO_AVATAR_HEADER = 32;
@@ -165,8 +167,8 @@ export function PerfilDesplazable({
     interpolate(
       scrollY.get(),
       [
-        finNombre.get() - altoHeader,
-        finNombre.get() - altoHeader + ENTRADA_TITULO,
+        finNombre.get() - altoHeader - ADELANTO_HEADER,
+        finNombre.get() - altoHeader - ADELANTO_HEADER + ENTRADA_TITULO,
       ],
       [0, 1],
       Extrapolation.CLAMP,
@@ -176,8 +178,8 @@ export function PerfilDesplazable({
     interpolate(
       scrollY.get(),
       [
-        finNombre.get() - altoHeader - ENTRADA_TITULO,
-        finNombre.get() - altoHeader,
+        finNombre.get() - altoHeader - ENTRADA_TITULO - ADELANTO_HEADER,
+        finNombre.get() - altoHeader - ADELANTO_HEADER,
       ],
       [0, 1],
       Extrapolation.CLAMP,
@@ -344,7 +346,7 @@ export function PerfilDesplazable({
             <View
               style={[
                 styles.cardEstadisticas,
-                { backgroundColor: isDark ? "#ffffff0d" : "#e1e1e1ff" },
+                { backgroundColor: isDark ? "#ffffff0d" : "#e9e9e9ff" },
               ]}
             >
               <View style={styles.estadisticaColumna}>
@@ -357,7 +359,7 @@ export function PerfilDesplazable({
                   {stats.publicaciones === 1 ? "Subido" : "Subidos"}
                 </Text>
                 <View style={styles.estadisticaValorFila}>
-                  <IconoPublicaciones size={17.5} color={COLOR_PUBLICACIONES} />
+                  <IconoPublicaciones size={19} color={COLOR_PUBLICACIONES} />
                   <Text numberOfLines={1} style={styles.estadisticaValor}>
                     {formatearNumero(stats.publicaciones)}
                   </Text>
@@ -381,7 +383,7 @@ export function PerfilDesplazable({
                   {stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
                 </Text>
                 <View style={styles.estadisticaValorFila}>
-                  <IconoUsuarios size={17.5} color={COLOR_SEGUIDORES} />
+                  <IconoUsuarios size={19} color={COLOR_SEGUIDORES} />
                   <Text numberOfLines={1} style={styles.estadisticaValor}>
                     {formatearNumero(stats.seguidores)}
                   </Text>
@@ -405,7 +407,7 @@ export function PerfilDesplazable({
                   Valoración
                 </Text>
                 <View style={styles.estadisticaValorFila}>
-                  <IconoReputacion size={18} color={COLOR_REPUTACION} />
+                  <IconoReputacion size={19} color={COLOR_REPUTACION} />
                   <Text numberOfLines={1} style={styles.estadisticaValor}>
                     {stats.reputacion}
                   </Text>
@@ -542,9 +544,9 @@ function CapaPortada({
 }
 
 /** Color del icono de cada estadística */
-const COLOR_PUBLICACIONES = "#6d6d6dff";
-const COLOR_SEGUIDORES = "#6d6d6dff";
-const COLOR_REPUTACION = "#6d6d6dff";
+const COLOR_PUBLICACIONES = "#ff2339ff";
+const COLOR_SEGUIDORES = "#2382ffff";
+const COLOR_REPUTACION = "#ffb223ff";
 
 /** Formatea números grandes estilo red social: 12.6k, 1.2M */
 function formatearNumero(valor: number): string {
@@ -589,6 +591,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
+    paddingBottom: 8, // Sube el contenido ~4px (ajusta entre 6 y 12 según veas)
     gap: 12,
   },
   botonHeader: {
@@ -648,7 +651,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 9,
     marginLeft: 10,
-    paddingBottom: 8, // <-- Ajusta entre 6 y 12 según la altura deseada
+    paddingBottom: 10, // <-- Ajusta entre 6 y 12 según la altura deseada
     paddingRight: 0,
     overflow: "hidden",
   },
@@ -656,15 +659,15 @@ const styles = StyleSheet.create({
   cardEstadisticas: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 20,
     paddingVertical: 15,
     paddingHorizontal: 4,
-    marginTop: 15,
+    marginTop: 25,
   },
   estadisticaColumna: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: 5,
   },
   separadorStat: {
     width: StyleSheet.hairlineWidth,
@@ -678,7 +681,7 @@ const styles = StyleSheet.create({
   },
   estadisticaValor: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
+    fontSize: 18,
     letterSpacing: -0.2,
     lineHeight: 20,
     textAlign: "center",
@@ -708,7 +711,7 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   insigniaNombre: { marginTop: 1, marginLeft: -4 },
-  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -7.5 },
+  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -6.5 },
   descripcion: {
     fontFamily: "Inter_400Regular",
     fontSize: 15,

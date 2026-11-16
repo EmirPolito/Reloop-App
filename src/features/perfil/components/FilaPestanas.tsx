@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
 import { IconoAnuncios, IconoPublicaciones } from "../Perfiliconos";
-import { coloresTarjeta } from "../perfilEstilos";
 
 export type Pestana = "publicaciones" | "anuncios";
 
@@ -20,16 +19,19 @@ const PESTANAS: { id: Pestana; label: string }[] = [
 ];
 
 /**
- * Rayita: ease-out fuerte y corto. Arranca rápido (responde al toque al instante) y frena
- * suave al llegar. withTiming se puede interrumpir: si tocas otra pestaña a medio camino,
- * cambia de rumbo desde donde va.
+ * Resorte amortiguado: se desliza rápido y frena en seco con un rebote mínimo,
+ * evitando oscilaciones al cambiar de pestaña.
  */
-const MOVIMIENTO = { duration: 220, easing: Easing.bezier(0.23, 1, 0.32, 1) };
+const RESORTE_DESPLAZAMIENTO = {
+  damping: 28,
+  stiffness: 260,
+  mass: 0.85,
+};
 
 /**
- * Fila de pestañas Publicaciones / Anuncios con su rayita animada y el divisor de abajo.
- * Se dibuja dos veces en el perfil (la de su lugar y la que queda fija bajo el header), las
- * dos gobernadas por el mismo estado `activa`.
+ * Selector tipo píldora para Publicaciones / Anuncios.
+ * Combina dos tonos (base suave y píldora activa en negro fuerte) cubriendo
+ * exactamente el 50 % sin espacio alrededor.
  */
 export function FilaPestanas({
   activa,
@@ -41,91 +43,127 @@ export function FilaPestanas({
   isDark: boolean;
 }) {
   const [ancho, setAncho] = useState(0);
-  const { texto, divisor } = coloresTarjeta(isDark);
-  // Pestaña no seleccionada: gris visible sobre el fondo (no blanco, o desaparece)
-  const inactivo = isDark ? "#64748B" : "#AEAEB2";
+
+  // Paleta de 2 tonos en negro:
+  // 1. Tono suave para el contenedor base
+  const tonoSuave = isDark ? "#222225" : "#ECECEE";
+  // 2. Tono fuerte (negro sólido) para la píldora activa
+  const tonoFuerte = "#000000";
+
+  // Colores de icono y texto según estado
+  const colorActivo = "#FFFFFF";
+  const colorInactivo = isDark ? "#8E8E93" : "#52525B";
 
   const indice = PESTANAS.findIndex((p) => p.id === activa);
   const columna = ancho / PESTANAS.length;
-  // La línea cubre toda la columna de borde a borde
   const destino = indice * columna;
 
-  // La primera vez se coloca directo; después se desliza al cambiar de pestaña
+  // Posición horizontal de la píldora activa
   const x = useSharedValue<number | null>(null);
+  // Escala sutil para el efecto táctil al presionar
+  const escala = useSharedValue(1);
+
   useEffect(() => {
     if (ancho <= 0) return;
-    x.set(x.get() === null ? destino : withTiming(destino, MOVIMIENTO));
+    x.set(
+      x.get() === null ? destino : withSpring(destino, RESORTE_DESPLAZAMIENTO),
+    );
   }, [ancho, destino, x]);
 
-  const estiloIndicador = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value ?? 0 }],
+  const estiloPildoraActiva = useAnimatedStyle(() => ({
+    transform: [{ translateX: x.value ?? 0 }, { scale: escala.value }],
   }));
 
+  const manejarPressIn = () => {
+    escala.set(withTiming(0.97, { duration: 100 }));
+  };
+
+  const manejarPressOut = () => {
+    escala.set(withSpring(1, { damping: 24, stiffness: 280 }));
+  };
+
   return (
-    <View>
+    <View style={styles.contenedorExterno}>
       <View
         accessibilityRole="tablist"
-        style={styles.fila}
+        style={[styles.pildoraBase, { backgroundColor: tonoSuave }]}
         onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
       >
+        {/* Fondo negro activo que cubre exactamente la mitad sin espacios */}
+        {ancho > 0 ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pildoraActiva,
+              {
+                backgroundColor: tonoFuerte,
+                width: columna,
+              },
+              estiloPildoraActiva,
+            ]}
+          />
+        ) : null}
+
         {PESTANAS.map((p) => {
           const seleccionada = p.id === activa;
-          const color = seleccionada ? texto : inactivo;
+          const color = seleccionada ? colorActivo : colorInactivo;
+
           return (
             <PressableSuave
               key={p.id}
               accessibilityRole="tab"
               accessibilityLabel={p.label}
               accessibilityState={{ selected: seleccionada }}
+              onPressIn={manejarPressIn}
+              onPressOut={manejarPressOut}
               onPress={() => onCambiar(p.id)}
               style={styles.pestana}
             >
               {p.id === "publicaciones" ? (
-                <IconoPublicaciones size={22} color={color} />
+                <IconoPublicaciones size={18} color={color} />
               ) : (
-                <IconoAnuncios size={20} color={color} />
+                <IconoAnuncios size={17} color={color} />
               )}
               <Text style={[styles.etiqueta, { color }]}>{p.label}</Text>
             </PressableSuave>
           );
         })}
-
-        {ancho > 0 ? (
-          <Animated.View
-            style={[
-              styles.indicador,
-              { backgroundColor: texto, width: columna },
-              estiloIndicador,
-            ]}
-          />
-        ) : null}
       </View>
-      <View style={[styles.divisor, { backgroundColor: divisor }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fila: {
+  contenedorExterno: {
+    paddingHorizontal: 0,
+    paddingVertical: 6,
+  },
+  pildoraBase: {
     flexDirection: "row",
     width: "100%",
+    height: 38,
+    borderRadius: 999,
+    overflow: "hidden",
+    position: "relative",
+  },
+  pildoraActiva: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 999,
   },
   pestana: {
     flex: 1,
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    zIndex: 1,
   },
-  indicador: {
-    position: "absolute",
-    left: 0,
-    bottom: 0,
-    height: 2,
-    borderRadius: 2,
+  etiqueta: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    top: 0.5,
   },
-  etiqueta: { fontFamily: "Inter_600SemiBold", fontSize: 14, top: 1 },
-  divisor: { height: StyleSheet.hairlineWidth },
 });

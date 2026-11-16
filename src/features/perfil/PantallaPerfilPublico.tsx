@@ -1,7 +1,6 @@
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
-import { Text } from "@/features/shared/Text";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
@@ -11,6 +10,7 @@ import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import { Text } from "@/features/shared/Text";
 import { BotonSeguir } from "./components/BotonSeguir";
 import { PerfilDesplazable } from "./components/PerfilDesplazable";
 import { useFollowers } from "./hooks/useFollowers";

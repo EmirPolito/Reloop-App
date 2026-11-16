@@ -287,9 +287,9 @@ function ShineOverlay({
 
 const GRADIENTE_BANNER: [string, string] = ["#2075fd", "#00aafe"];
 /** La insignia ocupa casi todo el alto del banner (usa también el padding), con tope */
-const INSIGNIA_PROPORCION = 0.96;
+const INSIGNIA_PROPORCION = 0.95;
 const INSIGNIA_MIN = 76;
-const INSIGNIA_MAX = 104;
+const INSIGNIA_MAX = 107;
 
 export function TarjetaPremium({
   activa,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: 13,
     paddingStart: 18,
     paddingEnd: 0,
     gap: 10,
@@ -486,20 +486,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: "Inter_700Bold",
-    fontSize: 20,
+    fontSize: 19,
     lineHeight: 22,
     color: "#fff",
     letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: "Inter_500Medium",
-    marginTop: 2.5,
+    marginTop: 1.5,
     fontSize: 12.68,
     lineHeight: 16,
     color: "rgba(255,255,255,0.85)",
   },
   buttonOuter: {
-    marginTop: 12,
+    marginTop: 11.5,
     alignSelf: "flex-start",
   },
   button: {
@@ -530,8 +530,8 @@ const styles = StyleSheet.create({
   badgeWrap: {
     flexShrink: 0,
     // Se extiende sobre el padding: crece sin hacer más alta la card
-    marginVertical: -12,
-    marginEnd: -4,
+    marginVertical: -11,
+    marginEnd: -2,
     alignItems: "center",
     justifyContent: "center",
   },

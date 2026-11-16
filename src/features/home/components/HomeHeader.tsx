@@ -9,6 +9,7 @@ import {
 } from "@/features/busqueda/frasesBusqueda";
 import { PlaceholderRotativo } from "@/features/busqueda/components/PlaceholderRotativo";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
+import { NotificationBellButton } from "@/components/ui/NotificationBellButton";
 
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import {
@@ -40,6 +41,7 @@ export const HomeHeader = memo(function HomeHeader({
   return (
     <View className="w-full">
       <View className="flex-row items-center justify-between gap-3 pt-[5px]">
+        {/* Logo — lado izquierdo, igual peso que el lado derecho para centrar UTSV */}
         <View className="flex-1 min-w-0 flex-row items-center gap-2">
           <Image
             accessibilityLabel="Logo ReLoop"
@@ -49,6 +51,7 @@ export const HomeHeader = memo(function HomeHeader({
           />
         </View>
 
+        {/* UTSV — centrado en la fila */}
         <Pressable
           accessibilityRole="button"
           className="min-h-9.5 flex-row items-center gap-1 px-2.5 rounded-full bg-white"
@@ -59,6 +62,11 @@ export const HomeHeader = memo(function HomeHeader({
           </Text>
           <ArrowRightIcon size={16} color="#1c77ffff" />
         </Pressable>
+
+        {/* Campana — lado derecho, mismo peso que el logo */}
+        <View className="flex-1 items-end">
+          <NotificationBellButton />
+        </View>
       </View>
 
       <View className="mt-3 mb-1">

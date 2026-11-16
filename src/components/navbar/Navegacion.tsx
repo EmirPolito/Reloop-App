@@ -2,11 +2,8 @@ import { PressableScale } from "@/components/PressableScale";
 import { PressableSuave } from "@/components/PressableSuave";
 import { NavigationIcon } from "@/components/iconos";
 import type { Tab } from "@/features/navigation/routes";
-import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import {
   IconoAnuncios,
-  IconoCampanaLinea,
-  IconoCampanaSolida,
   IconoChatLinea,
   IconoFavoritoLinea,
   IconoInicioLinea,
@@ -17,7 +14,15 @@ import {
 import { Text } from "@/features/shared/Text";
 import type { IconName } from "@/features/shared/constants";
 import { BlurView } from "expo-blur";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import {
   Modal,
   Platform,
@@ -26,11 +31,13 @@ import {
   View,
   type LayoutChangeEvent,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
-  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
+  withSpring,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -41,11 +48,11 @@ export interface NavegacionProps {
   /** `null` en pantallas fuera de las pestañas: ningún icono queda marcado */
   activeTab: Tab | null;
   onNavigate: (tab: Tab) => void;
-  onOpenNotifications: () => void;
-  /** En la pantalla de notificaciones: la campana queda marcada (rellena y con el indicador) */
-  notificacionesActivas?: boolean;
   isDark?: boolean;
   hasUnreadChats?: boolean;
+  /** Props opcionales por compatibilidad si algún layout aún las pasa */
+  onOpenNotifications?: () => void;
+  notificacionesActivas?: boolean;
   unreadNotifications?: number;
 }
 
@@ -62,79 +69,74 @@ const NAV_TABS: NavTabItem[] = [
   { id: "profile", label: "Perfil", icon: "person" },
 ];
 
-/** Lugares de la cápsula: las pestañas y la campana */
-const HUECOS = NAV_TABS.length + 1;
+/** 4 pestañas + 1 botón de crear = 5 módulos en un solo fondo */
+const INDICE_CREAR = NAV_TABS.length;
+const TOTAL_BOTONES = NAV_TABS.length + 1;
+const MAX_INDEX = TOTAL_BOTONES - 1;
 
-/** Hueco que ocupa la campana: entre Chats y Perfil */
-const HUECO_CAMPANA = 3;
-
-/** Hueco de la cápsula en el que va cada pestaña (las que van tras la campana se corren uno) */
-const huecoDeTab = (indice: number) =>
-  indice >= HUECO_CAMPANA ? indice + 1 : indice;
-
-const ALTO_CAPSULA = 62;
-/** Espacio entre el borde de la cápsula y el indicador */
+const ALTO_CAPSULA = 66;
 const MARGEN_CAPSULA = 5;
-const TAMANO_ICONO = 23;
+const TAMANO_ICONO = 21;
 
-/** Iconos de contorno de las pestañas sin seleccionar */
-const ICONOS_LINEA: Record<
-  Tab,
-  ((props: { size?: number; color?: string }) => React.JSX.Element) | undefined
+const ICONOS_LINEA: Partial<
+  Record<Tab, ComponentType<{ size?: number; color?: string }>>
 > = {
   home: IconoInicioLinea,
   favorites: IconoFavoritoLinea,
   chats: IconoChatLinea,
   profile: IconoPerfilLinea,
-} as Record<Tab, any>;
+};
 
 /* -------------------------------------------------------------------------- */
-/*  Animaciones (todo corre en el hilo de UI con Reanimated)                  */
+/*  Animaciones Liquid Glass (corren en el hilo de UI con Reanimated)         */
 /* -------------------------------------------------------------------------- */
 
-/** El indicador arranca rápido y frena suave, sin rebote */
-const DESLIZAR = { duration: 280, easing: Easing.bezier(0.23, 1, 0.32, 1) };
-const APARECER = { duration: 160, easing: Easing.out(Easing.cubic) };
+const DESLIZAR = { duration: 290, easing: Easing.bezier(0.22, 1, 0.36, 1) };
+const APARECER = { duration: 150, easing: Easing.out(Easing.cubic) };
+const SPRING_SOLTAR = { damping: 16, stiffness: 220, mass: 0.72 };
 
-/** Menú de crear: abre rápido y frena suave; cierra más corto */
-const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.23, 1, 0.32, 1) };
-const MENU_CERRAR = { duration: 160, easing: Easing.out(Easing.cubic) };
-const MENU_BLUR = 30;
+const MENU_ABRIR = { duration: 220, easing: Easing.bezier(0.23, 1, 0.32, 1) };
+const MENU_CERRAR = { duration: 150, easing: Easing.out(Easing.cubic) };
+const MENU_BLUR = 28;
 
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
-
-/** Color del icono de cada opción del menú */
 const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
 const COLOR_ICONO_PUBLICACION = "#ff3762";
 
 type Estilos = ReturnType<typeof createStyles>;
 
 /**
- * Fondo de cristal de la cápsula y del botón de crear. En iOS y web desenfoca lo que hay
- * detrás; en Android el desenfoque no está activo en la app y lo suple un tinte más opaco,
- * con el mismo borde y la misma sombra.
+ * Superficie Liquid Glass única: desenfoque nativo (iOS/Web), tinte translúcido
+ * y reflejo especular superior para simular refracción de borde curvo.
  */
-function Cristal({ isDark, styles }: { isDark: boolean; styles: Estilos }) {
+const LiquidGlassSurface = memo(function LiquidGlassSurface({
+  isDark,
+  styles,
+}: {
+  isDark: boolean;
+  styles: Estilos;
+}) {
   return (
     <>
       {Platform.OS !== "android" && (
         <BlurView
-          intensity={40}
+          intensity={55}
           tint={isDark ? "dark" : "light"}
           style={StyleSheet.absoluteFill}
         />
       )}
-      <View style={[StyleSheet.absoluteFill, styles.cristalTinte]} />
+      <View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, styles.cristalTinte]}
+      />
+      <View pointerEvents="none" style={styles.reflejoSuperior} />
     </>
   );
-}
+});
 
 /**
- * Pestaña de la cápsula: solo el icono. Sin seleccionar se dibuja de contorno; el activo,
- * relleno. Ambos se funden según lo cerca que esté el indicador, así el cambio acompaña al
- * deslizamiento sin estado propio.
+ * Pestaña de la cápsula con icono y etiqueta del módulo debajo.
  */
-function TabButton({
+const TabButton = memo(function TabButton({
   tab,
   indice,
   selected,
@@ -155,20 +157,22 @@ function TabButton({
   onPress: (tab: Tab) => void;
   styles: Estilos;
 }) {
-  const iconSelectedStyle = useAnimatedStyle(() => ({
-    opacity:
+  const activeStyle = useAnimatedStyle(() => {
+    const activo =
       Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
-      indicadorVisible.get(),
-  }));
-  const iconUnselectedStyle = useAnimatedStyle(() => ({
-    opacity:
-      1 -
-      Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
-        indicadorVisible.get(),
-  }));
+      indicadorVisible.get();
+    return { opacity: activo };
+  });
 
-  const colorInactivo = isDark ? "#A1A1AA" : "#1A1A1A";
-  const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
+  const inactiveStyle = useAnimatedStyle(() => {
+    const activo =
+      Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
+      indicadorVisible.get();
+    return { opacity: 1 - activo };
+  });
+
+  const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
+  const colorActivo = isDark ? "#FFFFFF" : "#101010";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
   return (
@@ -177,11 +181,11 @@ function TabButton({
       accessibilityState={{ selected }}
       accessibilityLabel={tab.label}
       onPress={() => onPress(tab.id)}
-      scaleTo={0.88}
+      scaleTo={0.9}
       style={styles.hueco}
     >
       <View style={styles.icono}>
-        <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
+        <Animated.View style={[styles.iconoCapa, inactiveStyle]}>
           {IconoLinea ? (
             <IconoLinea size={TAMANO_ICONO} color={colorInactivo} />
           ) : (
@@ -193,7 +197,7 @@ function TabButton({
             />
           )}
         </Animated.View>
-        <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
+        <Animated.View style={[styles.iconoCapa, activeStyle]}>
           {tab.id === "profile" ? (
             <IconoPerfil size={TAMANO_ICONO} color={colorActivo} />
           ) : (
@@ -207,112 +211,115 @@ function TabButton({
         </Animated.View>
         {showBadge ? <View style={styles.punto} /> : null}
       </View>
+
+      <View style={styles.etiquetaContenedor}>
+        <Animated.Text
+          numberOfLines={1}
+          style={[styles.etiqueta, { color: colorInactivo }, inactiveStyle]}
+        >
+          {tab.label}
+        </Animated.Text>
+        <Animated.Text
+          numberOfLines={1}
+          style={[
+            styles.etiqueta,
+            styles.etiquetaActiva,
+            { color: colorActivo },
+            activeStyle,
+          ]}
+        >
+          {tab.label}
+        </Animated.Text>
+      </View>
     </PressableScale>
   );
-}
+});
 
-/**
- * Campana de la cápsula: abre las notificaciones y muestra cuántas hay sin leer (con el
- * contador). Es de contorno siempre, aunque haya sin leer; solo en la pantalla de
- * notificaciones se marca como una pestaña más: el indicador se desliza detrás y el icono
- * pasa a sólido.
- */
-function BellButton({
-  unread,
+/** Botón de crear integrado como 5to módulo con reacción en vivo al pasar la píldora */
+const CreateSlotButton = memo(function CreateSlotButton({
   selected,
   posicion,
   indicadorVisible,
-  isDark,
   onPress,
+  isDark,
   styles,
 }: {
-  unread: number;
   selected: boolean;
   posicion: SharedValue<number>;
   indicadorVisible: SharedValue<number>;
-  isDark: boolean;
   onPress: () => void;
+  isDark: boolean;
   styles: Estilos;
 }) {
-  const colorInactivo = isDark ? "#A1A1AA" : "#1A1A1A";
-  const colorActivo = isDark ? "#FFFFFF" : "#1A1A1A";
-  const iconSelectedStyle = useAnimatedStyle(() => ({
-    opacity:
-      Math.max(0, 1 - Math.abs(posicion.get() - HUECO_CAMPANA)) *
-      indicadorVisible.get(),
-  }));
-  const iconUnselectedStyle = useAnimatedStyle(() => ({
-    opacity:
-      1 -
-      Math.max(0, 1 - Math.abs(posicion.get() - HUECO_CAMPANA)) *
-        indicadorVisible.get(),
-  }));
+  const activeStyle = useAnimatedStyle(() => {
+    const activo =
+      Math.max(0, 1 - Math.abs(posicion.get() - INDICE_CREAR)) *
+      indicadorVisible.get();
+    return { opacity: activo };
+  });
+
+  const inactiveStyle = useAnimatedStyle(() => {
+    const activo =
+      Math.max(0, 1 - Math.abs(posicion.get() - INDICE_CREAR)) *
+      indicadorVisible.get();
+    return { opacity: 1 - activo };
+  });
+
+  const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
+  const colorActivo = isDark ? "#FFFFFF" : "#101010";
+
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={
-        unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"
-      }
+      accessibilityLabel="Publicar producto"
       onPress={onPress}
-      scaleTo={0.88}
+      scaleTo={0.9}
       style={styles.hueco}
     >
       <View style={styles.icono}>
-        <Animated.View style={[styles.iconoCapa, iconUnselectedStyle]}>
-          <IconoCampanaLinea size={TAMANO_ICONO} color={colorInactivo} />
-        </Animated.View>
-        <Animated.View style={[styles.iconoCapa, iconSelectedStyle]}>
-          <IconoCampanaSolida size={TAMANO_ICONO} color={colorActivo} />
-        </Animated.View>
-        {unread > 0 ? (
-          <View style={styles.contador}>
-            <Text style={styles.contadorTexto}>{unreadBadgeLabel(unread)}</Text>
-          </View>
-        ) : null}
-      </View>
-    </PressableScale>
-  );
-}
-
-/** Botón circular de la acción principal, con el mismo cristal que la cápsula */
-function CreateButton({
-  onPress,
-  label,
-  isDark,
-  styles,
-  sinSombra = false,
-}: {
-  onPress: () => void;
-  label: string;
-  isDark: boolean;
-  styles: Estilos;
-  sinSombra?: boolean;
-}) {
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      scaleTo={0.97}
-      style={sinSombra ? styles.sinSombra : styles.sombra}
-    >
-      <View style={styles.crear}>
-        <Cristal isDark={isDark} styles={styles} />
-        <View>
+        <Animated.View style={[styles.iconoCapa, inactiveStyle]}>
           <NavigationIcon
             name="add"
-            size={26}
-            color={isDark ? "#FFFFFF" : "#1A1A1A"}
+            size={TAMANO_ICONO + 2}
+            color={colorInactivo}
           />
-        </View>
+        </Animated.View>
+        <Animated.View style={[styles.iconoCapa, activeStyle]}>
+          <NavigationIcon
+            name="add"
+            size={TAMANO_ICONO + 2}
+            color={colorActivo}
+          />
+        </Animated.View>
+      </View>
+
+      <View style={styles.etiquetaContenedor}>
+        <Animated.Text
+          numberOfLines={1}
+          style={[styles.etiqueta, { color: colorInactivo }, inactiveStyle]}
+        >
+          Crear
+        </Animated.Text>
+        <Animated.Text
+          numberOfLines={1}
+          style={[
+            styles.etiqueta,
+            styles.etiquetaActiva,
+            { color: colorActivo },
+            activeStyle,
+          ]}
+        >
+          Crear
+        </Animated.Text>
       </View>
     </PressableScale>
   );
-}
+});
 
-/** Opciones que salen del botón de crear, sobre el contenido difuminado */
+/** Menú flotante de acciones al pulsar o soltar en Crear */
 function MenuCrear({
+  visible,
   menu,
   isDark,
   bottom,
@@ -321,6 +328,7 @@ function MenuCrear({
   onPublicacion,
   styles,
 }: {
+  visible: boolean;
   menu: SharedValue<number>;
   isDark: boolean;
   bottom: number;
@@ -329,53 +337,59 @@ function MenuCrear({
   onPublicacion: () => void;
   styles: Estilos;
 }) {
-  const blurProps = useAnimatedProps(() => ({
-    intensity: MENU_BLUR * menu.value,
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: menu.value,
   }));
 
-  const veloStyle = useAnimatedStyle(() => ({ opacity: menu.value }));
-
-  // Crece desde la esquina del botón (transformOrigin en styles.menuCrear)
   const opcionesStyle = useAnimatedStyle(() => ({
     opacity: menu.value,
-    transform: [{ scale: 0.2 + 0.8 * menu.value }],
+    transform: [
+      { translateY: (1 - menu.value) * 14 },
+      { scale: 0.85 + 0.15 * menu.value },
+    ],
   }));
 
-  const opciones = [
-    {
-      label: "Crear anuncio",
-      Icono: IconoAnuncios,
-      color: COLOR_ICONO_ANUNCIO,
-      onPress: onAnuncio,
-    },
-    {
-      label: "Crear publicación",
-      Icono: IconoPublicaciones,
-      color: COLOR_ICONO_PUBLICACION,
-      onPress: onPublicacion,
-    },
-  ];
+  const opciones = useMemo(
+    () => [
+      {
+        label: "Crear anuncio",
+        Icono: IconoAnuncios,
+        color: COLOR_ICONO_ANUNCIO,
+        onPress: onAnuncio,
+      },
+      {
+        label: "Crear publicación",
+        Icono: IconoPublicaciones,
+        color: COLOR_ICONO_PUBLICACION,
+        onPress: onPublicacion,
+      },
+    ],
+    [onAnuncio, onPublicacion],
+  );
 
   return (
     <Modal
       transparent
-      visible
+      visible={visible}
       animationType="none"
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}
     >
-      {/* En Android el desenfoque no está activo en la app: lo suple un velo más opaco */}
-      {Platform.OS !== "android" && (
-        <AnimatedBlurView
-          animatedProps={blurProps}
-          tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
       <Animated.View
-        style={[StyleSheet.absoluteFill, styles.menuVelo, veloStyle]}
-      />
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, backdropStyle]}
+      >
+        {Platform.OS !== "android" && (
+          <BlurView
+            intensity={MENU_BLUR}
+            tint={isDark ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <View style={[StyleSheet.absoluteFill, styles.menuVelo]} />
+      </Animated.View>
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Cerrar"
@@ -383,21 +397,10 @@ function MenuCrear({
         style={StyleSheet.absoluteFill}
       />
 
-      {/* El botón sigue a la vista, encima del velo, y cierra el menú */}
-      <View style={[styles.menuBoton, { bottom }]}>
-        <CreateButton
-          onPress={onClose}
-          label="Cerrar"
-          isDark={isDark}
-          styles={styles}
-          sinSombra
-        />
-      </View>
-
       <Animated.View
         style={[
           styles.menuCrear,
-          { bottom: bottom + ALTO_CAPSULA + 10 },
+          { bottom: bottom + ALTO_CAPSULA + 12 },
           opcionesStyle,
         ]}
       >
@@ -423,107 +426,236 @@ function MenuCrear({
 /*  Navegación                                                                */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Barra de navegación flotante: una cápsula de cristal con los iconos de las pestañas y la
- * campana, y a su derecha el botón circular de crear. Un indicador se desliza detrás del
- * icono de la pestaña activa.
- */
 export function Navegacion({
   activeTab,
   onNavigate,
-  onOpenNotifications,
-  notificacionesActivas = false,
   isDark = false,
   hasUnreadChats = false,
-  unreadNotifications = 0,
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 12);
 
-  // -1 en "create" o fuera de las pestañas: no hay icono marcado y el indicador se oculta
-  const indiceTab = NAV_TABS.findIndex((tab) => tab.id === activeTab);
-  const huecoActivo = notificacionesActivas
-    ? HUECO_CAMPANA
-    : indiceTab >= 0
-      ? huecoDeTab(indiceTab)
-      : -1;
-  const posicion = useSharedValue(Math.max(huecoActivo, 0));
-  const indicadorVisible = useSharedValue(huecoActivo >= 0 ? 1 : 0);
-  const anchoHueco = useSharedValue(0);
-
-  // Con "Reducir movimiento", Reanimated lleva el indicador a su sitio sin animar
-  useEffect(() => {
-    if (huecoActivo >= 0) posicion.set(withTiming(huecoActivo, DESLIZAR));
-    indicadorVisible.set(withTiming(huecoActivo >= 0 ? 1 : 0, APARECER));
-  }, [huecoActivo, posicion, indicadorVisible]);
-
-  const medirCapsula = (e: LayoutChangeEvent) => {
-    anchoHueco.set((e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / HUECOS);
-  };
-
-  const indicadorStyle = useAnimatedStyle(() => ({
-    width: anchoHueco.get(),
-    opacity: anchoHueco.get() > 0 ? indicadorVisible.get() : 0,
-    transform: [{ translateX: posicion.get() * anchoHueco.get() }],
-  }));
-
-  const handleTabPress = (tabId: Tab) => {
-    if (tabId !== activeTab) onNavigate(tabId);
-  };
-
   const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const menu = useSharedValue(0);
 
-  const abrirMenu = () => {
+  const indiceTab = NAV_TABS.findIndex((tab) => tab.id === activeTab);
+  const huecoActivo =
+    menuAbierto || activeTab === "create" ? INDICE_CREAR : indiceTab;
+
+  const huecoAnterior = useRef(huecoActivo);
+  const ultimoIndiceArrastrado = useRef<number | null>(null);
+
+  const posicion = useSharedValue(Math.max(huecoActivo, 0));
+  const indicadorVisible = useSharedValue(huecoActivo >= 0 ? 1 : 0);
+  const estirar = useSharedValue(0);
+  const arrastrando = useSharedValue(0);
+  const inicioArrastre = useSharedValue(0);
+  const anchoHueco = useSharedValue(0);
+
+  useEffect(() => {
+    if (huecoActivo >= 0) {
+      // Si el cambio vino de soltar el arrastre, el spring de onEnd ya está en curso
+      if (ultimoIndiceArrastrado.current === huecoActivo) {
+        ultimoIndiceArrastrado.current = null;
+      } else {
+        posicion.set(withTiming(huecoActivo, DESLIZAR));
+
+        // Efecto gota líquida al tocar cualquier módulo (incluido Crear)
+        if (
+          huecoAnterior.current >= 0 &&
+          huecoAnterior.current !== huecoActivo
+        ) {
+          estirar.set(
+            withSequence(
+              withTiming(0.16, {
+                duration: 120,
+                easing: Easing.out(Easing.quad),
+              }),
+              withSpring(0, { damping: 14, stiffness: 210, mass: 0.7 }),
+            ),
+          );
+        }
+      }
+    }
+    huecoAnterior.current = huecoActivo;
+    indicadorVisible.set(withTiming(huecoActivo >= 0 ? 1 : 0, APARECER));
+  }, [huecoActivo, posicion, indicadorVisible, estirar]);
+
+  const medirCapsula = useCallback(
+    (e: LayoutChangeEvent) => {
+      const nuevoAncho =
+        (e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / TOTAL_BOTONES;
+      if (nuevoAncho > 0 && nuevoAncho !== anchoHueco.get()) {
+        anchoHueco.set(nuevoAncho);
+      }
+    },
+    [anchoHueco],
+  );
+
+  const abrirMenu = useCallback(() => {
+    setMenuAbierto(true);
     setMenuVisible(true);
     menu.set(withTiming(1, MENU_ABRIR));
-  };
+  }, [menu]);
 
-  // El modal se desmonta cuando termina la animación de salida
-  const cerrarMenu = () => {
+  const cerrarMenu = useCallback(() => {
+    setMenuAbierto(false);
     menu.set(
-      withTiming(0, MENU_CERRAR, () => {
-        scheduleOnRN(setMenuVisible, false);
+      withTiming(0, MENU_CERRAR, (finished) => {
+        if (finished) {
+          scheduleOnRN(setMenuVisible, false);
+        }
       }),
     );
-  };
+  }, [menu]);
 
-  const handleCrearPublicacion = () => {
+  const handleCrearPublicacion = useCallback(() => {
     cerrarMenu();
     onNavigate("create");
-  };
+  }, [cerrarMenu, onNavigate]);
+
+  const handleTabPress = useCallback(
+    (tabId: Tab) => {
+      if (tabId !== activeTab) onNavigate(tabId);
+    },
+    [activeTab, onNavigate],
+  );
+
+  const handleDropNavigate = useCallback(
+    (targetIndex: number) => {
+      ultimoIndiceArrastrado.current = targetIndex;
+
+      if (targetIndex === INDICE_CREAR) {
+        abrirMenu();
+        return;
+      }
+
+      const targetTab = NAV_TABS[targetIndex];
+      if (targetTab && targetTab.id !== activeTab) {
+        onNavigate(targetTab.id);
+      }
+    },
+    [abrirMenu, activeTab, onNavigate],
+  );
+
+  /** Gesto horizontal para jalar la píldora Liquid Glass por los 5 botones y soltarla */
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-8, 8])
+        .onStart((e) => {
+          const ancho = anchoHueco.get();
+          if (ancho <= 0) return;
+
+          arrastrando.set(
+            withSpring(1, { damping: 15, stiffness: 260, mass: 0.6 }),
+          );
+
+          if (indicadorVisible.get() < 0.5) {
+            const indiceToque = Math.min(
+              Math.max(Math.floor((e.x - MARGEN_CAPSULA) / ancho), 0),
+              MAX_INDEX,
+            );
+            posicion.set(indiceToque);
+            indicadorVisible.set(withTiming(1, APARECER));
+          }
+
+          inicioArrastre.set(posicion.get());
+        })
+        .onUpdate((e) => {
+          const ancho = anchoHueco.get();
+          if (ancho <= 0) return;
+
+          const crudo = inicioArrastre.get() + e.translationX / ancho;
+
+          // Efecto liga solo en los extremos exteriores (antes de Inicio y después de Crear)
+          let conResistencia = crudo;
+          if (crudo < 0) {
+            conResistencia = crudo * 0.25;
+          } else if (crudo > MAX_INDEX) {
+            conResistencia = MAX_INDEX + (crudo - MAX_INDEX) * 0.25;
+          }
+
+          posicion.set(conResistencia);
+
+          // Elongación líquida proporcional a la velocidad de arrastre
+          const deformacion = Math.min(Math.abs(e.velocityX) / 1800, 0.26);
+          estirar.set(withTiming(deformacion, { duration: 60 }));
+        })
+        .onEnd((e) => {
+          const ancho = anchoHueco.get();
+          if (ancho <= 0) return;
+
+          const proyectado = posicion.get() + e.velocityX * 0.00014;
+          const objetivo = Math.min(
+            Math.max(Math.round(proyectado), 0),
+            MAX_INDEX,
+          );
+
+          posicion.set(withSpring(objetivo, SPRING_SOLTAR));
+          arrastrando.set(
+            withSpring(0, { damping: 14, stiffness: 220, mass: 0.65 }),
+          );
+          estirar.set(withSpring(0, { damping: 12, stiffness: 190 }));
+
+          scheduleOnRN(handleDropNavigate, objetivo);
+        })
+        .onFinalize(() => {
+          arrastrando.set(withSpring(0));
+          estirar.set(withSpring(0));
+        }),
+    [
+      anchoHueco,
+      arrastrando,
+      estirar,
+      handleDropNavigate,
+      indicadorVisible,
+      inicioArrastre,
+      posicion,
+    ],
+  );
+
+  const indicadorStyle = useAnimatedStyle(() => {
+    const ancho = anchoHueco.get();
+    const lift = arrastrando.get();
+    const stretch = estirar.get();
+
+    return {
+      width: ancho,
+      opacity: ancho > 0 ? indicadorVisible.get() : 0,
+      transform: [
+        { translateX: posicion.get() * ancho },
+        { scaleX: 1 + 0.1 * lift + stretch },
+        { scaleY: 1 + 0.06 * lift - stretch * 0.45 },
+      ],
+    };
+  });
 
   return (
     <View style={[styles.navigationRow, { bottom: bottomInset }]}>
-      <View style={[styles.sombra, styles.capsulaSombra]}>
-        <View
-          accessibilityRole="tablist"
-          onLayout={medirCapsula}
-          style={styles.capsula}
-        >
-          <Cristal isDark={isDark} styles={styles} />
-          <Animated.View
-            pointerEvents="none"
-            style={[styles.indicador, indicadorStyle]}
-          />
-          {NAV_TABS.map((tab, indice) => (
-            <Fragment key={tab.id}>
-              {indice === HUECO_CAMPANA && (
-                <BellButton
-                  unread={unreadNotifications}
-                  selected={notificacionesActivas}
-                  posicion={posicion}
-                  indicadorVisible={indicadorVisible}
-                  isDark={isDark}
-                  onPress={onOpenNotifications}
-                  styles={styles}
-                />
-              )}
+      <GestureDetector gesture={panGesture}>
+        <View style={[styles.sombra, styles.capsulaSombra]}>
+          <View
+            accessibilityRole="tablist"
+            onLayout={medirCapsula}
+            style={styles.capsula}
+          >
+            <LiquidGlassSurface isDark={isDark} styles={styles} />
+
+            {/* Píldora activa arrastrable con acabado Liquid Glass */}
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.indicador, indicadorStyle]}
+            />
+
+            {NAV_TABS.map((tab, indice) => (
               <TabButton
+                key={tab.id}
                 tab={tab}
-                indice={huecoDeTab(indice)}
-                selected={!notificacionesActivas && activeTab === tab.id}
+                indice={indice}
+                selected={!menuAbierto && activeTab === tab.id}
                 posicion={posicion}
                 indicadorVisible={indicadorVisible}
                 showBadge={tab.id === "chats" && hasUnreadChats}
@@ -531,81 +663,89 @@ export function Navegacion({
                 onPress={handleTabPress}
                 styles={styles}
               />
-            </Fragment>
-          ))}
+            ))}
+
+            <CreateSlotButton
+              selected={menuAbierto || activeTab === "create"}
+              posicion={posicion}
+              indicadorVisible={indicadorVisible}
+              onPress={abrirMenu}
+              isDark={isDark}
+              styles={styles}
+            />
+          </View>
         </View>
-      </View>
+      </GestureDetector>
 
-      <CreateButton
-        onPress={abrirMenu}
-        label="Publicar producto"
+      <MenuCrear
+        visible={menuVisible}
+        menu={menu}
         isDark={isDark}
+        bottom={bottomInset}
+        onClose={cerrarMenu}
+        onAnuncio={cerrarMenu}
+        onPublicacion={handleCrearPublicacion}
         styles={styles}
-        sinSombra={menuVisible}
       />
-
-      {menuVisible && (
-        <MenuCrear
-          menu={menu}
-          isDark={isDark}
-          bottom={bottomInset}
-          onClose={cerrarMenu}
-          // Todavía no existe el flujo de crear anuncio: por ahora solo cierra el menú
-          onAnuncio={cerrarMenu}
-          onPublicacion={handleCrearPublicacion}
-          styles={styles}
-        />
-      )}
     </View>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Estilos                                                                   */
+/*  Estilos Liquid Glass                                                      */
 /* -------------------------------------------------------------------------- */
 
 function createStyles(isDark: boolean) {
   const android = Platform.OS === "android";
   const colors = isDark
     ? {
-        cristal: android ? "rgba(34, 34, 38, 0.96)" : "rgba(34, 34, 38, 0.62)",
-        borde: "rgba(255, 255, 255, 0.14)",
+        cristal: android ? "rgba(30, 30, 34, 0.94)" : "rgba(28, 28, 32, 0.56)",
+        borde: "rgba(255, 255, 255, 0.16)",
+        bordeSuperior: "rgba(255, 255, 255, 0.34)",
+        reflejo: "rgba(255, 255, 255, 0.10)",
         indicador: "rgba(255, 255, 255, 0.16)",
-        sombra: "0 8px 24px rgba(0, 0, 0, 0.35)",
-        sombraIndicador: "0 1px 4px rgba(0, 0, 0, 0.25)",
+        bordeIndicador: "rgba(255, 255, 255, 0.28)",
+        sombra:
+          "0 10px 28px rgba(0, 0, 0, 0.42), inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 2px rgba(0, 0, 0, 0.35)",
+        sombraIndicador:
+          "0 3px 10px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.32), inset 0 -1px 1.5px rgba(0, 0, 0, 0.22)",
         fondoContador: "#222226",
         text: "#FFFFFF",
-        velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.8)",
+        velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.78)",
       }
     : {
-        cristal: android ? "#f6f6f6f0" : "#f6f6f6f0",
-        borde: "#ffffffff",
-        indicador: "#ffffffff",
+        cristal: android
+          ? "rgba(248, 248, 250, 0.95)"
+          : "rgba(255, 255, 255, 0.58)",
+        borde: "rgba(255, 255, 255, 0.78)",
+        bordeSuperior: "#FFFFFF",
+        reflejo: "rgba(255, 255, 255, 0.55)",
+        indicador: "rgba(255, 255, 255, 0.88)",
+        bordeIndicador: "#FFFFFF",
+        sombra:
+          "0 10px 28px rgba(0, 0, 0, 0.11), inset 0 1.5px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.06)",
+        sombraIndicador:
+          "0 3px 10px rgba(0, 0, 0, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 1.5px rgba(0, 0, 0, 0.05)",
         fondoContador: "#EBEBEF",
         text: "#101010",
         velo: android
           ? "rgba(255, 255, 255, 0.94)"
-          : "rgba(255, 255, 255, 0.8)",
+          : "rgba(255, 255, 255, 0.78)",
       };
 
   return StyleSheet.create({
     navigationRow: {
       position: "absolute",
-      left: 15,
-      right: 15,
+      left: 14,
+      right: 14,
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
       zIndex: 999,
     },
 
-    /** La sombra va en una vista aparte: la cápsula recorta su contenido (overflow) */
     sombra: {
       borderRadius: ALTO_CAPSULA / 2,
       boxShadow: colors.sombra,
-    },
-    sinSombra: {
-      borderRadius: ALTO_CAPSULA / 2,
     },
 
     capsulaSombra: { flex: 1 },
@@ -618,18 +758,34 @@ function createStyles(isDark: boolean) {
       borderRadius: ALTO_CAPSULA / 2,
       borderWidth: 1,
       borderColor: colors.borde,
+      borderTopColor: colors.bordeSuperior,
       overflow: "hidden",
     },
 
-    cristalTinte: { backgroundColor: colors.cristal },
+    cristalTinte: {
+      backgroundColor: colors.cristal,
+    },
+
+    /** Reflejo especular superior que acentúa la curvatura del vidrio */
+    reflejoSuperior: {
+      position: "absolute",
+      top: 0,
+      left: 18,
+      right: 18,
+      height: 1.5,
+      borderRadius: 1,
+      backgroundColor: colors.reflejo,
+    },
 
     indicador: {
       position: "absolute",
       left: MARGEN_CAPSULA,
-      top: MARGEN_CAPSULA - 1,
-      bottom: MARGEN_CAPSULA - 1,
-      borderRadius: ALTO_CAPSULA / 2,
+      top: MARGEN_CAPSULA,
+      bottom: MARGEN_CAPSULA,
+      borderRadius: (ALTO_CAPSULA - MARGEN_CAPSULA * 2) / 2,
       backgroundColor: colors.indicador,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.bordeIndicador,
       boxShadow: colors.sombraIndicador,
     },
 
@@ -638,6 +794,7 @@ function createStyles(isDark: boolean) {
       height: "100%",
       alignItems: "center",
       justifyContent: "center",
+      gap: 3,
     },
 
     icono: {
@@ -648,9 +805,32 @@ function createStyles(isDark: boolean) {
     },
 
     iconoCapa: {
-      ...StyleSheet.absoluteFill,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       alignItems: "center",
       justifyContent: "center",
+    },
+
+    etiquetaContenedor: {
+      height: 12,
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    etiqueta: {
+      position: "absolute",
+      fontSize: 10,
+      lineHeight: 12,
+      fontFamily: "Inter_500Medium",
+      letterSpacing: -0.1,
+    },
+
+    etiquetaActiva: {
+      fontFamily: "Inter_600SemiBold",
     },
 
     punto: {
@@ -665,48 +845,13 @@ function createStyles(isDark: boolean) {
       borderColor: colors.fondoContador,
     },
 
-    contador: {
-      position: "absolute",
-      top: -6,
-      right: -8,
-      minWidth: 17,
-      height: 17,
-      paddingHorizontal: 4,
-      borderRadius: 9,
-      backgroundColor: "#FF3366",
-      borderWidth: 1.5,
-      borderColor: colors.fondoContador,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    contadorTexto: { color: "#FFFFFF", fontSize: 9.5, fontWeight: "700" },
-
-    crear: {
-      width: ALTO_CAPSULA,
-      height: ALTO_CAPSULA,
-      borderRadius: ALTO_CAPSULA / 2,
-      borderWidth: 1,
-      borderColor: colors.borde,
-      overflow: "hidden",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    /** Misma posición que el botón de la barra (navigationRow deja 15 a la derecha) */
-    menuBoton: {
-      position: "absolute",
-      right: 15,
-    },
-
     menuVelo: {
       backgroundColor: colors.velo,
     },
 
-    /** Alineado a la derecha, con los iconos sobre el eje del botón de crear */
     menuCrear: {
       position: "absolute",
-      right: 33,
+      right: 24,
       alignItems: "flex-end",
       transformOrigin: "right bottom",
     },
