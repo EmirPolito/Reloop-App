@@ -1,22 +1,23 @@
 import { memo } from "react";
-import { Pressable, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { Avatar } from "@/components/ui/Avatar";
-import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { Text } from "@/features/shared/Text";
+import { PressableSuave } from "@/components/PressableSuave";
+import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import type { Chat } from "@/features/marketplace/types";
+import { Text } from "@/features/shared/Text";
 import { formatChatTime } from "@/utils/time";
 
-const AVATAR_STYLE = { backgroundColor: "#dbeafe" } as const;
-const AVATAR_STYLE_DARK = { backgroundColor: "#1E293B" } as const;
-const AVATAR_TEXT_STYLE = {
-  fontSize: 17,
-  fontWeight: "700",
-  color: "#1d4ed8",
-} as const;
-const AVATAR_TEXT_STYLE_DARK = { ...AVATAR_TEXT_STYLE, color: "#93C5FD" } as const;
+const COLOR_PUNTO = "#1C77FF";
+/** Punto de un chat ya leído: un gris casi blanco (neutral-100) */
+const COLOR_PUNTO_LEIDO = "#ECECEE";
+const LADO_AVATAR = 50;
 
-/** Resumen de una conversación en la lista de chats. */
+/**
+ * Tarjeta de una conversación en la lista de chats, con el mismo estilo que las de
+ * notificaciones: el avatar de la otra persona (con su insignia si tiene Premium), su nombre
+ * arriba, el último mensaje debajo y, a la derecha, la hora con un punto azul debajo (apagado
+ * cuando ya se leyó).
+ */
 export const ChatListItem = memo(function ChatListItem({
   chat,
   productName,
@@ -27,91 +28,98 @@ export const ChatListItem = memo(function ChatListItem({
   productName?: string;
   onPress: (chatId: string) => void;
 }) {
-  const { isDark } = useAppTheme();
   const { lastMessage } = chat;
+  const hora =
+    lastMessage && lastMessage.time > 0 ? formatChatTime(lastMessage.time) : "";
+  const resumen = lastMessage
+    ? `${lastMessage.from === "me" ? "Tú: " : ""}${lastMessage.hasImages ? "📷 Foto" : lastMessage.text}`
+    : "Comienza a chatear";
 
   return (
-    <Pressable
+    <PressableSuave
       accessibilityRole="button"
+      accessibilityLabel={`${chat.name}. ${resumen}${hora ? `, ${hora}` : ""}${chat.unread ? ", sin leer" : ""}`}
       onPress={() => onPress(chat.id)}
-      style={({ pressed }) => [
-        {
-          flexDirection: "row",
-          alignItems: "center",
-          paddingVertical: 12,
-          paddingHorizontal: 0,
-          borderRadius: 16,
-          backgroundColor: pressed ? "#ca98980a" : "transparent",
-        },
-      ]}
+      style={styles.tarjeta}
     >
-      <Avatar
-        name={chat.name}
-        size={50}
-        style={isDark ? AVATAR_STYLE_DARK : AVATAR_STYLE}
-        textStyle={isDark ? AVATAR_TEXT_STYLE_DARK : AVATAR_TEXT_STYLE}
+      <AvatarVendedor
+        ownerId={chat.otherId}
+        fallbackName={chat.name}
+        size={LADO_AVATAR}
       />
 
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 0,
-          }}
-        >
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: 14,
-              fontWeight: "500",
-              color: isDark ? "#ffffff" : "#111827",
-              flex: 1,
-            }}
-          >
-            {chat.name}
-          </Text>
-          <Text
-            style={{
-              fontSize: 12,
-              color: isDark ? "#94A3B8" : "#6b7280",
-              marginLeft: 8,
-            }}
-          >
-            {lastMessage && lastMessage.time > 0
-              ? formatChatTime(lastMessage.time)
-              : ""}
-          </Text>
-        </View>
-
-        <Text
-          numberOfLines={1}
-          style={{
-            fontSize: 12.5,
-            color: isDark ? "#9ca3af" : "#4b5563",
-            lineHeight: 18,
-          }}
-        >
-          {lastMessage
-            ? `${lastMessage.from === "me" ? "Tú: " : ""}${lastMessage.hasImages ? "📷 Foto" : lastMessage.text}`
-            : "Comienza a chatear"}
+      <View style={styles.textos}>
+        <Text numberOfLines={1} style={styles.nombre}>
+          {chat.name}
         </Text>
-
+        <Text numberOfLines={1} style={styles.mensaje}>
+          {resumen}
+        </Text>
         {productName ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: 12,
-              color: isDark ? "#60A5FA" : "#2563eb",
-              fontWeight: "500",
-              marginTop: 3,
-            }}
-          >
+          <Text numberOfLines={1} style={styles.publicacion}>
             Publicación: {productName}
           </Text>
         ) : null}
       </View>
-    </Pressable>
+
+      <View style={styles.derecha}>
+        <Text style={styles.hora}>{hora}</Text>
+        <View
+          style={[
+            styles.punto,
+            !chat.unread && { backgroundColor: COLOR_PUNTO_LEIDO },
+          ]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      </View>
+    </PressableSuave>
   );
+});
+
+const styles = StyleSheet.create({
+  // Blanco liso, con borde fino y sombra suave porque el fondo de abajo es casi blanco
+  tarjeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    padding: 12,
+    borderRadius: 22,
+    marginBottom: 9,
+    backgroundColor: "#FFFFFF",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(0,0,0,0.07)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+  },
+  textos: { flex: 1, minWidth: 0, gap: 3 },
+  nombre: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#101010" },
+  mensaje: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#6B6B70",
+  },
+  publicacion: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: COLOR_PUNTO,
+  },
+  derecha: {
+    alignItems: "flex-end",
+    gap: 9,
+    alignSelf: "stretch",
+    paddingTop: 10,
+    marginRight: 4,
+  },
+  hora: { fontFamily: "Inter_500Medium", fontSize: 11.5, color: "#8A8A8F" },
+  punto: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLOR_PUNTO,
+  },
 });

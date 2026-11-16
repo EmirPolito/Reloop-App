@@ -14,7 +14,7 @@ import {
  * Botón circular con la campana del encabezado de las pestañas: abre las notificaciones y
  * muestra cuántas hay sin leer.
  */
-export function NotificationBellButton() {
+export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
   const { isDark } = useAppTheme();
   const { openNotifications } = useAppNavigation();
   const { unreadCount } = useNotifications();
@@ -25,6 +25,8 @@ export function NotificationBellButton() {
       style={({ pressed }) => [
         styles.boton,
         {
+          width: lado,
+          height: lado,
           backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
           borderColor: isDark ? "#ffffff2e" : "#ffffff5b",
         },
