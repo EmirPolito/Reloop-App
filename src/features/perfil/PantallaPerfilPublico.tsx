@@ -1,6 +1,5 @@
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
-import { PressableSuave } from "@/components/PressableSuave";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
@@ -10,12 +9,13 @@ import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { Text } from "@/features/shared/Text";
-import { BotonSeguir } from "./components/BotonSeguir";
-import { PerfilDesplazable } from "./components/PerfilDesplazable";
+import {
+  BotonHeaderPerfil,
+  PerfilDesplazable,
+} from "./components/PerfilDesplazable";
 import { useFollowers } from "./hooks/useFollowers";
 import { usePublicProfile } from "./hooks/usePublicProfile";
-import { IconoMensaje } from "./Perfiliconos";
+import { IconoCheck, IconoMensajeLinea, IconoSeguirUsuario } from "./Perfiliconos";
 import { defaultProfile } from "./profileMappers";
 
 /**
@@ -56,38 +56,29 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
         isDark={isDark}
         placeholder="iniciales"
         premium={premium}
-        acciones={
+        derecha={
           isOwn ? null : (
             <>
-              <PressableSuave
-                accessibilityRole="button"
-                accessibilityLabel={`Enviar mensaje a ${profile.name}`}
+              <BotonHeaderPerfil
+                etiqueta={`Enviar mensaje a ${profile.name}`}
                 onPress={() => openChat({ id: userId, name: profile.name })}
-                style={[
-                  styles.mensaje,
-                  { borderColor: isDark ? "#334155" : "#D4D4D8" },
-                ]}
               >
-                <IconoMensaje
-                  size={18}
-                  color={isDark ? "#F1F5F9" : "#101010"}
-                />
-                <Text
-                  style={[
-                    styles.mensajeTexto,
-                    { color: isDark ? "#F1F5F9" : "#101010" },
-                  ]}
-                >
-                  Mensaje
-                </Text>
-              </PressableSuave>
-              <BotonSeguir
-                isFollowing={isFollowing}
-                pending={pending}
-                isDark={isDark}
-                name={profile.name}
+                <IconoMensajeLinea size={18} color="#FFFFFF" />
+              </BotonHeaderPerfil>
+              <BotonHeaderPerfil
+                etiqueta={
+                  isFollowing
+                    ? `Dejar de seguir a ${profile.name}`
+                    : `Seguir a ${profile.name}`
+                }
                 onPress={() => void toggleFollow()}
-              />
+              >
+                {isFollowing ? (
+                  <IconoCheck size={16} color="#FFFFFF" />
+                ) : (
+                  <IconoSeguirUsuario size={18} color="#FFFFFF" />
+                )}
+              </BotonHeaderPerfil>
             </>
           )
         }
@@ -106,18 +97,3 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  // Mismo tamaño que Seguir: los dos se reparten el ancho
-  mensaje: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 6,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mensajeTexto: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
-});

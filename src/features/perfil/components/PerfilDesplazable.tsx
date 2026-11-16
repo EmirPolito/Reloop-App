@@ -37,7 +37,7 @@ import { PerfilAvatar } from "./PerfilAvatar";
 import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
-const ALTO_PORTADA = 136;
+const ALTO_PORTADA = 120;
 const ALTO_HEADER = 56;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
@@ -50,7 +50,7 @@ const BORDE_AVATAR = 3;
 /** Recorrido con el que el título pequeño entra al header */
 const ENTRADA_TITULO = 28;
 /** Píxeles de anticipación para que el desenfoque y el título salgan un poco antes */
-const ADELANTO_HEADER = 12;
+const ADELANTO_HEADER = 22;
 const ANCHO_PORTADA = 900;
 /** Avatar pequeño que entra al header junto al nombre */
 const LADO_AVATAR_HEADER = 32;
@@ -492,7 +492,13 @@ export function PerfilDesplazable({
                 <Text numberOfLines={1} style={styles.tituloNombre}>
                   {profile.name}
                 </Text>
-                {premium ? <PremiumBadge size={18} variant="static" /> : null}
+                {premium ? (
+                  <PremiumBadge
+                    size={18}
+                    variant="static"
+                    style={{ marginTop: 2, marginLeft: -2 }}
+                  />
+                ) : null}
               </View>
               <Text numberOfLines={1} style={styles.tituloSub}>
                 {stats.publicaciones}{" "}

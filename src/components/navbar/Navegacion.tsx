@@ -24,7 +24,7 @@ import {
   type ComponentType,
 } from "react";
 import {
-  Modal,
+  BackHandler,
   Platform,
   Pressable,
   StyleSheet,
@@ -88,16 +88,15 @@ const ICONOS_LINEA: Partial<
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Animaciones Liquid Glass (corren en el hilo de UI con Reanimated)         */
+/*  Animaciones Liquid Glass (curva fluida estilo Apple en hilo de UI)        */
 /* -------------------------------------------------------------------------- */
 
-const DESLIZAR = { duration: 290, easing: Easing.bezier(0.22, 1, 0.36, 1) };
-const APARECER = { duration: 150, easing: Easing.out(Easing.cubic) };
-const SPRING_SOLTAR = { damping: 16, stiffness: 220, mass: 0.72 };
+/** Arranca rápido y frena con suavidad sedosa, sin rebote excesivo */
+const SPRING_PILDORA = { damping: 26, stiffness: 185, mass: 0.92 };
+const APARECER = { duration: 180, easing: Easing.out(Easing.cubic) };
 
-const MENU_ABRIR = { duration: 220, easing: Easing.bezier(0.23, 1, 0.32, 1) };
-const MENU_CERRAR = { duration: 150, easing: Easing.out(Easing.cubic) };
-const MENU_BLUR = 28;
+const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.22, 1, 0.36, 1) };
+const MENU_CERRAR = { duration: 160, easing: Easing.out(Easing.cubic) };
 
 const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
 const COLOR_ICONO_PUBLICACION = "#ff3762";
@@ -105,7 +104,7 @@ const COLOR_ICONO_PUBLICACION = "#ff3762";
 type Estilos = ReturnType<typeof createStyles>;
 
 /**
- * Superficie Liquid Glass única: desenfoque nativo (iOS/Web), tinte translúcido
+ * Superficie Liquid Glass: desenfoque nativo (iOS/Web), tinte translúcido
  * y reflejo especular superior para simular refracción de borde curvo.
  */
 const LiquidGlassSurface = memo(function LiquidGlassSurface({
@@ -172,7 +171,7 @@ const TabButton = memo(function TabButton({
   });
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = isDark ? "#FFFFFF" : "#101010";
+  const colorActivo = "#101010";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
   return (
@@ -181,7 +180,7 @@ const TabButton = memo(function TabButton({
       accessibilityState={{ selected }}
       accessibilityLabel={tab.label}
       onPress={() => onPress(tab.id)}
-      scaleTo={0.9}
+      scaleTo={0.92}
       style={styles.hueco}
     >
       <View style={styles.icono}>
@@ -221,12 +220,7 @@ const TabButton = memo(function TabButton({
         </Animated.Text>
         <Animated.Text
           numberOfLines={1}
-          style={[
-            styles.etiqueta,
-            styles.etiquetaActiva,
-            { color: colorActivo },
-            activeStyle,
-          ]}
+          style={[styles.etiqueta, { color: colorActivo }, activeStyle]}
         >
           {tab.label}
         </Animated.Text>
@@ -266,7 +260,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
   });
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = isDark ? "#FFFFFF" : "#101010";
+  const colorActivo = "#101010";
 
   return (
     <PressableScale
@@ -274,7 +268,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
       accessibilityState={{ selected }}
       accessibilityLabel="Publicar producto"
       onPress={onPress}
-      scaleTo={0.9}
+      scaleTo={0.92}
       style={styles.hueco}
     >
       <View style={styles.icono}>
@@ -303,12 +297,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
         </Animated.Text>
         <Animated.Text
           numberOfLines={1}
-          style={[
-            styles.etiqueta,
-            styles.etiquetaActiva,
-            { color: colorActivo },
-            activeStyle,
-          ]}
+          style={[styles.etiqueta, { color: colorActivo }, activeStyle]}
         >
           Crear
         </Animated.Text>
@@ -317,13 +306,12 @@ const CreateSlotButton = memo(function CreateSlotButton({
   );
 });
 
-/** Menú flotante de acciones al pulsar o soltar en Crear */
+/** Menú flotante Liquid Glass sin desenfocar el resto de la pantalla */
 function MenuCrear({
   visible,
   menu,
   isDark,
   bottom,
-  onClose,
   onAnuncio,
   onPublicacion,
   styles,
@@ -332,20 +320,15 @@ function MenuCrear({
   menu: SharedValue<number>;
   isDark: boolean;
   bottom: number;
-  onClose: () => void;
   onAnuncio: () => void;
   onPublicacion: () => void;
   styles: Estilos;
 }) {
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: menu.value,
-  }));
-
   const opcionesStyle = useAnimatedStyle(() => ({
     opacity: menu.value,
     transform: [
-      { translateY: (1 - menu.value) * 14 },
-      { scale: 0.85 + 0.15 * menu.value },
+      { translateY: (1 - menu.value) * 12 },
+      { scale: 0.9 + 0.1 * menu.value },
     ],
   }));
 
@@ -368,57 +351,31 @@ function MenuCrear({
   );
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="none"
-      statusBarTranslucent
-      navigationBarTranslucent
-      onRequestClose={onClose}
+    <Animated.View
+      pointerEvents={visible ? "auto" : "none"}
+      style={[
+        styles.menuSombra,
+        { bottom: bottom + ALTO_CAPSULA + 10 },
+        opcionesStyle,
+      ]}
     >
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, backdropStyle]}
-      >
-        {Platform.OS !== "android" && (
-          <BlurView
-            intensity={MENU_BLUR}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <View style={[StyleSheet.absoluteFill, styles.menuVelo]} />
-      </Animated.View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Cerrar"
-        onPress={onClose}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <Animated.View
-        style={[
-          styles.menuCrear,
-          { bottom: bottom + ALTO_CAPSULA + 12 },
-          opcionesStyle,
-        ]}
-      >
-        {opciones.map(({ label, Icono, color, onPress }) => (
+      <View style={styles.menuCard}>
+        <LiquidGlassSurface isDark={isDark} styles={styles} />
+        {opciones.map(({ label, Icono, color, onPress }, index) => (
           <PressableSuave
             key={label}
             accessibilityRole="button"
             accessibilityLabel={label}
             onPress={onPress}
-            scaleTo={0.96}
-            style={styles.menuOpcion}
+            scaleTo={0.97}
+            style={[styles.menuOpcion, index > 0 && styles.menuOpcionSeparador]}
           >
             <Text style={styles.menuEtiqueta}>{label}</Text>
-            <Icono size={24} color={color} />
+            <Icono size={22} color={color} />
           </PressableSuave>
         ))}
-      </Animated.View>
-    </Modal>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -438,11 +395,17 @@ export function Navegacion({
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const menu = useSharedValue(0);
 
-  const indiceTab = NAV_TABS.findIndex((tab) => tab.id === activeTab);
+  useEffect(() => {
+    setPendingTab(null);
+  }, [activeTab]);
+
+  const tabEfectivo = pendingTab ?? activeTab;
+  const indiceTab = NAV_TABS.findIndex((tab) => tab.id === tabEfectivo);
   const huecoActivo =
-    menuAbierto || activeTab === "create" ? INDICE_CREAR : indiceTab;
+    menuAbierto || tabEfectivo === "create" ? INDICE_CREAR : indiceTab;
 
   const huecoAnterior = useRef(huecoActivo);
   const ultimoIndiceArrastrado = useRef<number | null>(null);
@@ -456,24 +419,22 @@ export function Navegacion({
 
   useEffect(() => {
     if (huecoActivo >= 0) {
-      // Si el cambio vino de soltar el arrastre, el spring de onEnd ya está en curso
       if (ultimoIndiceArrastrado.current === huecoActivo) {
         ultimoIndiceArrastrado.current = null;
       } else {
-        posicion.set(withTiming(huecoActivo, DESLIZAR));
+        posicion.set(withSpring(huecoActivo, SPRING_PILDORA));
 
-        // Efecto gota líquida al tocar cualquier módulo (incluido Crear)
         if (
           huecoAnterior.current >= 0 &&
           huecoAnterior.current !== huecoActivo
         ) {
           estirar.set(
             withSequence(
-              withTiming(0.16, {
-                duration: 120,
-                easing: Easing.out(Easing.quad),
+              withTiming(0.11, {
+                duration: 150,
+                easing: Easing.out(Easing.cubic),
               }),
-              withSpring(0, { damping: 14, stiffness: 210, mass: 0.7 }),
+              withSpring(0, { damping: 24, stiffness: 170 }),
             ),
           );
         }
@@ -483,18 +444,8 @@ export function Navegacion({
     indicadorVisible.set(withTiming(huecoActivo >= 0 ? 1 : 0, APARECER));
   }, [huecoActivo, posicion, indicadorVisible, estirar]);
 
-  const medirCapsula = useCallback(
-    (e: LayoutChangeEvent) => {
-      const nuevoAncho =
-        (e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / TOTAL_BOTONES;
-      if (nuevoAncho > 0 && nuevoAncho !== anchoHueco.get()) {
-        anchoHueco.set(nuevoAncho);
-      }
-    },
-    [anchoHueco],
-  );
-
   const abrirMenu = useCallback(() => {
+    setPendingTab(null);
     setMenuAbierto(true);
     setMenuVisible(true);
     menu.set(withTiming(1, MENU_ABRIR));
@@ -511,33 +462,76 @@ export function Navegacion({
     );
   }, [menu]);
 
+  useEffect(() => {
+    if (!menuVisible) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      cerrarMenu();
+      return true;
+    });
+    return () => sub.remove();
+  }, [menuVisible, cerrarMenu]);
+
+  const medirCapsula = useCallback(
+    (e: LayoutChangeEvent) => {
+      const nuevoAncho =
+        (e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / TOTAL_BOTONES;
+      if (nuevoAncho > 0 && nuevoAncho !== anchoHueco.get()) {
+        anchoHueco.set(nuevoAncho);
+      }
+    },
+    [anchoHueco],
+  );
+
   const handleCrearPublicacion = useCallback(() => {
+    setPendingTab("create");
     cerrarMenu();
     onNavigate("create");
   }, [cerrarMenu, onNavigate]);
 
   const handleTabPress = useCallback(
     (tabId: Tab) => {
-      if (tabId !== activeTab) onNavigate(tabId);
+      if (tabId !== activeTab) {
+        setPendingTab(tabId);
+        if (menuAbierto) cerrarMenu();
+        onNavigate(tabId);
+      } else {
+        setPendingTab(null);
+        if (menuAbierto) cerrarMenu();
+      }
     },
-    [activeTab, onNavigate],
+    [activeTab, cerrarMenu, menuAbierto, onNavigate],
   );
+
+  const handleCreatePress = useCallback(() => {
+    if (menuAbierto) {
+      cerrarMenu();
+    } else {
+      abrirMenu();
+    }
+  }, [abrirMenu, cerrarMenu, menuAbierto]);
 
   const handleDropNavigate = useCallback(
     (targetIndex: number) => {
       ultimoIndiceArrastrado.current = targetIndex;
 
       if (targetIndex === INDICE_CREAR) {
-        abrirMenu();
+        if (!menuAbierto) abrirMenu();
         return;
       }
 
       const targetTab = NAV_TABS[targetIndex];
-      if (targetTab && targetTab.id !== activeTab) {
+      if (!targetTab) return;
+
+      if (targetTab.id !== activeTab) {
+        setPendingTab(targetTab.id);
+        if (menuAbierto) cerrarMenu();
         onNavigate(targetTab.id);
+      } else {
+        setPendingTab(null);
+        if (menuAbierto) cerrarMenu();
       }
     },
-    [abrirMenu, activeTab, onNavigate],
+    [abrirMenu, activeTab, cerrarMenu, menuAbierto, onNavigate],
   );
 
   /** Gesto horizontal para jalar la píldora Liquid Glass por los 5 botones y soltarla */
@@ -550,7 +544,7 @@ export function Navegacion({
           if (ancho <= 0) return;
 
           arrastrando.set(
-            withSpring(1, { damping: 15, stiffness: 260, mass: 0.6 }),
+            withSpring(1, { damping: 22, stiffness: 220, mass: 0.7 }),
           );
 
           if (indicadorVisible.get() < 0.5) {
@@ -570,7 +564,6 @@ export function Navegacion({
 
           const crudo = inicioArrastre.get() + e.translationX / ancho;
 
-          // Efecto liga solo en los extremos exteriores (antes de Inicio y después de Crear)
           let conResistencia = crudo;
           if (crudo < 0) {
             conResistencia = crudo * 0.25;
@@ -580,31 +573,39 @@ export function Navegacion({
 
           posicion.set(conResistencia);
 
-          // Elongación líquida proporcional a la velocidad de arrastre
-          const deformacion = Math.min(Math.abs(e.velocityX) / 1800, 0.26);
-          estirar.set(withTiming(deformacion, { duration: 60 }));
+          const deformacion = Math.min(Math.abs(e.velocityX) / 2200, 0.18);
+          estirar.set(withTiming(deformacion, { duration: 80 }));
         })
         .onEnd((e) => {
           const ancho = anchoHueco.get();
           if (ancho <= 0) return;
 
-          const proyectado = posicion.get() + e.velocityX * 0.00014;
+          const impulso = Math.max(Math.min(e.velocityX * 0.00009, 0.3), -0.3);
           const objetivo = Math.min(
-            Math.max(Math.round(proyectado), 0),
+            Math.max(Math.round(posicion.get() + impulso), 0),
             MAX_INDEX,
           );
-
-          posicion.set(withSpring(objetivo, SPRING_SOLTAR));
-          arrastrando.set(
-            withSpring(0, { damping: 14, stiffness: 220, mass: 0.65 }),
+          const velocidadRelativa = Math.max(
+            Math.min(e.velocityX / ancho, 5),
+            -5,
           );
-          estirar.set(withSpring(0, { damping: 12, stiffness: 190 }));
+
+          posicion.set(
+            withSpring(objetivo, {
+              ...SPRING_PILDORA,
+              velocity: velocidadRelativa,
+            }),
+          );
+          arrastrando.set(
+            withSpring(0, { damping: 24, stiffness: 190, mass: 0.8 }),
+          );
+          estirar.set(withSpring(0, { damping: 24, stiffness: 180 }));
 
           scheduleOnRN(handleDropNavigate, objetivo);
         })
         .onFinalize(() => {
-          arrastrando.set(withSpring(0));
-          estirar.set(withSpring(0));
+          arrastrando.set(withSpring(0, { damping: 24, stiffness: 190 }));
+          estirar.set(withSpring(0, { damping: 24, stiffness: 180 }));
         }),
     [
       anchoHueco,
@@ -627,66 +628,75 @@ export function Navegacion({
       opacity: ancho > 0 ? indicadorVisible.get() : 0,
       transform: [
         { translateX: posicion.get() * ancho },
-        { scaleX: 1 + 0.1 * lift + stretch },
-        { scaleY: 1 + 0.06 * lift - stretch * 0.45 },
+        { scaleX: 1 + 0.06 * lift + stretch },
+        { scaleY: 1 + 0.04 * lift - stretch * 0.35 },
       ],
     };
   });
 
   return (
-    <View style={[styles.navigationRow, { bottom: bottomInset }]}>
-      <GestureDetector gesture={panGesture}>
-        <View style={[styles.sombra, styles.capsulaSombra]}>
-          <View
-            accessibilityRole="tablist"
-            onLayout={medirCapsula}
-            style={styles.capsula}
-          >
-            <LiquidGlassSurface isDark={isDark} styles={styles} />
-
-            {/* Píldora activa arrastrable con acabado Liquid Glass */}
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.indicador, indicadorStyle]}
-            />
-
-            {NAV_TABS.map((tab, indice) => (
-              <TabButton
-                key={tab.id}
-                tab={tab}
-                indice={indice}
-                selected={!menuAbierto && activeTab === tab.id}
-                posicion={posicion}
-                indicadorVisible={indicadorVisible}
-                showBadge={tab.id === "chats" && hasUnreadChats}
-                isDark={isDark}
-                onPress={handleTabPress}
-                styles={styles}
-              />
-            ))}
-
-            <CreateSlotButton
-              selected={menuAbierto || activeTab === "create"}
-              posicion={posicion}
-              indicadorVisible={indicadorVisible}
-              onPress={abrirMenu}
-              isDark={isDark}
-              styles={styles}
-            />
-          </View>
-        </View>
-      </GestureDetector>
+    <View pointerEvents="box-none" style={styles.contenedorPantalla}>
+      {menuVisible && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar menú"
+          onPress={cerrarMenu}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
 
       <MenuCrear
         visible={menuVisible}
         menu={menu}
         isDark={isDark}
         bottom={bottomInset}
-        onClose={cerrarMenu}
         onAnuncio={cerrarMenu}
         onPublicacion={handleCrearPublicacion}
         styles={styles}
       />
+
+      <View style={[styles.navigationRow, { bottom: bottomInset }]}>
+        <GestureDetector gesture={panGesture}>
+          <View style={[styles.sombra, styles.capsulaSombra]}>
+            <View
+              accessibilityRole="tablist"
+              onLayout={medirCapsula}
+              style={styles.capsula}
+            >
+              <LiquidGlassSurface isDark={isDark} styles={styles} />
+
+              <Animated.View
+                pointerEvents="none"
+                style={[styles.indicador, indicadorStyle]}
+              />
+
+              {NAV_TABS.map((tab, indice) => (
+                <TabButton
+                  key={tab.id}
+                  tab={tab}
+                  indice={indice}
+                  selected={!menuAbierto && tabEfectivo === tab.id}
+                  posicion={posicion}
+                  indicadorVisible={indicadorVisible}
+                  showBadge={tab.id === "chats" && hasUnreadChats}
+                  isDark={isDark}
+                  onPress={handleTabPress}
+                  styles={styles}
+                />
+              ))}
+
+              <CreateSlotButton
+                selected={menuAbierto || tabEfectivo === "create"}
+                posicion={posicion}
+                indicadorVisible={indicadorVisible}
+                onPress={handleCreatePress}
+                isDark={isDark}
+                styles={styles}
+              />
+            </View>
+          </View>
+        </GestureDetector>
+      </View>
     </View>
   );
 }
@@ -699,48 +709,54 @@ function createStyles(isDark: boolean) {
   const android = Platform.OS === "android";
   const colors = isDark
     ? {
-        cristal: android ? "rgba(30, 30, 34, 0.94)" : "rgba(28, 28, 32, 0.56)",
+        cristal: android ? "rgba(30, 30, 34, 0.94)" : "rgba(28, 28, 32, 0.62)",
         borde: "rgba(255, 255, 255, 0.16)",
         bordeSuperior: "rgba(255, 255, 255, 0.34)",
         reflejo: "rgba(255, 255, 255, 0.10)",
-        indicador: "rgba(255, 255, 255, 0.16)",
-        bordeIndicador: "rgba(255, 255, 255, 0.28)",
+        separador: "rgba(255, 255, 255, 0.10)",
+        indicador: "#FFFFFF",
+        bordeIndicador: "rgba(255, 255, 255, 0.9)",
         sombra:
           "0 10px 28px rgba(0, 0, 0, 0.42), inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 2px rgba(0, 0, 0, 0.35)",
         sombraIndicador:
-          "0 3px 10px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.32), inset 0 -1px 1.5px rgba(0, 0, 0, 0.22)",
+          "0 4px 12px rgba(0, 0, 0, 0.32), inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 1.5px rgba(0, 0, 0, 0.08)",
         fondoContador: "#222226",
         text: "#FFFFFF",
-        velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.78)",
       }
     : {
         cristal: android
-          ? "rgba(248, 248, 250, 0.95)"
-          : "rgba(255, 255, 255, 0.58)",
-        borde: "rgba(255, 255, 255, 0.78)",
+          ? "rgba(248, 248, 250, 0.96)"
+          : "rgba(255, 255, 255, 0.72)",
+        borde: "rgba(255, 255, 255, 0.85)",
         bordeSuperior: "#FFFFFF",
-        reflejo: "rgba(255, 255, 255, 0.55)",
-        indicador: "rgba(255, 255, 255, 0.88)",
+        reflejo: "rgba(255, 255, 255, 0.65)",
+        separador: "rgba(0, 0, 0, 0.06)",
+        indicador: "#FFFFFF",
         bordeIndicador: "#FFFFFF",
         sombra:
-          "0 10px 28px rgba(0, 0, 0, 0.11), inset 0 1.5px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.06)",
+          "0 10px 28px rgba(0, 0, 0, 0.12), inset 0 1.5px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.06)",
         sombraIndicador:
           "0 3px 10px rgba(0, 0, 0, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 1.5px rgba(0, 0, 0, 0.05)",
         fondoContador: "#EBEBEF",
         text: "#101010",
-        velo: android
-          ? "rgba(255, 255, 255, 0.94)"
-          : "rgba(255, 255, 255, 0.78)",
       };
 
   return StyleSheet.create({
+    contenedorPantalla: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999,
+    },
+
     navigationRow: {
       position: "absolute",
       left: 14,
       right: 14,
       flexDirection: "row",
       alignItems: "center",
-      zIndex: 999,
     },
 
     sombra: {
@@ -766,7 +782,6 @@ function createStyles(isDark: boolean) {
       backgroundColor: colors.cristal,
     },
 
-    /** Reflejo especular superior que acentúa la curvatura del vidrio */
     reflejoSuperior: {
       position: "absolute",
       top: 0,
@@ -823,14 +838,10 @@ function createStyles(isDark: boolean) {
 
     etiqueta: {
       position: "absolute",
-      fontSize: 10,
+      fontSize: 11,
       lineHeight: 12,
-      fontFamily: "Inter_500Medium",
-      letterSpacing: -0.1,
-    },
-
-    etiquetaActiva: {
       fontFamily: "Inter_600SemiBold",
+      letterSpacing: -0.1,
     },
 
     punto: {
@@ -845,28 +856,42 @@ function createStyles(isDark: boolean) {
       borderColor: colors.fondoContador,
     },
 
-    menuVelo: {
-      backgroundColor: colors.velo,
+    menuSombra: {
+      position: "absolute",
+      right: 14,
+      borderRadius: 22,
+      boxShadow: colors.sombra,
+      transformOrigin: "right bottom",
     },
 
-    menuCrear: {
-      position: "absolute",
-      right: 24,
-      alignItems: "flex-end",
-      transformOrigin: "right bottom",
+    menuCard: {
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: colors.borde,
+      borderTopColor: colors.bordeSuperior,
+      overflow: "hidden",
+      paddingVertical: 4,
+      paddingHorizontal: 6,
     },
 
     menuOpcion: {
       height: 44,
+      paddingHorizontal: 12,
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "flex-end",
       gap: 12,
+    },
+
+    menuOpcionSeparador: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.separador,
     },
 
     menuEtiqueta: {
       color: colors.text,
       fontFamily: "Inter_600SemiBold",
-      fontSize: 16,
+      fontSize: 15,
     },
   });
 }

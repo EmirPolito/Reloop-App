@@ -11,6 +11,57 @@ interface IconoProps {
 
 /** Grosor de los iconos de contorno (1.5 era el original) */
 const GROSOR_LINEA = 1.83;
+
+/** Persona con + (seguir usuario) — Iconly Light Add User */
+export function IconoSeguirUsuario({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M19.2929 8.66882V12.6788M21.338 10.6737H17.248"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="square"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M10.2049 14.8188C13.4613 14.8104 16.2301 16.3056 17.2478 19.5241C15.1964 20.7746 12.7818 21.2563 10.2049 21.25C7.62803 21.2563 5.21338 20.7746 3.16202 19.5241C4.18092 16.3021 6.94505 14.8104 10.2049 14.8188Z"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="square"
+      />
+      <Path
+        d="M14.5894 7.16961C14.5894 9.61056 12.6106 11.5893 10.1696 11.5893C7.72869 11.5893 5.74991 9.61056 5.74991 7.16961C5.74991 4.72866 7.72869 2.74988 10.1696 2.74988C12.6106 2.74988 14.5894 4.72866 14.5894 7.16961Z"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="square"
+      />
+    </Svg>
+  );
+}
+
+/** Sobre de contorno (mensaje) — Iconly Light Message */
+export function IconoMensajeLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(2, 3)"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M15.9026143,5.8511436 L11.4593272,9.46418164 C10.6198313,10.1301843 9.4387043,10.1301843 8.59920842,9.46418164 L4.11842516,5.8511436" />
+        <Path d="M14.9088637,17.9999789 C17.9502135,18.0083748 20,15.5095497 20,12.4383622 L20,5.57001263 C20,2.49882508 17.9502135,0 14.9088637,0 L5.09113634,0 C2.04978648,0 0,2.49882508 0,5.57001263 L0,12.4383622 C0,15.5095497 2.04978648,18.0083748 5.09113634,17.9999789 L14.9088637,17.9999789 Z" />
+      </G>
+    </Svg>
+  );
+}
 /** Trazo extra para engrosar los iconos de contorno que son formas rellenas */
 const GROSOR_RELLENO = 0.23;
 
