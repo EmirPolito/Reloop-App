@@ -415,15 +415,7 @@ export function TarjetaPremium({
               {detalle}
             </Text>
 
-            <Pressable
-              onPress={onPress}
-              onPressIn={onPressIn}
-              onPressOut={onPressOut}
-              onLayout={onButtonLayout}
-              style={styles.buttonOuter}
-              accessibilityRole="button"
-              accessibilityLabel={accionLabel}
-            >
+            <View onLayout={onButtonLayout} style={styles.buttonOuter}>
               <Animated.View
                 style={[styles.button, { transform: [{ scale }] }]}
               >
@@ -445,7 +437,7 @@ export function TarjetaPremium({
                 <ArrowCircleUpIcon size={19} />
                 <Text style={styles.buttonLabel}>{accionLabel}</Text>
               </Animated.View>
-            </Pressable>
+            </View>
           </View>
 
           {/* Derecha: insignia */}

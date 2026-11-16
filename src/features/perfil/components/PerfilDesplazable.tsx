@@ -38,7 +38,7 @@ import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
 const ALTO_PORTADA = 120;
-const ALTO_HEADER = 56;
+const ALTO_HEADER = 57;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
 /** Cuánto sobresale el avatar por encima del borde inferior de la portada */
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
-    paddingBottom: 8, // Sube el contenido ~4px (ajusta entre 6 y 12 según veas)
+    paddingBottom: 4, // Sube el contenido (más padding = más arriba; ajusta entre 2 y 12 según veas)
     gap: 12,
   },
   botonHeader: {
