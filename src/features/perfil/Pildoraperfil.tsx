@@ -15,7 +15,8 @@ export function PildoraPerfil({
   icon?: string;
 }) {
   const tema = TEMAS[color] ?? TEMAS.azul;
-  const textColor = isDark ? "#E5E7EB" : "#757575ff";
+  const bgColor = isDark ? tema.pillBgDark : tema.pillBg;
+  const contentColor = isDark ? tema.pillColorDark : tema.pillColor;
 
   return (
     <View
@@ -23,16 +24,14 @@ export function PildoraPerfil({
         flexDirection: "row",
         alignItems: "center",
         height: 22,
-        backgroundColor: tema.pillBg,
-        borderColor: tema.pillBorder,
-        borderWidth: 1,
-        paddingHorizontal: 6,
+        backgroundColor: bgColor,
+        paddingHorizontal: 7,
         borderRadius: 17,
       }}
     >
       {icon ? (
         <View style={{ marginRight: 3.5 }}>
-          {renderPerfilIcon(icon, 14, "#7c7c7cff")}
+          {renderPerfilIcon(icon, 14, contentColor)}
         </View>
       ) : null}
       <Text
@@ -40,7 +39,7 @@ export function PildoraPerfil({
           top: 0,
           fontSize: 11.5,
           fontFamily: "Inter_500Medium",
-          color: textColor,
+          color: contentColor,
         }}
       >
         {text}

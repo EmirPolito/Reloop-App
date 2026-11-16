@@ -41,8 +41,8 @@ const ALTO_PORTADA = 136;
 const ALTO_HEADER = 52;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
-/** El avatar sobresale de la portada la mitad de su alto */
-const SOLAPE_AVATAR = LADO_AVATAR / 2;
+/** Cuánto sobresale el avatar por encima del borde inferior de la portada */
+const SOLAPE_AVATAR = 42;
 /** Tamaño final del avatar al colapsar (se esconde bajo el header) */
 const ESCALA_AVATAR_MIN = 0.6;
 /** Borde del color de la pantalla alrededor del avatar */
@@ -56,8 +56,6 @@ const LADO_AVATAR_HEADER = 32;
 const MARGEN_LATERAL = 15;
 /** Espacio entre el avatar y el nombre */
 const ESPACIO_NOMBRE = 0;
-/** Separación entre el borde de abajo de la portada y las etiquetas */
-const ESPACIO_ETIQUETAS = 12;
 
 /** Botón redondo translúcido del header (editar perfil) */
 export function BotonHeaderPerfil({
@@ -259,8 +257,7 @@ export function PerfilDesplazable({
             />
           </Animated.View>
 
-          {/* Avatar (sobresale de la portada) y, a su derecha, las etiquetas: a la altura
-              de la mitad de abajo del avatar, ya fuera de la portada */}
+          {/* Avatar (sobresale de la portada) y, a su derecha, números de estadísticas */}
           <View
             style={[
               styles.filaAvatar,
@@ -290,16 +287,10 @@ export function PerfilDesplazable({
                 />
               </View>
             </Animated.View>
+
+            {/* Píldoras a la derecha del avatar */}
             {profile.pills.length > 0 ? (
-              <View
-                style={[
-                  styles.pildoras,
-                  // Empiezan justo debajo de la portada (la fila sube el alto del solape)
-                  {
-                    marginTop: SOLAPE_AVATAR + BORDE_AVATAR + ESPACIO_ETIQUETAS,
-                  },
-                ]}
-              >
+              <View style={styles.pildorasAvatar}>
                 {profile.pills.map((pill) => (
                   <PildoraPerfil
                     key={pill.id}
@@ -313,7 +304,7 @@ export function PerfilDesplazable({
             ) : null}
           </View>
 
-          {/* Nombre, @username, descripción, acciones y números */}
+          {/* Nombre, @username, descripción, píldoras y acciones */}
           <View style={styles.info}>
             <View
               style={styles.filaNombre}
@@ -322,8 +313,7 @@ export function PerfilDesplazable({
                 // `info` empieza tras la fila del avatar: se suma su posición
                 finNombre.set(
                   altoPortada +
-                    LADO_AVATAR / 2 +
-                    BORDE_AVATAR +
+                    (ladoMarco - SOLAPE_AVATAR) +
                     ESPACIO_NOMBRE +
                     y +
                     height,
@@ -350,16 +340,80 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
+            {/* Card gris de estadísticas debajo de la descripción */}
+            <View
+              style={[
+                styles.cardEstadisticas,
+                { backgroundColor: isDark ? "#ffffff0d" : "#e1e1e1ff" },
+              ]}
+            >
+              <View style={styles.estadisticaColumna}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  style={[styles.estadisticaEtiqueta, { color: suave }]}
+                >
+                  {stats.publicaciones === 1 ? "Subido" : "Subidos"}
+                </Text>
+                <View style={styles.estadisticaValorFila}>
+                  <IconoPublicaciones size={17.5} color={COLOR_PUBLICACIONES} />
+                  <Text numberOfLines={1} style={styles.estadisticaValor}>
+                    {formatearNumero(stats.publicaciones)}
+                  </Text>
+                </View>
+              </View>
 
-            <TarjetaEstadisticas
-              publicaciones={stats.publicaciones}
-              seguidores={stats.seguidores}
-              reputacion={stats.reputacion}
-              isDark={isDark}
-              fuerte={colorTexto}
-              suave={suave}
-            />
+              <View
+                style={[
+                  styles.separadorStat,
+                  { backgroundColor: isDark ? "#334155" : "#8d8d8dff" },
+                ]}
+              />
+
+              <View style={styles.estadisticaColumna}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  style={[styles.estadisticaEtiqueta, { color: suave }]}
+                >
+                  {stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
+                </Text>
+                <View style={styles.estadisticaValorFila}>
+                  <IconoUsuarios size={17.5} color={COLOR_SEGUIDORES} />
+                  <Text numberOfLines={1} style={styles.estadisticaValor}>
+                    {formatearNumero(stats.seguidores)}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={[
+                  styles.separadorStat,
+                  { backgroundColor: isDark ? "#334155" : "#8d8d8dff" },
+                ]}
+              />
+
+              <View style={styles.estadisticaColumna}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  style={[styles.estadisticaEtiqueta, { color: suave }]}
+                >
+                  Valoración
+                </Text>
+                <View style={styles.estadisticaValorFila}>
+                  <IconoReputacion size={18} color={COLOR_REPUTACION} />
+                  <Text numberOfLines={1} style={styles.estadisticaValor}>
+                    {stats.reputacion}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
           </View>
 
           <PublicacionesPerfil
@@ -436,11 +490,11 @@ export function PerfilDesplazable({
                 <Text numberOfLines={1} style={styles.tituloNombre}>
                   {profile.name}
                 </Text>
-                {premium ? <PremiumBadge size={17} variant="static" /> : null}
+                {premium ? <PremiumBadge size={18} variant="static" /> : null}
               </View>
               <Text numberOfLines={1} style={styles.tituloSub}>
                 {stats.publicaciones}{" "}
-                {stats.publicaciones === 1 ? "publicación" : "publicaciones"}
+                {stats.publicaciones === 1 ? "subido" : "subidos"}
               </Text>
             </View>
           </Animated.View>
@@ -487,100 +541,26 @@ function CapaPortada({
   );
 }
 
-/** Color del icono de cada estadística (igual en tema claro y oscuro) */
-const COLOR_PUBLICACIONES = "#ff2b63ff";
-const COLOR_SEGUIDORES = "#1971ffff";
-const COLOR_REPUTACION = "#ff9d00ff";
+/** Color del icono de cada estadística */
+const COLOR_PUBLICACIONES = "#6d6d6dff";
+const COLOR_SEGUIDORES = "#6d6d6dff";
+const COLOR_REPUTACION = "#6d6d6dff";
 
-/**
- * Tarjeta con las estadísticas del perfil: tres columnas separadas por líneas finas, cada
- * una con su etiqueta arriba y, abajo, su icono de color junto al número.
- */
-function TarjetaEstadisticas({
-  publicaciones,
-  seguidores,
-  reputacion,
-  isDark,
-  fuerte,
-  suave,
-}: {
-  publicaciones: number;
-  seguidores: number;
-  reputacion: string;
-  isDark: boolean;
-  fuerte: string;
-  suave: string;
-}) {
-  const { fondoTarjeta, divisor } = coloresTarjeta(isDark);
-  const separador = (
-    <View style={[styles.separadorEstadistica, { backgroundColor: divisor }]} />
-  );
-  return (
-    <View style={[styles.estadisticas, { backgroundColor: fondoTarjeta }]}>
-      <Estadistica
-        etiqueta={publicaciones === 1 ? "Publicación" : "Publicaciones"}
-        valor={String(publicaciones)}
-        icono={<IconoPublicaciones size={23} color={COLOR_PUBLICACIONES} />}
-        fuerte={fuerte}
-        suave={suave}
-      />
-      {separador}
-      <Estadistica
-        etiqueta={seguidores === 1 ? "Seguidor" : "Seguidores"}
-        valor={String(seguidores)}
-        icono={<IconoUsuarios size={23} color={COLOR_SEGUIDORES} />}
-        fuerte={fuerte}
-        suave={suave}
-      />
-      {separador}
-      <Estadistica
-        etiqueta="Valoración"
-        valor={reputacion}
-        icono={<IconoReputacion size={23} color={COLOR_REPUTACION} />}
-        fuerte={fuerte}
-        suave={suave}
-      />
-    </View>
-  );
-}
-
-/** Una columna de la tarjeta: etiqueta en gris y, debajo, el icono con el número */
-function Estadistica({
-  etiqueta,
-  valor,
-  icono,
-  fuerte,
-  suave,
-}: {
-  etiqueta: string;
-  valor: string;
-  icono: ReactNode;
-  fuerte: string;
-  suave: string;
-}) {
-  return (
-    <View
-      accessible
-      accessibilityLabel={`${valor} ${etiqueta.toLowerCase()}`}
-      style={styles.estadistica}
-    >
-      <Text
-        numberOfLines={1}
-        style={[styles.estadisticaEtiqueta, { color: suave }]}
-      >
-        {etiqueta}
-      </Text>
-      <View style={styles.estadisticaValorFila}>
-        {icono}
-        <Text
-          numberOfLines={1}
-          style={[styles.estadisticaValor, { color: fuerte }]}
-        >
-          {valor}
-        </Text>
-      </View>
-    </View>
-  );
+/** Formatea números grandes estilo red social: 12.6k, 1.2M */
+function formatearNumero(valor: number): string {
+  if (valor >= 1_000_000) {
+    const v = (valor / 1_000_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}M`;
+  }
+  if (valor >= 10_000) {
+    const v = (valor / 1_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}k`;
+  }
+  if (valor >= 1_000) {
+    const v = (valor / 1_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}k`;
+  }
+  return String(valor);
 }
 
 const styles = StyleSheet.create({
@@ -644,14 +624,14 @@ const styles = StyleSheet.create({
   tituloSub: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "rgba(255,255,255,0.82)",
+    color: "#ffffffd1",
   },
   derecha: { flexDirection: "row", alignItems: "center", gap: 10 },
   filaAvatar: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   avatar: {
     width: LADO_AVATAR,
@@ -659,60 +639,87 @@ const styles = StyleSheet.create({
     borderRadius: LADO_AVATAR / 2,
     overflow: "hidden",
   },
+  // Píldoras a la derecha del avatar
+  pildorasAvatar: {
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 9,
+    marginLeft: 10,
+    paddingBottom: 8, // <-- Ajusta entre 6 y 12 según la altura deseada
+    paddingRight: 0,
+    overflow: "hidden",
+  },
+  // Card gris de estadísticas (debajo de la descripción)
+  cardEstadisticas: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 4,
+    marginTop: 15,
+  },
+  estadisticaColumna: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  separadorStat: {
+    width: StyleSheet.hairlineWidth,
+    height: 32,
+  },
+  estadisticaValorFila: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  estadisticaValor: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    letterSpacing: -0.2,
+    lineHeight: 20,
+    textAlign: "center",
+    color: "#6d6d6dff",
+  },
+  estadisticaEtiqueta: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    lineHeight: 14,
+    textAlign: "center",
+  },
   // Mensaje y Seguir: uno junto al otro y del mismo ancho
-  acciones: { flexDirection: "row", gap: 10, marginTop: 21 },
-  info: { paddingHorizontal: 16, paddingTop: ESPACIO_NOMBRE, gap: 6 },
+  acciones: { flexDirection: "row", gap: 10, marginTop: 14 },
+  info: { paddingHorizontal: 16, paddingTop: ESPACIO_NOMBRE, gap: 4 },
   // Bajado un poco respecto al avatar; el @usuario compensa para quedarse donde estaba
   filaNombre: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 3,
+    marginTop: 1,
   },
   nombre: {
     flexShrink: 1,
     fontFamily: "Inter_600SemiBold",
     fontSize: 20,
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
     lineHeight: 26,
   },
-  insigniaNombre: { marginTop: 1 },
-  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -8.5 },
+  insigniaNombre: { marginTop: 1, marginLeft: -4 },
+  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -7.5 },
   descripcion: {
     fontFamily: "Inter_400Regular",
     fontSize: 15,
     lineHeight: 20,
     marginTop: 2.5,
   },
-
-  // A la derecha del avatar, en una sola fila (una junto a otra, sin saltar de línea) y
-  // pegadas a la derecha
-  pildoras: {
-    flex: 1,
-    alignSelf: "flex-start",
+  pildorasDebajo: {
     flexDirection: "row",
-    flexWrap: "nowrap",
-    justifyContent: "flex-end",
-    gap: 10,
-    marginLeft: 12,
-    overflow: "hidden",
-  },
-  // Tarjeta de estadísticas
-  estadisticas: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 22,
-    paddingVertical: 14,
-    borderRadius: 20,
-  },
-  estadistica: { flex: 1, alignItems: "center", gap: 6 },
-  separadorEstadistica: { width: StyleSheet.hairlineWidth, height: 36 },
-  estadisticaEtiqueta: { fontFamily: "Inter_500Medium", fontSize: 12.5 },
-  estadisticaValorFila: { flexDirection: "row", alignItems: "center", gap: 6 },
-  estadisticaValor: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
-    letterSpacing: -0.4,
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 6,
   },
   pestanas: { marginTop: 14, paddingHorizontal: MARGEN_LATERAL },
 });

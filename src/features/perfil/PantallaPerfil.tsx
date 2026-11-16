@@ -63,6 +63,17 @@ export function PantallaPerfil() {
               isDark={isDark}
               onPress={() => showComingSoonAlert("ReLoop Premium")}
             />
+            {/* <View style={{ marginTop: 14 }}>
+              <JoiPro
+                title="Joi Pro"
+                subtitle="Subscription or one-time purchase"
+                action="Upgrade"
+                onUpgrade={() => console.log("upgrade!")}
+                shine
+                particles
+                speed={1}
+              />
+            </View> */}
           </View>
           <AjustesPerfil isDark={isDark} />
         </>
