@@ -55,7 +55,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoMensaje size={22.5} color="#abababff" />}
+          icon={<IconoMensaje size={22.5} color="#48adffff" />}
           label="Cambiar correo"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar correo")}
@@ -63,7 +63,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         />
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoCandado size={23} color="#b2b2b2ff" />}
+          icon={<IconoCandado size={23} color="#ffc037ff" />}
           label="Cambiar contraseña"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar contraseña")}
@@ -75,8 +75,8 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           icon={
             <IconoCampana
               size={24}
-              color="#b2b2b2ff"
-              secondaryColor="#909090ff"
+              color="#8567ffff"
+              secondaryColor="#4628bcff"
             />
           }
           label="Notificaciones"
@@ -126,7 +126,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           icon={
             <IconoDocumento
               size={24.5}
-              color="#b2b2b2ff"
+              color="#c1c1c1ff"
               lineColor="#585858ff"
             />
           }
@@ -140,7 +140,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           icon={
             <IconoDocumento
               size={24.5}
-              color="#b2b2b2ff"
+              color="#c1c1c1ff"
               lineColor="#585858ff"
             />
           }
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   // Tarjetas de General y Legal
   // Las filas se extienden más a los lados (padding 9); el título queda donde estaba (9 + 6)
   settingsCard: {
-    borderRadius: 20,
+    borderRadius: 23,
     paddingVertical: 15,
     paddingHorizontal: 4,
     marginTop: 22,

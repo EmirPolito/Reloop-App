@@ -5,7 +5,8 @@ import type { Product } from "@/features/marketplace/types";
 export type HomeFeedRow =
   | { type: "banner" }
   | { type: "categories" }
-  | { type: "sectionTitle" }
+  /** `count`: publicaciones mostradas (`null` mientras cargan) */
+  | { type: "sectionTitle"; count: number | null }
   | { type: "products"; products: Product[] }
   /** Modo "@" del buscador: resultados de personas en lugar del feed */
   | { type: "users"; term: string }
@@ -22,7 +23,10 @@ export function buildHomeFeedRows(
   const rows: HomeFeedRow[] = [
     { type: "banner" },
     { type: "categories" },
-    { type: "sectionTitle" },
+    {
+      type: "sectionTitle",
+      count: status === "loading" ? null : products.length,
+    },
   ];
   if (status === "loading") {
     rows.push({ type: "loading" });

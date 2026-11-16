@@ -1,36 +1,73 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "heroui-native";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import Animated, {
+  SlideInLeft,
+  SlideInRight,
+  SlideOutLeft,
+  SlideOutRight,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LETRA, RADIO_HOJA, coloresOnboarding } from "../temaOnboarding";
 
+/** Lo que tarda una página en deslizarse al cambiar de paso */
+export const DESLIZAMIENTO_ONBOARDING_MS = 300;
+/** Alto del contenido mientras aún no se mide la primera página */
+const ALTO_INICIAL = 280;
+
+export type DireccionPaso = "adelante" | "atras";
+
 /**
  * Drawer propio de la configuración inicial, con el mismo estilo que el de elegir avatar:
- * card flotante, línea arriba, título al centro y flecha para volver a la izquierda. No se
- * puede cerrar (ni arrastrando ni tocando fuera) hasta terminar.
+ * card flotante, título al centro y flecha para volver a la izquierda. No se puede cerrar (ni
+ * arrastrando ni tocando fuera) hasta terminar. Es una sola card para todos los pasos: el
+ * contenido de cada uno entra deslizándose desde la derecha, como pasar una hoja (y sale hacia
+ * la derecha al volver). Su alto sigue al de la página actual, nunca menor que `altoMinimo`.
  */
 export function HojaOnboarding({
   visible,
   titulo,
+  paso,
+  direccion,
   isDark,
   onBack,
   altoMinimo,
+  tituloNegrita = false,
+  permitirArrastrarContenido = true,
   children,
 }: {
   visible: boolean;
   titulo: string;
+  /** Índice del paso actual: la página se vuelve a montar (y se desliza) al cambiar */
+  paso: number;
+  direccion: DireccionPaso;
   isDark: boolean;
   onBack?: () => void;
-  /** Alto mínimo del contenido (para igualar al drawer de avatar) */
+  /** Alto mínimo del contenido (para igualar al de avatar) */
   altoMinimo?: number;
+  /** Título en negrita */
+  tituloNegrita?: boolean;
+  /** En false, solo se arrastra la card desde arriba (para gestos dentro del contenido) */
+  permitirArrastrarContenido?: boolean;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const { height: altoVentana } = useWindowDimensions();
   const c = coloresOnboarding(isDark);
   const margenInferior = Math.max(insets.bottom - 22, 6);
+
+  // Las páginas se apilan una sobre otra mientras se deslizan: el alto de la card lo fija la
+  // medida de la página actual
+  const [medida, setMedida] = useState(0);
+  const alto = Math.max(altoMinimo ?? ALTO_INICIAL, medida);
+
+  // La primera página aparece con la card; solo las siguientes se deslizan
+  const [pasoInicial] = useState(paso);
+  const [movido, setMovido] = useState(false);
+  if (!movido && paso !== pasoInicial) setMovido(true);
+  const adelante = direccion === "adelante";
 
   return (
     <BottomSheet isOpen={visible} onOpenChange={() => {}}>
@@ -39,6 +76,7 @@ export function HojaOnboarding({
         <BottomSheet.Overlay />
         <BottomSheet.Content
           enablePanDownToClose={false}
+          enableContentPanningGesture={permitirArrastrarContenido}
           detached
           bottomInset={margenInferior}
           className="mx-2"
@@ -65,7 +103,7 @@ export function HojaOnboarding({
             ) : null}
             <BottomSheet.Title
               style={[
-                LETRA.semibold,
+                tituloNegrita ? LETRA.bold : LETRA.semibold,
                 { fontSize: 15, color: c.texto, textAlign: "center" },
               ]}
             >
@@ -73,8 +111,24 @@ export function HojaOnboarding({
             </BottomSheet.Title>
           </View>
 
-          <View style={{ paddingBottom: 14, minHeight: altoMinimo }}>
-            {children}
+          <View style={{ height: alto, marginBottom: 14, overflow: "hidden" }}>
+            <Animated.View
+              key={paso}
+              entering={
+                movido
+                  ? (adelante ? SlideInRight : SlideInLeft).duration(
+                      DESLIZAMIENTO_ONBOARDING_MS,
+                    )
+                  : undefined
+              }
+              exiting={(adelante ? SlideOutLeft : SlideOutRight).duration(
+                DESLIZAMIENTO_ONBOARDING_MS,
+              )}
+              onLayout={(e) => setMedida(e.nativeEvent.layout.height)}
+              style={styles.pagina}
+            >
+              {children}
+            </Animated.View>
           </View>
         </BottomSheet.Content>
       </BottomSheet.Portal>
@@ -100,4 +154,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  // Absoluta: así dos páginas pueden convivir mientras una sale y la otra entra
+  pagina: { position: "absolute", top: 0, left: 0, right: 0 },
 });

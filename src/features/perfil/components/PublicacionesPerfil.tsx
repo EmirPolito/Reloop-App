@@ -3,11 +3,11 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { ProductFan } from "@/features/marketplace/components/productAbanico";
 import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData";
 import type { Product } from "@/features/marketplace/types";
 import { IconoAnuncios, IconoPublicaciones } from "../Perfiliconos";
 import { FilaPestanas, type Pestana } from "./FilaPestanas";
+import { ListaPublicaciones } from "./ListaPublicaciones";
 
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];
@@ -73,7 +73,7 @@ export function PublicacionesPerfil({
     if (items.length) {
       return (
         <View style={styles.abanico}>
-          <ProductFan items={items} onOpen={onOpen} />
+          <ListaPublicaciones items={items} isDark={isDark} onOpen={onOpen} />
         </View>
       );
     }
@@ -122,8 +122,8 @@ export function PublicacionesPerfil({
 }
 
 const styles = StyleSheet.create({
-  /** Separación entre las pestañas y las imágenes de las publicaciones */
-  abanico: { marginTop: 30 },
+  /** Separación entre las pestañas y la lista de publicaciones */
+  abanico: { marginTop: 14 },
   /** Pestaña inactiva: fuera del flujo (no ocupa alto) e invisible, pero montada */
   oculta: { position: "absolute", top: 0, left: 0, right: 0, opacity: 0 },
 });

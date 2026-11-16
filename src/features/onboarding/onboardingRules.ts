@@ -2,13 +2,21 @@
 /*  Configuración inicial (onboarding): reglas puras                          */
 /* -------------------------------------------------------------------------- */
 
-export const PASOS_ONBOARDING = ["avatar", "etiquetas", "perfil"] as const;
+import { MAX_PILDORAS } from "@/features/perfil/Perfiltemas";
+
+export const PASOS_ONBOARDING = [
+  "avatar",
+  "fondo",
+  "etiquetas",
+  "usuario",
+] as const;
 export type PasoOnboarding = (typeof PASOS_ONBOARDING)[number];
 
 export const TITULOS_ONBOARDING: Record<PasoOnboarding, string> = {
   avatar: "Elige tu avatar",
-  etiquetas: "Tus etiquetas",
-  perfil: "Tu perfil",
+  fondo: "Elige tu fondo",
+  etiquetas: `Hasta ${MAX_PILDORAS} etiquetas`,
+  usuario: "Cambiar username",
 };
 
 /** Índice guardado → paso; cualquier valor inválido vuelve al primero */

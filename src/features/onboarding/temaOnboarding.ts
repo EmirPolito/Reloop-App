@@ -10,6 +10,9 @@ export const LETRA = {
   bold: { fontFamily: "Inter_700Bold" },
 } as const;
 
+/** Lo que suben los carruseles (avatares y fondos) sin mover lo de abajo */
+export const SUBIR_CARRUSEL = 5;
+
 /** Radio de la card del drawer */
 export const RADIO_HOJA = 35;
 

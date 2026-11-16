@@ -1,14 +1,14 @@
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { ProductCard } from "@/features/marketplace/components/ProductCard";
-import { filterProducts } from "@/features/marketplace/feedFilters";
+import { filterProducts, premiumPrimero } from "@/features/marketplace/feedFilters";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
 import {
   useMarketplaceActions,
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
@@ -19,6 +19,7 @@ import { CategoryRow } from "./components/CategoryRow";
 import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
+import { TarjetaPublicacion } from "./components/TarjetaPublicacion";
 import {
   buildHomeFeedRows,
   buildUserSearchRows,
@@ -42,12 +43,21 @@ export const HomeScreen = memo(function HomeScreen() {
 
   const busqueda = modoDeBusqueda(filters.query);
   const buscaUsuarios = busqueda.modo === "usuarios";
+  // Las publicaciones de quienes tienen Premium salen primero
+  const duenos = useMemo(
+    () => [...new Set(products.map((product) => product.ownerId))],
+    [products],
+  );
+  const premium = useDuenosPremium(duenos);
   const rows = useMemo(
     () =>
       buscaUsuarios
         ? buildUserSearchRows(busqueda.termino)
-        : buildHomeFeedRows(filterProducts(products, filters), status),
-    [buscaUsuarios, busqueda.termino, products, filters, status],
+        : buildHomeFeedRows(
+            premiumPrimero(filterProducts(products, filters), premium),
+            status,
+          ),
+    [buscaUsuarios, busqueda.termino, products, filters, status, premium],
   );
   const { query, category: activeCategory } = filters;
 
@@ -67,7 +77,7 @@ export const HomeScreen = memo(function HomeScreen() {
           return (
             <SectionTitle
               activeCategory={activeCategory}
-              onClearCategory={clearCategory}
+              count={item.count}
             />
           );
         case "users":
@@ -111,7 +121,7 @@ export const HomeScreen = memo(function HomeScreen() {
           return (
             <View style={styles.productRow}>
               {item.products.map((product) => (
-                <ProductCard
+                <TarjetaPublicacion
                   key={product.id}
                   item={product}
                   cardWidth={cardWidth}
@@ -139,7 +149,6 @@ export const HomeScreen = memo(function HomeScreen() {
       openUserProfile,
       toggleFavorite,
       toggleCategory,
-      clearCategory,
       reload,
     ],
   );

@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 
-import type {
-  DatosPerfil,
-  PildoraPerfilData,
-} from "@/features/perfil/Perfiltemas";
+import type { DatosPerfil } from "@/features/perfil/Perfiltemas";
 import { useProfile } from "@/features/perfil/ProfileProvider";
 import { completeOnboarding } from "@/features/perfil/profileRepository";
 import { useIntroTerminada } from "@/features/intro/efecto-entrada";
+import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { showErrorAlert } from "@/utils/alerts";
 import {
@@ -20,7 +18,7 @@ import { borrarPaso, guardarPaso, leerPaso } from "./progresoOnboarding";
  * Configuración inicial de una cuenta nueva: aparece la primera vez que la persona entra
  * ya con el correo verificado (la ficha nueva trae `onboardingPendiente`); las cuentas
  * anteriores nunca la ven. Guarda con la misma lógica de Editar perfil, paso a paso, y
- * recuerda en qué paso iba.
+ * recuerda en qué paso iba. Al terminar lleva a la persona a su perfil.
  */
 export function SheetBienvenida() {
   const { profile } = useProfile();
@@ -64,6 +62,7 @@ function Contenido({
   onPaso: (paso: number) => void;
 }) {
   const { saveProfile } = useProfile();
+  const { navigate } = useAppNavigation();
   const usuario = useSessionUser();
   // Nace cerrado y se abre cuando la animación de entrada ya terminó, con un margen para
   // que el BottomSheet se mida: solo se presenta al pasar de cerrado a abierto, y si eso
@@ -89,19 +88,13 @@ function Contenido({
     }
   };
 
-  const finalizar = async (pills: PildoraPerfilData[]) => {
-    try {
-      if (JSON.stringify(pills) !== JSON.stringify(profile.pills)) {
-        await saveProfile({ ...profile, pills });
-      }
-    } catch (error) {
-      showErrorAlert("No se pudo terminar la configuración", error);
-      throw error;
-    }
-    // Primero baja el drawer; al terminar su animación se marca como completo (quitar la
-    // marca desmonta el drawer, y hacerlo a media animación rompe el portal)
+  const finalizar = async () => {
+    // Primero baja el drawer; al terminar su animación se lleva a la persona a su perfil y se
+    // marca la configuración como completa (quitar la marca desmonta el drawer, y hacerlo a
+    // media animación rompe el portal)
     setAbierto(false);
     await new Promise((listo) => setTimeout(listo, CIERRE_ONBOARDING_MS));
+    navigate("profile");
     try {
       await completeOnboarding(uid);
       borrarPaso(uid);

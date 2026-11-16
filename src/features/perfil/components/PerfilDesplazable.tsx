@@ -125,6 +125,9 @@ export function PerfilDesplazable({
   const fondo = fondoPerfil(isDark);
   const { suave } = coloresTarjeta(isDark);
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
+  // Card de las estadísticas (blanca en claro) y mini cards de dentro (neutral-100)
+  const fondoCard = isDark ? "#ffffff0f" : "#FFFFFF";
+  const fondoMini = isDark ? "#ffffff14" : "#F5F5F5";
   const altoPortada = insets.top + ALTO_PORTADA;
   const altoHeader = insets.top + ALTO_HEADER;
 
@@ -342,76 +345,35 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {/* Card gris de estadísticas debajo de la descripción */}
-            <View
-              style={[
-                styles.cardEstadisticas,
-                { backgroundColor: isDark ? "#ffffff0d" : "#e9e9e9ff" },
-              ]}
-            >
-              <View style={styles.estadisticaColumna}>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  style={[styles.estadisticaEtiqueta, { color: suave }]}
-                >
-                  {stats.publicaciones === 1 ? "Subido" : "Subidos"}
-                </Text>
-                <View style={styles.estadisticaValorFila}>
-                  <IconoPublicaciones size={19} color={COLOR_PUBLICACIONES} />
-                  <Text numberOfLines={1} style={styles.estadisticaValor}>
-                    {formatearNumero(stats.publicaciones)}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.separadorStat,
-                  { backgroundColor: isDark ? "#334155" : "#8d8d8dff" },
-                ]}
-              />
-
-              <View style={styles.estadisticaColumna}>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  style={[styles.estadisticaEtiqueta, { color: suave }]}
-                >
-                  {stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
-                </Text>
-                <View style={styles.estadisticaValorFila}>
-                  <IconoUsuarios size={19} color={COLOR_SEGUIDORES} />
-                  <Text numberOfLines={1} style={styles.estadisticaValor}>
-                    {formatearNumero(stats.seguidores)}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.separadorStat,
-                  { backgroundColor: isDark ? "#334155" : "#8d8d8dff" },
-                ]}
-              />
-
-              <View style={styles.estadisticaColumna}>
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  style={[styles.estadisticaEtiqueta, { color: suave }]}
-                >
-                  Valoración
-                </Text>
-                <View style={styles.estadisticaValorFila}>
-                  <IconoReputacion size={19} color={COLOR_REPUTACION} />
-                  <Text numberOfLines={1} style={styles.estadisticaValor}>
-                    {stats.reputacion}
-                  </Text>
-                </View>
+            {/* Una card blanca con las tres mini cards de estadísticas */}
+            <View style={[styles.cardStats, { backgroundColor: fondoCard }]}>
+              <View style={styles.miniFila}>
+                <MiniCard
+                  icono={
+                    <IconoPublicaciones size={19} color={COLOR_PUBLICACIONES} />
+                  }
+                  valor={formatearNumero(stats.publicaciones)}
+                  etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
+                  fondo={fondoMini}
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
+                <MiniCard
+                  icono={<IconoUsuarios size={19} color={COLOR_SEGUIDORES} />}
+                  valor={formatearNumero(stats.seguidores)}
+                  etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
+                  fondo={fondoMini}
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
+                <MiniCard
+                  icono={<IconoReputacion size={19} color={COLOR_REPUTACION} />}
+                  valor={stats.reputacion}
+                  etiqueta="Valoración"
+                  fondo={fondoMini}
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
               </View>
             </View>
 
@@ -510,6 +472,46 @@ export function PerfilDesplazable({
         </View>
       </View>
     </PausaBrilloContext.Provider>
+  );
+}
+
+/** Mini card de una estadística: icono y número en una fila, y su nombre debajo */
+function MiniCard({
+  icono,
+  valor,
+  etiqueta,
+  fondo,
+  colorTexto,
+  suave,
+}: {
+  icono: ReactNode;
+  valor: string;
+  etiqueta: string;
+  fondo: string;
+  colorTexto: string;
+  suave: string;
+}) {
+  return (
+    <View style={[styles.miniCard, { backgroundColor: fondo }]}>
+      {/* El icono a la izquierda y el número a su derecha */}
+      <View style={styles.miniValorFila}>
+        {icono}
+        <Text
+          numberOfLines={1}
+          style={[styles.miniValor, { color: colorTexto }]}
+        >
+          {valor}
+        </Text>
+      </View>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[styles.miniEtiqueta, { color: suave }]}
+      >
+        {etiqueta}
+      </Text>
+    </View>
   );
 }
 
@@ -661,43 +663,29 @@ const styles = StyleSheet.create({
     paddingRight: 0,
     overflow: "hidden",
   },
-  // Card gris de estadísticas (debajo de la descripción)
-  cardEstadisticas: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 20,
-    paddingVertical: 15,
-    paddingHorizontal: 4,
-    marginTop: 25,
-  },
-  estadisticaColumna: {
+
+  // Card con las tres mini cards de estadísticas, debajo de la descripción
+  cardStats: { borderRadius: 26, padding: 12, marginTop: 18 },
+  miniFila: { flexDirection: "row", gap: 10 },
+  miniCard: {
     flex: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     alignItems: "center",
-    gap: 5,
-  },
-  separadorStat: {
-    width: StyleSheet.hairlineWidth,
-    height: 32,
-  },
-  estadisticaValorFila: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: 4,
   },
-  estadisticaValor: {
+  miniValorFila: { flexDirection: "row", alignItems: "center", gap: 6 },
+  miniValor: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 18,
+    fontSize: 16,
     letterSpacing: -0.2,
     lineHeight: 20,
-    textAlign: "center",
-    color: "#6d6d6dff",
   },
-  estadisticaEtiqueta: {
+  miniEtiqueta: {
     fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    lineHeight: 14,
-    textAlign: "center",
+    fontSize: 11.5,
+    lineHeight: 13,
   },
   // Mensaje y Seguir: uno junto al otro y del mismo ancho
   acciones: { flexDirection: "row", gap: 10, marginTop: 14 },
@@ -730,5 +718,5 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 6,
   },
-  pestanas: { marginTop: 14, paddingHorizontal: MARGEN_LATERAL },
+  pestanas: { marginTop: 30, paddingHorizontal: MARGEN_LATERAL },
 });

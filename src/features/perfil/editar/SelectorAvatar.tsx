@@ -144,6 +144,7 @@ export function SelectorAvatar({
   isDark,
   claveCarrusel,
   mostrarConfirmar = true,
+  subirCarrusel = 0,
 }: {
   flujo: FlujoAvatar;
   photo: string | null;
@@ -153,6 +154,8 @@ export function SelectorAvatar({
   claveCarrusel: string;
   /** Botón "Usar este avatar" (el onboarding guarda con su propio Continuar) */
   mostrarConfirmar?: boolean;
+  /** Píxeles que sube el carrusel sin mover lo demás (Editar perfil lo deja en su lugar) */
+  subirCarrusel?: number;
 }) {
   const c = coloresEditar(isDark);
   const { guardarFoto, hayCambio } = flujo;
@@ -165,15 +168,22 @@ export function SelectorAvatar({
     >
       {flujo.paso === "inicio" ? (
         <View style={styles.inicio}>
-          <CarruselAvatares
-            photo={photo}
-            name={name}
-            isDark={isDark}
-            // Al reabrir el drawer el carrusel vuelve al avatar guardado
-            key={claveCarrusel}
-            inicial={flujo.guardado}
-            onCambio={flujo.setCentrado}
-          />
+          <View
+            style={{
+              alignSelf: "stretch",
+              transform: [{ translateY: -subirCarrusel }],
+            }}
+          >
+            <CarruselAvatares
+              photo={photo}
+              name={name}
+              isDark={isDark}
+              // Al reabrir el drawer el carrusel vuelve al avatar guardado
+              key={claveCarrusel}
+              inicial={flujo.guardado}
+              onCambio={flujo.setCentrado}
+            />
+          </View>
 
           <View style={styles.opciones}>
             <Opcion

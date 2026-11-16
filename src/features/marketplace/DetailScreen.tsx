@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Avatar } from "@/components/ui/Avatar";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -17,6 +16,7 @@ import { useDraft } from "@/features/shared/DraftsProvider";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showErrorAlert } from "@/utils/alerts";
+import { AvatarVendedor } from "./components/AvatarVendedor";
 import { CommentsSection } from "./components/CommentsSection";
 import { DetailStat } from "./components/DetailStat";
 import { RatingBlock } from "./components/RatingBlock";
@@ -146,7 +146,11 @@ export function DetailScreen({ productId }: { productId: string }) {
       </View>
       <View style={styles.detailCard}>
         <View style={styles.sellerRow}>
-          <Avatar name={product.seller} />
+          <AvatarVendedor
+            ownerId={product.ownerId}
+            fallbackName={product.seller}
+            size={44}
+          />
           <View style={styles.sellerInfo}>
             <Pressable
               accessibilityRole="button"

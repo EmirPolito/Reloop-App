@@ -23,7 +23,7 @@ import {
   MAX_PILDORAS,
   type PildoraPerfilData,
 } from "@/features/perfil/Perfiltemas";
-import { Text, TextInput } from "@/features/shared/Text";
+import { TextInput } from "@/features/shared/Text";
 import { BotonPaso } from "../components/BotonPaso";
 import {
   BotonPalomita,
@@ -112,102 +112,92 @@ export function PasoEtiquetas({
 
   return (
     <View style={styles.paso}>
-      <View style={styles.encabezado}>
-        <Text
-          accessibilityRole="header"
-          style={[LETRA.bold, styles.titulo, { color: c.texto }]}
-        >
-          ¿Qué te describe?
-        </Text>
-        <Text style={[LETRA.regular, styles.subtitulo, { color: c.suave }]}>
-          Hasta {MAX_PILDORAS} etiquetas · {etiquetas.length}/{MAX_PILDORAS}
-        </Text>
-      </View>
-
-      {/* Campo redondo: el icono elegido a la izquierda y la palomita al escribir */}
-      <View style={[styles.campo, { backgroundColor: c.campo }]}>
-        {icono ? renderPerfilIcon(icono, 17, c.icono) : null}
-        <TextInput
-          {...teclado}
-          value={texto}
-          onChangeText={setTexto}
-          editable={!llenas}
-          maxLength={MAX_TEXTO_ETIQUETA}
-          placeholder={
-            llenas
-              ? `Ya tienes ${MAX_PILDORAS} etiquetas`
-              : "Escribe una etiqueta"
-          }
-          placeholderTextColor={c.campoPlaceholder}
-          selectionColor={c.campoTexto}
-          cursorColor={c.campoTexto}
-          underlineColorAndroid="transparent"
-          returnKeyType="done"
-          onSubmitEditing={agregar}
-          accessibilityLabel="Nueva etiqueta"
-          style={[LETRA.regular, styles.input, { color: c.campoTexto }]}
-        />
-        {limpio && !llenas ? (
-          <BotonPalomita
-            isDark={isDark}
-            etiqueta="Agregar etiqueta"
-            onPress={agregar}
+      <View style={styles.centro}>
+        {/* Campo redondo: el icono elegido a la izquierda y la palomita al escribir */}
+        <View style={[styles.campo, { backgroundColor: c.campo }]}>
+          {icono ? renderPerfilIcon(icono, 17, c.icono) : null}
+          <TextInput
+            {...teclado}
+            value={texto}
+            onChangeText={setTexto}
+            editable={!llenas}
+            maxLength={MAX_TEXTO_ETIQUETA}
+            placeholder={
+              llenas
+                ? `Ya tienes ${MAX_PILDORAS} etiquetas`
+                : `Escribe una etiqueta (máximo ${MAX_PILDORAS})`
+            }
+            placeholderTextColor={c.campoPlaceholder}
+            selectionColor={c.campoTexto}
+            cursorColor={c.campoTexto}
+            underlineColorAndroid="transparent"
+            returnKeyType="done"
+            onSubmitEditing={agregar}
+            accessibilityLabel="Nueva etiqueta"
+            style={[LETRA.regular, styles.input, { color: c.campoTexto }]}
           />
-        ) : null}
-      </View>
-
-      {/* Iconos para la etiqueta nueva: tocar otra vez el elegido lo quita */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.iconos}
-      >
-        {ICONOS.map((clave) => {
-          const elegido = icono === clave;
-          return (
-            <Pressable
-              key={clave}
-              accessibilityRole="button"
-              accessibilityLabel={`Icono ${clave}`}
-              accessibilityState={{ selected: elegido, disabled: llenas }}
-              disabled={llenas}
-              onPress={() => setIcono(elegido ? undefined : clave)}
-              style={({ pressed }) => [
-                styles.icono,
-                elegido && { backgroundColor: c.iconoElegido },
-                (pressed || llenas) && { opacity: 0.5 },
-              ]}
-            >
-              {renderPerfilIcon(clave, 24, c.icono)}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.etiquetas}>
-        {etiquetas.map((etiqueta) => (
-          <Animated.View
-            key={etiqueta.id}
-            entering={FadeIn.duration(160)}
-            exiting={FadeOut.duration(120)}
-            layout={LinearTransition.duration(180)}
-          >
-            <ChipEtiqueta
-              etiqueta={etiqueta}
+          {limpio && !llenas ? (
+            <BotonPalomita
               isDark={isDark}
-              tamano="editable"
-              onQuitar={() =>
-                setEtiquetas((actuales) =>
-                  actuales.filter((e) => e.id !== etiqueta.id),
-                )
-              }
+              etiqueta="Agregar etiqueta"
+              onPress={agregar}
             />
-          </Animated.View>
-        ))}
-      </View>
+          ) : null}
+        </View>
 
-      <View style={styles.espacio} />
+        {/* Iconos para la etiqueta nueva: tocar otra vez el elegido lo quita */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          // Sin crecer: un ScrollView ocupa todo el espacio libre y separaba el campo de las etiquetas
+          style={styles.carruselIconos}
+          contentContainerStyle={styles.iconos}
+        >
+          {ICONOS.map((clave) => {
+            const elegido = icono === clave;
+            return (
+              <Pressable
+                key={clave}
+                accessibilityRole="button"
+                accessibilityLabel={`Icono ${clave}`}
+                accessibilityState={{ selected: elegido, disabled: llenas }}
+                disabled={llenas}
+                onPress={() => setIcono(elegido ? undefined : clave)}
+                style={({ pressed }) => [
+                  styles.icono,
+                  elegido && { backgroundColor: c.iconoElegido },
+                  (pressed || llenas) && { opacity: 0.5 },
+                ]}
+              >
+                {renderPerfilIcon(clave, 24, c.icono)}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        <View style={styles.etiquetas}>
+          {etiquetas.map((etiqueta) => (
+            <Animated.View
+              key={etiqueta.id}
+              entering={FadeIn.duration(160)}
+              exiting={FadeOut.duration(120)}
+              layout={LinearTransition.duration(180)}
+            >
+              <ChipEtiqueta
+                etiqueta={etiqueta}
+                isDark={isDark}
+                tamano="editable"
+                onQuitar={() =>
+                  setEtiquetas((actuales) =>
+                    actuales.filter((e) => e.id !== etiqueta.id),
+                  )
+                }
+              />
+            </Animated.View>
+          ))}
+        </View>
+      </View>
 
       <View style={styles.botones}>
         <View style={styles.boton}>
@@ -227,15 +217,9 @@ export function PasoEtiquetas({
 }
 
 const styles = StyleSheet.create({
-  paso: { flex: 1, paddingHorizontal: 17, gap: 16 },
-  encabezado: { alignItems: "center", gap: 4 },
-  titulo: {
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.4,
-    textAlign: "center",
-  },
-  subtitulo: { fontSize: 12.5 },
+  paso: { flex: 1, paddingHorizontal: 17, gap: 14 },
+  // El contenido, centrado entre el título y los botones
+  centro: { flex: 1, justifyContent: "center", gap: 14 },
   campo: {
     height: 52,
     borderRadius: 26,
@@ -246,6 +230,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: { flex: 1, minWidth: 0, fontSize: 15, paddingVertical: 0 },
+  carruselIconos: { flexGrow: 0 },
   iconos: { gap: 12, paddingHorizontal: 2 },
   icono: {
     width: 48,
@@ -257,5 +242,4 @@ const styles = StyleSheet.create({
   etiquetas: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
   botones: { flexDirection: "row", gap: 10 },
   boton: { flex: 1 },
-  espacio: { flex: 1 },
 });

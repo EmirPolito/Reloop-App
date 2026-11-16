@@ -1,9 +1,10 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
-import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { type AnimatedStyle } from "react-native-reanimated";
+import { Pressable, StyleSheet, View } from "react-native";
 
+import { categoryFor } from "@/features/marketplace/data";
+import { productBadgeLabel } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { PRODUCT_COLORS, PRODUCT_ICONS } from "@/features/shared/constants";
@@ -13,105 +14,87 @@ import { optimizedImageUrl } from "@/lib/imageUrl";
 export interface ProfilePostCardProps {
   item: Product;
   cardWidth: number;
+  isDark: boolean;
   onPress: () => void;
-  /** Estilo animado del precio (el carrusel solo lo muestra en la tarjeta central). */
-  priceStyle?: StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
 }
 
-/** Alto de la tarjeta según su ancho (lo usa también el carrusel). */
-export const profilePostCardHeight = (cardWidth: number) =>
-  Math.min(240, Math.max(150, cardWidth * 1.2));
+/** Alto de la foto según el ancho de la tarjeta */
+export const profilePostImageHeight = (cardWidth: number) =>
+  Math.round(cardWidth * 1.05);
 
 /**
- * Tarjeta SOLO para las publicaciones del perfil (carrusel en abanico):
- * imagen con borde blanco, sombra suave abajo y precio arriba a la izquierda.
- * Sin botón de corazón. La tarjeta del inicio sigue siendo `ProductCard`.
+ * Tarjeta de una publicación del perfil (lista con scroll a los lados): la foto con
+ * esquinas redondeadas y, debajo, el nombre, el precio (o la categoría) y la categoría.
  */
 export const ProfilePostCard = memo(function ProfilePostCard({
   item,
   cardWidth,
+  isDark,
   onPress,
-  priceStyle,
 }: ProfilePostCardProps) {
   const imageUri = optimizedImageUrl(item.imageUri, cardWidth * 2);
-  const height = profilePostCardHeight(cardWidth);
-
-  // Ajusta `item.price` al campo real de tu tipo Product.
-  const priceLabel = `$${Number(item.price ?? 0).toLocaleString("es-MX")}`;
+  const colorTexto = isDark ? "#F1F5F9" : "#101010";
+  const colorSuave = isDark ? "#94A3B8" : "#8A8A8F";
 
   return (
-    // Capa externa: lleva la sombra (si tuviera overflow-hidden, iOS la recorta).
-    <View
-      style={{
-        width: cardWidth,
-        height,
-        borderRadius: 35,
-        backgroundColor: "#FFFFFF",
-        shadowColor: "#000000",
-        shadowOpacity: 0.14,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 4,
-      }}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Abrir ${item.name}`}
+      onPress={onPress}
+      style={{ width: cardWidth }}
     >
-      {/* Capa interna: borde blanco + recorte de esquinas */}
-      <View className="flex-1 overflow-hidden rounded-3xl border-3 border-white bg-white">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Abrir ${item.name}`}
-          onPress={onPress}
-          style={{ flex: 1 }}
+      <View
+        style={{
+          width: cardWidth,
+          height: profilePostImageHeight(cardWidth),
+          borderRadius: 28,
+          overflow: "hidden",
+        }}
+      >
+        <LinearGradient
+          colors={PRODUCT_COLORS[item.category]}
+          style={styles.relleno}
         >
-          <LinearGradient
-            colors={PRODUCT_COLORS[item.category]}
-            style={{ flex: 1 }}
-            className="items-center justify-center"
-          >
-            {imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={0}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              />
-            ) : (
-              <AppIcon
-                name={PRODUCT_ICONS[item.category]}
-                size={30}
-                color="#FFFFFF"
-              />
-            )}
-          </LinearGradient>
-        </Pressable>
-
-        {/* Precio arriba a la izquierda (solo visible en la tarjeta central) */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            {
-              position: "absolute",
-              top: 8,
-              left: 8,
-              backgroundColor: "rgba(255,255,255,0.95)",
-              borderRadius: 999,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-            },
-            priceStyle,
-          ]}
-        >
-          <Text className="text-xs font-bold text-neutral-900">
-            {priceLabel}
-          </Text>
-        </Animated.View>
+          {imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={0}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : (
+            <AppIcon
+              name={PRODUCT_ICONS[item.category]}
+              size={30}
+              color="#FFFFFF"
+            />
+          )}
+        </LinearGradient>
       </View>
-    </View>
+
+      <View style={styles.info}>
+        <Text numberOfLines={1} style={[styles.nombre, { color: colorTexto }]}>
+          {item.name}
+        </Text>
+        <View style={styles.fila}>
+          <Text style={[styles.precio, { color: colorTexto }]}>
+            {productBadgeLabel(item)}
+          </Text>
+          <Text numberOfLines={1} style={[styles.categoria, { color: colorSuave }]}>
+            {categoryFor(item.category).label}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
   );
+});
+
+const styles = StyleSheet.create({
+  relleno: { flex: 1, alignItems: "center", justifyContent: "center" },
+  info: { paddingHorizontal: 6, paddingTop: 10, gap: 2 },
+  nombre: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  fila: { flexDirection: "row", alignItems: "center", gap: 8 },
+  precio: { fontFamily: "Inter_700Bold", fontSize: 13.5 },
+  categoria: { flexShrink: 1, fontFamily: "Inter_500Medium", fontSize: 12.5 },
 });
