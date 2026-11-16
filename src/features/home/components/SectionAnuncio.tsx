@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   memo,
   useCallback,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import {
   ScrollView,
+  StyleSheet,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -17,6 +19,10 @@ import {
 } from "react-native";
 
 const AUTOPLAY_MS = 4000;
+/** Alto del carrusel (en estilo y no en clase: así no depende de que se regenere el CSS) */
+const ALTO_BANNER = 145;
+/** Espacio bajo cada anuncio para que se vea su sombra (el carrusel recorta lo que sale de él) */
+const ESPACIO_SOMBRA = 24;
 const GAP = 13; // separación entre anuncios (ajústala a gusto)
 
 const IMAGE_STYLE = { width: "100%", height: "100%" } as const;
@@ -97,10 +103,15 @@ export const FeedIntro = memo(function FeedIntro() {
   }, [width, step, settle]);
 
   return (
-    <View className="w-full mt-[13px] mb-5" onLayout={onLayout}>
+    <View
+      className="w-full mb-3"
+      style={{ marginTop: 20 }}
+      onLayout={onLayout}
+    >
       <View
         accessibilityLabel="Carrusel de anuncios de ReLoop"
-        className="h-[165px] w-full"
+        className="w-full"
+        style={{ height: ALTO_BANNER + ESPACIO_SOMBRA }}
       >
         {width > 0 ? (
           <ScrollView
@@ -121,12 +132,21 @@ export const FeedIntro = memo(function FeedIntro() {
                 className="h-full"
                 style={{ width, marginRight: GAP }}
               >
-                <View className="flex-1 overflow-hidden rounded-[18px]">
-                  <Image
-                    source={slide.source}
-                    contentFit="cover"
-                    style={IMAGE_STYLE}
-                  />
+                {/* Sombra de abajo: una franja más angosta que el anuncio que se desvanece hacia
+                    abajo, así queda siguiendo su forma y no sale como un cuadro */}
+                <LinearGradient
+                  pointerEvents="none"
+                  colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0)"]}
+                  style={estilosBanner.sombra}
+                />
+                <View style={estilosBanner.anuncio}>
+                  <View className="flex-1 overflow-hidden rounded-[18px]">
+                    <Image
+                      source={slide.source}
+                      contentFit="cover"
+                      style={IMAGE_STYLE}
+                    />
+                  </View>
                 </View>
               </View>
             ))}
@@ -135,7 +155,10 @@ export const FeedIntro = memo(function FeedIntro() {
       </View>
 
       {/* Puntitos */}
-      <View className="flex-row items-center justify-center gap-2.5 mt-3">
+      <View
+        className="flex-row items-center justify-center gap-2.5"
+        style={{ marginTop: -14 }}
+      >
         {BANNERS.map((banner, i) => (
           <View
             key={banner.id}
@@ -149,4 +172,18 @@ export const FeedIntro = memo(function FeedIntro() {
       </View>
     </View>
   );
+});
+
+const estilosBanner = StyleSheet.create({
+  anuncio: { height: ALTO_BANNER, borderRadius: 18 },
+  // Asoma por debajo del borde de abajo del anuncio, con las puntas hacia dentro
+  sombra: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    top: ALTO_BANNER - 14,
+    height: 22,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
 });

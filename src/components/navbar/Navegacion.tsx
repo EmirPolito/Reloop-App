@@ -391,7 +391,7 @@ export function Navegacion({
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 12);
+  const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom - 8, 8);
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);

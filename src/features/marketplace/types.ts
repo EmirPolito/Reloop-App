@@ -15,6 +15,8 @@ export type Product = {
   /** Promedio de calificaciones; solo en categorías que se pueden calificar */
   rating?: number;
   distance: string;
+  /** Universidad de la publicación (ver `universidades.ts`); sin ella es la propia */
+  universidad?: string;
   /** Derivado: la publicación es de la persona con sesión iniciada */
   isMine: boolean;
   createdAt: number;

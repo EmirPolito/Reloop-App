@@ -198,7 +198,8 @@ export function createStyles(isDark: boolean) {
     productsContent: {
       width: "100%",
       paddingHorizontal: 16,
-      paddingBottom: 20,
+      // Espacio para que la barra de navegación no tape la última publicación
+      paddingBottom: 120,
     },
     productRow: {
       width: "100%",

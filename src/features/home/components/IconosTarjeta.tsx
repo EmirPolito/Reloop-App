@@ -6,6 +6,38 @@ interface IconoProps {
   color?: string;
 }
 
+/**
+ * Trazo extra sobre el contorno de la lupa: el trazo original mide 1.5 y con esto queda en
+ * 1.8 (el trazo se reparte a los dos lados del borde).
+ */
+const GROSOR_EXTRA_LUPA = 0.25;
+
+/** Lupa — Iconly Light Search */
+export function IconoBusqueda({ size = 24, color = "#000000" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.5254 3.46429C7.21107 3.46429 3.71448 6.96089 3.71448 11.2752C3.71448 15.5896 7.21107 19.0862 11.5254 19.0862C15.8389 19.0862 19.3364 15.5896 19.3364 11.2752C19.3364 6.96094 15.8389 3.46429 11.5254 3.46429ZM2.21448 11.2752C2.21448 6.13246 6.38264 1.96429 11.5254 1.96429C16.6672 1.96429 20.8364 6.13241 20.8364 11.2752C20.8364 16.4181 16.6672 20.5862 11.5254 20.5862C6.38264 20.5862 2.21448 16.418 2.21448 11.2752Z"
+        fill={color}
+        stroke={color}
+        strokeWidth={GROSOR_EXTRA_LUPA}
+        strokeLinejoin="round"
+      />
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20.149 19.2376C19.7838 19.2376 19.4875 19.5346 19.4875 19.8981C19.4875 20.2636 19.7838 20.5595 20.149 20.5595C20.5135 20.5595 20.8095 20.2642 20.8095 19.8981C20.8095 19.5339 20.5135 19.2376 20.149 19.2376ZM17.9875 19.8981C17.9875 18.7055 18.956 17.7376 20.149 17.7376C21.3426 17.7376 22.3095 18.7061 22.3095 19.8981C22.3095 21.092 21.3426 22.0595 20.149 22.0595C18.956 22.0595 17.9875 21.0927 17.9875 19.8981Z"
+        fill={color}
+        stroke={color}
+        strokeWidth={GROSOR_EXTRA_LUPA}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** Estrella rellena — Iconly Bold Star */
 export function IconoEstrella({ size = 24, color = "#000000" }: IconoProps) {
   return (

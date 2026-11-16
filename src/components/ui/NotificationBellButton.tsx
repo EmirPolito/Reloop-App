@@ -3,9 +3,12 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
-import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
+import {
+  IconoNotificacion,
+  IconoNotificacionRellena,
+} from "./IconoNotificacion";
 
 /**
  * Botón circular con la campana del encabezado de las pestañas: abre las notificaciones y
@@ -34,12 +37,15 @@ export function NotificationBellButton() {
           : "Notificaciones"
       }
     >
-      {/* Mismo icono y color que la campana del Home */}
-      <AppIcon
-        name="notifications"
-        size={19}
-        color={isDark ? "#FFFFFF" : "#23242C"}
-      />
+      {/* De contorno; rellena cuando hay notificaciones sin leer */}
+      {unreadCount > 0 ? (
+        <IconoNotificacionRellena
+          size={24}
+          color={isDark ? "#FFFFFF" : "#23242C"}
+        />
+      ) : (
+        <IconoNotificacion size={24} color={isDark ? "#FFFFFF" : "#23242C"} />
+      )}
       {unreadCount > 0 ? (
         <View style={styles.contador}>
           <Text style={styles.contadorTexto}>
