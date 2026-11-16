@@ -8,7 +8,6 @@ import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
 import { LADO_AVATAR, estilosPerfil } from "../perfilEstilos";
 import { type ColorPerfil, TEMAS } from "../Perfiltemas";
-import { BrilloAvatar } from "./BrilloAvatar";
 
 /** Ancho al que se pide la foto de perfil a Cloudinary. */
 const ANCHO_FOTO = 400;
@@ -43,7 +42,6 @@ export function PerfilAvatar({
           transition={200}
           style={StyleSheet.absoluteFill}
         />
-        <BrilloAvatar id="perfil-avatar" />
       </View>
     );
   }

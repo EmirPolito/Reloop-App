@@ -19,7 +19,6 @@ import { ORBES } from "@/constants/orbes";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
-import { BrilloAvatar } from "../components/BrilloAvatar";
 import { INTER, coloresEditar } from "./editarTema";
 
 /** Lado del avatar del centro */
@@ -122,15 +121,12 @@ export function CarruselAvatares({
                   style={[styles.neutro, { backgroundColor: c.avatarFondo }]}
                 >
                   {photo ? (
-                    <>
-                      <Image
-                        source={{ uri: optimizedImageUrl(photo, 400) ?? photo }}
-                        contentFit="cover"
-                        transition={200}
-                        style={StyleSheet.absoluteFill}
-                      />
-                      <BrilloAvatar id="sheet-avatar" />
-                    </>
+                    <Image
+                      source={{ uri: optimizedImageUrl(photo, 400) ?? photo }}
+                      contentFit="cover"
+                      transition={200}
+                      style={StyleSheet.absoluteFill}
+                    />
                   ) : (
                     <Text
                       style={[INTER.medium, { fontSize: 40, color: c.texto }]}

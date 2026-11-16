@@ -134,7 +134,9 @@ export function PasoEtiquetas({
           editable={!llenas}
           maxLength={MAX_TEXTO_ETIQUETA}
           placeholder={
-            llenas ? "Ya tienes 4 etiquetas" : "Escribe una etiqueta"
+            llenas
+              ? `Ya tienes ${MAX_PILDORAS} etiquetas`
+              : "Escribe una etiqueta"
           }
           placeholderTextColor={c.campoPlaceholder}
           selectionColor={c.campoTexto}

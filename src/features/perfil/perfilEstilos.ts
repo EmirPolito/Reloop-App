@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import { APP_BACKGROUND } from "@/features/shared/constants";
 
 /** Lado del avatar redondo */
-export const LADO_AVATAR = 90;
+export const LADO_AVATAR = 82;
 
 /** Fondo de la pantalla del perfil (gris tipo Apple en claro) */
 export function fondoPerfil(isDark: boolean) {

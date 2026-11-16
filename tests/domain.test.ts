@@ -223,8 +223,8 @@ describe("reglas por categoría", () => {
     assert.equal(productBadgeLabel(product({ category: "cambio", price: 0 })), "Intercambios");
   });
   it("promedio de reputación: solo cuenta lo calificable; sin datos, raya", () => {
-    assert.equal(averageRatingLabel([]), "—");
-    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined })]), "—");
+    assert.equal(averageRatingLabel([]), "0");
+    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined })]), "0");
     assert.equal(averageRatingLabel([product({ rating: 5 }), product({ rating: 4 })]), "4.5");
     assert.equal(averageRatingLabel([product({ rating: 5 }), product({ category: "cambio", rating: undefined })]), "5.0");
   });
@@ -389,6 +389,10 @@ describe("mapeo de perfiles", () => {
     assert.deepEqual(p.stickers, ["sticker-1"]);
     assert.equal(p.photo, null);
     assert.equal(p.cover, null);
+  });
+  it("de un perfil con más etiquetas de las permitidas solo se leen las primeras 2", () => {
+    const etiquetas = ["a", "b", "c", "d"].map((id) => ({ id, text: id, color: "azul" }));
+    assert.deepEqual(mapProfile({ nombre: "Ana", etiquetas }, "Ana").pills.map((x) => x.id), ["a", "b"]);
   });
   it("la imagen de fondo se lee y se guarda como `fondoUrl`", () => {
     const url = "https://res.cloudinary.com/demo/image/upload/v1/fondo.png";

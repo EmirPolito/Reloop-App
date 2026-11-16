@@ -5,6 +5,7 @@ import { PATRON_USERNAME, normalizarNombre } from "./username";
 import {
   COLORES_PERFIL,
   MAX_NOMBRE,
+  MAX_PILDORAS,
   type ColorPerfil,
   type DatosPerfil,
   type PildoraPerfilData,
@@ -31,21 +32,27 @@ function isColor(value: unknown): value is ColorPerfil {
 
 function mapPills(value: unknown): PildoraPerfilData[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((item): PildoraPerfilData[] => {
-    if (typeof item?.id !== "string" || typeof item?.text !== "string") return [];
-    return [
-      {
-        id: item.id,
-        text: item.text,
-        color: isColor(item.color) ? item.color : "azul",
-        ...(typeof item.icon === "string" ? { icon: item.icon } : {}),
-      },
-    ];
-  });
+  return value
+    .flatMap((item): PildoraPerfilData[] => {
+      if (typeof item?.id !== "string" || typeof item?.text !== "string")
+        return [];
+      return [
+        {
+          id: item.id,
+          text: item.text,
+          color: isColor(item.color) ? item.color : "azul",
+          ...(typeof item.icon === "string" ? { icon: item.icon } : {}),
+        },
+      ];
+    })
+    .slice(0, MAX_PILDORAS);
 }
 
 /** Perfil guardado en Firestore, con valores seguros si falta algún campo. */
-export function mapProfile(data: DocumentData, fallbackName: string): DatosPerfil {
+export function mapProfile(
+  data: DocumentData,
+  fallbackName: string,
+): DatosPerfil {
   const name =
     typeof data.nombre === "string" && data.nombre ? data.nombre : fallbackName;
   return {

@@ -22,6 +22,11 @@ import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { LADO_AVATAR, coloresTarjeta, fondoPerfil } from "../perfilEstilos";
 import {
+  IconoPublicaciones,
+  IconoReputacion,
+  IconoUsuarios,
+} from "../Perfiliconos";
+import {
   DESCRIPCION_POR_DEFECTO,
   gradienteCieloPerfil,
   type DatosPerfil,
@@ -32,7 +37,7 @@ import { PerfilAvatar } from "./PerfilAvatar";
 import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
-const ALTO_PORTADA = 120;
+const ALTO_PORTADA = 136;
 const ALTO_HEADER = 52;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
@@ -41,7 +46,7 @@ const SOLAPE_AVATAR = LADO_AVATAR / 2;
 /** Tamaño final del avatar al colapsar (se esconde bajo el header) */
 const ESCALA_AVATAR_MIN = 0.6;
 /** Borde del color de la pantalla alrededor del avatar */
-const BORDE_AVATAR = 4;
+const BORDE_AVATAR = 3;
 /** Recorrido con el que el título pequeño entra al header */
 const ENTRADA_TITULO = 28;
 const ANCHO_PORTADA = 900;
@@ -49,6 +54,10 @@ const ANCHO_PORTADA = 900;
 const LADO_AVATAR_HEADER = 32;
 /** Margen a los lados de las publicaciones */
 const MARGEN_LATERAL = 15;
+/** Espacio entre el avatar y el nombre */
+const ESPACIO_NOMBRE = 0;
+/** Separación entre el borde de abajo de la portada y las etiquetas */
+const ESPACIO_ETIQUETAS = 12;
 
 /** Botón redondo translúcido del header (editar perfil) */
 export function BotonHeaderPerfil({
@@ -100,7 +109,7 @@ export function PerfilDesplazable({
   premium: boolean;
   /** Botón del header (fijo arriba a la derecha) */
   derecha?: ReactNode;
-  /** A la derecha del avatar: Seguir y Mensaje */
+  /** Debajo de la descripción: Mensaje y Seguir (perfil ajeno) */
   acciones?: ReactNode;
   stats: { publicaciones: number; seguidores: number; reputacion: string };
   publicaciones: {
@@ -250,7 +259,8 @@ export function PerfilDesplazable({
             />
           </Animated.View>
 
-          {/* Avatar (sobresale de la portada) y acciones a la derecha */}
+          {/* Avatar (sobresale de la portada) y, a su derecha, las etiquetas: a la altura
+              de la mitad de abajo del avatar, ya fuera de la portada */}
           <View
             style={[
               styles.filaAvatar,
@@ -280,10 +290,30 @@ export function PerfilDesplazable({
                 />
               </View>
             </Animated.View>
-            <View style={styles.acciones}>{acciones}</View>
+            {profile.pills.length > 0 ? (
+              <View
+                style={[
+                  styles.pildoras,
+                  // Empiezan justo debajo de la portada (la fila sube el alto del solape)
+                  {
+                    marginTop: SOLAPE_AVATAR + BORDE_AVATAR + ESPACIO_ETIQUETAS,
+                  },
+                ]}
+              >
+                {profile.pills.map((pill) => (
+                  <PildoraPerfil
+                    key={pill.id}
+                    text={pill.text}
+                    color={pill.color}
+                    icon={pill.icon}
+                    isDark={isDark}
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
 
-          {/* Nombre, @username, descripción, etiquetas y números */}
+          {/* Nombre, @username, descripción, acciones y números */}
           <View style={styles.info}>
             <View
               style={styles.filaNombre}
@@ -294,7 +324,7 @@ export function PerfilDesplazable({
                   altoPortada +
                     LADO_AVATAR / 2 +
                     BORDE_AVATAR +
-                    12 +
+                    ESPACIO_NOMBRE +
                     y +
                     height,
                 );
@@ -320,42 +350,16 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {profile.pills.length > 0 ? (
-              <View style={styles.pildoras}>
-                {profile.pills.map((pill) => (
-                  <PildoraPerfil
-                    key={pill.id}
-                    text={pill.text}
-                    color={pill.color}
-                    icon={pill.icon}
-                    isDark={isDark}
-                  />
-                ))}
-              </View>
-            ) : null}
+            {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
 
-            <View style={styles.numeros}>
-              <Numero
-                valor={String(stats.publicaciones)}
-                etiqueta={
-                  stats.publicaciones === 1 ? "publicación" : "publicaciones"
-                }
-                fuerte={colorTexto}
-                suave={suave}
-              />
-              <Numero
-                valor={String(stats.seguidores)}
-                etiqueta={stats.seguidores === 1 ? "seguidor" : "seguidores"}
-                fuerte={colorTexto}
-                suave={suave}
-              />
-              <Numero
-                valor={`★ ${stats.reputacion}`}
-                etiqueta="valoración"
-                fuerte={colorTexto}
-                suave={suave}
-              />
-            </View>
+            <TarjetaEstadisticas
+              publicaciones={stats.publicaciones}
+              seguidores={stats.seguidores}
+              reputacion={stats.reputacion}
+              isDark={isDark}
+              fuerte={colorTexto}
+              suave={suave}
+            />
           </View>
 
           <PublicacionesPerfil
@@ -483,23 +487,99 @@ function CapaPortada({
   );
 }
 
-/** "12 publicaciones": número en negrita y etiqueta en gris */
-function Numero({
-  valor,
-  etiqueta,
+/** Color del icono de cada estadística (igual en tema claro y oscuro) */
+const COLOR_PUBLICACIONES = "#ff2b63ff";
+const COLOR_SEGUIDORES = "#1971ffff";
+const COLOR_REPUTACION = "#ff9d00ff";
+
+/**
+ * Tarjeta con las estadísticas del perfil: tres columnas separadas por líneas finas, cada
+ * una con su etiqueta arriba y, abajo, su icono de color junto al número.
+ */
+function TarjetaEstadisticas({
+  publicaciones,
+  seguidores,
+  reputacion,
+  isDark,
   fuerte,
   suave,
 }: {
-  valor: string;
+  publicaciones: number;
+  seguidores: number;
+  reputacion: string;
+  isDark: boolean;
+  fuerte: string;
+  suave: string;
+}) {
+  const { fondoTarjeta, divisor } = coloresTarjeta(isDark);
+  const separador = (
+    <View style={[styles.separadorEstadistica, { backgroundColor: divisor }]} />
+  );
+  return (
+    <View style={[styles.estadisticas, { backgroundColor: fondoTarjeta }]}>
+      <Estadistica
+        etiqueta={publicaciones === 1 ? "Publicación" : "Publicaciones"}
+        valor={String(publicaciones)}
+        icono={<IconoPublicaciones size={23} color={COLOR_PUBLICACIONES} />}
+        fuerte={fuerte}
+        suave={suave}
+      />
+      {separador}
+      <Estadistica
+        etiqueta={seguidores === 1 ? "Seguidor" : "Seguidores"}
+        valor={String(seguidores)}
+        icono={<IconoUsuarios size={23} color={COLOR_SEGUIDORES} />}
+        fuerte={fuerte}
+        suave={suave}
+      />
+      {separador}
+      <Estadistica
+        etiqueta="Valoración"
+        valor={reputacion}
+        icono={<IconoReputacion size={23} color={COLOR_REPUTACION} />}
+        fuerte={fuerte}
+        suave={suave}
+      />
+    </View>
+  );
+}
+
+/** Una columna de la tarjeta: etiqueta en gris y, debajo, el icono con el número */
+function Estadistica({
+  etiqueta,
+  valor,
+  icono,
+  fuerte,
+  suave,
+}: {
   etiqueta: string;
+  valor: string;
+  icono: ReactNode;
   fuerte: string;
   suave: string;
 }) {
   return (
-    <Text style={[styles.numeroEtiqueta, { color: suave }]}>
-      <Text style={[styles.numeroValor, { color: fuerte }]}>{valor}</Text>{" "}
-      {etiqueta}
-    </Text>
+    <View
+      accessible
+      accessibilityLabel={`${valor} ${etiqueta.toLowerCase()}`}
+      style={styles.estadistica}
+    >
+      <Text
+        numberOfLines={1}
+        style={[styles.estadisticaEtiqueta, { color: suave }]}
+      >
+        {etiqueta}
+      </Text>
+      <View style={styles.estadisticaValorFila}>
+        {icono}
+        <Text
+          numberOfLines={1}
+          style={[styles.estadisticaValor, { color: fuerte }]}
+        >
+          {valor}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -532,7 +612,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   botonHeader: {
-    width: 36,
+    width: 38,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
@@ -579,38 +659,60 @@ const styles = StyleSheet.create({
     borderRadius: LADO_AVATAR / 2,
     overflow: "hidden",
   },
-  acciones: {
+  // Mensaje y Seguir: uno junto al otro y del mismo ancho
+  acciones: { flexDirection: "row", gap: 10, marginTop: 21 },
+  info: { paddingHorizontal: 16, paddingTop: ESPACIO_NOMBRE, gap: 6 },
+  // Bajado un poco respecto al avatar; el @usuario compensa para quedarse donde estaba
+  filaNombre: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingBottom: 4,
+    gap: 6,
+    marginTop: 3,
   },
-  info: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
-  filaNombre: { flexDirection: "row", alignItems: "center", gap: 6 },
   nombre: {
     flexShrink: 1,
     fontFamily: "Inter_600SemiBold",
-    fontSize: 24,
-    letterSpacing: -0.7,
-    lineHeight: 30,
+    fontSize: 20,
+    letterSpacing: -0.5,
+    lineHeight: 26,
   },
   insigniaNombre: { marginTop: 1 },
-  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -4 },
+  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -8.5 },
   descripcion: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14.5,
+    fontSize: 15,
     lineHeight: 20,
-    marginTop: 6,
+    marginTop: 2.5,
   },
-  pildoras: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
-  numeros: {
+
+  // A la derecha del avatar, en una sola fila (una junto a otra, sin saltar de línea) y
+  // pegadas a la derecha
+  pildoras: {
+    flex: 1,
+    alignSelf: "flex-start",
     flexDirection: "row",
-    flexWrap: "wrap",
-    columnGap: 16,
-    rowGap: 4,
-    marginTop: 6,
+    flexWrap: "nowrap",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginLeft: 12,
+    overflow: "hidden",
   },
-  numeroValor: { fontFamily: "Inter_600SemiBold" },
-  numeroEtiqueta: { fontFamily: "Inter_400Regular", fontSize: 14 },
+  // Tarjeta de estadísticas
+  estadisticas: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 22,
+    paddingVertical: 14,
+    borderRadius: 20,
+  },
+  estadistica: { flex: 1, alignItems: "center", gap: 6 },
+  separadorEstadistica: { width: StyleSheet.hairlineWidth, height: 36 },
+  estadisticaEtiqueta: { fontFamily: "Inter_500Medium", fontSize: 12.5 },
+  estadisticaValorFila: { flexDirection: "row", alignItems: "center", gap: 6 },
+  estadisticaValor: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 20,
+    letterSpacing: -0.4,
+  },
   pestanas: { marginTop: 14, paddingHorizontal: MARGEN_LATERAL },
 });

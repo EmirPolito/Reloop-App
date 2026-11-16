@@ -1,6 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
+import { Text } from "@/features/shared/Text";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
@@ -68,9 +69,17 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
                 ]}
               >
                 <IconoMensaje
-                  size={20}
+                  size={18}
                   color={isDark ? "#F1F5F9" : "#101010"}
                 />
+                <Text
+                  style={[
+                    styles.mensajeTexto,
+                    { color: isDark ? "#F1F5F9" : "#101010" },
+                  ]}
+                >
+                  Mensaje
+                </Text>
               </PressableSuave>
               <BotonSeguir
                 isFollowing={isFollowing}
@@ -99,12 +108,16 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
 }
 
 const styles = StyleSheet.create({
+  // Mismo tamaño que Seguir: los dos se reparten el ancho
   mensaje: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+  mensajeTexto: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
 });

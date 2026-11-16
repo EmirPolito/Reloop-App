@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Switch, View } from "react-native";
 
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { showComingSoonAlert } from "@/utils/alerts";
 import { coloresTarjeta } from "../perfilEstilos";
@@ -11,7 +12,9 @@ import {
   IconoDocumento,
   IconoFlecha,
   IconoLogin,
+  IconoLuna,
   IconoMensaje,
+  IconoSol,
 } from "../Perfiliconos";
 import { FilaAjuste } from "./FilaAjuste";
 import { TarjetaAccion } from "./TarjetaAccion";
@@ -25,6 +28,7 @@ const ACCION = "#101010";
  */
 export function AjustesPerfil({ isDark }: { isDark: boolean }) {
   const { signOut } = useAuth();
+  const { setIsDark } = useAppTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleSignOut = useCallback(() => {
@@ -49,7 +53,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoMensaje size={22.5} color="#101010" />}
+          icon={<IconoMensaje size={22.5} color="#abababff" />}
           label="Cambiar correo"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar correo")}
@@ -57,7 +61,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         />
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoCandado size={23} color="#101010" />}
+          icon={<IconoCandado size={23} color="#b2b2b2ff" />}
           label="Cambiar contraseña"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar contraseña")}
@@ -69,7 +73,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           icon={
             <IconoCampana
               size={24}
-              color="#101010"
+              color="#b2b2b2ff"
               secondaryColor="#909090ff"
             />
           }
@@ -86,16 +90,17 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
             />
           }
         />
-        {/* <FilaAjuste
+        {/* Modo claro / oscuro: se recuerda para la próxima vez que se abra la app */}
+        <FilaAjuste
           bg={rowBg}
           icon={
             isDark ? (
-              <IconoLuna size={24} color="#c3c3c3aa" />
+              <IconoLuna size={24} color="#b2b2b2ff" />
             ) : (
               <IconoSol size={24} color="#f59e0baa" />
             )
           }
-          label="Modo claro"
+          label="Modo oscuro"
           textColor={textoFila}
           right={
             <Switch
@@ -107,7 +112,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
               thumbColor="#FFFFFF"
             />
           }
-        /> */}
+        />
       </View>
 
       {/* =========================== LEGAL =========================== */}
@@ -117,7 +122,11 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         <FilaAjuste
           bg={rowBg}
           icon={
-            <IconoDocumento size={24.5} color="#101010" lineColor="#909090ff" />
+            <IconoDocumento
+              size={24.5}
+              color="#b2b2b2ff"
+              lineColor="#585858ff"
+            />
           }
           label="Términos y condiciones"
           textColor={textoFila}
@@ -127,7 +136,11 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         <FilaAjuste
           bg={rowBg}
           icon={
-            <IconoDocumento size={24.5} color="#101010" lineColor="#909090ff" />
+            <IconoDocumento
+              size={24.5}
+              color="#b2b2b2ff"
+              lineColor="#585858ff"
+            />
           }
           label="Términos y condiciones"
           textColor={textoFila}
@@ -150,15 +163,15 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  contenedor: { paddingHorizontal: 15 },
+  contenedor: { paddingHorizontal: 16 },
   // Tarjetas de General y Legal
   // Las filas se extienden más a los lados (padding 9); el título queda donde estaba (9 + 6)
   settingsCard: {
-    borderRadius: 19,
+    borderRadius: 20,
     paddingVertical: 15,
-    paddingHorizontal: 9,
-    marginTop: 21,
-    gap: 8,
+    paddingHorizontal: 4,
+    marginTop: 22,
+    gap: 10,
     elevation: 0.4,
   },
   cardLabel: {

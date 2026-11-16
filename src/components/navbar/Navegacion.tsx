@@ -578,11 +578,9 @@ function createStyles(isDark: boolean) {
         velo: android ? "rgba(16, 16, 18, 0.94)" : "rgba(16, 16, 18, 0.8)",
       }
     : {
-        cristal: android ? "#f8f8f8ff" : "#f8f8f8ff",
+        cristal: android ? "#f6f6f6f0" : "#f6f6f6f0",
         borde: "#ffffffff",
         indicador: "#ffffffff",
-        sombra: "0 8px 24px rgba(0, 0, 0, 0.1)",
-        sombraIndicador: "0 1px 4px rgba(0, 0, 0, 0.08)",
         fondoContador: "#EBEBEF",
         text: "#101010",
         velo: android

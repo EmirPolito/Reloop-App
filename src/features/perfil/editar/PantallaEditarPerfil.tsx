@@ -23,7 +23,6 @@ import { useImagePicker } from "@/hooks/useImagePicker";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showErrorAlert } from "@/utils/alerts";
 import { getInitials } from "@/utils/text";
-import { BrilloAvatar } from "../components/BrilloAvatar";
 import { PerfilPortada } from "../components/PerfilPortada";
 import { fondoPerfil } from "../perfilEstilos";
 import { IconoFlecha } from "../Perfiliconos";
@@ -175,18 +174,14 @@ export function PantallaEditarPerfil() {
           >
             <View style={[styles.avatar, { backgroundColor: c.avatarFondo }]}>
               {profile.photo ? (
-                <>
-                  <Image
-                    source={{
-                      uri:
-                        optimizedImageUrl(profile.photo, 400) ?? profile.photo,
-                    }}
-                    contentFit="cover"
-                    transition={200}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <BrilloAvatar id="editar-avatar" />
-                </>
+                <Image
+                  source={{
+                    uri: optimizedImageUrl(profile.photo, 400) ?? profile.photo,
+                  }}
+                  contentFit="cover"
+                  transition={200}
+                  style={StyleSheet.absoluteFill}
+                />
               ) : profile.orb !== null ? (
                 <OrbAvatar
                   orb={profile.orb}

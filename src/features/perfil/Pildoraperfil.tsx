@@ -22,25 +22,24 @@ export function PildoraPerfil({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        height: 21,
+        height: 22,
         backgroundColor: tema.pillBg,
         borderColor: tema.pillBorder,
         borderWidth: 1,
-        paddingHorizontal: 5.5,
+        paddingHorizontal: 6,
         borderRadius: 17,
       }}
     >
       {icon ? (
         <View style={{ marginRight: 3.5 }}>
-          {/* El icono toma el color de la píldora */}
-          {renderPerfilIcon(icon, 13.5, tema.accent)}
+          {renderPerfilIcon(icon, 14, "#7c7c7cff")}
         </View>
       ) : null}
       <Text
         style={{
           top: 0,
-          fontSize: 10.5,
-          fontWeight: "500",
+          fontSize: 11.5,
+          fontFamily: "Inter_500Medium",
           color: textColor,
         }}
       >
