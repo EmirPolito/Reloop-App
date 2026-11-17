@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
 import { useRef, useState, type ComponentRef } from "react";
 import {
   Modal,
@@ -12,17 +13,18 @@ import {
 import Animated, { FadeInUp, FadeOut } from "react-native-reanimated";
 
 import {
-  UNIVERSIDADES,
-  universidadPorId,
-} from "@/features/marketplace/universidades";
-import {
   useMarketplaceActions,
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
+import {
+  UNIVERSIDADES,
+  universidadPorId,
+} from "@/features/marketplace/universidades";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { LocationIcon } from "@/features/shared/PillIcons";
 import { Text } from "@/features/shared/Text";
 
+/** Igual al del botón de notificaciones */
+const LADO_BOTON = 45;
 const ANCHO_MENU = 292;
 const SEPARACION = 8;
 const MARGEN_PANTALLA = 16;
@@ -35,7 +37,8 @@ interface Posicion {
 }
 
 /**
- * Botón de universidad del inicio (siglas con su pin y una flecha) y, al tocarlo, un menú que
+ * Botón de universidad del inicio: un círculo con su logo (o sus siglas de 3 letras si no hay
+ * logo), del tamaño del de notificaciones. Al tocarlo se despliega un menú que
  * se despliega debajo con las universidades. Elegir una cambia las publicaciones del inicio a
  * las de esa universidad. Las universidades son de ejemplo por ahora.
  */
@@ -77,16 +80,26 @@ export function SelectorUniversidad() {
         accessibilityLabel={`Universidad: ${actual.sigla}. Cambiar`}
         accessibilityState={{ expanded: posicion !== null }}
         onPress={abrir}
+        // Mismo círculo que el de la campana: mismo tamaño, fondo y borde
         style={[
           estilos.boton,
-          { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "#FFFFFF" },
+          {
+            backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
+            borderColor: isDark ? "#ffffff2e" : "#ffffff5b",
+          },
         ]}
       >
-        <LocationIcon size={16} color={colorTexto} />
-        <Text style={[estilos.sigla, { color: colorTexto }]}>
-          {actual.sigla}
-        </Text>
-        <Ionicons name="chevron-down" size={14} color="#1c77ff" />
+        {actual.logo ? (
+          <Image
+            source={actual.logo}
+            contentFit="contain"
+            style={estilos.logo}
+          />
+        ) : (
+          <Text style={[estilos.sigla, { color: colorTexto }]}>
+            {actual.sigla.slice(0, 3)}
+          </Text>
+        )}
       </Pressable>
 
       <Modal
@@ -202,16 +215,17 @@ export function SelectorUniversidad() {
 }
 
 const estilos = StyleSheet.create({
-  // Compacto: solo lo que necesita (pin, siglas y flecha)
+  // Círculo del tamaño del botón de notificaciones, solo con el logo (o las 3 letras)
   boton: {
-    height: 36,
-    flexDirection: "row",
+    width: LADO_BOTON,
+    height: LADO_BOTON,
+    borderRadius: LADO_BOTON / 2,
+    borderWidth: 2,
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    borderRadius: 999,
+    justifyContent: "center",
   },
-  sigla: { fontFamily: "Inter_600SemiBold", fontSize: 12.5 },
+  logo: { width: 26, height: 26 },
+  sigla: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   menu: {
     position: "absolute",
     width: ANCHO_MENU,

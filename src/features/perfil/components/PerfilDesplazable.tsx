@@ -126,8 +126,7 @@ export function PerfilDesplazable({
   const { suave } = coloresTarjeta(isDark);
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
   // Card de las estadísticas (blanca en claro) y mini cards de dentro (neutral-100)
-  const fondoCard = isDark ? "#ffffff0f" : "#FFFFFF";
-  const fondoMini = isDark ? "#ffffff14" : "#F5F5F5";
+  const colorLinea = isDark ? "#ffffff24" : "#E4E4E7";
   const altoPortada = insets.top + ALTO_PORTADA;
   const altoHeader = insets.top + ALTO_HEADER;
 
@@ -345,32 +344,31 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {/* Una card blanca con las tres mini cards de estadísticas */}
-            <View style={[styles.cardStats, { backgroundColor: fondoCard }]}>
+            {/* Las tres estadísticas sin fondo, separadas por dos líneas */}
+            <View style={styles.cardStats}>
               <View style={styles.miniFila}>
                 <MiniCard
                   icono={
-                    <IconoPublicaciones size={19} color={COLOR_PUBLICACIONES} />
+                    <IconoPublicaciones size={25} color={COLOR_PUBLICACIONES} />
                   }
                   valor={formatearNumero(stats.publicaciones)}
                   etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
-                  fondo={fondoMini}
                   colorTexto={colorTexto}
                   suave={suave}
                 />
+                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
                 <MiniCard
-                  icono={<IconoUsuarios size={19} color={COLOR_SEGUIDORES} />}
+                  icono={<IconoUsuarios size={25} color={COLOR_SEGUIDORES} />}
                   valor={formatearNumero(stats.seguidores)}
                   etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
-                  fondo={fondoMini}
                   colorTexto={colorTexto}
                   suave={suave}
                 />
+                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
                 <MiniCard
-                  icono={<IconoReputacion size={19} color={COLOR_REPUTACION} />}
+                  icono={<IconoReputacion size={25} color={COLOR_REPUTACION} />}
                   valor={stats.reputacion}
                   etiqueta="Valoración"
-                  fondo={fondoMini}
                   colorTexto={colorTexto}
                   suave={suave}
                 />
@@ -475,24 +473,22 @@ export function PerfilDesplazable({
   );
 }
 
-/** Mini card de una estadística: icono y número en una fila, y su nombre debajo */
+/** Una estadística: icono y número en una fila, y su nombre debajo */
 function MiniCard({
   icono,
   valor,
   etiqueta,
-  fondo,
   colorTexto,
   suave,
 }: {
   icono: ReactNode;
   valor: string;
   etiqueta: string;
-  fondo: string;
   colorTexto: string;
   suave: string;
 }) {
   return (
-    <View style={[styles.miniCard, { backgroundColor: fondo }]}>
+    <View style={styles.miniCard}>
       {/* El icono a la izquierda y el número a su derecha */}
       <View style={styles.miniValorFila}>
         {icono}
@@ -665,27 +661,33 @@ const styles = StyleSheet.create({
   },
 
   // Card con las tres mini cards de estadísticas, debajo de la descripción
-  cardStats: { borderRadius: 26, padding: 12, marginTop: 18 },
-  miniFila: { flexDirection: "row", gap: 10 },
+  cardStats: { paddingVertical: 4, marginTop: 2, paddingHorizontal: 4 },
+  // Las secciones se reparten por todo el ancho, con las líneas entre ellas
+  miniFila: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   miniCard: {
-    flex: 1,
-    borderRadius: 18,
-    paddingVertical: 14,
+    minWidth: 92,
+    paddingVertical: 18,
     paddingHorizontal: 4,
     alignItems: "center",
-    gap: 4,
+    gap: 11,
   },
-  miniValorFila: { flexDirection: "row", alignItems: "center", gap: 6 },
+  // Las dos líneas que separan las tres estadísticas
+  linea: { width: 1, height: 60 },
+  miniValorFila: { flexDirection: "row", alignItems: "center", gap: 8 },
   miniValor: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-    letterSpacing: -0.2,
-    lineHeight: 20,
+    fontSize: 22,
+    letterSpacing: -0.4,
+    lineHeight: 27,
   },
   miniEtiqueta: {
     fontFamily: "Inter_500Medium",
-    fontSize: 11.5,
-    lineHeight: 13,
+    fontSize: 13.5,
+    lineHeight: 16,
   },
   // Mensaje y Seguir: uno junto al otro y del mismo ancho
   acciones: { flexDirection: "row", gap: 10, marginTop: 14 },

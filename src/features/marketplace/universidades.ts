@@ -6,6 +6,8 @@ export interface Universidad {
   /** Siglas: lo que se muestra en el botón del inicio */
   sigla: string;
   nombre: string;
+  /** Logo de la universidad (resultado de `require`); sin él se muestran sus siglas de 3 letras */
+  logo?: number;
 }
 
 /**

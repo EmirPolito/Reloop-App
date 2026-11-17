@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect } from "react";
+import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -63,23 +63,45 @@ const SUBIR = { distancia: 16, velocidad: 500 };
  * En ambos casos avisa con `onDismiss` cuando ya no está a la vista. Animaciones y gestos
  * corren en el hilo de UI.
  */
-export function NotificationBanner({
-  notification,
-  onOpen,
-  onDismiss,
-}: {
-  notification: AppNotification;
+/** Lo que muestra el banner cuando no es una notificación (un aviso de la app) */
+export interface ContenidoBanner {
+  titulo: string;
+  descripcion: string;
+  /** Lo que va a la izquierda (un círculo de 47 px) */
+  leading: ReactNode;
+  icono: ComponentProps<typeof Ionicons>["name"];
+  /** Lo que anuncia el lector de pantalla sobre tocarlo */
+  pista?: string;
+}
+
+type PropsBanner = {
   onOpen: () => void;
   onDismiss: () => void;
-}) {
+} & (
+  | { notification: AppNotification }
+  | { contenido: ContenidoBanner }
+);
+
+/** El banner de una notificación, o con `contenido` el de un aviso de la app (mismo diseño). */
+export function NotificationBanner(props: PropsBanner) {
+  const { onOpen, onDismiss } = props;
   const insets = useSafeAreaInsets();
   const { width: anchoVentana } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const anchoAbierta = Math.min(anchoVentana - MARGEN * 2, ANCHO_MAXIMO);
 
-  const titulo = notificationTitle(notification);
-  const descripcion = `${notification.actorName} ${notificationMessage(notification)}`;
-  const icono = notificationIcon(notification);
+  const { titulo, descripcion, leading, icono, pista } =
+    "notification" in props
+      ? {
+          titulo: notificationTitle(props.notification),
+          descripcion: `${props.notification.actorName} ${notificationMessage(props.notification)}`,
+          leading: (
+            <NotificationLeading notification={props.notification} size={47} />
+          ),
+          icono: notificationIcon(props.notification),
+          pista: "Toca para abrir",
+        }
+      : props.contenido;
 
   /** Opacidad de toda la píldora */
   const opacidad = useSharedValue(0);
@@ -232,14 +254,14 @@ export function NotificationBanner({
           accessible
           accessibilityRole="alert"
           accessibilityLabel={`${titulo}. ${descripcion}`}
-          accessibilityHint="Toca para abrir"
+          accessibilityHint={pista ?? "Toca para cerrar"}
           style={[styles.pildora, estiloPildora]}
         >
           {/* Ancho fijo: el texto no se reacomoda mientras la píldora cambia de tamaño */}
           <Animated.View
             style={[styles.contenido, { width: anchoAbierta }, estiloContenido]}
           >
-            <NotificationLeading notification={notification} size={47} />
+            {leading}
             <View style={styles.textos}>
               <Text numberOfLines={1} style={styles.titulo}>
                 {titulo}

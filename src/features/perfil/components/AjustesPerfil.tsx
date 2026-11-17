@@ -169,15 +169,15 @@ const styles = StyleSheet.create({
   // Tarjetas de General y Legal
   // Las filas se extienden más a los lados (padding 9); el título queda donde estaba (9 + 6)
   settingsCard: {
-    borderRadius: 23,
+    borderRadius: 22,
     paddingVertical: 15,
     paddingHorizontal: 4,
     marginTop: 22,
     gap: 10,
-    elevation: 0.4,
+    elevation: 1,
   },
   cardLabel: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     fontFamily: "Inter_400Regular",
     fontWeight: "500",
     marginBottom: 5,

@@ -103,4 +103,4 @@ export const CATEGORY_IMAGES: Record<CategoryId, number> = {
 };
 
 /** Fondo general de la app (gris tipo Apple en claro); igual en todos los módulos */
-export const APP_BACKGROUND = { light: "#f5f5f5ff", dark: "#161616" } as const;
+export const APP_BACKGROUND = { light: "#f7f7f7ff", dark: "#161616" } as const;
