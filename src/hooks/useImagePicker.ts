@@ -18,6 +18,13 @@ const COVER_IMAGE_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.85,
 };
 
+const SQUARE_CAMERA_OPTIONS: ImagePicker.ImagePickerOptions = {
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  aspect: [1, 1],
+  quality: 0.85,
+};
+
 const GALLERY_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ["images"],
   allowsMultipleSelection: true,
@@ -111,6 +118,22 @@ export function useImagePicker() {
     }
   }, []);
 
+  /** Una foto cuadrada tomada con la cámara, para una publicación. */
+  const takeSquarePhoto = useCallback(async (): Promise<string | null> => {
+    setIsPicking(true);
+    try {
+      if (!(await ensureCameraPermission())) return null;
+      const result =
+        await ImagePicker.launchCameraAsync(SQUARE_CAMERA_OPTIONS);
+      return result.canceled ? null : (result.assets[0]?.uri ?? null);
+    } catch (error) {
+      showAlert("No se pudo abrir la cámara", String(error));
+      return null;
+    } finally {
+      setIsPicking(false);
+    }
+  }, []);
+
   /** Una foto sin recortar, con sus medidas, para ajustarla después en la app. `null` si se cancela. */
   const pickImageWithSize = useCallback(async (): Promise<{
     uri: string;
@@ -168,6 +191,7 @@ export function useImagePicker() {
     pickSquareImage,
     pickCoverImage,
     takeCoverPhoto,
+    takeSquarePhoto,
     pickImageWithSize,
     pickImages,
   };
