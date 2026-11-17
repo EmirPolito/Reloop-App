@@ -43,21 +43,23 @@ export function BarraNavegacion() {
   }, [visible, opacidad]);
   const estilo = useAnimatedStyle(() => ({ opacity: opacidad.get() }));
 
-  // Dos toques seguidos no deben abrir dos veces la misma pantalla
-  const ultimoToque = useRef(0);
-  const conBloqueo = useCallback((accion: () => void) => {
+  // Dos toques seguidos al mismo destino no deben abrir dos veces la misma pantalla; los que
+  // van a destinos distintos sí pasan (si no, tocar rápido otra pestaña "no hacía nada")
+  const ultimoToque = useRef({ clave: "", hora: 0 });
+  const conBloqueo = useCallback((clave: string, accion: () => void) => {
     const ahora = Date.now();
-    if (ahora - ultimoToque.current < BLOQUEO_MS) return;
-    ultimoToque.current = ahora;
+    const anterior = ultimoToque.current;
+    if (anterior.clave === clave && ahora - anterior.hora < BLOQUEO_MS) return;
+    ultimoToque.current = { clave, hora: ahora };
     accion();
   }, []);
 
   const alIrAPestana = useCallback(
-    (tab: Tab) => conBloqueo(() => navigate(tab)),
+    (tab: Tab) => conBloqueo(tab, () => navigate(tab)),
     [conBloqueo, navigate],
   );
   const alAbrirNotificaciones = useCallback(
-    () => conBloqueo(openNotifications),
+    () => conBloqueo("notificaciones", openNotifications),
     [conBloqueo, openNotifications],
   );
 

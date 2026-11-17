@@ -10,23 +10,17 @@ import {
 
 import { CATEGORIES } from "@/features/marketplace/data";
 import { categoryPriceMode } from "@/features/marketplace/rules";
-import type { CategoryId } from "@/features/marketplace/types";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text, TextInput } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
-import { EMPTY_DRAFT, type ProductDraft } from "./draftRules";
+import {
+  EMPTY_DRAFT,
+  FORM_CATEGORY_LABELS,
+  type ProductDraft,
+} from "./draftRules";
 import { usePublishProduct } from "./hooks/usePublishProduct";
-
-/** Texto corto de cada categoría en el selector del formulario. */
-const FORM_CATEGORY_LABELS: Record<CategoryId, string> = {
-  venta: "Vender",
-  cambio: "Cambiar",
-  donacion: "Donar",
-  mascota: "Adopción",
-  comida: "Comida",
-};
 
 export function PantallaCrearPublicacion() {
   const { styles, isDark } = useAppTheme();

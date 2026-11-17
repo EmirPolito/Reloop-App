@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 
 import { useAuth } from "@/features/auth/AuthProvider";
+import { AvisoHost } from "@/features/avisos/AvisosProvider";
 import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
 import { NotificationBannerHost } from "@/features/notificaciones/components/NotificationBannerHost";
 import { BarraNavegacion } from "@/features/navigation/BarraNavegacion";
@@ -30,6 +31,8 @@ export default function AppLayout() {
       <BarraNavegacion />
       {/* Después de la pila: el banner flota encima de cualquier pantalla */}
       <NotificationBannerHost />
+      {/* Avisos de la app (republicada, eliminada...), con el mismo diseño */}
+      <AvisoHost />
       {/* Configuración inicial de las cuentas nuevas (no se puede cerrar hasta terminar) */}
       <SheetBienvenida />
     </SessionProviders>

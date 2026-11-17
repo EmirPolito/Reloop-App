@@ -36,22 +36,6 @@ import Svg, {
 // Helpers de animación
 // ---------------------------------------------------------------------------
 
-const SHINE_SPEED = 55.2;
-const SHINE_WIDTH = 34;
-const SHINE_SKEW = -18;
-const SHINE_RUNWAY = 53;
-const SHINE_PHASE = 1.6;
-
-function shinePeriod(pillWidth: number) {
-  return (pillWidth + SHINE_RUNWAY * 2) / SHINE_SPEED;
-}
-
-function shineOffset(time: number, pillWidth: number) {
-  const period = shinePeriod(pillWidth);
-  const phase = (((time + SHINE_PHASE) % period) + period) % period;
-  return -SHINE_RUNWAY + phase * SHINE_SPEED;
-}
-
 const PARTICLE_LIFE = 2.8;
 const PARTICLE_PEAK = 0.7;
 const PARTICLE_INSET = 16;
@@ -241,47 +225,6 @@ function ParticleDot({ particle }: { particle: Particle }) {
 }
 
 // ---------------------------------------------------------------------------
-// Shine overlay del botón
-// ---------------------------------------------------------------------------
-
-function ShineOverlay({
-  time,
-  buttonWidth,
-}: {
-  time: number;
-  buttonWidth: number;
-}) {
-  const offset = shineOffset(time, buttonWidth);
-  const shineHalf = (SHINE_WIDTH / 2) * Math.cos((SHINE_SKEW * Math.PI) / 180);
-
-  if (offset + shineHalf <= 0 || offset - shineHalf >= buttonWidth) {
-    return null;
-  }
-
-  const start = Math.max(0, Math.min(0.98, (offset - shineHalf) / buttonWidth));
-  const mid = Math.max(start + 0.01, Math.min(0.99, offset / buttonWidth));
-  const end = Math.max(
-    mid + 0.01,
-    Math.min(1, (offset + shineHalf) / buttonWidth),
-  );
-
-  return (
-    <LinearGradient
-      colors={[
-        "rgba(255,255,255,0)",
-        "rgba(255,255,255,0.9)",
-        "rgba(255,255,255,0)",
-      ]}
-      locations={[start, mid, end]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={StyleSheet.absoluteFill}
-      pointerEvents="none"
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
@@ -307,7 +250,6 @@ export function TarjetaPremium({
 
   // Layout
   const [bannerSize, setBannerSize] = useState({ width: 0, height: 0 });
-  const [buttonWidth, setButtonWidth] = useState(0);
 
   // Reloj de animación
   const [clockTime, setClockTime] = useState(0);
@@ -334,10 +276,6 @@ export function TarjetaPremium({
   const onBannerLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setBannerSize({ width, height });
-  }, []);
-
-  const onButtonLayout = useCallback((e: LayoutChangeEvent) => {
-    setButtonWidth(e.nativeEvent.layout.width);
   }, []);
 
   const tamanoInsignia = Math.round(
@@ -415,7 +353,7 @@ export function TarjetaPremium({
               {detalle}
             </Text>
 
-            <View onLayout={onButtonLayout} style={styles.buttonOuter}>
+            <View style={styles.buttonOuter}>
               <Animated.View
                 style={[styles.button, { transform: [{ scale }] }]}
               >
@@ -423,17 +361,6 @@ export function TarjetaPremium({
                   style={[StyleSheet.absoluteFill, styles.buttonRim]}
                   pointerEvents="none"
                 />
-                {buttonWidth > 0 && (
-                  <View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      { borderRadius: 15, overflow: "hidden" },
-                    ]}
-                    pointerEvents="none"
-                  >
-                    <ShineOverlay time={clockTime} buttonWidth={buttonWidth} />
-                  </View>
-                )}
                 <ArrowCircleUpIcon size={19} />
                 <Text style={styles.buttonLabel}>{accionLabel}</Text>
               </Animated.View>
@@ -459,7 +386,7 @@ const styles = StyleSheet.create({
     width: "100%",
     overflow: "hidden",
     borderRadius: 20,
-    minHeight: 110,
+    minHeight: 105,
   },
   card: {
     flex: 1,
@@ -502,8 +429,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 15,
     paddingVertical: 5,
-    paddingStart: 6,
-    paddingEnd: 16,
+    paddingHorizontal: 14,
     minHeight: 30,
     minWidth: 125,
     overflow: "hidden",

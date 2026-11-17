@@ -11,6 +11,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -110,6 +111,42 @@ export async function createProduct(data: NewProductData): Promise<string> {
     creadoEn: serverTimestamp(),
   });
   return ref.id;
+}
+
+/** Cambios que la dueña puede hacer a su publicación (ver `validOwnerEdit` en las reglas). */
+export interface ProductEdits {
+  name: string;
+  description: string;
+  category: CategoryId;
+  price: number;
+  /** URL ya subida a Cloudinary */
+  imageUrl: string | null;
+  /** La categoría cambió: las calificaciones vuelven a empezar como en una publicación nueva */
+  resetRatings: boolean;
+}
+
+/** Guarda la edición de una publicación propia. */
+export async function updateProduct(
+  productId: string,
+  { resetRatings, ...edits }: ProductEdits,
+): Promise<void> {
+  const rated = allowsProductRating(edits.category);
+  await updateDoc(doc(db, PRODUCTS, productId), {
+    ...edits,
+    ...(resetRatings
+      ? { ratingTotal: rated ? 5 : 0, ratingCount: rated ? 1 : 0 }
+      : {}),
+  });
+}
+
+/** Republica: renueva la fecha de creación, así vuelve a salir al principio del inicio. */
+export async function republishProduct(productId: string): Promise<void> {
+  await updateDoc(doc(db, PRODUCTS, productId), { creadoEn: serverTimestamp() });
+}
+
+/** Borra una publicación propia. */
+export async function deleteProduct(productId: string): Promise<void> {
+  await deleteDoc(doc(db, PRODUCTS, productId));
 }
 
 /** Actualiza el nombre de vendedor en las publicaciones de la persona que aún muestran otro. */

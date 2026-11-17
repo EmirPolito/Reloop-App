@@ -73,7 +73,12 @@ export function PublicacionesPerfil({
     if (items.length) {
       return (
         <View style={styles.abanico}>
-          <ListaPublicaciones items={items} isDark={isDark} onOpen={onOpen} />
+          <ListaPublicaciones
+              items={items}
+              isDark={isDark}
+              isOwn={isOwn}
+              onOpen={onOpen}
+            />
         </View>
       );
     }

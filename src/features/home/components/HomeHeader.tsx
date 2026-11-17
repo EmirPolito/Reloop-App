@@ -36,7 +36,7 @@ export const HomeHeader = memo(function HomeHeader({
   return (
     <View className="w-full">
       <View className="flex-row items-center justify-between gap-3 pt-[5px]">
-        {/* Logo — lado izquierdo, igual peso que el lado derecho para centrar UTSV */}
+        {/* Logo — lado izquierdo */}
         <View className="flex-1 min-w-0 flex-row items-center gap-2">
           <Image
             accessibilityLabel="Logo ReLoop"
@@ -46,11 +46,9 @@ export const HomeHeader = memo(function HomeHeader({
           />
         </View>
 
-        {/* Universidad — centrada en la fila; al tocarla se despliega el menú */}
-        <SelectorUniversidad />
-
-        {/* Campana — lado derecho, mismo peso que el logo */}
-        <View className="flex-1 items-end">
+        {/* Lado derecho: el círculo de la universidad (abre su menú) a la izquierda de la campana */}
+        <View className="flex-row items-center gap-2">
+          <SelectorUniversidad />
           <NotificationBellButton />
         </View>
       </View>

@@ -12,6 +12,7 @@ import {
   IconoPublicaciones,
 } from "@/features/perfil/Perfiliconos";
 import { Text } from "@/features/shared/Text";
+import { useLatestRef } from "@/hooks/useLatestRef";
 import type { IconName } from "@/features/shared/constants";
 import { BlurView } from "expo-blur";
 import {
@@ -91,8 +92,12 @@ const ICONOS_LINEA: Partial<
 /*  Animaciones Liquid Glass (curva fluida estilo Apple en hilo de UI)        */
 /* -------------------------------------------------------------------------- */
 
-/** Arranca rápido y frena con suavidad sedosa, sin rebote excesivo */
-const SPRING_PILDORA = { damping: 26, stiffness: 185, mass: 0.92 };
+/**
+ * Arranca rápido y frena con suavidad, casi sin rebote. Es un resorte rígido (asienta en
+ * ~0.2 s): el anterior era igual de amortiguado pero tan blando que tardaba más de medio
+ * segundo en llegar y se sentía lento.
+ */
+const SPRING_PILDORA = { damping: 30, stiffness: 340, mass: 0.8 };
 const APARECER = { duration: 180, easing: Easing.out(Easing.cubic) };
 
 const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.22, 1, 0.36, 1) };
@@ -398,9 +403,13 @@ export function Navegacion({
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const menu = useSharedValue(0);
 
-  useEffect(() => {
+  // Al llegar la pestaña de verdad, se descarta la que se esperaba (se ajusta durante el
+  // render: con un efecto la barra se dibujaba una vez de más en cada cambio)
+  const [tabPrevia, setTabPrevia] = useState(activeTab);
+  if (tabPrevia !== activeTab) {
+    setTabPrevia(activeTab);
     setPendingTab(null);
-  }, [activeTab]);
+  }
 
   const tabEfectivo = pendingTab ?? activeTab;
   const indiceTab = NAV_TABS.findIndex((tab) => tab.id === tabEfectivo);
@@ -416,6 +425,43 @@ export function Navegacion({
   const arrastrando = useSharedValue(0);
   const inicioArrastre = useSharedValue(0);
   const anchoHueco = useSharedValue(0);
+
+  /** Desliza la píldora a un hueco con el estiramiento de siempre (todo en el hilo de UI) */
+  const moverPildora = useCallback(
+    (hueco: number, conEstiramiento: boolean) => {
+      posicion.set(withSpring(hueco, SPRING_PILDORA));
+      if (conEstiramiento) {
+        estirar.set(
+          withSequence(
+            withTiming(0.11, {
+              duration: 150,
+              easing: Easing.out(Easing.cubic),
+            }),
+            withSpring(0, { damping: 24, stiffness: 170 }),
+          ),
+        );
+      }
+      indicadorVisible.set(withTiming(1, APARECER));
+    },
+    [posicion, estirar, indicadorVisible],
+  );
+
+  /**
+   * Al tocar una pestaña la píldora arranca en ese mismo instante y la navegación (que es lo
+   * pesado: monta la pantalla) se manda un cuadro después. Así el toque se siente inmediato y
+   * la animación ya corre en el hilo de UI cuando el hilo de JS se ocupa de la pantalla nueva.
+   */
+  const irAPestana = useCallback(
+    (hueco: number, tabId: Tab) => {
+      if (huecoAnterior.current !== hueco) {
+        // El efecto de abajo ya no repite esta animación
+        ultimoIndiceArrastrado.current = hueco;
+        moverPildora(hueco, huecoAnterior.current >= 0);
+      }
+      requestAnimationFrame(() => onNavigate(tabId));
+    },
+    [moverPildora, onNavigate],
+  );
 
   useEffect(() => {
     if (huecoActivo >= 0) {
@@ -485,7 +531,7 @@ export function Navegacion({
   const handleCrearPublicacion = useCallback(() => {
     setPendingTab("create");
     cerrarMenu();
-    onNavigate("create");
+    requestAnimationFrame(() => onNavigate("create"));
   }, [cerrarMenu, onNavigate]);
 
   const handleTabPress = useCallback(
@@ -493,13 +539,16 @@ export function Navegacion({
       if (tabId !== activeTab) {
         setPendingTab(tabId);
         if (menuAbierto) cerrarMenu();
-        onNavigate(tabId);
+        irAPestana(
+          NAV_TABS.findIndex((tab) => tab.id === tabId),
+          tabId,
+        );
       } else {
         setPendingTab(null);
         if (menuAbierto) cerrarMenu();
       }
     },
-    [activeTab, cerrarMenu, menuAbierto, onNavigate],
+    [activeTab, cerrarMenu, irAPestana, menuAbierto],
   );
 
   const handleCreatePress = useCallback(() => {
@@ -532,6 +581,14 @@ export function Navegacion({
       }
     },
     [abrirMenu, activeTab, cerrarMenu, menuAbierto, onNavigate],
+  );
+
+  // El gesto llama siempre a la última versión del manejador sin volver a crearse: si se
+  // creara de nuevo con cada cambio de estado, un arrastre en curso podía cortarse
+  const handleDropRef = useLatestRef(handleDropNavigate);
+  const soltarEnHueco = useCallback(
+    (hueco: number) => handleDropRef.current(hueco),
+    [handleDropRef],
   );
 
   /** Gesto horizontal para jalar la píldora Liquid Glass por los 5 botones y soltarla */
@@ -573,8 +630,8 @@ export function Navegacion({
 
           posicion.set(conResistencia);
 
-          const deformacion = Math.min(Math.abs(e.velocityX) / 2200, 0.18);
-          estirar.set(withTiming(deformacion, { duration: 80 }));
+          // Directo, sin crear una animación nueva en cada cuadro del arrastre
+          estirar.set(Math.min(Math.abs(e.velocityX) / 2200, 0.18));
         })
         .onEnd((e) => {
           const ancho = anchoHueco.get();
@@ -601,7 +658,7 @@ export function Navegacion({
           );
           estirar.set(withSpring(0, { damping: 24, stiffness: 180 }));
 
-          scheduleOnRN(handleDropNavigate, objetivo);
+          scheduleOnRN(soltarEnHueco, objetivo);
         })
         .onFinalize(() => {
           arrastrando.set(withSpring(0, { damping: 24, stiffness: 190 }));
@@ -611,7 +668,7 @@ export function Navegacion({
       anchoHueco,
       arrastrando,
       estirar,
-      handleDropNavigate,
+      soltarEnHueco,
       indicadorVisible,
       inicioArrastre,
       posicion,

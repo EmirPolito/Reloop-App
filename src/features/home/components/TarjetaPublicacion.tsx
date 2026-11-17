@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -45,6 +45,7 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   onOpen,
   onOpenSeller,
   onToggleFavorite,
+  acciones,
 }: {
   item: Product;
   cardWidth: number;
@@ -53,6 +54,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   /** Recibe el uid de quien vende */
   onOpenSeller: (ownerId: string) => void;
   onToggleFavorite: (productId: string) => void;
+  /** Si se pasa, va en lugar del avatar, el título y el precio (el perfil propio) */
+  acciones?: ReactNode;
 }) {
   const { isDark } = useAppTheme();
   const imageUri = optimizedImageUrl(item.imageUri, cardWidth * 2);
@@ -151,40 +154,44 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           </View>
         </View>
 
-        {/* Avatar a la izquierda y, a su lado, el título con el precio debajo */}
-        <View style={estilos.info}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Ver perfil de ${item.seller}`}
-            onPress={() => onOpenSeller(item.ownerId)}
-            hitSlop={6}
-          >
-            <AvatarVendedor
-              ownerId={item.ownerId}
-              fallbackName={item.seller}
-              size={LADO_AVATAR}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Abrir ${item.name}`}
-            onPress={() => onOpen(item.id)}
-            style={estilos.textos}
-          >
-            <Text
-              numberOfLines={1}
-              style={[estilos.titulo, { color: colorTexto }]}
-            >
-              {item.name}
-            </Text>
-            <Text
-              numberOfLines={1}
-              style={[estilos.precio, { color: colorTexto }]}
-            >
-              {precio}
-            </Text>
-          </Pressable>
-        </View>
+        {acciones ?? (
+          <>
+            {/* Avatar a la izquierda y, a su lado, el título con el precio debajo */}
+            <View style={estilos.info}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Ver perfil de ${item.seller}`}
+                onPress={() => onOpenSeller(item.ownerId)}
+                hitSlop={6}
+              >
+                <AvatarVendedor
+                  ownerId={item.ownerId}
+                  fallbackName={item.seller}
+                  size={LADO_AVATAR}
+                />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir ${item.name}`}
+                onPress={() => onOpen(item.id)}
+                style={estilos.textos}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={[estilos.titulo, { color: colorTexto }]}
+                >
+                  {item.name}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={[estilos.precio, { color: colorTexto }]}
+                >
+                  {precio}
+                </Text>
+              </Pressable>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );

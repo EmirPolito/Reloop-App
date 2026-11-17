@@ -1,22 +1,26 @@
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { filterProducts, premiumPrimero } from "@/features/marketplace/feedFilters";
-import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
 import {
-  UNIVERSIDAD_PROPIA,
-  universidadPorId,
-} from "@/features/marketplace/universidades";
+  filterProducts,
+  premiumPrimero,
+} from "@/features/marketplace/feedFilters";
+import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
+
+import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
+import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import {
   useMarketplaceActions,
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
+import {
+  UNIVERSIDAD_PROPIA,
+  universidadPorId,
+} from "@/features/marketplace/universidades";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
-import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
-import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { memo, useCallback, useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { CategoryRow } from "./components/CategoryRow";
@@ -46,8 +50,7 @@ export const HomeScreen = memo(function HomeScreen() {
     filters,
     universidad,
   } = useMarketplaceState();
-  const { setQuery, toggleCategory, reload } =
-    useMarketplaceActions();
+  const { setQuery, toggleCategory, reload } = useMarketplaceActions();
   const toggleFavorite = useToggleFavorite();
   const { openProduct, openUserProfile } = useAppNavigation();
   const cardWidth = useProductCardWidth();
@@ -58,7 +61,8 @@ export const HomeScreen = memo(function HomeScreen() {
   const products = useMemo(
     () =>
       todos.filter(
-        (product) => (product.universidad ?? UNIVERSIDAD_PROPIA) === universidad,
+        (product) =>
+          (product.universidad ?? UNIVERSIDAD_PROPIA) === universidad,
       ),
     [todos, universidad],
   );
@@ -95,10 +99,7 @@ export const HomeScreen = memo(function HomeScreen() {
           );
         case "sectionTitle":
           return (
-            <SectionTitle
-              activeCategory={activeCategory}
-              count={item.count}
-            />
+            <SectionTitle activeCategory={activeCategory} count={item.count} />
           );
         case "users":
           return (

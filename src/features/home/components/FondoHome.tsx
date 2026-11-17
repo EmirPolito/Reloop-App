@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { memo } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
@@ -49,7 +50,7 @@ const OSCURO: Record<(typeof MANCHAS)[number]["id"], string> = {
  * degradados radiales de SVG y un degradado lineal, sin imágenes. Cubre también la barra de
  * estado, que queda sin color propio. Va detrás de todo y no recibe toques.
  */
-export function FondoHome({
+export const FondoHome = memo(function FondoHome({
   intensidad = 1,
   dentroDeEscena = true,
   colorBase,
@@ -133,7 +134,7 @@ export function FondoHome({
       />
     </View>
   );
-}
+});
 
 const estilos = StyleSheet.create({
   fondo: { position: "absolute", left: 0, right: 0, bottom: 0 },
