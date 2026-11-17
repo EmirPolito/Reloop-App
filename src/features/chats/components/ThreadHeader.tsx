@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
-import { Avatar } from "@/components/ui/Avatar";
+import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import {
   THREAD_HEADER_CONTENT_HEIGHT,
   THREAD_HEADER_Z,
@@ -14,10 +14,11 @@ import { BackArrowIcon, CategoryIcon } from "./ThreadIcons";
 
 function roundButtonStyle(isDark: boolean) {
   return {
-    width: 45,
-    height: 45,
-    borderRadius: 30,
-    backgroundColor: isDark ? "#ffffff1a" : "#ffffffb7",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    // Blanco liso en claro: translúcido se veía gris sobre el fondo
+    backgroundColor: isDark ? "#ffffff1a" : "#FFFFFF",
     borderWidth: 2,
     borderColor: isDark ? "#ffffff33" : "#ffffffff",
     alignItems: "center",
@@ -27,11 +28,14 @@ function roundButtonStyle(isDark: boolean) {
 
 /** Encabezado flotante del chat: volver, contacto (abre su perfil) y menú. */
 export function ThreadHeader({
+  contactId,
   contactName,
   onBack,
   onOpenProfile,
   onOpenMenu,
 }: {
+  /** uid del contacto: de ahí sale su avatar de ahora y si tiene insignia */
+  contactId: string;
   contactName: string;
   onBack: () => void;
   onOpenProfile: () => void;
@@ -98,7 +102,7 @@ export function ThreadHeader({
         style={buttonStyle}
       >
         <View style={{ transform: [{ translateX: -1.5 }] }}>
-          <BackArrowIcon size={26} color={iconColor} />
+          <BackArrowIcon size={28} color={iconColor} />
         </View>
       </PressableScale>
 
@@ -110,7 +114,11 @@ export function ThreadHeader({
           onPress={onOpenProfile}
           scaleTo={0.94}
         >
-          <Avatar name={contactName} size={45} />
+          <AvatarVendedor
+            ownerId={contactId}
+            fallbackName={contactName}
+            size={45}
+          />
         </PressableScale>
 
         <Text

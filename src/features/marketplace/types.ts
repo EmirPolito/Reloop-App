@@ -56,5 +56,9 @@ export type Chat = {
   lastMessage: ChatPreview | null;
   /** El último mensaje es de la otra persona y aún no se ha leído */
   unread: boolean;
+  /** Cuándo leyó esta persona el chat por última vez (ms; 0 si nunca) */
+  readAt: number;
+  /** Cuándo lo leyó la otra persona (ms; 0 si nunca): dice si vio mi último mensaje */
+  otherReadAt: number;
   updatedAt: number;
 };

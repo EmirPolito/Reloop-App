@@ -29,6 +29,9 @@ const PREVIEW_CONTAINER_OUT = FadeOutDown.duration(240);
 const PREVIEW_ITEM_OUT = FadeOut.duration(220);
 const PREVIEW_LAYOUT = LinearTransition.duration(320).easing(SOFT_EASE);
 
+/** Cuánto sube de más el composer cuando el teclado está abierto (px) */
+const HUECO_SOBRE_TECLADO = 8;
+
 /** Claves estables para las miniaturas (así la salida y el reacomodo animan la correcta). */
 function usePreviewKeys(images: string[]): string[] {
   return useMemo(() => {
@@ -73,7 +76,12 @@ export function MessageComposer({
   const bottomInset = insets.bottom;
   const liftStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: -Math.max(keyboard.height.value - bottomInset, 0) },
+      {
+        // Con el teclado abierto queda un poco más arriba de él (el hueco aparece junto con el teclado)
+        translateY:
+          -Math.max(keyboard.height.get() - bottomInset, 0) -
+          Math.min(keyboard.height.get() / 40, 1) * HUECO_SOBRE_TECLADO,
+      },
     ],
   }));
 
@@ -172,11 +180,11 @@ export function MessageComposer({
             backgroundColor: isDark ? "#1E293Bd9" : "#ffffffd3",
             borderWidth: 2,
             borderColor: isDark ? "#ffffff22" : "#FFFFFF",
-            borderRadius: 30,
-            paddingHorizontal: 5,
-            paddingVertical: 2.5,
-            marginRight: 7,
-            minHeight: 44,
+            borderRadius: 32,
+            paddingHorizontal: 6,
+            paddingVertical: 3,
+            marginRight: 8,
+            minHeight: 54,
           }}
         >
           <Pressable
@@ -184,8 +192,8 @@ export function MessageComposer({
             accessibilityLabel="Adjuntar fotos"
             onPress={onPickImages}
             style={{
-              width: 43,
-              height: 43,
+              width: 46,
+              height: 46,
               borderRadius: 30,
               backgroundColor: isDark ? "#334155" : "#e8e8e8cc",
               alignItems: "center",
@@ -194,7 +202,7 @@ export function MessageComposer({
           >
             <AppIcon
               name="attach"
-              size={22}
+              size={24}
               color={isDark ? "#F1F5F9" : "#101010"}
             />
           </Pressable>
@@ -214,9 +222,9 @@ export function MessageComposer({
                 backgroundColor: "transparent",
                 borderWidth: 0,
                 paddingVertical: 1,
-                paddingLeft: 8.5,
+                paddingLeft: 10,
                 top: 1,
-                fontSize: 13.5,
+                fontSize: 15,
                 color: isDark ? "#FFFFFF" : "#000000",
               },
             ]}

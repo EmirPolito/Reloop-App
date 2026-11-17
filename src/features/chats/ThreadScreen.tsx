@@ -5,17 +5,19 @@ import {
   useState,
   type ComponentRef,
 } from "react";
-import { Keyboard, Platform, ScrollView, View } from "react-native";
+import { ScrollView, View, type LayoutChangeEvent } from "react-native";
 import Animated, {
   FadeIn,
   useAnimatedKeyboard,
   useAnimatedStyle,
+  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BackHeader } from "@/components/ui/BackHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { FondoHome } from "@/features/home/components/FondoHome";
 import { useProduct } from "@/features/marketplace/hooks/useProductsByIds";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -38,6 +40,8 @@ import {
 } from "./threadLayout";
 
 const NO_IMAGES: string[] = [];
+/** Fondo liso de la conversación: un poco menos blanco que el de los chats */
+const FONDO_CONVERSACION = "#F4F4F6";
 
 export function ThreadScreen({ chatId }: { chatId: string }) {
   const insets = useSafeAreaInsets();
@@ -59,11 +63,21 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const [sending, setSending] = useState(false);
   const [viewer, setViewer] = useState({ images: NO_IMAGES, initialIndex: 0 });
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
-  // El teclado achica la lista (el composer sube con él, ver MessageComposer)
+  // Con el teclado la lista sube con una transformación (que corre en el hilo de UI y no
+  // obliga a recalcular el tamaño de todos los mensajes en cada cuadro, como hacía el margen).
+  // Solo sube lo que hace falta: una conversación corta no se mueve ni se esconde.
   const keyboard = useAnimatedKeyboard();
-  const listStyle = useAnimatedStyle(() => ({
-    marginBottom: keyboard.height.value,
-  }));
+  const alturaLista = useSharedValue(0);
+  const alturaContenido = useSharedValue(0);
+  const listStyle = useAnimatedStyle(() => {
+    const visible = alturaLista.get();
+    const ocupado = Math.min(alturaContenido.get(), visible);
+    const subir = Math.min(
+      keyboard.height.get(),
+      Math.max(0, ocupado - (visible - keyboard.height.get())),
+    );
+    return { transform: [{ translateY: -subir }] };
+  });
 
   const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { product: relatedProduct } = useProduct(activeChat?.productId);
@@ -76,15 +90,6 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
       console.warn("No se pudo marcar el chat como leído.", error),
     );
   }, [unread, chatId, markRead]);
-
-  // Al abrir el teclado la lista se achica: mantener visible el último mensaje
-  useEffect(() => {
-    const event = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const sub = Keyboard.addListener(event, () =>
-      scrollRef.current?.scrollToEnd({ animated: true }),
-    );
-    return () => sub.remove();
-  }, []);
 
   async function handleSend() {
     const text = messageDraft.trim();
@@ -159,6 +164,13 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
 
   return (
     <View style={styles.fill}>
+      {/* El fondo de los chats, sin sus colores: solo el blanco liso de abajo */}
+      <FondoHome
+        intensidad={0}
+        dentroDeEscena={false}
+        colorBase={FONDO_CONVERSACION}
+      />
+
       {/* 1. Los mensajes van PRIMERO y sin marginTop:
           ocupan toda la pantalla y pasan por detrás del header */}
       <Animated.ScrollView
@@ -178,14 +190,24 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
         scrollIndicatorInsets={{ top: fixedTop }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() =>
-          scrollRef.current?.scrollToEnd({ animated: false })
+        onLayout={(e: LayoutChangeEvent) =>
+          alturaLista.set(e.nativeEvent.layout.height)
         }
+        onContentSizeChange={(_, alto) => {
+          alturaContenido.set(alto);
+          scrollRef.current?.scrollToEnd({ animated: false });
+        }}
       >
         {messages.map((message, index) => (
           <MessageBubble
             key={message.id}
             message={message}
+            contactId={activeChat.otherId}
+            contactName={activeChat.name}
+            // El avatar sale en el primer mensaje de cada racha de la otra persona
+            showAvatar={
+              message.from === "them" && messages[index - 1]?.from !== "them"
+            }
             isNew={index >= initialCount}
             onOpenImages={openImageViewer}
           />
@@ -202,6 +224,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
 
       {/* 3. El header va DESPUÉS de la lista, así queda por encima */}
       <ThreadHeader
+        contactId={activeChat.otherId}
         contactName={activeChat.name}
         onBack={back}
         onOpenProfile={() => openUserProfile(activeChat.otherId)}

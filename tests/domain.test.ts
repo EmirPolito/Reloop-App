@@ -279,7 +279,7 @@ describe("filas del inicio", () => {
 
 describe("búsqueda de chats", () => {
   const chat = (over: Partial<Chat>): Chat => ({
-    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, updatedAt: 0, ...over,
+    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, readAt: 0, otherReadAt: 0, updatedAt: 0, ...over,
   });
   const chats = [
     chat({ id: "1", name: "Beto", productId: "p1" }),

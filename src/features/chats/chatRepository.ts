@@ -9,6 +9,7 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  Timestamp,
   updateDoc,
   where,
   writeBatch,
@@ -23,6 +24,8 @@ import { chatIdFor, introMessageFor, mapChat, mapMessage } from "./chatMappers";
 const CHATS = "chats";
 const MESSAGES = "mensajes";
 const MESSAGES_LIMIT = 300;
+/** Tope al contar mensajes sin leer: a partir de ahí la lista muestra "+9" */
+const MAX_SIN_LEER = 10;
 
 type OnError = (error: unknown) => void;
 
@@ -66,6 +69,30 @@ export function subscribeMessages(
   return onSnapshot(
     messages,
     (snapshot) => onData(snapshot.docs.map((item) => mapMessage(item, uid))),
+    onError,
+  );
+}
+
+/**
+ * Cuántos mensajes de la otra persona llegaron después de `readAt` (se cuentan hasta
+ * `MAX_SIN_LEER`), en tiempo real. Los mensajes propios no cuentan.
+ */
+export function subscribeUnreadCount(
+  chatId: string,
+  uid: string,
+  readAt: number,
+  onData: (count: number) => void,
+  onError: OnError,
+): Unsubscribe {
+  const pending = query(
+    collection(db, CHATS, chatId, MESSAGES),
+    where("creadoEn", ">", Timestamp.fromMillis(readAt)),
+    limit(MAX_SIN_LEER),
+  );
+  return onSnapshot(
+    pending,
+    (snapshot) =>
+      onData(snapshot.docs.filter((item) => item.data().from !== uid).length),
     onError,
   );
 }

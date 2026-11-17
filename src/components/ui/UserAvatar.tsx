@@ -99,6 +99,6 @@ function AvatarBase({
 }
 
 const estilos = StyleSheet.create({
-  // Sobresale unos píxeles por la esquina para que no tape la cara del avatar
-  insignia: { position: "absolute", right: -3, bottom: -3 },
+  // Sobresale por abajo y casi no por la derecha, para que no tape la cara del avatar
+  insignia: { position: "absolute", right: -2, bottom: -6 },
 });

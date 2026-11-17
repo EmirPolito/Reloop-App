@@ -21,6 +21,7 @@ import { useChats } from "./ChatProvider";
 import { filterChats } from "./chatSelectors";
 import { BulkMessageIcon, BulkSearchIcon } from "./components/ChatIcons";
 import { ChatListItem } from "./components/ChatListItem";
+import { useMensajesSinLeer } from "./hooks/useMensajesSinLeer";
 import { BackArrowIcon } from "./components/ThreadIcons";
 
 /** Todos, los que tienen mensajes sin leer o los que hablan de una publicación */
@@ -49,6 +50,7 @@ export function ChatsScreen() {
     [chats],
   );
   const { products } = useProductsByIds(productIds);
+  const sinLeerPorChat = useMensajesSinLeer(chats);
 
   // Con "@" al inicio se busca por persona (su usuario o su nombre)
   const modoBusqueda = modoDeBusqueda(busqueda);
@@ -147,7 +149,8 @@ export function ChatsScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{
-              paddingHorizontal: 15,
+              // Más ancha que otras listas: los chats abarcan más de lado a lado
+              paddingHorizontal: 6,
               paddingTop: 12,
               // Espacio para que la barra de navegación no tape el último chat
               paddingBottom: insets.bottom + 110,
@@ -155,10 +158,11 @@ export function ChatsScreen() {
             renderItem={({ item }) => (
               <ChatListItem
                 chat={item}
-                productName={
+                categoria={
                   products.find((product) => product.id === item.productId)
-                    ?.name
+                    ?.category
                 }
+                sinLeer={item.unread ? (sinLeerPorChat[item.id] ?? 1) : 0}
                 onPress={openThread}
               />
             )}
@@ -220,6 +224,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 20,
   },
-  lista: { flex: 1 },
+  // Un poco más cerca de las píldoras que en otras pantallas
+  lista: { flex: 1, marginTop: -10 },
   vacio: { paddingTop: 110, paddingBottom: 140 },
 });

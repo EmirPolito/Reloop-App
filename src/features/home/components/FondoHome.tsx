@@ -52,17 +52,20 @@ const OSCURO: Record<(typeof MANCHAS)[number]["id"], string> = {
 export function FondoHome({
   intensidad = 1,
   dentroDeEscena = true,
+  colorBase,
 }: {
   /** Qué tan marcados se ven los colores de arriba (1 = como en el inicio) */
   intensidad?: number;
   /** En una pestaña la escena deja libre el espacio de la hora y el fondo sube a cubrirlo; en una pantalla que ya empieza arriba del todo, no */
   dentroDeEscena?: boolean;
+  /** Color liso de fondo en lugar del blanco de siempre (en claro) */
+  colorBase?: string;
 }) {
   const { isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
 
-  const base = isDark ? APP_BACKGROUND.dark : BASE_CLARO;
+  const base = isDark ? APP_BACKGROUND.dark : (colorBase ?? BASE_CLARO);
   // El resplandor llega hasta arriba del todo: se suma lo que la escena deja para la hora
   const alto = Math.round(height * PROPORCION_ALTO) + insets.top;
 

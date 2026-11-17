@@ -67,7 +67,7 @@ export function NotificationLeading({
             pointerEvents="none"
             style={[
               styles.insignia,
-              { width: insignia, height: insignia, right: -2, bottom: -2 },
+              { width: insignia, height: insignia, right: -1, bottom: -5 },
             ]}
           >
             <PremiumBadge size={insignia} variant="static" />
