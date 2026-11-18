@@ -461,6 +461,175 @@ export function IconoLuna({ size = 24, color = "#6366F1" }: IconoProps) {
   );
 }
 
+/** Candado de contorno (cambiar contraseña) — Iconly Light Lock */
+export function IconoCandadoLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(3.5, 2)"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M12.9234,7.4478 L12.9234,5.3008 C12.9234,2.7878 10.8854,0.749755462 8.3724,0.749755462 C5.8594,0.7388 3.8134,2.7668 3.8024,5.2808 L3.8024,5.3008 L3.8024,7.4478" />
+        <Path d="M12.1832,19.2496 L4.5422,19.2496 C2.4482,19.2496 0.7502,17.5526 0.7502,15.4576 L0.7502,11.1686 C0.7502,9.0736 2.4482,7.3766 4.5422,7.3766 L12.1832,7.3766 C14.2772,7.3766 15.9752,9.0736 15.9752,11.1686 L15.9752,15.4576 C15.9752,17.5526 14.2772,19.2496 12.1832,19.2496 Z" />
+        <Path d="M8.3629,12.2027 L8.3629,14.4237" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Campana de contorno (notificaciones) — Iconly Light Notification */
+export function IconoNotificacionLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(3.5, 2)"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M8.5,15.8476424 C14.13923,15.8476424 16.7480515,15.1242108 17,12.220506 C17,9.31879687 15.1811526,9.50539234 15.1811526,5.94511102 C15.1811526,3.16414015 12.5452291,0 8.5,0 C4.4547709,0 1.81884743,3.16414015 1.81884743,5.94511102 C1.81884743,9.50539234 0,9.31879687 0,12.220506 C0.252952291,15.135187 2.86177374,15.8476424 8.5,15.8476424 Z" />
+        <Path d="M10.8887931,18.8572176 C9.52465753,20.3719337 7.3966462,20.3898948 6.0194615,18.8572176" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Hoja con esquina doblada (términos y condiciones) — Iconly Light Paper */
+export function IconoPapelLinea({ size = 24, color = "#000000" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(3.5, 2)"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M11.2378,0.761771171 L4.5848,0.761771171 C2.5048,0.7538 0.7998,2.4118 0.7508,4.4908 L0.7508,15.2038 C0.7048,17.3168 2.3798,19.0678 4.4928,19.1148 C4.5238,19.1148 4.5538,19.1158 4.5848,19.1148 L12.5738,19.1148 C14.6678,19.0298 16.3178,17.2998 16.3029015,15.2038 L16.3029015,6.0378 L11.2378,0.761771171 Z" />
+        <Path d="M10.9751,0.75 L10.9751,3.659 C10.9751,5.079 12.1231,6.23 13.5431,6.234 L16.2981,6.234" />
+        <Path d="M10.7881,13.3585 L5.3881,13.3585" />
+        <Path d="M8.7432,9.606 L5.3872,9.606" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Documento con líneas (política de privacidad) — Iconly Light Document */
+export function IconoDocumentoLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(3, 2)"
+        stroke={color}
+        strokeWidth={GROSOR_LINEA}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M12.7162,14.2234 L5.4962,14.2234" />
+        <Path d="M12.7162,10.0369 L5.4962,10.0369" />
+        <Path d="M8.2513,5.8601 L5.4963,5.8601" />
+        <Path d="M12.9086,0.7498 C12.9086,0.7498 5.2316,0.7538 5.2196,0.7538 C2.4596,0.7708 0.7506,2.5868 0.7506,5.3568 L0.7506,14.5528 C0.7506,17.3368 2.4726,19.1598 5.2566,19.1598 C5.2566,19.1598 12.9326,19.1568 12.9456,19.1568 C15.7056,19.1398 17.4156,17.3228 17.4156,14.5528 L17.4156,5.3568 C17.4156,2.5728 15.6926,0.7498 12.9086,0.7498 Z" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Puerta con flecha de salida (cerrar sesión) — Iconly Light-Outline Logout */
+export function IconoCerrarSesionLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        transform="translate(2, 2)"
+        fill={color}
+        stroke={color}
+        strokeWidth={GROSOR_RELLENO}
+        strokeLinejoin="round"
+        d="M9.3083,0 C11.7543,0 13.7443,1.99 13.7443,4.436 L13.7443,5.368 C13.7443,5.782 13.4083,6.118 12.9943,6.118 C12.5803,6.118 12.2443,5.782 12.2443,5.368 L12.2443,4.436 C12.2443,2.816 10.9273,1.5 9.3083,1.5 L4.4333,1.5 C2.8163,1.5 1.5003,2.816 1.5003,4.436 L1.5003,15.565 C1.5003,17.184 2.8163,18.5 4.4333,18.5 L9.3193,18.5 C10.9313,18.5 12.2443,17.188 12.2443,15.576 L12.2443,14.633 C12.2443,14.219 12.5803,13.883 12.9943,13.883 C13.4083,13.883 13.7443,14.219 13.7443,14.633 L13.7443,15.576 C13.7443,18.016 11.7583,20 9.3193,20 L4.4333,20 C1.9893,20 0.0003,18.011 0.0003,15.565 L0.0003,4.436 C0.0003,1.99 1.9893,0 4.4333,0 L9.3083,0 Z M17.3884,6.554 L20.3164,9.469 C20.3519,9.5039 20.3833,9.5421 20.4107,9.5828 C20.4227,9.6012 20.4343,9.6203 20.4451,9.6399 C20.4538,9.6552 20.4618,9.6712 20.4693,9.6875 C20.4756,9.7018 20.4817,9.7162 20.4873,9.7308 C20.4948,9.7498 20.5014,9.7693 20.5072,9.7891 C20.5116,9.8047 20.5156,9.8203 20.5191,9.836 C20.5236,9.8551 20.5271,9.8743 20.5298,9.8937 C20.5314,9.9063 20.5329,9.9195 20.5341,9.9328 C20.5364,9.9556 20.5374,9.9777 20.5374,10 L20.5323,10.062 C20.5374,10.0555 20.5313,10.1105 20.5193,10.1639 C20.5156,10.1797 20.5116,10.1953 20.5071,10.2107 C20.5014,10.2307 20.4948,10.2502 20.4874,10.2695 C20.4817,10.2838 20.4756,10.2982 20.4691,10.3123 C20.4618,10.3288 20.4538,10.3448 20.4452,10.3605 C20.4343,10.3797 20.4227,10.3988 20.4103,10.4172 C20.4033,10.4282 20.3956,10.439 20.3876,10.4497 C20.3638,10.481 20.3378,10.5104 20.3098,10.5377 L17.3884,13.447 C17.2424,13.593 17.0504,13.666 16.8594,13.666 C16.6674,13.666 16.4744,13.593 16.3284,13.445 C16.0364,13.151 16.0374,12.677 16.3304,12.385 L17.9703,10.75 L7.7461,10.75 C7.3321,10.75 6.9961,10.414 6.9961,10 C6.9961,9.586 7.3321,9.25 7.7461,9.25 L17.9723,9.25 L16.3304,7.616 C16.0374,7.324 16.0354,6.85 16.3284,6.556 C16.6204,6.262 17.0944,6.262 17.3884,6.554 Z"
+      />
+    </Svg>
+  );
+}
+
+/** Flecha larga hacia la izquierda — Iconly Light Arrow Left 3 */
+export function IconoFlechaIzquierda({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G stroke={color} strokeWidth={1.5} strokeLinecap="square">
+        <Path d="M4.25012 12L20.2499 12" />
+        <Path d="M9.91028 6.33995C9.91028 9.2497 7.3477 12 4.25023 12" />
+        <Path d="M9.91028 17.66C9.91028 14.7503 7.3477 12 4.25023 12" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Flecha larga hacia la derecha — Iconly Light Arrow Right 3 */
+export function IconoFlechaDerecha({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G stroke={color} strokeWidth={1.5} strokeLinecap="square">
+        <Path d="M20.2497 12L4.24993 12" />
+        <Path d="M14.59 17.66C14.59 14.7503 17.1526 12 20.2501 12" />
+        <Path d="M14.59 6.33995C14.59 9.2497 17.1526 12 20.2501 12" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Sol de contorno (Lucide Sun): modo claro */
+export function IconoSolLinea({ size = 24, color = "#F59E0B" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Circle cx={12} cy={12} r={4} />
+        <Path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Luna de contorno (Lucide Moon): modo oscuro */
+export function IconoLunaLinea({ size = 24, color = "#6366F1" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export const PERFIL_ICONS = {
   work: ({ size = 14, color = "#000" }) => (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
