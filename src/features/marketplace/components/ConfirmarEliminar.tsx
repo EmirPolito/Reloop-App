@@ -81,7 +81,7 @@ export function ConfirmarEliminar({
               scaleTo={0.96}
               style={[
                 estilos.boton,
-                { backgroundColor: "#E5484D", opacity: eliminando ? 0.6 : 1 },
+                { backgroundColor: "#F20000", opacity: eliminando ? 0.6 : 1 },
               ]}
             >
               <Text style={[estilos.textoBoton, { color: "#FFFFFF" }]}>

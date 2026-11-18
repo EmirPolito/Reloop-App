@@ -18,7 +18,7 @@ import { republishProduct } from "../productRepository";
 import type { Product } from "../types";
 
 const COLOR_ELIMINAR = "#E5484D";
-const LADO = 40;
+const LADO = 34;
 const GIRO = { duration: 520, easing: Easing.out(Easing.cubic) };
 
 /** Dos flechas en círculo (republicar) — Lucide "repeat-2" */
@@ -103,7 +103,7 @@ export function AccionesPublicacion({
         style={[estilos.boton, { backgroundColor: fondo }]}
       >
         <Animated.View style={estiloGiro}>
-          <IconoRepetir size={20} color={icono} />
+          <IconoRepetir size={18} color={icono} />
         </Animated.View>
       </PressableScale>
 
@@ -114,7 +114,7 @@ export function AccionesPublicacion({
         scaleTo={0.9}
         style={[estilos.boton, { backgroundColor: fondo }]}
       >
-        <IconoEditar size={20} color={icono} />
+        <IconoEditar size={18} color={icono} />
       </PressableScale>
 
       <PressableScale
@@ -127,7 +127,7 @@ export function AccionesPublicacion({
           { backgroundColor: isDark ? "rgba(229,72,77,0.18)" : "#FDECEC" },
         ]}
       >
-        <Ionicons name="trash-outline" size={20} color={COLOR_ELIMINAR} />
+        <Ionicons name="trash-outline" size={18} color={COLOR_ELIMINAR} />
       </PressableScale>
     </View>
   );
@@ -138,8 +138,8 @@ const estilos = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
   },
   boton: {
     width: LADO,

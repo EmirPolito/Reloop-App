@@ -57,9 +57,10 @@ export function useAvisos(): AvisosActions {
   return useRequiredContext(AvisosActionsContext, "AvisosProvider");
 }
 
-const COLORES: Record<TipoAviso, { color: string; fondo: string }> = {
-  exito: { color: "#12915F", fondo: "#DCF5E9" },
-  error: { color: "#FF3762", fondo: "#FFE4EA" },
+/** Color fuerte del círculo de cada tipo de aviso (el icono va en blanco) */
+const COLORES: Record<TipoAviso, string> = {
+  exito: "#34D399",
+  error: "#FF6B88",
 };
 
 /** Dibuja el aviso actual arriba de todo. Va en el layout de la app, junto a los banners. */
@@ -72,7 +73,7 @@ export function AvisoHost() {
   const acciones = useRequiredContext(AvisosActionsContext, "AvisosProvider");
   if (!aviso) return null;
 
-  const { color, fondo } = COLORES[aviso.tipo];
+  const fondo = COLORES[aviso.tipo];
   return (
     <NotificationBanner
       key={aviso.id}
@@ -84,7 +85,7 @@ export function AvisoHost() {
             <Ionicons
               name={aviso.tipo === "exito" ? "checkmark" : "close"}
               size={24}
-              color={color}
+              color="#FFFFFF"
             />
           </View>
         ),

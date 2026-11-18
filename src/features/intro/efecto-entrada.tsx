@@ -24,10 +24,10 @@ import { scheduleOnRN } from "react-native-worklets";
  * hacia el centro del cuerpo, el aro sale de la pantalla por los bordes mientras el fondo
  * se desvanece, así que se "atraviesa" el logo hacia la app.
  */
-const LOGO = require("../../../assets/logo/logo-negro2.png");
+const LOGO = require("../../../assets/logos-intro/logo-negro2.png");
 
 /** Logo con el nombre ("reloop"), justo debajo del icono. */
-const LOGO_NOMBRE = require("../../../assets/images/logoo.png");
+const LOGO_NOMBRE = require("../../../assets/images/logos-reloop/logoo.png");
 const LOGO_NOMBRE_ASPECTO = 1774 / 887; // ancho / alto del PNG
 const LOGO_NOMBRE_ANCHO_MAX = 220; // dp
 const LOGO_NOMBRE_SEPARACION = -4; // dp entre el icono y el nombre

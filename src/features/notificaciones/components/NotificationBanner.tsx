@@ -31,7 +31,7 @@ const ANCHO_RECOGIDA = 116;
 const ALTO_RECOGIDA = 34;
 
 const ANCHO_MAXIMO = 370; // Ancho máximo (tablets o pantallas grandes)
-const ALTO_ABIERTA = 70; // Alto de la card en mobile
+const ALTO_ABIERTA = 65; // Alto de la card en mobile
 const MARGEN = 16; // Margen lateral: más margen = card menos ancha
 const BAJAR_CAPA = 16; // Distancia extra bajo la zona segura (sube/baja la card)
 

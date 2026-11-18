@@ -19,6 +19,8 @@ const PESTANAS: { id: Pestana; label: string }[] = [
 ];
 
 const MARGEN = 3;
+const ALTO = 40;
+const MARGEN_LATERAL = 6;
 const DESLIZAR = { duration: 260, easing: Easing.bezier(0.3, 0, 0.2, 1) };
 
 /** Icono y texto de una pestaña en un solo color */
@@ -126,16 +128,18 @@ export function FilaPestanas({
 const styles = StyleSheet.create({
   barra: {
     flexDirection: "row",
-    height: 44,
-    borderRadius: 22,
+    height: ALTO,
+    borderRadius: ALTO / 2,
     padding: MARGEN,
+    // Un poco menos ancha que la pantalla
+    marginHorizontal: MARGEN_LATERAL,
   },
   pildora: {
     position: "absolute",
     top: MARGEN,
     bottom: MARGEN,
     left: MARGEN,
-    borderRadius: 22 - MARGEN,
+    borderRadius: ALTO / 2 - MARGEN,
   },
   mitad: { flex: 1, alignItems: "center", justifyContent: "center" },
   capaResaltada: {

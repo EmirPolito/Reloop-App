@@ -11,6 +11,8 @@ interface IconoProps {
 
 /** Grosor de los iconos de contorno (1.5 era el original) */
 const GROSOR_LINEA = 1.83;
+/** Iconos de contorno de los ajustes: un poco más finos que el resto */
+const GROSOR_AJUSTES = 1.5;
 
 /** Persona con + (seguir usuario) — Iconly Light Add User */
 export function IconoSeguirUsuario({
@@ -46,13 +48,14 @@ export function IconoSeguirUsuario({
 export function IconoMensajeLinea({
   size = 24,
   color = "#000000",
-}: IconoProps) {
+  grosor = GROSOR_LINEA,
+}: IconoProps & { grosor?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <G
         transform="translate(2, 3)"
         stroke={color}
-        strokeWidth={GROSOR_LINEA}
+        strokeWidth={grosor}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -471,7 +474,7 @@ export function IconoCandadoLinea({
       <G
         transform="translate(3.5, 2)"
         stroke={color}
-        strokeWidth={GROSOR_LINEA}
+        strokeWidth={GROSOR_AJUSTES}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -493,7 +496,7 @@ export function IconoNotificacionLinea({
       <G
         transform="translate(3.5, 2)"
         stroke={color}
-        strokeWidth={GROSOR_LINEA}
+        strokeWidth={GROSOR_AJUSTES}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -511,7 +514,7 @@ export function IconoPapelLinea({ size = 24, color = "#000000" }: IconoProps) {
       <G
         transform="translate(3.5, 2)"
         stroke={color}
-        strokeWidth={GROSOR_LINEA}
+        strokeWidth={GROSOR_AJUSTES}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -534,7 +537,7 @@ export function IconoDocumentoLinea({
       <G
         transform="translate(3, 2)"
         stroke={color}
-        strokeWidth={GROSOR_LINEA}
+        strokeWidth={GROSOR_AJUSTES}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -557,42 +560,48 @@ export function IconoCerrarSesionLinea({
       <Path
         transform="translate(2, 2)"
         fill={color}
-        stroke={color}
-        strokeWidth={GROSOR_RELLENO}
-        strokeLinejoin="round"
         d="M9.3083,0 C11.7543,0 13.7443,1.99 13.7443,4.436 L13.7443,5.368 C13.7443,5.782 13.4083,6.118 12.9943,6.118 C12.5803,6.118 12.2443,5.782 12.2443,5.368 L12.2443,4.436 C12.2443,2.816 10.9273,1.5 9.3083,1.5 L4.4333,1.5 C2.8163,1.5 1.5003,2.816 1.5003,4.436 L1.5003,15.565 C1.5003,17.184 2.8163,18.5 4.4333,18.5 L9.3193,18.5 C10.9313,18.5 12.2443,17.188 12.2443,15.576 L12.2443,14.633 C12.2443,14.219 12.5803,13.883 12.9943,13.883 C13.4083,13.883 13.7443,14.219 13.7443,14.633 L13.7443,15.576 C13.7443,18.016 11.7583,20 9.3193,20 L4.4333,20 C1.9893,20 0.0003,18.011 0.0003,15.565 L0.0003,4.436 C0.0003,1.99 1.9893,0 4.4333,0 L9.3083,0 Z M17.3884,6.554 L20.3164,9.469 C20.3519,9.5039 20.3833,9.5421 20.4107,9.5828 C20.4227,9.6012 20.4343,9.6203 20.4451,9.6399 C20.4538,9.6552 20.4618,9.6712 20.4693,9.6875 C20.4756,9.7018 20.4817,9.7162 20.4873,9.7308 C20.4948,9.7498 20.5014,9.7693 20.5072,9.7891 C20.5116,9.8047 20.5156,9.8203 20.5191,9.836 C20.5236,9.8551 20.5271,9.8743 20.5298,9.8937 C20.5314,9.9063 20.5329,9.9195 20.5341,9.9328 C20.5364,9.9556 20.5374,9.9777 20.5374,10 L20.5323,10.062 C20.5374,10.0555 20.5313,10.1105 20.5193,10.1639 C20.5156,10.1797 20.5116,10.1953 20.5071,10.2107 C20.5014,10.2307 20.4948,10.2502 20.4874,10.2695 C20.4817,10.2838 20.4756,10.2982 20.4691,10.3123 C20.4618,10.3288 20.4538,10.3448 20.4452,10.3605 C20.4343,10.3797 20.4227,10.3988 20.4103,10.4172 C20.4033,10.4282 20.3956,10.439 20.3876,10.4497 C20.3638,10.481 20.3378,10.5104 20.3098,10.5377 L17.3884,13.447 C17.2424,13.593 17.0504,13.666 16.8594,13.666 C16.6674,13.666 16.4744,13.593 16.3284,13.445 C16.0364,13.151 16.0374,12.677 16.3304,12.385 L17.9703,10.75 L7.7461,10.75 C7.3321,10.75 6.9961,10.414 6.9961,10 C6.9961,9.586 7.3321,9.25 7.7461,9.25 L17.9723,9.25 L16.3304,7.616 C16.0374,7.324 16.0354,6.85 16.3284,6.556 C16.6204,6.262 17.0944,6.262 17.3884,6.554 Z"
       />
     </Svg>
   );
 }
 
-/** Flecha larga hacia la izquierda — Iconly Light Arrow Left 3 */
+/** Flecha hacia la izquierda, de contorno: la de la derecha en espejo */
 export function IconoFlechaIzquierda({
   size = 24,
   color = "#000000",
 }: IconoProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G stroke={color} strokeWidth={1.5} strokeLinecap="square">
-        <Path d="M4.25012 12L20.2499 12" />
-        <Path d="M9.91028 6.33995C9.91028 9.2497 7.3477 12 4.25023 12" />
-        <Path d="M9.91028 17.66C9.91028 14.7503 7.3477 12 4.25023 12" />
+      <G
+        transform="translate(24, 0) scale(-1, 1)"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M19.75 11.7257L4.75 11.7257" />
+        <Path d="M13.6997 5.70124C13.6997 5.70124 19.7497 8.96224 19.7497 11.7242C19.7497 14.4882 13.6997 17.7502 13.6997 17.7502" />
       </G>
     </Svg>
   );
 }
 
-/** Flecha larga hacia la derecha — Iconly Light Arrow Right 3 */
+/** Flecha hacia la derecha, de contorno — Iconly Light Arrow Right */
 export function IconoFlechaDerecha({
   size = 24,
   color = "#000000",
 }: IconoProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G stroke={color} strokeWidth={1.5} strokeLinecap="square">
-        <Path d="M20.2497 12L4.24993 12" />
-        <Path d="M14.59 17.66C14.59 14.7503 17.1526 12 20.2501 12" />
-        <Path d="M14.59 6.33995C14.59 9.2497 17.1526 12 20.2501 12" />
+      <G
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M19.75 11.7257L4.75 11.7257" />
+        <Path d="M13.6997 5.70124C13.6997 5.70124 19.7497 8.96224 19.7497 11.7242C19.7497 14.4882 13.6997 17.7502 13.6997 17.7502" />
       </G>
     </Svg>
   );
@@ -604,7 +613,7 @@ export function IconoSolLinea({ size = 24, color = "#F59E0B" }: IconoProps) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <G
         stroke={color}
-        strokeWidth={2}
+        strokeWidth={1.7}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -622,7 +631,7 @@ export function IconoLunaLinea({ size = 24, color = "#6366F1" }: IconoProps) {
       <Path
         d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
         stroke={color}
-        strokeWidth={2}
+        strokeWidth={1.7}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

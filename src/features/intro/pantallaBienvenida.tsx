@@ -151,7 +151,7 @@ export function PantallaBienvenida({ onComenzar, onRegistrarse }: Props) {
         >
           <Image
             accessibilityLabel="Logo ReLoop"
-            source={require("@/assets/images/logoo.png")}
+            source={require("@/assets/images/logos-reloop/logoo.png")}
             contentFit="contain"
             style={{ width: 150, height: 38 }}
           />

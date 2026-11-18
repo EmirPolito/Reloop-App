@@ -50,7 +50,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoMensajeLinea size={22.5} color={colorIcono} />}
+          icon={<IconoMensajeLinea size={22.5} color={colorIcono} grosor={1.5} />}
           label="Cambiar correo"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar correo")}

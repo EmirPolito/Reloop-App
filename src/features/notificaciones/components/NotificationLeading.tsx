@@ -13,14 +13,14 @@ import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import type { ComponentType } from "react";
 import type { AppNotification, NotificationType } from "../types";
 
-/** Icono y colores del círculo de cada tipo que no es "te empezó a seguir". */
+/** Icono y color del círculo de cada tipo que no es "te empezó a seguir" (fondo del color, icono blanco). */
 const ICONOS: Record<
   Exclude<NotificationType, "seguidor">,
-  { Icono: ComponentType<IconProps>; color: string; fondo: string }
+  { Icono: ComponentType<IconProps>; color: string }
 > = {
-  favorito: { Icono: CorazonActivoIcon, color: "#FF3762", fondo: "#FFE4EA" },
-  comentario: { Icono: ChatActivoIcon, color: "#296FFA", fondo: "#E2ECFF" },
-  mensaje: { Icono: IconoMensaje, color: "#12915F", fondo: "#DCF5E9" },
+  favorito: { Icono: CorazonActivoIcon, color: "#FF6B88" },
+  comentario: { Icono: ChatActivoIcon, color: "#5C93FF" },
+  mensaje: { Icono: IconoMensaje, color: "#34D399" },
 };
 
 /** El icono ocupa algo más de la mitad del círculo */
@@ -45,7 +45,7 @@ export function NotificationLeading({
   const premium = useIsPremium(notification.actorId);
 
   if (notification.type !== "seguidor") {
-    const { Icono, color, fondo } = ICONOS[notification.type];
+    const { Icono, color } = ICONOS[notification.type];
     const insignia = Math.round(size * PROPORCION_INSIGNIA);
     return (
       <View style={{ width: size, height: size }}>
@@ -56,11 +56,12 @@ export function NotificationLeading({
               width: size,
               height: size,
               borderRadius: size / 2,
-              backgroundColor: fondo,
+              // Fondo fuerte (el color del tipo) con el icono blanco
+              backgroundColor: color,
             },
           ]}
         >
-          <Icono size={size * PROPORCION_ICONO} color={color} />
+          <Icono size={size * PROPORCION_ICONO} color="#FFFFFF" />
         </View>
         {premium ? (
           <View

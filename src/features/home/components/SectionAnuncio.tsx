@@ -28,9 +28,9 @@ const GAP = 13; // separación entre anuncios (ajústala a gusto)
 const IMAGE_STYLE = { width: "100%", height: "100%" } as const;
 
 const BANNERS = [
-  { id: "banner-1", source: require("@/assets/images/anuncio2.png") },
-  { id: "banner-2", source: require("@/assets/images/1er-banner.png") },
-  { id: "banner-3", source: require("@/assets/images/anuncio2.png") },
+  { id: "banner-1", source: require("@/assets/images/home-banners/anuncio2.png") },
+  { id: "banner-2", source: require("@/assets/images/home-banners/1er-banner.png") },
+  { id: "banner-3", source: require("@/assets/images/home-banners/anuncio2.png") },
 ];
 
 const COUNT = BANNERS.length;

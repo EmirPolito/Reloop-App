@@ -4,19 +4,19 @@
     "slug": "ReLoop",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/iconos-app/icon.png",
     "scheme": "reloop",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/iconos-app/icon.png"
     },
     "android": {
       "package": "com.jamingarciadev.reloop",
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/iconos-app/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/logos-reloop/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -28,7 +28,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/iconos-app/favicon.png"
     },
     "plugins": [
       [
@@ -48,7 +48,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/iconos-app/splash-icon.png",
           "imageWidth": 240
         }
       ],

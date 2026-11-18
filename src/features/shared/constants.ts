@@ -95,12 +95,12 @@ export const PRODUCT_COLORS: Record<CategoryId, [string, string]> = {
 };
 
 export const CATEGORY_IMAGES: Record<CategoryId, number> = {
-  venta: require("@/assets/images/VENTAS.png"),
-  cambio: require("@/assets/images/INTERCAMBIOS.png"),
-  donacion: require("@/assets/images/DONACIONES.png"),
-  mascota: require("@/assets/images/ADOPCIONES.png"),
-  comida: require("@/assets/images/COMIDAS.png"),
+  venta: require("@/assets/images/home-iconos-opciones/VENTAS.png"),
+  cambio: require("@/assets/images/home-iconos-opciones/INTERCAMBIOS.png"),
+  donacion: require("@/assets/images/home-iconos-opciones/DONACIONES.png"),
+  mascota: require("@/assets/images/home-iconos-opciones/ADOPCIONES.png"),
+  comida: require("@/assets/images/home-iconos-opciones/COMIDAS.png"),
 };
 
 /** Fondo general de la app (gris tipo Apple en claro); igual en todos los módulos */
-export const APP_BACKGROUND = { light: "#f8f8f8ff", dark: "#161616" } as const;
+export const APP_BACKGROUND = { light: "#fafafaff", dark: "#161616" } as const;
