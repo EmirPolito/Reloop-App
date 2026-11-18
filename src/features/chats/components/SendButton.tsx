@@ -8,16 +8,16 @@ import { SendIcon } from "./ThreadIcons";
 
 // Estilos fuera del componente: referencias estables, cero trabajo al re-renderizar
 const SEND_BUTTON_STYLE: ViewStyle = {
-  width: 50.5,
-  height: 50.5,
-  marginRight: 5.5,
+  width: 56,
+  height: 56,
+  marginRight: 4,
   opacity: 1, // Siempre con opacidad completa
 };
 
 const SEND_GRADIENT_STYLE: ViewStyle = {
   width: "100%",
   height: "100%",
-  borderRadius: 25.25,
+  borderRadius: 28,
   alignItems: "center",
   justifyContent: "center",
   borderWidth: 0.3,
@@ -83,7 +83,7 @@ export const SendButton = memo(function SendButton({
           <ActivityIndicator color="#ffffff" />
         ) : (
           <View style={{ transform: [{ translateX: 0.5 }] }}>
-            <SendIcon size={32} color="#ffffff" />
+            <SendIcon size={35} color="#ffffff" />
           </View>
         )}
       </LinearGradient>

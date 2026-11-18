@@ -136,6 +136,35 @@ const sendMessage = async (u, chatId, text, images = []) => {
 await expectOk("A crea su propio perfil (como ensureProfile)", () => ensureProfile(A, "Ana"));
 await expectOk("B crea su propio perfil", () => ensureProfile(B, "Beto"));
 await expectOk("C crea su propio perfil", () => ensureProfile(C, "Carla"));
+// Como ensureProfile en la app: la ficha nueva nace con su username y su reserva, juntas
+const ensureProfileConUsername = (u, name, username) => runTransaction(u.db, async (t) => {
+  const ref = doc(u.db, "usuarios", u.uid);
+  const reservaRef = doc(u.db, "usernames", username);
+  const [perfil, reserva] = await Promise.all([t.get(ref), t.get(reservaRef)]);
+  if (perfil.exists()) return;
+  const libre = !reserva.exists();
+  t.set(ref, {
+    uid: u.uid, ...profileDoc(name, libre ? { username, usernameNormalized: username } : {}),
+    creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+  });
+  if (libre) t.set(reservaRef, { uid: u.uid, creadoEn: serverTimestamp() });
+});
+const NUEVO1 = await client("nuevo1");
+const NUEVO2 = await client("nuevo2");
+await expectOk("Nuevo crea su perfil ya con su username reservado (una sola operación)", async () => {
+  await ensureProfileConUsername(NUEVO1, "Dani", `dani${run}`);
+  if ((await getDoc(doc(NUEVO1.db, "usuarios", NUEVO1.uid))).data().usernameNormalized !== `dani${run}`) throw new Error("sin username");
+});
+await expectDenied("Otro crea su perfil con el username que ya reservó el primero", () => runTransaction(NUEVO2.db, async (t) => {
+  t.set(doc(NUEVO2.db, "usuarios", NUEVO2.uid), {
+    uid: NUEVO2.uid, ...profileDoc("Eli", { username: `dani${run}`, usernameNormalized: `dani${run}` }),
+    creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+  });
+}));
+await expectOk("Otro: si el sugerido está ocupado, su ficha se crea sin username", async () => {
+  await ensureProfileConUsername(NUEVO2, "Eli", `dani${run}`);
+  if ((await getDoc(doc(NUEVO2.db, "usuarios", NUEVO2.uid))).data().usernameNormalized) throw new Error("tomó uno ocupado");
+});
 await expectDenied("A crea el perfil de B", () => setDoc(doc(A.db, "usuarios", "otro-uid"), { uid: "otro-uid", ...profileDoc("X"), creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() }));
 await expectDenied("A crea perfil con correo", () => setDoc(doc(A.db, "usuarios", A.uid + "x"), { uid: A.uid + "x", ...profileDoc("X"), correo: "a@b.c", creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() }));
 await expectOk("A guarda su perfil (nombre, color, etiquetas, stickers, foto https)", () => saveProfile(A, profileDoc("Ana Pérez", { color: "rosa", descripcion: "Hola", etiquetas: [{ id: "1", text: "Mate", color: "azul" }], stickers: ["sticker-1"], fotoUrl: "https://res.cloudinary.com/demo/image/upload/v1/a.png" })));

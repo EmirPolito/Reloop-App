@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import { AppState, View } from "react-native";
+import { useEffect, useState } from "react";
+import { AppState } from "react-native";
 
 import { Text } from "@/features/shared/Text";
+import { PressableScale } from "@/components/PressableScale";
 import { mensajeDeError } from "../authService";
 import { useAuth } from "../AuthProvider";
-import { AuthCarouselLayout } from "../components/AuthCarouselLayout";
-import { AuthButton } from "../components/AuthFields";
-import { authStyles } from "../components/authStyles";
-import { LOGIN_VARIANT } from "../components/authVariants";
-import { verifySlides } from "../slides";
+import {
+  EnlaceCristal,
+  estilosCristal,
+  PantallaCurva,
+} from "../components/authStyles";
+
+/** Imagen del centro: la misma carta de Recuperar contraseña. */
+const IMAGEN_CARTA = require("@/assets/images/auth/clay.png");
 
 /** Segundos que hay que esperar entre un reenvío del correo y el siguiente. */
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -17,17 +21,16 @@ const POLL_MS = 5000;
 
 /**
  * Pantalla para quien tiene cuenta pero aún no verificó su correo. Se comprueba sola cada
- * pocos segundos y al volver a la app, así que basta con abrir el enlace del correo y regresar.
+ * pocos segundos y al volver a la app (no hace falta un botón para comprobarlo): basta con
+ * abrir el enlace del correo y regresar.
  */
 export function VerificarCorreoPage() {
   const { user, resendVerification, checkVerification, signOut } = useAuth();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [checking, setChecking] = useState(false);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(0);
   const email = user?.email ?? null;
-  const slides = useMemo(() => verifySlides(email), [email]);
 
   useEffect(() => {
     const ignoreFailure = () => {};
@@ -47,24 +50,6 @@ export function VerificarCorreoPage() {
 
   const secondsLeft = Math.max(0, Math.ceil((resendAt - now) / 1000));
 
-  async function handleCheck() {
-    setChecking(true);
-    setError("");
-    setNotice("");
-    try {
-      const verified = await checkVerification();
-      if (!verified) {
-        setError(
-          "Todavía no aparece como verificado. Abre el enlace del correo y vuelve a intentarlo.",
-        );
-      }
-    } catch (e) {
-      setError(mensajeDeError(e));
-    } finally {
-      setChecking(false);
-    }
-  }
-
   async function handleResend() {
     if (secondsLeft > 0) return;
     setError("");
@@ -81,36 +66,55 @@ export function VerificarCorreoPage() {
   }
 
   return (
-    <AuthCarouselLayout
-      slides={slides}
-      variant={LOGIN_VARIANT}
-      paused
-      footerPrompt="¿Te equivocaste de correo?"
-      footerAction="Cerrar sesión"
-      onFooterPress={() => {
-        signOut().catch((e) => console.warn("No se pudo cerrar la sesión.", e));
-      }}
+    <PantallaCurva
+      titulo="Verifica tu correo"
+      descripcion={`Enviamos un enlace a ${email ?? "tu correo"}. Ábrelo y vuelve aquí: entrarás automáticamente. Si no lo ves, revisa el spam.`}
+      imagen={IMAGEN_CARTA}
+      imagenLabel="Carta de correo"
     >
-      <View style={authStyles.emailFormContainer}>
-        {error ? <Text style={authStyles.authError}>{error}</Text> : null}
-        {notice ? <Text style={authStyles.authNotice}>{notice}</Text> : null}
+      <PressableScale
+        scaleTo={0.97}
+        disabled={secondsLeft > 0}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: secondsLeft > 0 }}
+        onPress={handleResend}
+        style={[
+          estilosCristal.boton,
+          estilosCristal.botonAlto,
+          estilosCristal.botonPrimero,
+          estilosCristal.botonSecundario,
+          secondsLeft > 0 && estilosCristal.botonDeshabilitado,
+        ]}
+      >
+        <Text
+          style={[
+            estilosCristal.botonTexto,
+            estilosCristal.botonSecundarioTexto,
+          ]}
+        >
+          {secondsLeft > 0
+            ? `Reenviar correo (${secondsLeft} s)`
+            : "Reenviar correo"}
+        </Text>
+      </PressableScale>
 
-        <AuthButton
-          label={checking ? "Comprobando..." : "Ya verifiqué mi correo"}
-          onPress={handleCheck}
-          disabled={checking}
-        />
-        <AuthButton
-          variant="secondary"
-          label={
-            secondsLeft > 0
-              ? `Reenviar correo (${secondsLeft} s)`
-              : "Reenviar correo"
-          }
-          onPress={handleResend}
-          disabled={secondsLeft > 0}
-        />
-      </View>
-    </AuthCarouselLayout>
+      {error ? (
+        <Text style={[estilosCristal.aviso, estilosCristal.avisoError]}>
+          {error}
+        </Text>
+      ) : null}
+      {notice ? <Text style={estilosCristal.aviso}>{notice}</Text> : null}
+
+      <EnlaceCristal
+        oscuro
+        prefijo="¿Te equivocaste de correo?"
+        texto="Cerrar sesión"
+        onPress={() => {
+          signOut().catch((e) =>
+            console.warn("No se pudo cerrar la sesión.", e),
+          );
+        }}
+      />
+    </PantallaCurva>
   );
 }

@@ -210,6 +210,29 @@ service cloud.firestore {
         && request.resource.data.seller.size() <= 30;
     }
 
+    // La dueña puede editar su publicación (nombre, descripción, categoría, precio y foto) y
+    // republicarla (renovar su fecha de creación con la hora del servidor). Al cambiar de
+    // categoría las calificaciones vuelven a empezar como en una publicación nueva; si la
+    // categoría no cambia, las calificaciones no se tocan.
+    function validOwnerEdit() {
+      let d = request.resource.data;
+      let changed = d.diff(resource.data).affectedKeys();
+      return resource.data.ownerId == request.auth.uid
+        && changed.hasOnly(['name', 'description', 'category', 'price', 'imageUrl',
+                            'ratingTotal', 'ratingCount', 'creadoEn'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 40
+        && d.description is string && d.description.size() <= 500
+        && d.category in ['venta', 'cambio', 'donacion', 'mascota', 'comida']
+        && d.price is number && d.price >= 0 && d.price <= 1000000
+        && (d.imageUrl == null || (d.imageUrl is string && d.imageUrl.matches('https://.*')))
+        && (!('creadoEn' in changed) || d.creadoEn == request.time)
+        && (('category' in changed)
+              ? ((d.category in ['venta', 'comida'])
+                  ? (d.ratingTotal == 5 && d.ratingCount == 1)
+                  : (d.ratingTotal == 0 && d.ratingCount == 0))
+              : !changed.hasAny(['ratingTotal', 'ratingCount']));
+    }
+
     // Cualquier persona, salvo la dueña, puede calificar. El promedio solo cambia en la
     // medida exacta de su propia nota: se compara su calificación antes y después del cambio.
     function validRatingUpdate(productId) {
@@ -227,7 +250,10 @@ service cloud.firestore {
     match /productos/{productId} {
       allow read: if signedIn();
       allow create: if signedIn() && validNewProduct(request.resource.data);
-      allow update: if signedIn() && (validSellerRename() || validRatingUpdate(productId));
+      allow update: if signedIn()
+        && (validSellerRename() || validOwnerEdit() || validRatingUpdate(productId));
+      // Solo la dueña borra su publicación
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
 
       match /comentarios/{commentId} {
         allow read: if signedIn();

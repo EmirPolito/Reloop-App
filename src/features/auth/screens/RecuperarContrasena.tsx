@@ -1,16 +1,23 @@
 import { useState } from "react";
-import { View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
+import { PressableScale } from "@/components/PressableScale";
 import { Text } from "@/features/shared/Text";
 import { showAlert } from "@/utils/alerts";
 import { isValidEmail } from "@/utils/validation";
-import { mensajeDeError } from "../authService";
 import { useAuth } from "../AuthProvider";
-import { AuthCarouselLayout } from "../components/AuthCarouselLayout";
-import { AuthButton, EmailField } from "../components/AuthFields";
-import { authStyles } from "../components/authStyles";
-import { LOGIN_VARIANT } from "../components/authVariants";
-import { RECOVERY_SLIDES } from "../slides";
+import { mensajeDeError } from "../authService";
+import { MessageIcon } from "../components/AuthIcons";
+import {
+  CampoCristal,
+  EnlaceCristal,
+  estilosCristal,
+  PantallaCurva,
+  TINTA_TENUE,
+} from "../components/authStyles";
+
+/** Imagen de la carta del centro: se puede cambiar reemplazando este archivo. */
+const IMAGEN_CARTA = require("@/assets/images/auth/clay.png");
 
 export function RecuperacionPage({
   email,
@@ -26,10 +33,20 @@ export function RecuperacionPage({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function handleEmailChange(valor: string) {
+    if (error) setError("");
+    setSent(false);
+    onChangeEmail(valor);
+  }
+
   async function handleSendReset() {
     const correo = email.trim();
+    if (!correo) {
+      setError("Ingresa tu correo");
+      return;
+    }
     if (!isValidEmail(correo)) {
-      setError("Escribe un correo electrónico válido.");
+      setError("Correo no válido");
       return;
     }
     setError("");
@@ -49,36 +66,61 @@ export function RecuperacionPage({
   }
 
   return (
-    <AuthCarouselLayout
-      slides={RECOVERY_SLIDES}
-      variant={LOGIN_VARIANT}
-      paused
-      footerPrompt="¿Recordaste tu contraseña?"
-      footerAction="Inicia sesión"
-      onFooterPress={onNavigateLogin}
+    <PantallaCurva
+      titulo="¿Olvidaste tu contraseña?"
+      descripcion="Ingresa tu correo electrónico para enviarte un enlace de recuperación de contraseña."
+      imagen={IMAGEN_CARTA}
+      imagenLabel="Carta de correo"
     >
-      <View style={authStyles.emailFormContainer}>
-        <EmailField
-          value={email}
-          onChangeText={(text) => {
-            setSent(false);
-            onChangeEmail(text);
-          }}
-        />
+      <CampoCristal
+        icon={<MessageIcon color={TINTA_TENUE} />}
+        accessibilityLabel="Correo electrónico"
+        value={email}
+        onChangeText={handleEmailChange}
+        placeholder="Correo electrónico"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        returnKeyType="send"
+        onSubmitEditing={handleSendReset}
+        error={error}
+        onQuitarError={() => setError("")}
+        estiloCampo={estilosCristal.campoClaro}
+      />
 
-        {error ? <Text style={authStyles.authError}>{error}</Text> : null}
-        {sent ? (
-          <Text style={authStyles.authNotice}>
-            ¡Correo enviado! Revisa tu bandeja de entrada o spam.
-          </Text>
-        ) : null}
+      <PressableScale
+        scaleTo={0.97}
+        disabled={loading}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: loading }}
+        onPress={handleSendReset}
+        style={[
+          estilosCristal.boton,
+          estilosCristal.botonAlto,
+          estilosCristal.botonCerca,
+          loading && estilosCristal.botonDeshabilitado,
+        ]}
+      >
+        <Text style={estilosCristal.botonTexto}>
+          {loading ? "Enviando..." : "Enviar enlace"}
+        </Text>
+      </PressableScale>
 
-        <AuthButton
-          label={loading ? "Enviando..." : "Enviar enlace"}
-          onPress={handleSendReset}
-          disabled={loading}
-        />
-      </View>
-    </AuthCarouselLayout>
+      {sent ? (
+        <Animated.Text
+          entering={FadeIn.duration(520)}
+          style={estilosCristal.aviso}
+        >
+          ¡Correo enviado! Revisa tu bandeja de entrada o spam.
+        </Animated.Text>
+      ) : null}
+
+      <EnlaceCristal
+        oscuro
+        prefijo="¿Recordaste tu contraseña?"
+        texto="Inicia sesión"
+        onPress={onNavigateLogin}
+      />
+    </PantallaCurva>
   );
 }

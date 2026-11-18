@@ -15,6 +15,8 @@ export type Product = {
   /** Promedio de calificaciones; solo en categorías que se pueden calificar */
   rating?: number;
   distance: string;
+  /** Universidad de la publicación (ver `universidades.ts`); sin ella es la propia */
+  universidad?: string;
   /** Derivado: la publicación es de la persona con sesión iniciada */
   isMine: boolean;
   createdAt: number;
@@ -54,5 +56,9 @@ export type Chat = {
   lastMessage: ChatPreview | null;
   /** El último mensaje es de la otra persona y aún no se ha leído */
   unread: boolean;
+  /** Cuándo leyó esta persona el chat por última vez (ms; 0 si nunca) */
+  readAt: number;
+  /** Cuándo lo leyó la otra persona (ms; 0 si nunca): dice si vio mi último mensaje */
+  otherReadAt: number;
   updatedAt: number;
 };

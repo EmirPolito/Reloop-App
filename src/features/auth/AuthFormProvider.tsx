@@ -26,7 +26,9 @@ export function AuthFormProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <AuthFormContext.Provider value={value}>{children}</AuthFormContext.Provider>
+    <AuthFormContext.Provider value={value}>
+      {children}
+    </AuthFormContext.Provider>
   );
 }
 

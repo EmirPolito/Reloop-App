@@ -29,10 +29,7 @@ export interface SessionUser {
 
 /** `unverified`: tiene cuenta pero aún no abrió el enlace del correo de verificación. */
 export type AuthStatus =
-  | "loading"
-  | "authenticated"
-  | "unverified"
-  | "unauthenticated";
+  "loading" | "authenticated" | "unverified" | "unauthenticated";
 
 interface AuthSession {
   status: AuthStatus;

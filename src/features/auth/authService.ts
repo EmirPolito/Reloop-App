@@ -57,7 +57,11 @@ export async function actualizarNombre(nombre: string): Promise<void> {
 }
 
 export async function iniciarSesion(correo: string, contrasena: string) {
-  const cred = await signInWithEmailAndPassword(auth, correo.trim(), contrasena);
+  const cred = await signInWithEmailAndPassword(
+    auth,
+    correo.trim(),
+    contrasena,
+  );
   return cred.user;
 }
 
@@ -75,25 +79,40 @@ export async function enviarRecuperacion(correo: string): Promise<void> {
   }
 }
 
+/** Mensaje corto (cabe dentro de un campo) que explica qué falló. */
 export function mensajeDeError(error: unknown): string {
   switch (getErrorCode(error)) {
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
-      return "Correo o contraseña incorrectos.";
+      return "Correo o contraseña incorrectos";
     case "auth/email-already-in-use":
-      return "Ese correo ya tiene una cuenta registrada.";
+      return "Este correo ya está registrado";
     case "auth/weak-password":
-      return "La contraseña es muy débil (mínimo 6 caracteres).";
+      return "Contraseña muy débil";
     case "auth/invalid-email":
-      return "El correo electrónico no es válido.";
+      return "Correo no válido";
     case "auth/too-many-requests":
-      return "Demasiados intentos. Espera unos minutos.";
+      return "Demasiados intentos, espera";
     case "auth/network-request-failed":
-      return "Sin conexión. Revisa tu internet.";
+      return "Sin conexión a internet";
     default:
       // Sin mensaje propio (p. ej. `auth/operation-not-allowed` si falta activar el registro): el código queda en consola
       console.warn("Error de autenticación:", error);
-      return "Ocurrió un error. Inténtalo de nuevo.";
+      return "Algo falló, intenta de nuevo";
+  }
+}
+
+/** Campo donde se muestra el error: el correo si tiene que ver con él, si no la contraseña. */
+export function campoDeError(error: unknown): "correo" | "password" {
+  switch (getErrorCode(error)) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/email-already-in-use":
+    case "auth/invalid-email":
+      return "correo";
+    default:
+      return "password";
   }
 }

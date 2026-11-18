@@ -120,7 +120,7 @@ export function SheetEditar({
 }
 
 const RADIO_CARD = 35;
-/** Fondo de la card: [claro, oscuro] (mismos colores que PALETA.sheet) */
+/** Fondo de la card: [claro, oscuro] */
 const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
 
 const styles = StyleSheet.create({

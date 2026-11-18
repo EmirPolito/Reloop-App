@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from "react";
 
 import type { SessionUser } from "@/features/auth/AuthProvider";
+import { AvisosProvider } from "@/features/avisos/AvisosProvider";
 import { ChatProvider } from "@/features/chats/ChatProvider";
 import { MarketplaceProvider } from "@/features/marketplace/MarketplaceProvider";
 import { NotificationsProvider } from "@/features/notificaciones/NotificationsProvider";
@@ -24,7 +25,9 @@ export function SessionProviders({
         <MarketplaceProvider>
           <ChatProvider>
             <NotificationsProvider>
-              <DraftsProvider>{children}</DraftsProvider>
+              <DraftsProvider>
+                <AvisosProvider>{children}</AvisosProvider>
+              </DraftsProvider>
             </NotificationsProvider>
           </ChatProvider>
         </MarketplaceProvider>

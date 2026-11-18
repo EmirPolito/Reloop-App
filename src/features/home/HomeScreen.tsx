@@ -1,24 +1,34 @@
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { ProductCard } from "@/features/marketplace/components/ProductCard";
-import { filterProducts } from "@/features/marketplace/feedFilters";
+import {
+  filterProducts,
+  premiumPrimero,
+} from "@/features/marketplace/feedFilters";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
+
+import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
+import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import {
   useMarketplaceActions,
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
+import {
+  UNIVERSIDAD_PROPIA,
+  universidadPorId,
+} from "@/features/marketplace/universidades";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
-import { ResultadosUsuarios } from "@/features/busqueda/components/ResultadosUsuarios";
-import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { memo, useCallback, useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { CategoryRow } from "./components/CategoryRow";
+import { FondoHome } from "./components/FondoHome";
 import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
+import { TarjetaPublicacion } from "./components/TarjetaPublicacion";
 import {
   buildHomeFeedRows,
   buildUserSearchRows,
@@ -33,21 +43,45 @@ const SIN_STICKY: number[] = [];
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
   const { styles, isDark } = useAppTheme();
-  const { products, status, favorites, filters } = useMarketplaceState();
-  const { setQuery, toggleCategory, clearCategory, reload } =
-    useMarketplaceActions();
+  const {
+    products: todos,
+    status,
+    favorites,
+    filters,
+    universidad,
+  } = useMarketplaceState();
+  const { setQuery, toggleCategory, reload } = useMarketplaceActions();
   const toggleFavorite = useToggleFavorite();
   const { openProduct, openUserProfile } = useAppNavigation();
   const cardWidth = useProductCardWidth();
 
   const busqueda = modoDeBusqueda(filters.query);
   const buscaUsuarios = busqueda.modo === "usuarios";
+  // Solo las de la universidad elegida (las que no dicen cuál son de la propia)
+  const products = useMemo(
+    () =>
+      todos.filter(
+        (product) =>
+          (product.universidad ?? UNIVERSIDAD_PROPIA) === universidad,
+      ),
+    [todos, universidad],
+  );
+  const sinComunidad = universidad !== UNIVERSIDAD_PROPIA;
+  // Las publicaciones de quienes tienen Premium salen primero
+  const duenos = useMemo(
+    () => [...new Set(products.map((product) => product.ownerId))],
+    [products],
+  );
+  const premium = useDuenosPremium(duenos);
   const rows = useMemo(
     () =>
       buscaUsuarios
         ? buildUserSearchRows(busqueda.termino)
-        : buildHomeFeedRows(filterProducts(products, filters), status),
-    [buscaUsuarios, busqueda.termino, products, filters, status],
+        : buildHomeFeedRows(
+            premiumPrimero(filterProducts(products, filters), premium),
+            status,
+          ),
+    [buscaUsuarios, busqueda.termino, products, filters, status, premium],
   );
   const { query, category: activeCategory } = filters;
 
@@ -65,10 +99,7 @@ export const HomeScreen = memo(function HomeScreen() {
           );
         case "sectionTitle":
           return (
-            <SectionTitle
-              activeCategory={activeCategory}
-              onClearCategory={clearCategory}
-            />
+            <SectionTitle activeCategory={activeCategory} count={item.count} />
           );
         case "users":
           return (
@@ -95,14 +126,18 @@ export const HomeScreen = memo(function HomeScreen() {
           return (
             <EmptyState
               title={
-                query || activeCategory
-                  ? "No encontramos publicaciones"
-                  : "Tu comunidad empieza aquí"
+                sinComunidad
+                  ? `Aún no hay publicaciones en ${universidadPorId(universidad).sigla}`
+                  : query || activeCategory
+                    ? "No encontramos publicaciones"
+                    : "Tu comunidad empieza aquí"
               }
               message={
-                query || activeCategory
-                  ? "Prueba con otra búsqueda o categoría."
-                  : "Sé la primera persona en publicar. Comparte algo con la comunidad UTSV."
+                sinComunidad
+                  ? "Cuando la comunidad de esa universidad empiece a publicar, las verás aquí."
+                  : query || activeCategory
+                    ? "Prueba con otra búsqueda o categoría."
+                    : "Sé la primera persona en publicar. Comparte algo con la comunidad UTSV."
               }
               icon={query ? "search" : "sell"}
             />
@@ -111,7 +146,7 @@ export const HomeScreen = memo(function HomeScreen() {
           return (
             <View style={styles.productRow}>
               {item.products.map((product) => (
-                <ProductCard
+                <TarjetaPublicacion
                   key={product.id}
                   item={product}
                   cardWidth={cardWidth}
@@ -133,37 +168,37 @@ export const HomeScreen = memo(function HomeScreen() {
       isDark,
       activeCategory,
       query,
+      sinComunidad,
+      universidad,
       cardWidth,
       favorites,
       openProduct,
       openUserProfile,
       toggleFavorite,
       toggleCategory,
-      clearCategory,
       reload,
     ],
   );
 
   return (
-    <FlatList
-      style={styles.homeList}
-      data={rows}
-      keyExtractor={homeRowKey}
-      stickyHeaderIndices={buscaUsuarios ? SIN_STICKY : STICKY_HEADER_INDICES}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.productsContent}
-      ListHeaderComponent={
-        <HomeHeader
-          query={query}
-          onChangeQuery={setQuery}
-          onClearCategory={clearCategory}
-        />
-      }
-      renderItem={renderItem}
-      initialNumToRender={6}
-      maxToRenderPerBatch={4}
-      windowSize={7}
-      removeClippedSubviews
-    />
+    <View style={{ flex: 1 }}>
+      <FondoHome />
+      <FlatList
+        style={styles.homeList}
+        data={rows}
+        keyExtractor={homeRowKey}
+        stickyHeaderIndices={buscaUsuarios ? SIN_STICKY : STICKY_HEADER_INDICES}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.productsContent}
+        ListHeaderComponent={
+          <HomeHeader query={query} onChangeQuery={setQuery} />
+        }
+        renderItem={renderItem}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}
+        windowSize={7}
+        removeClippedSubviews
+      />
+    </View>
   );
 });

@@ -3,6 +3,15 @@ import type { NewProductData } from "@/features/marketplace/productRepository";
 import type { CategoryId } from "@/features/marketplace/types";
 import { parsePrice } from "@/utils/price";
 
+/** Texto corto de cada categoría en el selector del formulario (crear y editar). */
+export const FORM_CATEGORY_LABELS: Record<CategoryId, string> = {
+  venta: "Vender",
+  cambio: "Cambiar",
+  donacion: "Donar",
+  mascota: "Adopción",
+  comida: "Comida",
+};
+
 export interface ProductDraft {
   name: string;
   description: string;

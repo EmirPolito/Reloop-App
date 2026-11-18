@@ -24,7 +24,16 @@ import { scheduleOnRN } from "react-native-worklets";
  * hacia el centro del cuerpo, el aro sale de la pantalla por los bordes mientras el fondo
  * se desvanece, así que se "atraviesa" el logo hacia la app.
  */
-const LOGO = require("../../../assets/logo/logo.png");
+const LOGO = require("../../../assets/logos-intro/logo-negro2.png");
+
+/** Logo con el nombre ("reloop"), justo debajo del icono. */
+const LOGO_NOMBRE = require("../../../assets/images/logos-reloop/logoo.png");
+const LOGO_NOMBRE_ASPECTO = 1774 / 887; // ancho / alto del PNG
+const LOGO_NOMBRE_ANCHO_MAX = 220; // dp
+const LOGO_NOMBRE_SEPARACION = -4; // dp entre el icono y el nombre
+
+/** Cuánto sube el icono respecto al centro de la pantalla (dp). */
+const SUBIR_ICONO = 40;
 
 /* ------------------------------------------------------------------ */
 /* Geometría del PNG (px del lienzo original)                         */
@@ -40,7 +49,7 @@ const SAFE_RADIUS = 330;
 /* ------------------------------------------------------------------ */
 /* Ajustes                                                            */
 /* ------------------------------------------------------------------ */
-const FONDO = "#0d0d0dff";
+const FONDO = "#f8f8f8ff";
 const LOGO_WIDTH = 150; // ancho en dp del isotipo
 const INTRO_FROM = 0.82;
 const ANTICIPATION = 0.92; // pequeño "encogimiento" antes de entrar
@@ -111,11 +120,18 @@ function SplashOverlay({
   const k = LOGO_WIDTH / CANVAS_W;
   const logoW = LOGO_WIDTH;
   const logoH = CANVAS_H * k;
+  // Nombre: 50 % del ancho de la pantalla, sin pasar del máximo
+  const nombreW = Math.min(winW * 0.5, LOGO_NOMBRE_ANCHO_MAX);
+  const nombreH = nombreW / LOGO_NOMBRE_ASPECTO;
 
   const dx = (ORIGIN_X - CANVAS_W / 2) * k; // punto fijo del zoom respecto al centro
   const dy = (ORIGIN_Y - CANVAS_H / 2) * k;
   const safeR = SAFE_RADIUS * k;
-  const farthest = Math.hypot(winW / 2 + Math.abs(dx), winH / 2 + Math.abs(dy));
+  // El icono está SUBIR_ICONO más arriba del centro: su punto de zoom queda más lejos del borde inferior
+  const farthest = Math.hypot(
+    winW / 2 + Math.abs(dx),
+    winH / 2 + SUBIR_ICONO + Math.abs(dy),
+  );
   // Escala final: el hueco del cuerpo queda más grande que la diagonal de la pantalla
   const maxExpand = (farthest * 1.15) / (safeR * ANTICIPATION);
 
@@ -123,7 +139,11 @@ function SplashOverlay({
   const anticipate = useSharedValue(0);
   const expand = useSharedValue(0);
 
-  const [ready, setReady] = useState({ logoLoaded: false, laidOut: false });
+  const [ready, setReady] = useState({
+    logoLoaded: false,
+    nombreLoaded: false,
+    laidOut: false,
+  });
   const [introDone, setIntroDone] = useState(false);
 
   // Si la imagen falla no se bloquea la app: se omite la animación
@@ -134,7 +154,8 @@ function SplashOverlay({
 
   // 1) Con la imagen cargada y la vista medida: se oculta la splash nativa y empieza la entrada
   useEffect(() => {
-    if (!ready.logoLoaded || !ready.laidOut) return;
+    // Espera a las dos imágenes para que el icono y el nombre entren a la vez
+    if (!ready.logoLoaded || !ready.nombreLoaded || !ready.laidOut) return;
     let cancelled = false;
     SplashScreen.hideAsync()
       .catch(() => {})
@@ -206,6 +227,15 @@ function SplashOverlay({
     ),
   }));
 
+  // El nombre entra igual que el icono (fundido + crece de INTRO_FROM a 1)
+  // y se va junto con el fondo (no hace zoom)
+  const nombreStyle = useAnimatedStyle(() => ({
+    opacity:
+      interpolate(intro.get(), [0, 0.6], [0, 1], Extrapolation.CLAMP) *
+      interpolate(expand.get(), [0, 0.4], [1, 0], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(intro.get(), [0, 1], [INTRO_FROM, 1]) }],
+  }));
+
   return (
     <View
       style={StyleSheet.absoluteFill}
@@ -228,6 +258,24 @@ function SplashOverlay({
           />
         </Animated.View>
       </View>
+
+      <Animated.View
+        style={[
+          styles.nombre,
+          { top: winH / 2 - SUBIR_ICONO + logoH / 2 + LOGO_NOMBRE_SEPARACION },
+          nombreStyle,
+        ]}
+      >
+        <Image
+          source={LOGO_NOMBRE}
+          style={{ width: nombreW, height: nombreH }}
+          resizeMode="contain"
+          fadeDuration={0}
+          accessibilityLabel="ReLoop"
+          onLoad={() => setReady((r) => ({ ...r, nombreLoaded: true }))}
+          onError={onImageError}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -238,6 +286,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
+    // Centra el icono SUBIR_ICONO por encima de la mitad de la pantalla
+    paddingBottom: SUBIR_ICONO * 2,
+  },
+  nombre: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
   },
   fondo: { backgroundColor: FONDO },
 });

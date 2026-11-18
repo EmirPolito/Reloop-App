@@ -61,3 +61,18 @@ export function filterProducts(
     );
   });
 }
+
+/**
+ * Pone primero las publicaciones de quienes tienen Premium, conservando el orden de siempre
+ * dentro de cada grupo.
+ */
+export function premiumPrimero(
+  products: Product[],
+  premiumOwners: ReadonlySet<string>,
+): Product[] {
+  if (premiumOwners.size === 0) return products;
+  return [
+    ...products.filter((product) => premiumOwners.has(product.ownerId)),
+    ...products.filter((product) => !premiumOwners.has(product.ownerId)),
+  ];
+}

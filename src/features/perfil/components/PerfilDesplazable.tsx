@@ -33,22 +33,26 @@ import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
 const ALTO_PORTADA = 120;
-const ALTO_HEADER = 52;
+const ALTO_HEADER = 57;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
-/** El avatar sobresale de la portada la mitad de su alto */
-const SOLAPE_AVATAR = LADO_AVATAR / 2;
+/** Cuánto sobresale el avatar por encima del borde inferior de la portada */
+const SOLAPE_AVATAR = 44;
 /** Tamaño final del avatar al colapsar (se esconde bajo el header) */
 const ESCALA_AVATAR_MIN = 0.6;
 /** Borde del color de la pantalla alrededor del avatar */
-const BORDE_AVATAR = 4;
+const BORDE_AVATAR = 3;
 /** Recorrido con el que el título pequeño entra al header */
 const ENTRADA_TITULO = 28;
+/** Píxeles de anticipación para que el desenfoque y el título salgan un poco antes */
+const ADELANTO_HEADER = 22;
 const ANCHO_PORTADA = 900;
 /** Avatar pequeño que entra al header junto al nombre */
 const LADO_AVATAR_HEADER = 32;
 /** Margen a los lados de las publicaciones */
 const MARGEN_LATERAL = 15;
+/** Espacio entre el avatar y el nombre */
+const ESPACIO_NOMBRE = 0;
 
 /** Botón redondo translúcido del header (editar perfil) */
 export function BotonHeaderPerfil({
@@ -100,7 +104,7 @@ export function PerfilDesplazable({
   premium: boolean;
   /** Botón del header (fijo arriba a la derecha) */
   derecha?: ReactNode;
-  /** A la derecha del avatar: Seguir y Mensaje */
+  /** Debajo de la descripción: Mensaje y Seguir (perfil ajeno) */
   acciones?: ReactNode;
   stats: { publicaciones: number; seguidores: number; reputacion: string };
   publicaciones: {
@@ -116,6 +120,8 @@ export function PerfilDesplazable({
   const fondo = fondoPerfil(isDark);
   const { suave } = coloresTarjeta(isDark);
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
+  // Card de las estadísticas (blanca en claro) y mini cards de dentro (neutral-100)
+  const colorLinea = isDark ? "#ffffff24" : "#E4E4E7";
   const altoPortada = insets.top + ALTO_PORTADA;
   const altoHeader = insets.top + ALTO_HEADER;
 
@@ -158,8 +164,8 @@ export function PerfilDesplazable({
     interpolate(
       scrollY.get(),
       [
-        finNombre.get() - altoHeader,
-        finNombre.get() - altoHeader + ENTRADA_TITULO,
+        finNombre.get() - altoHeader - ADELANTO_HEADER,
+        finNombre.get() - altoHeader - ADELANTO_HEADER + ENTRADA_TITULO,
       ],
       [0, 1],
       Extrapolation.CLAMP,
@@ -169,8 +175,8 @@ export function PerfilDesplazable({
     interpolate(
       scrollY.get(),
       [
-        finNombre.get() - altoHeader - ENTRADA_TITULO,
-        finNombre.get() - altoHeader,
+        finNombre.get() - altoHeader - ENTRADA_TITULO - ADELANTO_HEADER,
+        finNombre.get() - altoHeader - ADELANTO_HEADER,
       ],
       [0, 1],
       Extrapolation.CLAMP,
@@ -250,7 +256,7 @@ export function PerfilDesplazable({
             />
           </Animated.View>
 
-          {/* Avatar (sobresale de la portada) y acciones a la derecha */}
+          {/* Avatar (sobresale de la portada) y, a su derecha, números de estadísticas */}
           <View
             style={[
               styles.filaAvatar,
@@ -280,10 +286,24 @@ export function PerfilDesplazable({
                 />
               </View>
             </Animated.View>
-            <View style={styles.acciones}>{acciones}</View>
+
+            {/* Píldoras a la derecha del avatar, debajo de la portada */}
+            {profile.pills.length > 0 ? (
+              <View style={styles.pildorasAvatar}>
+                {profile.pills.map((pill) => (
+                  <PildoraPerfil
+                    key={pill.id}
+                    text={pill.text}
+                    color={pill.color}
+                    icon={pill.icon}
+                    isDark={isDark}
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
 
-          {/* Nombre, @username, descripción, etiquetas y números */}
+          {/* Nombre, @username, descripción, estadísticas y acciones */}
           <View style={styles.info}>
             <View
               style={styles.filaNombre}
@@ -292,9 +312,8 @@ export function PerfilDesplazable({
                 // `info` empieza tras la fila del avatar: se suma su posición
                 finNombre.set(
                   altoPortada +
-                    LADO_AVATAR / 2 +
-                    BORDE_AVATAR +
-                    12 +
+                    (ladoMarco - SOLAPE_AVATAR) +
+                    ESPACIO_NOMBRE +
                     y +
                     height,
                 );
@@ -320,42 +339,31 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {profile.pills.length > 0 ? (
-              <View style={styles.pildoras}>
-                {profile.pills.map((pill) => (
-                  <PildoraPerfil
-                    key={pill.id}
-                    text={pill.text}
-                    color={pill.color}
-                    icon={pill.icon}
-                    isDark={isDark}
-                  />
-                ))}
-              </View>
-            ) : null}
-
-            <View style={styles.numeros}>
-              <Numero
-                valor={String(stats.publicaciones)}
-                etiqueta={
-                  stats.publicaciones === 1 ? "publicación" : "publicaciones"
-                }
-                fuerte={colorTexto}
+            {/* Las tres estadísticas, sin iconos, separadas por dos líneas finas */}
+            <View style={styles.stats}>
+              <Estadistica
+                valor={formatearNumero(stats.publicaciones)}
+                etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
+                colorTexto={colorTexto}
                 suave={suave}
               />
-              <Numero
-                valor={String(stats.seguidores)}
-                etiqueta={stats.seguidores === 1 ? "seguidor" : "seguidores"}
-                fuerte={colorTexto}
+              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+              <Estadistica
+                valor={formatearNumero(stats.seguidores)}
+                etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
+                colorTexto={colorTexto}
                 suave={suave}
               />
-              <Numero
-                valor={`★ ${stats.reputacion}`}
-                etiqueta="valoración"
-                fuerte={colorTexto}
+              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+              <Estadistica
+                valor={stats.reputacion}
+                etiqueta="Valoración"
+                colorTexto={colorTexto}
                 suave={suave}
               />
             </View>
+
+            {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
           </View>
 
           <PublicacionesPerfil
@@ -432,11 +440,17 @@ export function PerfilDesplazable({
                 <Text numberOfLines={1} style={styles.tituloNombre}>
                   {profile.name}
                 </Text>
-                {premium ? <PremiumBadge size={17} variant="static" /> : null}
+                {premium ? (
+                  <PremiumBadge
+                    size={18}
+                    variant="static"
+                    style={{ marginTop: 2, marginLeft: -2 }}
+                  />
+                ) : null}
               </View>
               <Text numberOfLines={1} style={styles.tituloSub}>
                 {stats.publicaciones}{" "}
-                {stats.publicaciones === 1 ? "publicación" : "publicaciones"}
+                {stats.publicaciones === 1 ? "subido" : "subidos"}
               </Text>
             </View>
           </Animated.View>
@@ -444,6 +458,35 @@ export function PerfilDesplazable({
         </View>
       </View>
     </PausaBrilloContext.Provider>
+  );
+}
+
+/** Una estadística: el número arriba y su nombre debajo */
+function Estadistica({
+  valor,
+  etiqueta,
+  colorTexto,
+  suave,
+}: {
+  valor: string;
+  etiqueta: string;
+  colorTexto: string;
+  suave: string;
+}) {
+  return (
+    <View style={styles.estadistica}>
+      <Text numberOfLines={1} style={[styles.estadisticaValor, { color: colorTexto }]}>
+        {valor}
+      </Text>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[styles.estadisticaEtiqueta, { color: suave }]}
+      >
+        {etiqueta}
+      </Text>
+    </View>
   );
 }
 
@@ -483,24 +526,21 @@ function CapaPortada({
   );
 }
 
-/** "12 publicaciones": número en negrita y etiqueta en gris */
-function Numero({
-  valor,
-  etiqueta,
-  fuerte,
-  suave,
-}: {
-  valor: string;
-  etiqueta: string;
-  fuerte: string;
-  suave: string;
-}) {
-  return (
-    <Text style={[styles.numeroEtiqueta, { color: suave }]}>
-      <Text style={[styles.numeroValor, { color: fuerte }]}>{valor}</Text>{" "}
-      {etiqueta}
-    </Text>
-  );
+/** Formatea números grandes estilo red social: 12.6k, 1.2M */
+function formatearNumero(valor: number): string {
+  if (valor >= 1_000_000) {
+    const v = (valor / 1_000_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}M`;
+  }
+  if (valor >= 10_000) {
+    const v = (valor / 1_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}k`;
+  }
+  if (valor >= 1_000) {
+    const v = (valor / 1_000).toFixed(1);
+    return `${v.endsWith(".0") ? v.slice(0, -2) : v}k`;
+  }
+  return String(valor);
 }
 
 const styles = StyleSheet.create({
@@ -529,10 +569,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
+    paddingBottom: 4, // Sube el contenido (más padding = más arriba; ajusta entre 2 y 12 según veas)
     gap: 12,
   },
   botonHeader: {
-    width: 36,
+    width: 38,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
@@ -564,14 +605,14 @@ const styles = StyleSheet.create({
   tituloSub: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "rgba(255,255,255,0.82)",
+    color: "#ffffffd1",
   },
   derecha: { flexDirection: "row", alignItems: "center", gap: 10 },
   filaAvatar: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   avatar: {
     width: LADO_AVATAR,
@@ -579,38 +620,57 @@ const styles = StyleSheet.create({
     borderRadius: LADO_AVATAR / 2,
     overflow: "hidden",
   },
-  acciones: {
+  // Tres estadísticas a todo el ancho, más abajo que las píldoras para que no se vean juntas
+  stats: { flexDirection: "row", alignItems: "center", marginTop: 30 },
+  estadistica: { flex: 1, alignItems: "center", gap: 2 },
+  estadisticaValor: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 17,
+    lineHeight: 22,
+  },
+  estadisticaEtiqueta: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13.5,
+    lineHeight: 17,
+  },
+  // Las dos líneas finas que separan las estadísticas
+  linea: { width: StyleSheet.hairlineWidth * 2, height: 34 },
+  // Mensaje y Seguir: uno junto al otro y del mismo ancho
+  acciones: { flexDirection: "row", gap: 10, marginTop: 14 },
+  info: { paddingHorizontal: 16, paddingTop: ESPACIO_NOMBRE, gap: 4 },
+  // Bajado un poco respecto al avatar; el @usuario compensa para quedarse donde estaba
+  filaNombre: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingBottom: 4,
+    gap: 6,
+    marginTop: 1,
   },
-  info: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
-  filaNombre: { flexDirection: "row", alignItems: "center", gap: 6 },
   nombre: {
     flexShrink: 1,
     fontFamily: "Inter_600SemiBold",
-    fontSize: 24,
-    letterSpacing: -0.7,
-    lineHeight: 30,
+    fontSize: 20,
+    letterSpacing: -0.4,
+    lineHeight: 26,
   },
-  insigniaNombre: { marginTop: 1 },
-  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -4 },
+  insigniaNombre: { marginTop: 1, marginLeft: -4 },
+  usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -6.5 },
   descripcion: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14.5,
+    fontSize: 15,
     lineHeight: 20,
-    marginTop: 6,
+    marginTop: 9,
   },
-  pildoras: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
-  numeros: {
+  // Píldoras a la derecha del avatar
+  pildorasAvatar: {
+    flex: 1,
     flexDirection: "row",
-    flexWrap: "wrap",
-    columnGap: 16,
-    rowGap: 4,
-    marginTop: 6,
+    flexWrap: "nowrap",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 9,
+    marginLeft: 10,
+    paddingBottom: 10,
+    overflow: "hidden",
   },
-  numeroValor: { fontFamily: "Inter_600SemiBold" },
-  numeroEtiqueta: { fontFamily: "Inter_400Regular", fontSize: 14 },
-  pestanas: { marginTop: 14, paddingHorizontal: MARGEN_LATERAL },
+  pestanas: { marginTop: 40, paddingHorizontal: MARGEN_LATERAL },
 });

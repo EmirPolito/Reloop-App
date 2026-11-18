@@ -31,7 +31,8 @@ export function averageRatingLabel(products: Product[]): string {
     (product) =>
       allowsProductRating(product.category) && product.rating !== undefined,
   );
-  if (rated.length === 0) return "—";
+  // Sin valoraciones todavía: 0 (no una raya)
+  if (rated.length === 0) return "0";
   const total = rated.reduce((sum, product) => sum + (product.rating ?? 0), 0);
   return (total / rated.length).toFixed(1);
 }

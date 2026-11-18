@@ -34,7 +34,9 @@ export function mapChat(
         hasImages: Boolean(last.hasImages),
       }
     : null;
-  const readAt = toMillis((data.reads as Record<string, unknown> | undefined)?.[uid]);
+  const reads = data.reads as Record<string, unknown> | undefined;
+  const readAt = toMillis(reads?.[uid]);
+  const otherReadAt = toMillis(reads?.[otherId]);
 
   return {
     id: snapshot.id,
@@ -43,6 +45,8 @@ export function mapChat(
     ...(typeof data.productId === "string" ? { productId: data.productId } : {}),
     lastMessage,
     unread: Boolean(lastMessage && lastMessage.from === "them" && lastMessage.time > readAt),
+    readAt,
+    otherReadAt,
     updatedAt: toMillis(data.actualizadoEn),
   };
 }

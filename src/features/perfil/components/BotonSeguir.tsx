@@ -4,7 +4,11 @@ import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
 import { IconoCheck, IconoMas } from "../Perfiliconos";
 
-/** Botón Seguir / Siguiendo del perfil público */
+/**
+ * Botón Seguir / Siguiendo del perfil público. Ocupa todo su espacio (junto a Mensaje), así
+ * no cambia de tamaño al pasar de "Seguir" a "Siguiendo"; y no se atenúa mientras se guarda
+ * (solo deja de responder), para que el cambio de color se vea limpio.
+ */
 export function BotonSeguir({
   isFollowing,
   pending,
@@ -43,10 +47,7 @@ export function BotonSeguir({
       accessibilityState={{ selected: isFollowing, busy: pending }}
       onPress={onPress}
       disabled={pending}
-      style={[
-        styles.boton,
-        { backgroundColor: fondo, opacity: pending ? 0.6 : 1 },
-      ]}
+      style={[styles.boton, { backgroundColor: fondo }]}
     >
       {isFollowing ? (
         <IconoCheck size={16} color={texto} />
@@ -62,12 +63,13 @@ export function BotonSeguir({
 
 const styles = StyleSheet.create({
   boton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    height: 40,
-    paddingHorizontal: 18,
-    borderRadius: 20,
+    height: 42,
+    borderRadius: 21,
   },
-  texto: { fontSize: 14, fontWeight: "600" },
+  texto: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
 });

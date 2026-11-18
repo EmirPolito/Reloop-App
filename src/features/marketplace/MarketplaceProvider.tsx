@@ -2,6 +2,7 @@ import {
   createContext,
   useMemo,
   useReducer,
+  useState,
   type PropsWithChildren,
 } from "react";
 
@@ -20,6 +21,7 @@ import {
   setFavorite as saveFavorite,
 } from "./productRepository";
 import type { CategoryId, Product } from "./types";
+import { UNIVERSIDAD_PROPIA } from "./universidades";
 
 export interface MarketplaceState {
   products: Product[];
@@ -32,6 +34,8 @@ export interface MarketplaceState {
   /** ids de productos que esta persona ya reportó */
   reported: string[];
   filters: FeedFilters;
+  /** Universidad cuyas publicaciones se ven en el inicio (id de `universidades.ts`). */
+  universidad: string;
 }
 
 interface MarketplaceActions {
@@ -40,6 +44,7 @@ interface MarketplaceActions {
   rateProduct: (productId: string, rating: number) => Promise<void>;
   reportProduct: (productId: string) => Promise<void>;
   setQuery: (query: string) => void;
+  setUniversidad: (universidad: string) => void;
   toggleCategory: (category: CategoryId) => void;
   clearCategory: () => void;
   clearFilters: () => void;
@@ -62,6 +67,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
   const { uid } = useSessionUser();
   const data = useMarketplaceData(uid);
   const [filters, dispatchFilters] = useReducer(filtersReducer, NO_FILTERS);
+  const [universidad, setUniversidad] = useState(UNIVERSIDAD_PROPIA);
   const favoritesRef = useLatestRef(data.favorites);
   const productsRef = useLatestRef(data.products);
   const notify = useNotify();
@@ -75,6 +81,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       ratings: data.ratings,
       reported: data.reported,
       filters,
+      universidad,
     }),
     [
       data.products,
@@ -83,6 +90,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       data.ratings,
       data.reported,
       filters,
+      universidad,
     ],
   );
 
@@ -104,6 +112,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       rateProduct: (productId, rating) => saveRating(uid, productId, rating),
       reportProduct: (productId) => saveReport(uid, productId),
       setQuery: (query) => dispatchFilters({ type: "queryChanged", query }),
+      setUniversidad,
       toggleCategory: (category) =>
         dispatchFilters({ type: "categoryToggled", category }),
       clearCategory: () => dispatchFilters({ type: "categoryCleared" }),

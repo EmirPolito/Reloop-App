@@ -6,14 +6,24 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_PATTERN.test(email.trim());
 }
 
-/** Devuelve el mensaje de error para el usuario, o `null` si los datos son válidos. */
-export function validateCredentials(
+/** Valida correo y contraseña por separado, con mensajes cortos que caben dentro de cada campo. */
+export function validarPorCampo(
   email: string,
   password: string,
-): string | null {
-  if (!isValidEmail(email)) return "Escribe un correo electrónico válido.";
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-  }
-  return null;
+): {
+  emailError: string;
+  passwordError: string;
+} {
+  const correo = email.trim();
+  const emailError = !correo
+    ? "Ingresa tu correo"
+    : !isValidEmail(correo)
+      ? "Correo no válido"
+      : "";
+  const passwordError = !password
+    ? "Ingresa tu contraseña"
+    : password.length < MIN_PASSWORD_LENGTH
+      ? `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`
+      : "";
+  return { emailError, passwordError };
 }

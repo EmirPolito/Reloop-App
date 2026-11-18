@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { crearSuscripcionCompartida } from "@/lib/sharedSubscription";
 import { subscribeMembership } from "../membershipRepository";
@@ -24,6 +24,25 @@ const useMembresiaDe = crearSuscripcionCompartida<{
     alError,
   ),
 );
+
+/**
+ * Quiénes de `uids` tienen Premium vigente, con las mismas suscripciones compartidas que
+ * `useIsPremium`. Sirve para ordenar listas (los de Premium primero). Se reevalúa cuando la
+ * lista o una membresía cambian.
+ */
+export function useDuenosPremium(uids: readonly string[]): ReadonlySet<string> {
+  const membresias = useMembresiaDe.varias(uids);
+  return useMemo(() => {
+    const premium = new Set<string>();
+    membresias.forEach((leida, uid) => {
+      // Se juzga con la hora a la que llegó (sin leer el reloj al dibujar), como useIsPremium
+      if (leida && isMembershipActive(leida.membership, leida.recibidaEn)) {
+        premium.add(uid);
+      }
+    });
+    return premium;
+  }, [membresias]);
+}
 
 /**
  * `true` mientras la membresía Premium de `uid` esté vigente. Se actualiza sola si un

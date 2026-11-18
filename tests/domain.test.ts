@@ -57,7 +57,7 @@ import type { AppNotification } from "@/features/notificaciones/types";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
 import { parsePrice } from "@/utils/price";
 import { getInitials } from "@/utils/text";
-import { isValidEmail, validateCredentials } from "@/utils/validation";
+import { isValidEmail, validarPorCampo } from "@/utils/validation";
 
 function snap(id: string, data: DocumentData | undefined) {
   return { id, data: () => data } as unknown as DocumentSnapshot<DocumentData>;
@@ -145,8 +145,8 @@ describe("barra de navegación por ruta", () => {
 });
 
 describe("onboarding", () => {
-  it("son tres pasos: portada, avatar e identidad", () => {
-    assert.deepEqual([...PASOS_ONBOARDING], ["portada", "avatar", "identidad"]);
+  it("son tres pasos: avatar, etiquetas y perfil", () => {
+    assert.deepEqual([...PASOS_ONBOARDING], ["avatar", "etiquetas", "perfil"]);
   });
   it("retoma el paso guardado y vuelve al primero si el valor no sirve", () => {
     assert.equal(pasoDesdeIndice("2"), 2);
@@ -223,8 +223,8 @@ describe("reglas por categoría", () => {
     assert.equal(productBadgeLabel(product({ category: "cambio", price: 0 })), "Intercambios");
   });
   it("promedio de reputación: solo cuenta lo calificable; sin datos, raya", () => {
-    assert.equal(averageRatingLabel([]), "—");
-    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined })]), "—");
+    assert.equal(averageRatingLabel([]), "0");
+    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined })]), "0");
     assert.equal(averageRatingLabel([product({ rating: 5 }), product({ rating: 4 })]), "4.5");
     assert.equal(averageRatingLabel([product({ rating: 5 }), product({ category: "cambio", rating: undefined })]), "5.0");
   });
@@ -279,7 +279,7 @@ describe("filas del inicio", () => {
 
 describe("búsqueda de chats", () => {
   const chat = (over: Partial<Chat>): Chat => ({
-    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, updatedAt: 0, ...over,
+    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, readAt: 0, otherReadAt: 0, updatedAt: 0, ...over,
   });
   const chats = [
     chat({ id: "1", name: "Beto", productId: "p1" }),
@@ -390,6 +390,10 @@ describe("mapeo de perfiles", () => {
     assert.equal(p.photo, null);
     assert.equal(p.cover, null);
   });
+  it("de un perfil con más etiquetas de las permitidas solo se leen las primeras 2", () => {
+    const etiquetas = ["a", "b", "c", "d"].map((id) => ({ id, text: id, color: "azul" }));
+    assert.deepEqual(mapProfile({ nombre: "Ana", etiquetas }, "Ana").pills.map((x) => x.id), ["a", "b"]);
+  });
   it("la imagen de fondo se lee y se guarda como `fondoUrl`", () => {
     const url = "https://res.cloudinary.com/demo/image/upload/v1/fondo.png";
     assert.equal(mapProfile({ fondoUrl: url }, "Ana").cover, url);
@@ -476,8 +480,18 @@ describe("utilidades", () => {
   it("credenciales", () => {
     assert.equal(isValidEmail("a@b.co"), true);
     assert.equal(isValidEmail("a@b"), false);
-    assert.match(validateCredentials("a@b.co", "123") ?? "", /al menos 6/);
-    assert.equal(validateCredentials("a@b.co", "123456"), null);
+    assert.deepEqual(validarPorCampo("", ""), {
+      emailError: "Ingresa tu correo",
+      passwordError: "Ingresa tu contraseña",
+    });
+    assert.deepEqual(validarPorCampo("a@b", "123"), {
+      emailError: "Correo no válido",
+      passwordError: "Mínimo 6 caracteres",
+    });
+    assert.deepEqual(validarPorCampo(" a@b.co ", "123456"), {
+      emailError: "",
+      passwordError: "",
+    });
   });
 });
 

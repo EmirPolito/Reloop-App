@@ -34,15 +34,24 @@ export function ProfileProvider({ children }: PropsWithChildren) {
   const [stored, setStored] = useState<DatosPerfil | null>(null);
 
   useEffect(() => {
-    // Cuentas creadas antes de existir las fichas: se completan al iniciar sesión
-    // El username se asigna después: necesita la ficha ya creada y al día
+    // Cuentas creadas antes de existir las fichas: se completan al iniciar sesión. Una ficha
+    // nueva ya nace con su username; solo si no se pudo (estaba ocupado, o es una ficha
+    // antigua) se busca otro con `ensureUsername`
     ensureProfile(user.uid, user.name)
-      .then(() => ensureUsername(user.uid, user.name))
+      .then((tieneUsername) =>
+        tieneUsername ? undefined : ensureUsername(user.uid, user.name),
+      )
       .catch((error) =>
-        console.warn("No se pudo preparar el perfil.", describeFirestoreError(error)),
+        console.warn(
+          "No se pudo preparar el perfil.",
+          describeFirestoreError(error),
+        ),
       );
     ensureAccountEmail(user.uid, user.email).catch((error) =>
-      console.warn("No se pudo guardar el correo.", describeFirestoreError(error)),
+      console.warn(
+        "No se pudo guardar el correo.",
+        describeFirestoreError(error),
+      ),
     );
     return subscribeProfile(
       user.uid,
@@ -50,7 +59,10 @@ export function ProfileProvider({ children }: PropsWithChildren) {
         if (profile) setStored(profile);
       },
       (error) =>
-        console.warn("No se pudo leer el perfil.", describeFirestoreError(error)),
+        console.warn(
+          "No se pudo leer el perfil.",
+          describeFirestoreError(error),
+        ),
       user.name,
     );
   }, [user.uid, user.name, user.email]);
@@ -65,7 +77,10 @@ export function ProfileProvider({ children }: PropsWithChildren) {
     [user.uid, profile],
   );
 
-  const value = useMemo(() => ({ profile, saveProfile }), [profile, saveProfile]);
+  const value = useMemo(
+    () => ({ profile, saveProfile }),
+    [profile, saveProfile],
+  );
 
   return (
     <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>

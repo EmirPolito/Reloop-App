@@ -21,9 +21,11 @@ export default function AuthLayout() {
           <Stack.Screen name="register" />
           <Stack.Screen name="recovery" />
         </Stack.Protected>
+        {/* Al cerrar sesión desde la verificación ("¿Te equivocaste de correo?") se vuelve
+            a Registrarse, para crear la cuenta con el correo correcto */}
         <Stack.Protected
           guard={status === "unverified"}
-          redirectTo="/login"
+          redirectTo="/register"
         >
           <Stack.Screen name="verify" />
         </Stack.Protected>

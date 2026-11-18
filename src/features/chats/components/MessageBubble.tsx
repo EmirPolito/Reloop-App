@@ -4,6 +4,7 @@ import { Pressable, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { EASE_OUT } from "@/constants/motion";
+import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import type { ChatMessage } from "@/features/marketplace/types";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
@@ -11,6 +12,10 @@ import { optimizedImageUrl } from "@/lib/imageUrl";
 import { formatMessageTime } from "@/utils/time";
 
 const BUBBLE_ENTERING = FadeInDown.duration(160).easing(EASE_OUT);
+
+/** Avatar de quien escribe, a la izquierda de sus burbujas, y su separación con ellas */
+const LADO_AVATAR = 34;
+const SEPARACION_AVATAR = 8;
 
 const IMAGE_GAP = 4;
 const MAX_VISIBLE_IMAGES = 4;
@@ -119,10 +124,18 @@ function MessageImages({
 // no todo el historial (clave para que el envío se sienta fluido).
 export const MessageBubble = memo(function MessageBubble({
   message,
+  contactId,
+  contactName,
+  showAvatar,
   isNew,
   onOpenImages,
 }: {
   message: ChatMessage;
+  /** Quien escribe los mensajes recibidos (su avatar va a la izquierda de la burbuja) */
+  contactId: string;
+  contactName: string;
+  /** Primer mensaje de una racha de la otra persona: lleva el avatar; los siguientes, solo el hueco */
+  showAvatar: boolean;
   /** Solo los mensajes nuevos se animan; el historial aparece sin movimiento. */
   isNew: boolean;
   onOpenImages: (images: string[], initialIndex: number) => void;
@@ -133,19 +146,20 @@ export const MessageBubble = memo(function MessageBubble({
   const hasImages = images.length > 0;
   const hasText = message.text.trim().length > 0;
 
-  return (
+  const burbuja = (
     <Animated.View
-      entering={isNew ? BUBBLE_ENTERING : undefined}
+      entering={isMe && isNew ? BUBBLE_ENTERING : undefined}
       style={[
         styles.messageBubble,
         isMe ? styles.myMessage : styles.theirMessage,
         {
-          maxWidth: "78%",
+          maxWidth: isMe ? "78%" : undefined,
+          flexShrink: 1,
           paddingHorizontal: hasImages && !hasText ? 0 : 15,
           paddingVertical: hasImages && !hasText ? 0 : 8,
           borderRadius: 13,
           marginVertical: 3.5,
-          alignSelf: isMe ? "flex-end" : "flex-start",
+          alignSelf: isMe ? "flex-end" : "auto",
           ...(hasImages && !hasText
             ? {
                 backgroundColor: "transparent",
@@ -236,6 +250,38 @@ export const MessageBubble = memo(function MessageBubble({
           {formatMessageTime(message.time)}
         </Text>
       </View>
+    </Animated.View>
+  );
+
+  // Los míos, como siempre: pegados a la derecha
+  if (isMe) return burbuja;
+
+  // Los recibidos: el avatar a la izquierda de la burbuja (solo en el primero de la racha) y
+  // los siguientes alineados debajo, con el mismo hueco
+  return (
+    <Animated.View
+      entering={isNew ? BUBBLE_ENTERING : undefined}
+      style={{
+        flexDirection: "row",
+        // El avatar queda arriba, a la altura de la primera línea de la burbuja
+        alignItems: "flex-start",
+        alignSelf: "flex-start",
+        maxWidth: "88%",
+        gap: SEPARACION_AVATAR,
+      }}
+    >
+      <View
+        style={{ width: LADO_AVATAR, height: LADO_AVATAR, marginTop: 3 }}
+      >
+        {showAvatar ? (
+          <AvatarVendedor
+            ownerId={contactId}
+            fallbackName={contactName}
+            size={LADO_AVATAR}
+          />
+        ) : null}
+      </View>
+      {burbuja}
     </Animated.View>
   );
 });

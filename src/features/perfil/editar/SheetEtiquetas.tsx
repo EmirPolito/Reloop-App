@@ -30,7 +30,12 @@ export function SheetEtiquetas({
   onGuardar: (pills: PildoraPerfilData[]) => Promise<void>;
 }) {
   return (
-    <SheetEditar visible={visible} titulo="Etiquetas" isDark={isDark} onClose={onClose}>
+    <SheetEditar
+      visible={visible}
+      titulo="Etiquetas"
+      isDark={isDark}
+      onClose={onClose}
+    >
       <Contenido
         visible={visible}
         pills={pills}
@@ -44,9 +49,9 @@ export function SheetEtiquetas({
 
 /**
  * Cambios sobre un borrador de etiquetas (agregar, color, icono, quitar), con el máximo y
- * los colores de Editar perfil. Lo comparten este drawer y el onboarding.
+ * los colores de Editar perfil.
  */
-export function accionesBorradorEtiquetas(
+function accionesBorradorEtiquetas(
   setBorrador: Dispatch<SetStateAction<PildoraPerfilData[]>>,
 ) {
   return {
@@ -61,7 +66,9 @@ export function accionesBorradorEtiquetas(
         curr.map((x) => (x.id === id ? { ...x, color } : x)),
       ),
     cambiarIcono: (id: string, icon?: string) =>
-      setBorrador((curr) => curr.map((x) => (x.id === id ? { ...x, icon } : x))),
+      setBorrador((curr) =>
+        curr.map((x) => (x.id === id ? { ...x, icon } : x)),
+      ),
     quitar: (id: string) =>
       setBorrador((curr) => curr.filter((x) => x.id !== id)),
   };
@@ -123,12 +130,20 @@ function Contenido({
         <Pressable
           accessibilityRole="button"
           onPress={() => void guardar()}
-          style={[styles.boton, { backgroundColor: isDark ? "#F1F5F9" : "#1C1C1E" }]}
+          style={[
+            styles.boton,
+            { backgroundColor: isDark ? "#F1F5F9" : "#1C1C1E" },
+          ]}
         >
           {guardando ? (
             <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
           ) : (
-            <Text style={[INTER.medium, { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" }]}>
+            <Text
+              style={[
+                INTER.medium,
+                { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+              ]}
+            >
               Guardar
             </Text>
           )}

@@ -39,7 +39,7 @@ export interface DatosPerfil {
   onboardingPendiente: boolean;
 }
 
-export const MAX_PILDORAS = 4;
+export const MAX_PILDORAS = 2;
 export const MAX_NOMBRE = 30;
 export const MAX_DESCRIPCION = 80;
 export const MAX_TEXTO_PILDORA = 16;
@@ -57,8 +57,11 @@ export interface TemaColor {
   /** Degradado del header: 3 tonos de arriba hacia abajo */
   gradientLight: [string, string, string];
   gradientDark: [string, string, string];
-  /** Píldora: fondo suave y borde más notorio */
+  /** Píldora: fondo suave y color para texto e icono */
   pillBg: string;
+  pillBgDark: string;
+  pillColor: string;
+  pillColorDark: string;
   pillBorder: string;
 }
 
@@ -73,43 +76,58 @@ export const COLORES_PERFIL: ColorPerfil[] = [
 export const TEMAS: Record<ColorPerfil, TemaColor> = {
   azul: {
     label: "Azul",
-    accent: "#232323ff",
+    accent: "#5c5c5cff",
     gradientLight: ["#15a5ffff", "#3eb5ffff", "#9ad8ffff"],
     gradientDark: ["#1E3A8A", "#2563EB", "#38BDF8"],
-    pillBg: "#e1e1e1ff",
-    pillBorder: "#e1e1e1ff",
+    pillBg: "#e9e9e9ff",
+    pillBgDark: "rgba(56, 189, 248, 0.14)",
+    pillColor: "#1c90dedd",
+    pillColorDark: "#38BDF8",
+    pillBorder: "transparent",
   },
   naranja: {
     label: "Naranja",
-    accent: "#232323ff",
+    accent: "#c6c6c6ff",
     gradientLight: ["#ff8725ff", "#ff9d4cff", "#ffcea6ff"],
     gradientDark: ["#9A3412", "#EA580C", "#FB923C"],
-    pillBg: "#e1e1e1ff",
-    pillBorder: "#e1e1e1ff",
+    pillBg: "#e9e9e9ff",
+    pillBgDark: "rgba(251, 146, 60, 0.14)",
+    pillColor: "#e47418e0",
+    pillColorDark: "#FB923C",
+    pillBorder: "transparent",
   },
   rosa: {
     label: "Rosa",
-    accent: "#232323ff",
+    accent: "#5c5c5cff",
     gradientLight: ["#ff208cff", "#ff3d9bff", "#ffacd4ff"],
     gradientDark: ["#9D174D", "#DB2777", "#F472B6"],
-    pillBg: "#e1e1e1ff",
-    pillBorder: "#e1e1e1ff",
+    pillBg: "#e9e9e9ff",
+    pillBgDark: "rgba(244, 114, 182, 0.14)",
+    pillColor: "#df1c77dc",
+    pillColorDark: "#F472B6",
+    pillBorder: "transparent",
   },
   verde: {
     label: "Verde",
-    accent: "#232323ff",
+    accent: "#5c5c5cff",
     gradientLight: ["#2cb844ff", "#4ade80", "#a0ffc3ff"],
     gradientDark: ["#166534", "#16A34A", "#4ADE80"],
-    pillBg: "#e1e1e1ff",
-    pillBorder: "#e1e1e1ff",
+    pillBg: "#e9e9e9ff",
+    pillBgDark: "rgba(74, 222, 128, 0.14)",
+    pillColor: "#30955ae2",
+    pillColorDark: "#4ADE80",
+    pillBorder: "transparent",
   },
   amarillo: {
     label: "Amarillo",
-    accent: "#232323ff",
+    accent: "#5c5c5cff",
     gradientLight: ["#facc15", "#fde047", "#fff6afff"],
     gradientDark: ["#854D0E", "#CA8A04", "#FACC15"],
-    pillBg: "#e1e1e1ff",
-    pillBorder: "#e1e1e1ff",
+    pillBg: "#e9e9e9ff",
+    pillBgDark: "rgba(250, 204, 21, 0.14)",
+    pillColor: "#e0b519de",
+    pillColorDark: "#FACC15",
+    pillBorder: "transparent",
   },
 };
 
@@ -132,9 +150,6 @@ export function gradienteCieloPerfil(
   const tema = TEMAS[color] ?? TEMAS.azul;
   return isDark ? tema.gradientDark : tema.gradientLight;
 }
-
-/** Puntos de parada del degradado: los 3 tonos del tema terminan un poco antes de la mitad de la pantalla (0.45) */
-export const LOCATIONS_APP_BACKGROUND = [0, 0.12, 0.26, 0.45] as const;
 
 /** Botón de acción principal (crear publicación, enviar mensaje): un solo estilo fijo */
 export const ESTILO_BOTON_ACCION = {

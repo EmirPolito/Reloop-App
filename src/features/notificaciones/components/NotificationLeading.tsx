@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
 import {
@@ -6,27 +5,34 @@ import {
   CorazonActivoIcon,
   type IconProps,
 } from "@/components/iconos";
-import { Avatar } from "@/components/ui/Avatar";
-import { OrbAvatar } from "@/components/ui/OrbAvatar";
+import { PremiumBadge } from "@/components/ui/PremiumBadge";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { IconoMensaje } from "@/features/perfil/Perfiliconos";
-import { optimizedImageUrl } from "@/lib/imageUrl";
+import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import type { ComponentType } from "react";
 import type { AppNotification, NotificationType } from "../types";
 
-/** Icono y colores del círculo de cada tipo que no es "te empezó a seguir". */
+/** Icono y color del círculo de cada tipo que no es "te empezó a seguir" (fondo del color, icono blanco). */
 const ICONOS: Record<
   Exclude<NotificationType, "seguidor">,
-  { Icono: ComponentType<IconProps>; color: string; fondo: string }
+  { Icono: ComponentType<IconProps>; color: string }
 > = {
-  favorito: { Icono: CorazonActivoIcon, color: "#FF3762", fondo: "#FFE4EA" },
-  comentario: { Icono: ChatActivoIcon, color: "#296FFA", fondo: "#E2ECFF" },
-  mensaje: { Icono: IconoMensaje, color: "#12915F", fondo: "#DCF5E9" },
+  favorito: { Icono: CorazonActivoIcon, color: "#FF6B88" },
+  comentario: { Icono: ChatActivoIcon, color: "#5C93FF" },
+  mensaje: { Icono: IconoMensaje, color: "#34D399" },
 };
+
+/** El icono ocupa algo más de la mitad del círculo */
+const PROPORCION_ICONO = 0.54;
+/** La insignia sobre un círculo con icono mide un poco más de un tercio de este */
+const PROPORCION_INSIGNIA = 0.4;
 
 /**
  * Lo que va a la izquierda de una notificación (en el banner y en la lista): el avatar de
- * la persona si empezó a seguirte (foto, avatar orbe o iniciales) y, para el resto, un
- * icono dentro de un círculo.
+ * la persona si empezó a seguirte (su foto o avatar de ahora, con sus iniciales mientras
+ * llega) y, para el resto, un icono dentro de un círculo. Si quien la provocó tiene
+ * Premium, su insignia se ve en la esquina en ambos casos.
  */
 export function NotificationLeading({
   notification,
@@ -35,46 +41,55 @@ export function NotificationLeading({
   notification: AppNotification;
   size: number;
 }) {
-  const circulo = { width: size, height: size, borderRadius: size / 2 };
+  const perfil = usePerfilDe(notification.actorId) ?? null;
+  const premium = useIsPremium(notification.actorId);
 
   if (notification.type !== "seguidor") {
-    const { Icono, color, fondo } = ICONOS[notification.type];
+    const { Icono, color } = ICONOS[notification.type];
+    const insignia = Math.round(size * PROPORCION_INSIGNIA);
     return (
-      <View style={[styles.centrado, circulo, { backgroundColor: fondo }]}>
-        <Icono size={size * 0.5} color={color} />
+      <View style={{ width: size, height: size }}>
+        <View
+          style={[
+            styles.centrado,
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              // Fondo fuerte (el color del tipo) con el icono blanco
+              backgroundColor: color,
+            },
+          ]}
+        >
+          <Icono size={size * PROPORCION_ICONO} color="#FFFFFF" />
+        </View>
+        {premium ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.insignia,
+              { width: insignia, height: insignia, right: -1, bottom: -5 },
+            ]}
+          >
+            <PremiumBadge size={insignia} variant="static" />
+          </View>
+        ) : null}
       </View>
     );
   }
 
-  if (notification.actorPhoto) {
-    return (
-      <Image
-        accessibilityLabel={`Foto de ${notification.actorName}`}
-        source={{
-          uri:
-            optimizedImageUrl(notification.actorPhoto, 200) ??
-            notification.actorPhoto,
-        }}
-        contentFit="cover"
-        transition={150}
-        style={circulo}
-      />
-    );
-  }
-
-  if (notification.actorOrb !== null) {
-    return (
-      <OrbAvatar
-        orb={notification.actorOrb}
-        name={notification.actorName}
-        size={size}
-      />
-    );
-  }
-
-  return <Avatar name={notification.actorName} size={size} />;
+  return (
+    <UserAvatar
+      photo={perfil ? perfil.photo : notification.actorPhoto}
+      orb={perfil ? perfil.orb : notification.actorOrb}
+      name={perfil?.name ?? notification.actorName}
+      size={size}
+      premium={premium}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   centrado: { alignItems: "center", justifyContent: "center" },
+  insignia: { position: "absolute" },
 });
