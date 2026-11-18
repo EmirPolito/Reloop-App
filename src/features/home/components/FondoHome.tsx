@@ -70,6 +70,19 @@ export const FondoHome = memo(function FondoHome({
   // El resplandor llega hasta arriba del todo: se suma lo que la escena deja para la hora
   const alto = Math.round(height * PROPORCION_ALTO) + insets.top;
 
+  // En oscuro: solo el tono liso de la app, sin resplandor de colores
+  if (isDark) {
+    return (
+      <View
+        pointerEvents="none"
+        style={[
+          estilos.fondo,
+          { top: dentroDeEscena ? -insets.top : 0, backgroundColor: base },
+        ]}
+      />
+    );
+  }
+
   return (
     <View
       pointerEvents="none"

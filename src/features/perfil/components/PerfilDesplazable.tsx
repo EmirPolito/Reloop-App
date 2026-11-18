@@ -32,23 +32,23 @@ import { PerfilAvatar } from "./PerfilAvatar";
 import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
-const ALTO_PORTADA = 120;
+export const ALTO_PORTADA = 120;
 const ALTO_HEADER = 57;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
 /** Cuánto sobresale el avatar por encima del borde inferior de la portada */
-const SOLAPE_AVATAR = 44;
+export const SOLAPE_AVATAR = 44;
 /** Tamaño final del avatar al colapsar (se esconde bajo el header) */
 const ESCALA_AVATAR_MIN = 0.6;
 /** Borde del color de la pantalla alrededor del avatar */
-const BORDE_AVATAR = 3;
+export const BORDE_AVATAR = 3;
 /** Recorrido con el que el título pequeño entra al header */
 const ENTRADA_TITULO = 28;
 /** Píxeles de anticipación para que el desenfoque y el título salgan un poco antes */
 const ADELANTO_HEADER = 22;
 const ANCHO_PORTADA = 900;
 /** Avatar pequeño que entra al header junto al nombre */
-const LADO_AVATAR_HEADER = 32;
+const LADO_AVATAR_HEADER = 38;
 /** Margen a los lados de las publicaciones */
 const MARGEN_LATERAL = 15;
 /** Espacio entre el avatar y el nombre */
@@ -462,7 +462,7 @@ export function PerfilDesplazable({
 }
 
 /** Una estadística: el número arriba y su nombre debajo */
-function Estadistica({
+export function Estadistica({
   valor,
   etiqueta,
   colorTexto,
@@ -491,7 +491,7 @@ function Estadistica({
 }
 
 /** Imagen (o degradado) de la portada y el velo de arriba; llena su contenedor */
-function CapaPortada({
+export function CapaPortada({
   cover,
   cielo,
   insetTop,
@@ -527,7 +527,7 @@ function CapaPortada({
 }
 
 /** Formatea números grandes estilo red social: 12.6k, 1.2M */
-function formatearNumero(valor: number): string {
+export function formatearNumero(valor: number): string {
   if (valor >= 1_000_000) {
     const v = (valor / 1_000_000).toFixed(1);
     return `${v.endsWith(".0") ? v.slice(0, -2) : v}M`;
@@ -669,7 +669,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 9,
     marginLeft: 10,
-    paddingBottom: 10,
+    marginRight: -6,
+    paddingBottom: 14,
     overflow: "hidden",
   },
   pestanas: { marginTop: 40, paddingHorizontal: MARGEN_LATERAL },

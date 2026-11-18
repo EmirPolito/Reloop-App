@@ -18,13 +18,13 @@ const ICONOS: Record<
   Exclude<NotificationType, "seguidor">,
   { Icono: ComponentType<IconProps>; color: string }
 > = {
-  favorito: { Icono: CorazonActivoIcon, color: "#FF6B88" },
-  comentario: { Icono: ChatActivoIcon, color: "#5C93FF" },
-  mensaje: { Icono: IconoMensaje, color: "#34D399" },
+  favorito: { Icono: CorazonActivoIcon, color: "#FF3D63" },
+  comentario: { Icono: ChatActivoIcon, color: "#2F6BFF" },
+  mensaje: { Icono: IconoMensaje, color: "#10B981" },
 };
 
 /** El icono ocupa algo más de la mitad del círculo */
-const PROPORCION_ICONO = 0.54;
+const PROPORCION_ICONO = 0.62;
 /** La insignia sobre un círculo con icono mide un poco más de un tercio de este */
 const PROPORCION_INSIGNIA = 0.4;
 

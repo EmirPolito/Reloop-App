@@ -10,11 +10,13 @@ export function AvatarVendedor({
   ownerId,
   fallbackName,
   size,
+  ajusteInsignia,
 }: {
   ownerId: string;
   /** Nombre de la publicación, mientras llega el del perfil */
   fallbackName: string;
   size: number;
+  ajusteInsignia?: { escala: number; right: number; bottom: number };
 }) {
   const perfil = usePerfilDe(ownerId);
   const premium = useIsPremium(ownerId);
@@ -25,6 +27,7 @@ export function AvatarVendedor({
       name={perfil?.name ?? fallbackName}
       size={size}
       premium={premium}
+      ajusteInsignia={ajusteInsignia}
     />
   );
 }

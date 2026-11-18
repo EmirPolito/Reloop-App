@@ -85,7 +85,7 @@ export function SelectorUniversidad() {
           estilos.boton,
           {
             backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
-            borderColor: isDark ? "#ffffff2e" : "#ffffff5b",
+            borderColor: "transparent",
           },
         ]}
       >

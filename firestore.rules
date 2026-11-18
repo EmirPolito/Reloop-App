@@ -312,7 +312,10 @@ service cloud.firestore {
       return request.auth.uid in before.participants
         && after.participants == before.participants
         && changed.hasOnly(['names', 'reads', 'lastMessage', 'productId', 'introducedProducts',
-                            'actualizadoEn'])
+                            'actualizadoEn', 'borrados'])
+        && (!('borrados' in changed)
+              || (after.borrados.diff(before.get('borrados', {})).affectedKeys().hasOnly([request.auth.uid])
+                  && after.borrados[request.auth.uid] == request.time))
         && (!('names' in changed)
               || after.names.diff(before.names).affectedKeys().hasOnly([request.auth.uid]))
         && (!('reads' in changed)

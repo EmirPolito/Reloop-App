@@ -17,7 +17,7 @@ interface Thread {
 }
 
 /** Mensajes de un chat en tiempo real. */
-export function useThreadMessages(chatId: string) {
+export function useThreadMessages(chatId: string, deletedAt = 0) {
   const { uid } = useSessionUser();
   const [thread, setThread] = useState<Thread | null>(null);
 
@@ -26,6 +26,7 @@ export function useThreadMessages(chatId: string) {
       subscribeMessages(
         chatId,
         uid,
+        deletedAt,
         (messages) =>
           setThread((current) => ({
             chatId,
@@ -41,7 +42,7 @@ export function useThreadMessages(chatId: string) {
           setThread({ chatId, messages: NO_MESSAGES, status: "error", initialCount: 0 });
         },
       ),
-    [chatId, uid],
+    [chatId, uid, deletedAt],
   );
 
   // Si el chat cambia, lo guardado es del anterior y se ignora hasta que llegue lo nuevo

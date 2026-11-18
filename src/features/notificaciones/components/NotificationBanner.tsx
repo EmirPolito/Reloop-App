@@ -3,6 +3,7 @@ import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   ReduceMotion,
   cancelAnimation,
   interpolate,
@@ -27,19 +28,29 @@ import { NotificationLeading } from "./NotificationLeading";
 
 /** Tiempo a la vista antes de recogerse sola */
 const VISIBLE_MS = 4500;
-const ANCHO_RECOGIDA = 116;
-const ALTO_RECOGIDA = 34;
+/** Recogida, la notificación es un círculo blanco con su icono dentro */
+const ANCHO_RECOGIDA = 56;
+const ALTO_RECOGIDA = 56;
+const LADO_LEADING = 47;
+const PADDING_LEADING = 10;
+/** El icono recogido se ve un poco más chico que abierto */
+const ESCALA_LEADING_RECOGIDO = 0.82;
 
 const ANCHO_MAXIMO = 370; // Ancho máximo (tablets o pantallas grandes)
 const ALTO_ABIERTA = 65; // Alto de la card en mobile
 const MARGEN = 16; // Margen lateral: más margen = card menos ancha
 const BAJAR_CAPA = 16; // Distancia extra bajo la zona segura (sube/baja la card)
 
-const ASOMAR = { duration: 180, easing: EASE_OUT_CUBIC };
-const EXPANDIR = { duration: 300, easing: EASE_OUT_CUBIC };
-const RECOGER = { duration: 220, easing: EASE_OUT_CUBIC };
-const TEXTO_ENTRA = { duration: 180, easing: EASE_OUT_CUBIC };
-const TEXTO_SALE = { duration: 110, easing: EASE_OUT_CUBIC };
+const ASOMAR = { duration: 320, easing: EASE_OUT_CUBIC };
+// Entrada con la misma curva suave que la salida
+const ENTRA = { duration: 520, easing: Easing.bezier(0.32, 0.72, 0, 1) };
+const EXPANDIR = { duration: 620, easing: Easing.bezier(0.32, 0.72, 0, 1) };
+// Salida suave: arranca con calma y se asienta sin cortes
+const SUAVE = Easing.bezier(0.32, 0.72, 0, 1);
+const RECOGER = { duration: 620, easing: SUAVE };
+const SALIDA_SUBE = { duration: 400, easing: SUAVE };
+const TEXTO_ENTRA = { duration: 360, easing: SUAVE };
+const TEXTO_SALE = { duration: 240, easing: SUAVE };
 // Con "Reducir movimiento" solo queda un fundido, que sí debe animarse
 const FUNDIDO = {
   duration: 160,
@@ -69,7 +80,7 @@ export interface ContenidoBanner {
   descripcion: string;
   /** Lo que va a la izquierda (un círculo de 47 px) */
   leading: ReactNode;
-  icono: ComponentProps<typeof Ionicons>["name"];
+  icono: ComponentProps<typeof Ionicons>["name"] | null;
   /** Lo que anuncia el lector de pantalla sobre tocarlo */
   pista?: string;
 }
@@ -98,7 +109,11 @@ export function NotificationBanner(props: PropsBanner) {
           leading: (
             <NotificationLeading notification={props.notification} size={47} />
           ),
-          icono: notificationIcon(props.notification),
+          // Con círculo de color a la izquierda no se repite un icono a la derecha
+          icono:
+            props.notification.type === "seguidor"
+              ? notificationIcon(props.notification)
+              : null,
           pista: "Toca para abrir",
         }
       : props.contenido;
@@ -136,29 +151,23 @@ export function NotificationBanner(props: PropsBanner) {
     const subir = TEXTO_SALE.duration + RECOGER.duration - 60;
     contenido.set(withTiming(0, TEXTO_SALE));
     abierta.set(withDelay(TEXTO_SALE.duration - 30, withTiming(0, RECOGER)));
-    opacidad.set(withDelay(subir, withTiming(0, ASOMAR)));
+    opacidad.set(withDelay(subir, withTiming(0, SALIDA_SUBE)));
     asomada.set(
       withDelay(
         subir,
-        withTiming(0, ASOMAR, (terminada) => {
+        withTiming(0, SALIDA_SUBE, (terminada) => {
           if (terminada) scheduleOnRN(onDismiss);
         }),
       ),
     );
   };
 
-  /** Con reacción: se abre el destino y el banner se va con un fundido corto */
+  /** Con reacción: se abre el destino y el banner se recoge con la misma salida suave */
   const abrir = () => {
     "worklet";
     if (cerrando.get()) return;
-    cerrando.set(true);
-    cancelAnimation(reloj);
     scheduleOnRN(onOpen);
-    opacidad.set(
-      withTiming(0, FUNDIDO, (terminada) => {
-        if (terminada) scheduleOnRN(onDismiss);
-      }),
-    );
+    recoger();
   };
 
   /** (Re)inicia la cuenta atrás; tocar el banner la detiene y soltarlo la reinicia */
@@ -183,9 +192,9 @@ export function NotificationBanner(props: PropsBanner) {
       opacidad.set(withTiming(1, FUNDIDO));
     } else {
       opacidad.set(withTiming(1, ASOMAR));
-      asomada.set(withTiming(1, ASOMAR));
-      abierta.set(withDelay(110, withTiming(1, EXPANDIR)));
-      contenido.set(withDelay(300, withTiming(1, TEXTO_ENTRA)));
+      asomada.set(withTiming(1, ENTRA));
+      abierta.set(withDelay(280, withTiming(1, EXPANDIR)));
+      contenido.set(withDelay(620, withTiming(1, TEXTO_ENTRA)));
     }
     scheduleOnUI(programar);
     // Solo al montar: cada notificación monta su propio banner (ver `key` en el host)
@@ -229,6 +238,7 @@ export function NotificationBanner(props: PropsBanner) {
     return {
       width: interpolate(a, [0, 1], [ANCHO_RECOGIDA, anchoAbierta]),
       height: interpolate(a, [0, 1], [ALTO_RECOGIDA, ALTO_ABIERTA]),
+      borderRadius: interpolate(a, [0, 1], [ALTO_RECOGIDA / 2, ALTO_ABIERTA / 2]),
       opacity: opacidad.get(),
       transform: [
         {
@@ -237,6 +247,27 @@ export function NotificationBanner(props: PropsBanner) {
             arrastre.get(),
         },
       ],
+    };
+  });
+
+  // La sombra tiene ya su tamaño final y solo cambia su opacidad (barato): animar el tamaño
+  // de una vista con sombra obligaba a redibujarla en cada cuadro
+  const estiloSombra = useAnimatedStyle(() => ({
+    opacity: opacidad.get() * interpolate(abierta.get(), [0.85, 1], [0, 1], "clamp"),
+    transform: [{ translateY: (asomada.get() - 1) * (ALTO_RECOGIDA + insets.top + BAJAR_CAPA) + arrastre.get() }],
+  }));
+
+  // El círculo (avatar o icono) pasa del centro de la bolita recogida a la izquierda de la
+  // tarjeta, creciendo hasta su tamaño
+  const estiloLeading = useAnimatedStyle(() => {
+    const a = abierta.get();
+    return {
+      left: interpolate(
+        a,
+        [0, 1],
+        [(ANCHO_RECOGIDA - LADO_LEADING) / 2, PADDING_LEADING],
+      ),
+      transform: [{ scale: interpolate(a, [0, 1], [ESCALA_LEADING_RECOGIDO, 1]) }],
     };
   });
 
@@ -249,6 +280,10 @@ export function NotificationBanner(props: PropsBanner) {
       pointerEvents="box-none"
       style={[styles.capa, { top: insets.top + BAJAR_CAPA }]}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.sombra, { width: anchoAbierta }, estiloSombra]}
+      />
       <GestureDetector gesture={gestos}>
         <Animated.View
           accessible
@@ -258,10 +293,12 @@ export function NotificationBanner(props: PropsBanner) {
           style={[styles.pildora, estiloPildora]}
         >
           {/* Ancho fijo: el texto no se reacomoda mientras la píldora cambia de tamaño */}
+          <Animated.View style={[styles.leading, estiloLeading]}>
+            {leading}
+          </Animated.View>
           <Animated.View
             style={[styles.contenido, { width: anchoAbierta }, estiloContenido]}
           >
-            {leading}
             <View style={styles.textos}>
               <Text numberOfLines={1} style={styles.titulo}>
                 {titulo}
@@ -270,7 +307,7 @@ export function NotificationBanner(props: PropsBanner) {
                 {descripcion}
               </Text>
             </View>
-            <Ionicons name={icono} size={20} color="#111113" />
+            {icono ? <Ionicons name={icono} size={20} color="#111113" /> : null}
           </Animated.View>
         </Animated.View>
       </GestureDetector>
@@ -292,16 +329,31 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(0, 0, 0, 0.06)",
     overflow: "hidden",
-    alignItems: "center",
+  },
+  leading: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
     justifyContent: "center",
+  },
+  sombra: {
+    position: "absolute",
+    top: 0,
+    height: ALTO_ABIERTA,
+    borderRadius: ALTO_ABIERTA / 2,
+    backgroundColor: "#FFFFFF",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.18)",
   },
   contenido: {
+    position: "absolute",
+    top: 0,
+    left: 0,
     height: ALTO_ABIERTA,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingLeft: 10,
+    // Deja libre el círculo de la izquierda
+    paddingLeft: PADDING_LEADING + LADO_LEADING + 10,
     paddingRight: 23,
   },
   textos: { flex: 1, minWidth: 0 },

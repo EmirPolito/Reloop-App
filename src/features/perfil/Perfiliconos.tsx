@@ -817,3 +817,61 @@ export function renderPerfilIcon(
   const IconComponent = PERFIL_ICONS[iconKey as IconPerfilKey];
   return <IconComponent size={size} color={color} />;
 }
+
+/** Foto de perfil / fondo (Iconly Light Image) */
+export function IconoImagenLinea({ size = 24, color = "#000000" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(2, 2)"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M19.21,5.8992 L19.21,14.0502 C19.21,17.0702 17.32,19.2002 14.3,19.2002 L5.65,19.2002 C2.63,19.2002 0.75,17.0702 0.75,14.0502 L0.75,5.8992 C0.75,2.8792 2.64,0.7502 5.65,0.7502 L14.3,0.7502 C17.32,0.7502 19.21,2.8792 19.21,5.8992 Z" />
+        <Path d="M3.2813,14.4309 L4.8093,12.8179 C5.3403,12.2549 6.2253,12.2279 6.7893,12.7579 C6.8063,12.7749 7.7263,13.7099 7.7263,13.7099 C8.2813,14.2749 9.1883,14.2839 9.7533,13.7299 C9.7903,13.6939 12.0873,10.9079 12.0873,10.9079 C12.6793,10.1889 13.7423,10.0859 14.4623,10.6789 C14.5103,10.7189 16.6803,12.9459 16.6803,12.9459" />
+        <Path d="M8.3126,7.1331 C8.3126,8.1021 7.5276,8.8871 6.5586,8.8871 C5.5896,8.8871 4.8046,8.1021 4.8046,7.1331 C4.8046,6.1641 5.5896,5.3791 6.5586,5.3791 C7.5276,5.3801 8.3126,6.1641 8.3126,7.1331 Z" />
+      </G>
+    </Svg>
+  );
+}
+
+/** Avatar de perfil (carita) */
+export function IconoCaritaLinea({ size = 24, color = "#000000" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12.25 2.88867C17.359 2.88867 21.5 7.02967 21.5 12.1387C21.5 17.2477 17.359 21.3887 12.25 21.3887C7.141 21.3887 3 17.2477 3 12.1387C3 8.97067 4.592 6.17467 7.02 4.50767"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="square"
+      />
+      <Path
+        d="M16.498 12.6895C16.498 15.0355 14.596 16.9375 12.25 16.9375C9.90395 16.9375 8.00195 15.0355 8.00195 12.6895"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="square"
+      />
+    </Svg>
+  );
+}
+
+/** Eliminar / papelera (Iconly Light Delete) */
+export function IconoEliminarLinea({ size = 24, color = "#000000" }: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G
+        transform="translate(3, 2)"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <Path d="M16.3249,7.4682 C16.3249,7.4682 15.7819,14.2032 15.4669,17.0402 C15.3169,18.3952 14.4799,19.1892 13.1089,19.2142 C10.4999,19.2612 7.8879,19.2642 5.2799,19.2092 C3.9609,19.1822 3.1379,18.3782 2.9909,17.0472 C2.6739,14.1852 2.1339,7.4682 2.1339,7.4682" />
+        <Path d="M17.7082,4.2397 L0.7502,4.2397" />
+        <Path d="M14.4406,4.2397 C13.6556,4.2397 12.9796,3.6847 12.8256,2.9157 L12.5826,1.6997 C12.4326,1.1387 11.9246,0.7507 11.3456,0.7507 L7.1126,0.7507 C6.5336,0.7507 6.0256,1.1387 5.8756,1.6997 L5.6326,2.9157 C5.4786,3.6847 4.8026,4.2397 4.0176,4.2397" />
+      </G>
+    </Svg>
+  );
+}

@@ -177,9 +177,10 @@ export function MessageComposer({
             flex: 1,
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: isDark ? "#1E293Bd9" : "#ffffffd3",
+            // El mismo color del buscador de Chats
+            backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
             borderWidth: 2,
-            borderColor: isDark ? "#ffffff22" : "#FFFFFF",
+            borderColor: "transparent",
             borderRadius: 32,
             paddingHorizontal: 6,
             paddingVertical: 3,
@@ -195,7 +196,7 @@ export function MessageComposer({
               width: 46,
               height: 46,
               borderRadius: 30,
-              backgroundColor: isDark ? "#334155" : "#e8e8e8cc",
+              backgroundColor: isDark ? "#ffffff14" : "#e8e8e8cc",
               alignItems: "center",
               justifyContent: "center",
             }}

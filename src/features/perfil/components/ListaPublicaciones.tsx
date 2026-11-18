@@ -53,7 +53,7 @@ const RETRASO_CAPAS = 90;
 const MAX_PUNTOS = 3;
 /** El carrusel siempre tiene al menos 3 lugares: los que faltan son tarjetas grises */
 const LUGARES_MIN = 3;
-const LADO_PUNTO = 8;
+const LADO_PUNTO = 6;
 
 /** Módulo que no se vuelve negativo (el carrusel gira en los dos sentidos) */
 function modulo(n: number, m: number) {
@@ -158,7 +158,7 @@ export const ListaPublicaciones = memo(function ListaPublicaciones({
       await deleteProduct(producto.id);
       setPorEliminar(null);
       mostrar({
-        tipo: "exito",
+        tipo: "eliminada",
         titulo: "Publicación eliminada",
         descripcion: `"${producto.name}" se eliminó correctamente.`,
       });
@@ -310,6 +310,10 @@ const CartaAbanico = memo(function CartaAbanico({
 
   return (
     <Animated.View
+      // La carta se rasteriza una vez: al moverla, girarla o alzarla solo se transforma esa
+      // textura, así la foto y la tarjeta no se deforman ni parpadean mientras se anima
+      renderToHardwareTextureAndroid
+      shouldRasterizeIOS
       style={[
         styles.carta,
         { width: cardWidth, left: (ancho - cardWidth) / 2, zIndex: capa },
@@ -556,8 +560,9 @@ const styles = StyleSheet.create({
   tituloPie: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   precioPie: { fontFamily: "Inter_500Medium", fontSize: 13.5 },
   toqueCarta: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  navegacion: { alignItems: "center", gap: 9, paddingTop: 16, paddingBottom: 6 },
-  puntos: { flexDirection: "row", alignItems: "center", gap: 8 },
+  // Puntos y flechas más abajo, y las flechas un poco más separadas de los puntos
+  navegacion: { alignItems: "center", gap: 14, paddingTop: 28, paddingBottom: 6 },
+  puntos: { flexDirection: "row", alignItems: "center", gap: 7 },
   // Círculos perfectos: tamaño fijo que no se encoge ni se estira
   punto: {
     width: LADO_PUNTO,

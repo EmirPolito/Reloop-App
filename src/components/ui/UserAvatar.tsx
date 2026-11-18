@@ -20,6 +20,7 @@ const ESCALA_INSIGNIA = 0.58;
  */
 export function UserAvatar({
   premium = false,
+  ajusteInsignia,
   ...props
 }: {
   photo: string | null;
@@ -28,15 +29,26 @@ export function UserAvatar({
   size: number;
   style?: StyleProp<ViewStyle>;
   premium?: boolean;
+  /** Tamaño y posición de la insignia si no deben ser los de siempre */
+  ajusteInsignia?: { escala: number; right: number; bottom: number };
 }) {
   if (!premium) return <AvatarBase {...props} />;
-  const insignia = Math.round(props.size * ESCALA_INSIGNIA);
+  const insignia = Math.round(
+    props.size * (ajusteInsignia?.escala ?? ESCALA_INSIGNIA),
+  );
   return (
     <View style={{ width: props.size, height: props.size }}>
       <AvatarBase {...props} />
       <View
         pointerEvents="none"
-        style={[estilos.insignia, { width: insignia, height: insignia }]}
+        style={[
+          estilos.insignia,
+          { width: insignia, height: insignia },
+          ajusteInsignia && {
+            right: ajusteInsignia.right,
+            bottom: ajusteInsignia.bottom,
+          },
+        ]}
       >
         <PremiumBadge size={insignia} variant="static" />
       </View>

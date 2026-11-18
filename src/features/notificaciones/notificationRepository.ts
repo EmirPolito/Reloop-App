@@ -95,6 +95,16 @@ export async function markNotificationRead(
   await updateDoc(doc(notificationsOf(uid), notificationId), { leida: true });
 }
 
+/** Elimina notificaciones de la lista de `uid`. */
+export async function deleteNotifications(
+  uid: string,
+  notificationIds: string[],
+): Promise<void> {
+  await commitInChunks(notificationIds, (batch, id) =>
+    batch.delete(doc(notificationsOf(uid), id)),
+  );
+}
+
 export async function markNotificationsRead(
   uid: string,
   notificationIds: string[],

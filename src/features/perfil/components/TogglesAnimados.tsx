@@ -15,7 +15,7 @@ import { Circle, G, Path, Svg } from "react-native-svg";
 import { IconoNotificacionLinea, IconoLunaLinea } from "../Perfiliconos";
 
 /** Misma curva con rebote del toggle original (cubic-bezier(0.68, -0.55, 0.265, 1.55)) */
-const REBOTE = Easing.bezier(0.68, -0.55, 0.265, 1.55);
+const REBOTE = Easing.bezier(0.34, 1.3, 0.64, 1);
 
 // Medidas del tamaño "md" del original: pista 56x32, borde 2, bolita 24 a 2 px del borde
 const ANCHO = 56;
@@ -118,7 +118,7 @@ function SolRelleno({ color }: { color: string }) {
  * gira y se encoge mientras aparece la luna (port del ThemeToggle web, tamaño md).
  */
 export function ToggleTema({ value, onValueChange, accessibilityLabel }: ToggleProps) {
-  const progreso = useProgreso(value, 700);
+  const progreso = useProgreso(value, 320);
 
   const estiloSol = useAnimatedStyle(() => ({
     opacity: interpolate(progreso.value, [0, 1], [1, 0], Extrapolation.CLAMP),
@@ -165,12 +165,12 @@ export function ToggleNotificaciones({
   accessibilityLabel,
   isDark,
 }: ToggleProps & { isDark: boolean }) {
-  const progreso = useProgreso(value, 600);
+  const progreso = useProgreso(value, 300);
 
   // Balanceo de campana: 0 → -22° → 16° → 0 (en los extremos queda recta)
   const balanceo = (p: number) => {
     "worklet";
-    return interpolate(p, [0, 0.35, 0.7, 1], [0, 22, -16, 0], Extrapolation.CLAMP);
+    return interpolate(p, [0, 0.35, 0.7, 1], [0, 18, -12, 0], Extrapolation.CLAMP);
   };
   const estiloApagada = useAnimatedStyle(() => ({
     opacity: interpolate(progreso.value, [0, 1], [1, 0], Extrapolation.CLAMP),
@@ -192,10 +192,10 @@ export function ToggleNotificaciones({
       bolita={["#FFFFFF", "#FFFFFF"]}
     >
       <CapaIcono style={estiloApagada}>
-        <IconoNotificacionLinea size={ICONO + 2} color="#9CA3AF" />
+        <IconoNotificacionLinea size={ICONO} color="#9CA3AF" />
       </CapaIcono>
       <CapaIcono style={estiloEncendida}>
-        <IconoNotificacionLinea size={ICONO + 2} color="#6a4fe0" />
+        <IconoNotificacionLinea size={ICONO} color="#6a4fe0" />
       </CapaIcono>
     </ToggleBase>
   );

@@ -27,8 +27,9 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
         {
           width: lado,
           height: lado,
+          // El borde es del mismo color que el fondo: no se ve ningún aro
           backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
-          borderColor: isDark ? "#ffffff2e" : "#ffffff5b",
+          borderColor: "transparent",
         },
         pressed && { transform: [{ scale: 0.98 }] },
       ]}

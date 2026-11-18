@@ -58,6 +58,8 @@ export function subscribeChats(
 export function subscribeMessages(
   chatId: string,
   uid: string,
+  /** Solo se muestran los mensajes posteriores a esta fecha (la del borrado del chat) */
+  deletedAt: number,
   onData: (messages: ChatMessage[]) => void,
   onError: OnError,
 ): Unsubscribe {
@@ -68,7 +70,12 @@ export function subscribeMessages(
   );
   return onSnapshot(
     messages,
-    (snapshot) => onData(snapshot.docs.map((item) => mapMessage(item, uid))),
+    (snapshot) =>
+      onData(
+        snapshot.docs
+          .map((item) => mapMessage(item, uid))
+          .filter((message) => message.time > deletedAt),
+      ),
     onError,
   );
 }
@@ -185,6 +192,16 @@ export async function sendMessage(
 
 export async function markChatRead(chatId: string, uid: string): Promise<void> {
   await updateDoc(doc(db, CHATS, chatId), { [`reads.${uid}`]: serverTimestamp() });
+}
+
+/**
+ * "Elimina" chats solo para esta persona: queda una marca con la fecha y lo anterior deja de
+ * verse; si la otra persona escribe después, el chat reaparece solo con lo nuevo.
+ */
+export async function deleteChatsForMe(uid: string, chatIds: string[]): Promise<void> {
+  await commitInChunks(chatIds, (batch, id) =>
+    batch.update(doc(db, CHATS, id), { [`borrados.${uid}`]: serverTimestamp() }),
+  );
 }
 
 /** Actualiza el nombre propio en los chats en los que se participa y que aún muestran otro. */

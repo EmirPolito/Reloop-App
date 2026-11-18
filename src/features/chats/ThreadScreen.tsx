@@ -49,11 +49,12 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
   const { sendMessage, markRead } = useChatActions();
+  const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const {
     messages,
     initialCount,
     status: messagesStatus,
-  } = useThreadMessages(chatId);
+  } = useThreadMessages(chatId, activeChat?.deletedAt);
   const { back, openProduct, openUserProfile } = useAppNavigation();
   const { pickImages } = useImagePicker();
   const [messageDraft, setMessageDraft] = useDraft(`message:${chatId}`);
@@ -79,7 +80,6 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
     return { transform: [{ translateY: -subir }] };
   });
 
-  const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { product: relatedProduct } = useProduct(activeChat?.productId);
   const unread = activeChat?.unread ?? false;
 

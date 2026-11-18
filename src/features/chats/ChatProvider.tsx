@@ -14,6 +14,7 @@ import { describeFirestoreError } from "@/lib/firestoreValues";
 import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 import {
+  deleteChatsForMe,
   markChatRead,
   sendMessage as saveMessage,
   subscribeChats,
@@ -34,6 +35,8 @@ interface ChatActions {
     content: { text: string; images: string[] },
   ) => Promise<void>;
   markRead: (chatId: string) => Promise<void>;
+  /** Elimina chats solo para esta persona. */
+  deleteChats: (chatIds: string[]) => Promise<void>;
 }
 
 const LOADING: ChatsState = { chats: [], status: "loading" };
@@ -76,6 +79,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
         }
       },
       markRead: (chatId) => markChatRead(chatId, uid),
+      deleteChats: (chatIds) => deleteChatsForMe(uid, chatIds),
     }),
     [uid, chatsRef, notify],
   );
