@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
+import { ENTRADA_MODULO } from "@/constants/motion";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
@@ -13,7 +15,11 @@ import { Text } from "@/features/shared/Text";
 import { showErrorAlert } from "@/utils/alerts";
 import { FilaAjuste } from "../components/FilaAjuste";
 import { coloresTarjeta, fondoPerfil } from "../perfilEstilos";
-import { IconoCaritaLinea, IconoFlecha, IconoImagenLinea } from "../Perfiliconos";
+import {
+  IconoCaritaLinea,
+  IconoFlecha,
+  IconoImagenLinea,
+} from "../Perfiliconos";
 import {
   MAX_DESCRIPCION,
   MAX_NOMBRE,
@@ -28,18 +34,20 @@ import { SheetFondo } from "./SheetFondo";
 import { SheetDescripcion, SheetNombre, SheetUsername } from "./SheetsTexto";
 import { VistaPreviaPerfil } from "./VistaPreviaPerfil";
 
+/** Entrada de la pantalla: fundido con un desplazamiento corto, como las demás */
+const ENTRADA = FadeInDown.duration(ENTRADA_MODULO.timing.duration + 90)
+  .easing(ENTRADA_MODULO.timing.easing)
+  .withInitialValues({
+    transform: [{ translateY: ENTRADA_MODULO.desplazamiento * 2 }],
+  });
+
 /** Lo que tarda en cerrarse un drawer */
 const CIERRE_DRAWER_MS = 450;
 /** Lo que se espera a que un drawer recién montado esté listo */
 const MONTAJE_DRAWER_MS = 80;
 
 type Sheet =
-  | "fondo"
-  | "avatar"
-  | "etiquetas"
-  | "nombre"
-  | "username"
-  | "descripcion";
+  "fondo" | "avatar" | "etiquetas" | "nombre" | "username" | "descripcion";
 
 /** Cambios en curso que la vista previa muestra antes de guardarlos */
 interface Borrador {
@@ -150,76 +158,83 @@ export function PantallaEditarPerfil() {
 
   return (
     <View style={{ flex: 1, backgroundColor: fondo }}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <VistaPreviaPerfil
-          profile={vista}
-          isDark={isDark}
-          premium={premium}
-        />
+      <Animated.View entering={ENTRADA} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <VistaPreviaPerfil
+            profile={vista}
+            isDark={isDark}
+            premium={premium}
+          />
 
-        <View style={styles.contenedor}>
-          <View style={[styles.tarjeta, { backgroundColor: fondoTarjeta }]}>
-            <Text style={[styles.etiquetaTarjeta, { color: mutedColor }]}>
-              Personalizar
-            </Text>
-            <FilaAjuste
-              bg={rowBg}
-              icon={iconoSvg(<IconoImagenLinea size={24} color={colorIcono} />)}
-              label="Fondo de perfil"
-              textColor={textoFila}
-              onPress={() => abrir("fondo")}
-              right={derecha()}
-            />
-            <FilaAjuste
-              bg={rowBg}
-              icon={iconoSvg(<IconoCaritaLinea size={24} color={colorIcono} />)}
-              label="Foto o avatar de perfil"
-              textColor={textoFila}
-              onPress={() => abrir("avatar")}
-              right={derecha()}
-            />
-            <FilaAjuste
-              bg={rowBg}
-              icon={icono("pricetag-outline")}
-              label="Etiquetas"
-              textColor={textoFila}
-              onPress={() => abrir("etiquetas")}
-              right={derecha(`${profile.pills.length}/${MAX_PILDORAS}`)}
-            />
-            <FilaAjuste
-              bg={rowBg}
-              icon={icono("text-outline")}
-              label="Nombre"
-              textColor={textoFila}
-              onPress={() => abrir("nombre")}
-              right={derecha(profile.name)}
-            />
-            <FilaAjuste
-              bg={rowBg}
-              icon={icono("at-outline")}
-              label="Username"
-              textColor={textoFila}
-              onPress={() => abrir("username")}
-              right={derecha(profile.username ? `@${profile.username}` : "")}
-            />
-            <FilaAjuste
-              bg={rowBg}
-              icon={icono("document-text-outline")}
-              label="Descripción"
-              textColor={textoFila}
-              onPress={() => abrir("descripcion")}
-              right={derecha()}
-            />
+          <View style={styles.contenedor}>
+            <View style={[styles.tarjeta, { backgroundColor: fondoTarjeta }]}>
+              <Text style={[styles.etiquetaTarjeta, { color: mutedColor }]}>
+                Personalizar
+              </Text>
+              <FilaAjuste
+                bg={rowBg}
+                icon={iconoSvg(
+                  <IconoImagenLinea size={24} color={colorIcono} />,
+                )}
+                label="Fondo de perfil"
+                textColor={textoFila}
+                onPress={() => abrir("fondo")}
+                right={derecha()}
+              />
+              <FilaAjuste
+                bg={rowBg}
+                icon={iconoSvg(
+                  <IconoCaritaLinea size={24} color={colorIcono} />,
+                )}
+                label="Foto o avatar de perfil"
+                textColor={textoFila}
+                onPress={() => abrir("avatar")}
+                right={derecha()}
+              />
+              <FilaAjuste
+                bg={rowBg}
+                icon={icono("pricetag-outline")}
+                label="Etiquetas"
+                textColor={textoFila}
+                onPress={() => abrir("etiquetas")}
+                right={derecha(`${profile.pills.length}/${MAX_PILDORAS}`)}
+              />
+              <FilaAjuste
+                bg={rowBg}
+                icon={icono("text-outline")}
+                label="Nombre"
+                textColor={textoFila}
+                onPress={() => abrir("nombre")}
+                right={derecha(profile.name)}
+              />
+              <FilaAjuste
+                bg={rowBg}
+                icon={icono("at-outline")}
+                label="Username"
+                textColor={textoFila}
+                onPress={() => abrir("username")}
+                right={derecha(profile.username ? `@${profile.username}` : "")}
+              />
+              <FilaAjuste
+                bg={rowBg}
+                icon={icono("document-text-outline")}
+                label="Descripción"
+                textColor={textoFila}
+                onPress={() => abrir("descripcion")}
+                right={derecha()}
+              />
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </Animated.View>
 
       {/* Volver al perfil, arriba a la izquierda sobre la portada */}
-      <View
+      <Animated.View
+        entering={FadeIn.duration(220)}
         pointerEvents="box-none"
         style={[styles.barra, { top: insets.top + 2 }]}
       >
@@ -235,7 +250,7 @@ export function PantallaEditarPerfil() {
             <BackArrowIcon size={27} color="#FFFFFF" />
           </View>
         </PressableScale>
-      </View>
+      </Animated.View>
 
       {montados.has("fondo") ? (
         <SheetFondo
@@ -319,7 +334,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.38)",
   },
-  cajaIcono: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
+  cajaIcono: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   contenedor: { paddingHorizontal: 16 },
   // Misma tarjeta que General en el perfil
   tarjeta: {
@@ -336,6 +356,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 5,
   },
-  derecha: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 },
+  derecha: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 1,
+  },
   valor: { fontFamily: "Inter_400Regular", fontSize: 13.5, maxWidth: 130 },
 });
