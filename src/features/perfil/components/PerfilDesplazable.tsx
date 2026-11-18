@@ -22,11 +22,6 @@ import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { LADO_AVATAR, coloresTarjeta, fondoPerfil } from "../perfilEstilos";
 import {
-  IconoPublicaciones,
-  IconoReputacion,
-  IconoUsuarios,
-} from "../Perfiliconos";
-import {
   DESCRIPCION_POR_DEFECTO,
   gradienteCieloPerfil,
   type DatosPerfil,
@@ -292,7 +287,7 @@ export function PerfilDesplazable({
               </View>
             </Animated.View>
 
-            {/* Píldoras a la derecha del avatar */}
+            {/* Píldoras a la derecha del avatar, debajo de la portada */}
             {profile.pills.length > 0 ? (
               <View style={styles.pildorasAvatar}>
                 {profile.pills.map((pill) => (
@@ -308,7 +303,7 @@ export function PerfilDesplazable({
             ) : null}
           </View>
 
-          {/* Nombre, @username, descripción, píldoras y acciones */}
+          {/* Nombre, @username, descripción, estadísticas y acciones */}
           <View style={styles.info}>
             <View
               style={styles.filaNombre}
@@ -344,35 +339,28 @@ export function PerfilDesplazable({
               {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
             </Text>
 
-            {/* Las tres estadísticas sin fondo, separadas por dos líneas */}
-            <View style={styles.cardStats}>
-              <View style={styles.miniFila}>
-                <MiniCard
-                  icono={
-                    <IconoPublicaciones size={25} color={COLOR_PUBLICACIONES} />
-                  }
-                  valor={formatearNumero(stats.publicaciones)}
-                  etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
-                  colorTexto={colorTexto}
-                  suave={suave}
-                />
-                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
-                <MiniCard
-                  icono={<IconoUsuarios size={25} color={COLOR_SEGUIDORES} />}
-                  valor={formatearNumero(stats.seguidores)}
-                  etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
-                  colorTexto={colorTexto}
-                  suave={suave}
-                />
-                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
-                <MiniCard
-                  icono={<IconoReputacion size={25} color={COLOR_REPUTACION} />}
-                  valor={stats.reputacion}
-                  etiqueta="Valoración"
-                  colorTexto={colorTexto}
-                  suave={suave}
-                />
-              </View>
+            {/* Las tres estadísticas, sin iconos, separadas por dos líneas finas */}
+            <View style={styles.stats}>
+              <Estadistica
+                valor={formatearNumero(stats.publicaciones)}
+                etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
+                colorTexto={colorTexto}
+                suave={suave}
+              />
+              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+              <Estadistica
+                valor={formatearNumero(stats.seguidores)}
+                etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
+                colorTexto={colorTexto}
+                suave={suave}
+              />
+              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+              <Estadistica
+                valor={stats.reputacion}
+                etiqueta="Valoración"
+                colorTexto={colorTexto}
+                suave={suave}
+              />
             </View>
 
             {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
@@ -473,37 +461,28 @@ export function PerfilDesplazable({
   );
 }
 
-/** Una estadística: icono y número en una fila, y su nombre debajo */
-function MiniCard({
-  icono,
+/** Una estadística: el número arriba y su nombre debajo */
+function Estadistica({
   valor,
   etiqueta,
   colorTexto,
   suave,
 }: {
-  icono: ReactNode;
   valor: string;
   etiqueta: string;
   colorTexto: string;
   suave: string;
 }) {
   return (
-    <View style={styles.miniCard}>
-      {/* El icono a la izquierda y el número a su derecha */}
-      <View style={styles.miniValorFila}>
-        {icono}
-        <Text
-          numberOfLines={1}
-          style={[styles.miniValor, { color: colorTexto }]}
-        >
-          {valor}
-        </Text>
-      </View>
+    <View style={styles.estadistica}>
+      <Text numberOfLines={1} style={[styles.estadisticaValor, { color: colorTexto }]}>
+        {valor}
+      </Text>
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.8}
-        style={[styles.miniEtiqueta, { color: suave }]}
+        style={[styles.estadisticaEtiqueta, { color: suave }]}
       >
         {etiqueta}
       </Text>
@@ -546,11 +525,6 @@ function CapaPortada({
     </>
   );
 }
-
-/** Color del icono de cada estadística */
-const COLOR_PUBLICACIONES = "#ff2339ff";
-const COLOR_SEGUIDORES = "#2382ffff";
-const COLOR_REPUTACION = "#ffb223ff";
 
 /** Formatea números grandes estilo red social: 12.6k, 1.2M */
 function formatearNumero(valor: number): string {
@@ -646,49 +620,21 @@ const styles = StyleSheet.create({
     borderRadius: LADO_AVATAR / 2,
     overflow: "hidden",
   },
-  // Píldoras a la derecha del avatar
-  pildorasAvatar: {
-    flex: 1,
-    flexDirection: "row",
-    flexWrap: "nowrap",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 9,
-    marginLeft: 10,
-    paddingBottom: 10, // <-- Ajusta entre 6 y 12 según la altura deseada
-    paddingRight: 0,
-    overflow: "hidden",
-  },
-
-  // Card con las tres mini cards de estadísticas, debajo de la descripción
-  cardStats: { paddingVertical: 4, marginTop: 2, paddingHorizontal: 4 },
-  // Las secciones se reparten por todo el ancho, con las líneas entre ellas
-  miniFila: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  miniCard: {
-    minWidth: 92,
-    paddingVertical: 18,
-    paddingHorizontal: 4,
-    alignItems: "center",
-    gap: 11,
-  },
-  // Las dos líneas que separan las tres estadísticas
-  linea: { width: 1, height: 60 },
-  miniValorFila: { flexDirection: "row", alignItems: "center", gap: 8 },
-  miniValor: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 22,
-    letterSpacing: -0.4,
-    lineHeight: 27,
-  },
-  miniEtiqueta: {
+  // Tres estadísticas a todo el ancho, más abajo que las píldoras para que no se vean juntas
+  stats: { flexDirection: "row", alignItems: "center", marginTop: 30 },
+  estadistica: { flex: 1, alignItems: "center", gap: 2 },
+  estadisticaValor: {
     fontFamily: "Inter_500Medium",
-    fontSize: 13.5,
-    lineHeight: 16,
+    fontSize: 17,
+    lineHeight: 22,
   },
+  estadisticaEtiqueta: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13.5,
+    lineHeight: 17,
+  },
+  // Las dos líneas finas que separan las estadísticas
+  linea: { width: StyleSheet.hairlineWidth * 2, height: 34 },
   // Mensaje y Seguir: uno junto al otro y del mismo ancho
   acciones: { flexDirection: "row", gap: 10, marginTop: 14 },
   info: { paddingHorizontal: 16, paddingTop: ESPACIO_NOMBRE, gap: 4 },
@@ -712,13 +658,19 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 15,
     lineHeight: 20,
-    marginTop: 2.5,
+    marginTop: 9,
   },
-  pildorasDebajo: {
+  // Píldoras a la derecha del avatar
+  pildorasAvatar: {
+    flex: 1,
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 6,
+    flexWrap: "nowrap",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 9,
+    marginLeft: 10,
+    paddingBottom: 10,
+    overflow: "hidden",
   },
-  pestanas: { marginTop: 30, paddingHorizontal: MARGEN_LATERAL },
+  pestanas: { marginTop: 40, paddingHorizontal: MARGEN_LATERAL },
 });

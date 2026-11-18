@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { StyleSheet, Switch, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
@@ -8,20 +8,18 @@ import { Text } from "@/features/shared/Text";
 import { showComingSoonAlert } from "@/utils/alerts";
 import { coloresTarjeta } from "../perfilEstilos";
 import {
-  IconoCampana,
-  IconoCandado,
-  IconoDocumento,
+  IconoCandadoLinea,
+  IconoCerrarSesionLinea,
+  IconoDocumentoLinea,
   IconoFlecha,
-  IconoLogin,
-  IconoLuna,
-  IconoMensaje,
-  IconoSol,
+  IconoLunaLinea,
+  IconoMensajeLinea,
+  IconoNotificacionLinea,
+  IconoSolLinea,
 } from "../Perfiliconos";
 import { FilaAjuste } from "./FilaAjuste";
 import { TarjetaAccion } from "./TarjetaAccion";
-
-/** Color de acción de los switches (igual que el del drawer) */
-const ACCION = "#101010";
+import { ToggleNotificaciones, ToggleTema } from "./TogglesAnimados";
 
 /**
  * Ajustes al final del perfil propio: General, Legal y Cerrar sesión. Editar perfil está
@@ -42,10 +40,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
   const rowBg = isDark ? "#1b1b1b0e" : "#ffffffff";
   const mutedColor = isDark ? "#8b8b8bff" : "#9CA3AF";
-  const switchTrack = {
-    false: isDark ? "#828282ff" : "#E5E7EB",
-    true: isDark ? "#ffffff0e" : ACCION,
-  };
+  const colorIcono = isDark ? "#FFFFFF" : "#101010";
 
   return (
     <View style={styles.contenedor}>
@@ -55,7 +50,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoMensaje size={22.5} color="#48adffff" />}
+          icon={<IconoMensajeLinea size={22.5} color={colorIcono} />}
           label="Cambiar correo"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar correo")}
@@ -63,7 +58,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         />
         <FilaAjuste
           bg={rowBg}
-          icon={<IconoCandado size={23} color="#ffc037ff" />}
+          icon={<IconoCandadoLinea size={24.5} color={colorIcono} />}
           label="Cambiar contraseña"
           textColor={textoFila}
           onPress={() => showComingSoonAlert("Cambiar contraseña")}
@@ -72,23 +67,15 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={
-            <IconoCampana
-              size={24}
-              color="#8567ffff"
-              secondaryColor="#4628bcff"
-            />
-          }
+          icon={<IconoNotificacionLinea size={24} color={colorIcono} />}
           label="Notificaciones"
           textColor={textoFila}
           right={
-            <Switch
+            <ToggleNotificaciones
               accessibilityLabel="Activar o desactivar notificaciones"
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={switchTrack}
-              ios_backgroundColor={switchTrack.false}
-              thumbColor="#FFFFFF"
+              isDark={isDark}
             />
           }
         />
@@ -97,21 +84,18 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           bg={rowBg}
           icon={
             isDark ? (
-              <IconoLuna size={24} color="#b2b2b2ff" />
+              <IconoLunaLinea size={24} color={colorIcono} />
             ) : (
-              <IconoSol size={24} color="#f59e0baa" />
+              <IconoSolLinea size={24} color={colorIcono} />
             )
           }
           label="Modo oscuro"
           textColor={textoFila}
           right={
-            <Switch
+            <ToggleTema
               accessibilityLabel="Activar o desactivar el modo oscuro"
               value={isDark}
               onValueChange={setIsDark}
-              trackColor={switchTrack}
-              ios_backgroundColor={switchTrack.false}
-              thumbColor="#FFFFFF"
             />
           }
         />
@@ -123,13 +107,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
         <FilaAjuste
           bg={rowBg}
-          icon={
-            <IconoDocumento
-              size={24.5}
-              color="#c1c1c1ff"
-              lineColor="#585858ff"
-            />
-          }
+          icon={<IconoDocumentoLinea size={24} color={colorIcono} />}
           label="Términos y condiciones"
           textColor={textoFila}
           onPress={() => openLegal("terminos")}
@@ -137,13 +115,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         />
         <FilaAjuste
           bg={rowBg}
-          icon={
-            <IconoDocumento
-              size={24.5}
-              color="#c1c1c1ff"
-              lineColor="#585858ff"
-            />
-          }
+          icon={<IconoDocumentoLinea size={24} color={colorIcono} />}
           label="Política de privacidad"
           textColor={textoFila}
           onPress={() => openLegal("privacidad")}
@@ -153,7 +125,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
 
       {/* ======================= CERRAR SESIÓN ======================= */}
       <TarjetaAccion
-        icon={<IconoLogin size={25} color="#f20000ff" />}
+        icon={<IconoCerrarSesionLinea size={25} color="#f20000ff" />}
         label="Cerrar sesión"
         labelColor="#ff2424ff"
         backgroundColor={fondoTarjeta}
@@ -169,7 +141,7 @@ const styles = StyleSheet.create({
   // Tarjetas de General y Legal
   // Las filas se extienden más a los lados (padding 9); el título queda donde estaba (9 + 6)
   settingsCard: {
-    borderRadius: 22,
+    borderRadius: 21,
     paddingVertical: 15,
     paddingHorizontal: 4,
     marginTop: 22,
@@ -177,7 +149,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cardLabel: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     fontFamily: "Inter_400Regular",
     fontWeight: "500",
     marginBottom: 5,
