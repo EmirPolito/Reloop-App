@@ -40,7 +40,7 @@ export interface MarketplaceState {
 
 interface MarketplaceActions {
   /** Las acciones sobre datos devuelven la promesa para que quien llama muestre el error. */
-  toggleFavorite: (productId: string) => Promise<void>;
+  toggleFavorite: (productId: string) => Promise<boolean>;
   rateProduct: (productId: string, rating: number) => Promise<void>;
   reportProduct: (productId: string) => Promise<void>;
   setQuery: (query: string) => void;
@@ -108,6 +108,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
             productName: product.name,
           });
         }
+        return favorite;
       },
       rateProduct: (productId, rating) => saveRating(uid, productId, rating),
       reportProduct: (productId) => saveReport(uid, productId),

@@ -18,7 +18,7 @@ import { republishProduct } from "../productRepository";
 import type { Product } from "../types";
 
 const COLOR_ELIMINAR = "#E5484D";
-const LADO = 34;
+const LADO = 30;
 const GIRO = { duration: 520, easing: Easing.out(Easing.cubic) };
 
 /** Dos flechas en círculo (republicar) — Lucide "repeat-2" */
@@ -138,8 +138,9 @@ const estilos = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingVertical: 13,
+    paddingHorizontal: 0,
+    paddingTop: 17,
+    paddingBottom: 6,
   },
   boton: {
     width: LADO,

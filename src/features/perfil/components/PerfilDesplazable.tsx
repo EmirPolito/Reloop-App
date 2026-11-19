@@ -32,7 +32,7 @@ import { PerfilAvatar } from "./PerfilAvatar";
 import { PublicacionesPerfil, SIN_ANUNCIOS } from "./PublicacionesPerfil";
 
 /** Alto de la portada abierta y del header ya colapsado (sin contar la barra de estado) */
-export const ALTO_PORTADA = 120;
+export const ALTO_PORTADA = 150;
 const ALTO_HEADER = 57;
 /** Lo que recorre la portada hasta quedar como header */
 const RECORRIDO = ALTO_PORTADA - ALTO_HEADER;
@@ -475,7 +475,10 @@ export function Estadistica({
 }) {
   return (
     <View style={styles.estadistica}>
-      <Text numberOfLines={1} style={[styles.estadisticaValor, { color: colorTexto }]}>
+      <Text
+        numberOfLines={1}
+        style={[styles.estadisticaValor, { color: colorTexto }]}
+      >
         {valor}
       </Text>
       <Text
@@ -648,11 +651,11 @@ const styles = StyleSheet.create({
   nombre: {
     flexShrink: 1,
     fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
+    fontSize: 19,
     letterSpacing: -0.4,
     lineHeight: 26,
   },
-  insigniaNombre: { marginTop: 1, marginLeft: -4 },
+  insigniaNombre: { marginTop: 1.55, marginLeft: -4 },
   usuario: { fontFamily: "Inter_400Regular", fontSize: 14.5, marginTop: -6.5 },
   descripcion: {
     fontFamily: "Inter_400Regular",

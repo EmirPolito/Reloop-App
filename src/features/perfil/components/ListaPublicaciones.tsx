@@ -31,9 +31,9 @@ import {
 } from "../Perfiliconos";
 
 /** Ancho de cada tarjeta (las tres miden lo mismo) respecto al ancho disponible */
-const PROPORCION_TARJETA = 0.44;
+const PROPORCION_TARJETA = 0.4;
 /** Cuánto se separa cada tarjeta del centro, como fracción del ancho disponible */
-const DESPLAZAMIENTO = 0.18;
+const DESPLAZAMIENTO = 0.14;
 /** Grados que se inclina cada tarjeta de los lados */
 const GIRO = 13;
 /** Cuánto bajan las tarjetas de los lados */

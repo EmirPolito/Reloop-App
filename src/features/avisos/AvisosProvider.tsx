@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
   createContext,
+  type ComponentProps,
   useCallback,
   useContext,
   useMemo,
@@ -12,7 +13,7 @@ import { StyleSheet, View } from "react-native";
 import { NotificationBanner } from "@/features/notificaciones/components/NotificationBanner";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 
-type TipoAviso = "exito" | "error" | "eliminada";
+type TipoAviso = "exito" | "error" | "eliminada" | "favorito" | "sinFavorito";
 
 interface Aviso {
   /** Cambia con cada aviso: cada uno monta su propio banner */
@@ -63,6 +64,17 @@ const COLORES: Record<TipoAviso, string> = {
   error: "#FF3D63",
   // Al eliminar algo: rojo
   eliminada: "#F20000",
+  favorito: "#F2143C",
+  sinFavorito: "#64748B",
+};
+
+/** Icono (en blanco) del círculo de cada tipo de aviso */
+const ICONOS: Record<TipoAviso, ComponentProps<typeof Ionicons>["name"]> = {
+  exito: "checkmark",
+  error: "close",
+  eliminada: "trash",
+  favorito: "heart",
+  sinFavorito: "heart-dislike",
 };
 
 /** Dibuja el aviso actual arriba de todo. Va en el layout de la app, junto a los banners. */
@@ -85,13 +97,7 @@ export function AvisoHost() {
         leading: (
           <View style={[estilos.circulo, { backgroundColor: fondo }]}>
             <Ionicons
-              name={
-                aviso.tipo === "exito"
-                  ? "checkmark"
-                  : aviso.tipo === "eliminada"
-                    ? "trash"
-                    : "close"
-              }
+              name={ICONOS[aviso.tipo]}
               size={28}
               color="#FFFFFF"
             />

@@ -95,7 +95,10 @@ export const VistaPreviaPerfil = memo(function VistaPreviaPerfil({
 
       <View style={styles.info}>
         <View style={styles.filaNombre}>
-          <Text numberOfLines={2} style={[styles.nombre, { color: colorTexto }]}>
+          <Text
+            numberOfLines={2}
+            style={[styles.nombre, { color: colorTexto }]}
+          >
             {profile.name}
           </Text>
           {premium ? <PremiumBadge size={24} style={styles.insignia} /> : null}
@@ -108,7 +111,6 @@ export const VistaPreviaPerfil = memo(function VistaPreviaPerfil({
         <Text style={[styles.descripcion, { color: colorTexto }]}>
           {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
         </Text>
-
       </View>
     </View>
   );
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
   nombre: {
     flexShrink: 1,
     fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
+    fontSize: 19,
     letterSpacing: -0.4,
     lineHeight: 26,
   },
