@@ -67,7 +67,7 @@ const ts = (millis: number) => Timestamp.fromMillis(millis);
 function product(over: Partial<Product> = {}): Product {
   return {
     id: "p1", ownerId: "u1", name: "Calculadora", description: "Casi nueva", category: "venta",
-    price: 280, imageUri: null, seller: "Ana", rating: 4.5, distance: "0.0 km", isMine: false,
+    price: 280, imageUri: null, seller: "Ana", rating: 4.5, availableQuantity: 1, distance: "0.0 km", isMine: false,
     createdAt: 1, ...over,
   };
 }
@@ -217,7 +217,7 @@ describe("reglas por categoría", () => {
     assert.equal(categoryPriceMode("donacion"), "none");
   });
   it("etiquetas de precio", () => {
-    assert.equal(formatProductPrice(product({ price: 120 })), "$120");
+    assert.equal(formatProductPrice(product({ price: 120 })), "$120.00 MXN");
     assert.equal(formatProductPrice(product({ category: "donacion", price: 0 })), "Donación");
     assert.equal(formatProductPrice(product({ category: "cambio", price: 0 })), null);
     assert.equal(productBadgeLabel(product({ category: "cambio", price: 0 })), "Intercambios");
@@ -239,22 +239,30 @@ describe("borrador de publicación", () => {
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "" }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "-3" }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "abc" }).valid, false);
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "12,5" }), { valid: true, price: 12.5 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "12,5" }), { valid: true, price: 12.5, availableQuantity: 1 });
   });
   it("un intercambio acepta precio vacío; si se escribe debe ser válido", () => {
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio" }), { valid: true, price: 0 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio" }), { valid: true, price: 0, availableQuantity: 1 });
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio", priceText: "x" }).valid, false);
   });
   it("una donación ignora el precio escrito", () => {
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", priceText: "99" }), { valid: true, price: 0 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", priceText: "99" }), { valid: true, price: 0, availableQuantity: 1 });
+  });
+  it("exige una cantidad disponible válida", () => {
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", quantityText: "0" }).valid, false);
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", quantityText: "2.5" }).valid, false);
+    assert.deepEqual(
+      validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", quantityText: "3" }),
+      { valid: true, price: 0, availableQuantity: 3 },
+    );
   });
   it("arma los datos a guardar con texto limpio y descripción por defecto", () => {
     const data = buildNewProduct(
       { ...EMPTY_DRAFT, name: "  Lámpara ", description: "  ", photo: "file:///x.jpg" },
-      { ownerId: "u1", seller: "Ana", price: 150, imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png" },
+      { ownerId: "u1", seller: "Ana", price: 150, availableQuantity: 3, imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png" },
     );
     assert.deepEqual(data, {
-      ownerId: "u1", seller: "Ana", name: "Lámpara", description: "Sin descripción", category: "venta", price: 150,
+      ownerId: "u1", seller: "Ana", name: "Lámpara", description: "Sin descripción", category: "venta", price: 150, availableQuantity: 3,
       imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png",
     });
   });

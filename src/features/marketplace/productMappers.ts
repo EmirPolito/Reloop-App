@@ -36,6 +36,14 @@ export function mapProduct(
     imageUri: typeof data.imageUrl === "string" ? data.imageUrl : null,
     seller: typeof data.seller === "string" ? data.seller : "Usuario",
     ...(rating !== undefined ? { rating } : {}),
+    availableQuantity: Math.max(
+      1,
+      Math.floor(
+        Number.isFinite(Number(data.availableQuantity))
+          ? Number(data.availableQuantity)
+          : 1,
+      ),
+    ),
     distance: typeof data.distance === "string" ? data.distance : "0.0 km",
     isMine: data.ownerId === uid,
     createdAt: toMillis(data.creadoEn),

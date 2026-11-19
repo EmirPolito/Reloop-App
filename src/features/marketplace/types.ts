@@ -14,6 +14,8 @@ export type Product = {
   seller: string;
   /** Promedio de calificaciones; solo en categorías que se pueden calificar */
   rating?: number;
+  /** Número de unidades disponibles */
+  availableQuantity: number;
   distance: string;
   /** Universidad de la publicación (ver `universidades.ts`); sin ella es la propia */
   universidad?: string;

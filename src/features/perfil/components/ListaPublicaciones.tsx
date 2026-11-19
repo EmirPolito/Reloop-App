@@ -148,7 +148,7 @@ export const ListaPublicaciones = memo(function ListaPublicaciones({
   }, [total, lugar, lugaresCiclo, dir, pos]);
 
   const cardWidth = Math.round(ancho * PROPORCION_TARJETA);
-  const altoTarjeta = Math.round(cardWidth * 0.74) + ALTO_PIE;
+  const altoTarjeta = 64 + cardWidth + ALTO_PIE;
 
   const eliminar = async () => {
     if (!porEliminar || eliminando) return;

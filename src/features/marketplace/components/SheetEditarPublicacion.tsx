@@ -70,6 +70,7 @@ function borradorDe(producto: Product): ProductDraft {
     description:
       producto.description === "Sin descripción" ? "" : producto.description,
     priceText: producto.price > 0 ? String(producto.price) : "",
+    quantityText: String(producto.availableQuantity),
     category: producto.category,
     photo: producto.imageUri,
   };
@@ -99,6 +100,7 @@ function Formulario({
     borrador.name.trim() !== inicial.name ||
     borrador.description.trim() !== inicial.description ||
     borrador.priceText.trim() !== inicial.priceText ||
+    borrador.quantityText.trim() !== inicial.quantityText ||
     borrador.category !== inicial.category ||
     borrador.photo !== inicial.photo;
 
@@ -129,6 +131,7 @@ function Formulario({
         description: borrador.description.trim() || "Sin descripción",
         category: borrador.category,
         price: resultado.price,
+        availableQuantity: resultado.availableQuantity,
         imageUrl,
         resetRatings: borrador.category !== producto.category,
       });
@@ -260,6 +263,21 @@ function Formulario({
           style={[estilos.entrada, campo]}
         />
       ) : null}
+      <TextInput
+        {...teclado}
+        accessibilityLabel="Cantidad disponible"
+        value={borrador.quantityText}
+        onChangeText={(quantityText) =>
+          cambiar({
+            quantityText: quantityText.replace(/[^0-9]/g, ""),
+          })
+        }
+        placeholder="Cantidad disponible"
+        placeholderTextColor={colorSuave}
+        keyboardType="number-pad"
+        maxLength={4}
+        style={[estilos.entrada, campo]}
+      />
 
       <BotonPaso
         texto="Guardar cambios"

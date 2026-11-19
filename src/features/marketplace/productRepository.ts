@@ -95,6 +95,7 @@ export interface NewProductData {
   description: string;
   category: CategoryId;
   price: number;
+  availableQuantity: number;
   /** URL ya subida a Cloudinary */
   imageUrl: string | null;
 }
@@ -108,6 +109,7 @@ export async function createProduct(data: NewProductData): Promise<string> {
     distance: "0.0 km",
     ratingTotal: rated ? 5 : 0,
     ratingCount: rated ? 1 : 0,
+    availableQuantity: data.availableQuantity,
     creadoEn: serverTimestamp(),
   });
   return ref.id;
@@ -119,6 +121,7 @@ export interface ProductEdits {
   description: string;
   category: CategoryId;
   price: number;
+  availableQuantity: number;
   /** URL ya subida a Cloudinary */
   imageUrl: string | null;
   /** La categoría cambió: las calificaciones vuelven a empezar como en una publicación nueva */

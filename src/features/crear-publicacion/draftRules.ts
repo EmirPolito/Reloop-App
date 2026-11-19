@@ -16,6 +16,7 @@ export interface ProductDraft {
   name: string;
   description: string;
   priceText: string;
+  quantityText: string;
   category: CategoryId;
   photo: string | null;
 }
@@ -24,12 +25,13 @@ export const EMPTY_DRAFT: ProductDraft = {
   name: "",
   description: "",
   priceText: "",
+  quantityText: "1",
   category: "venta",
   photo: null,
 };
 
 export type DraftValidation =
-  | { valid: true; price: number }
+  | { valid: true; price: number; availableQuantity: number }
   | { valid: false; title: string; message: string };
 
 /** Comprueba el borrador antes de publicar y resuelve el precio final. */
@@ -55,7 +57,24 @@ export function validateDraft(draft: ProductDraft): DraftValidation {
     };
   }
 
-  return { valid: true, price: mode === "none" ? 0 : (price ?? 0) };
+  const quantity = Number(draft.quantityText.trim());
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 9999
+  ) {
+    return {
+      valid: false,
+      title: "Cantidad no válida",
+      message: "Indica una cantidad entre 1 y 9999.",
+    };
+  }
+
+  return {
+    valid: true,
+    price: mode === "none" ? 0 : (price ?? 0),
+    availableQuantity: quantity,
+  };
 }
 
 /** Datos que se guardan al publicar; la foto ya debe estar subida (`imageUrl`). */
@@ -65,8 +84,15 @@ export function buildNewProduct(
     ownerId,
     seller,
     price,
+    availableQuantity,
     imageUrl,
-  }: { ownerId: string; seller: string; price: number; imageUrl: string | null },
+  }: {
+    ownerId: string;
+    seller: string;
+    price: number;
+    availableQuantity: number;
+    imageUrl: string | null;
+  },
 ): NewProductData {
   return {
     ownerId,
@@ -75,6 +101,7 @@ export function buildNewProduct(
     description: draft.description.trim() || "Sin descripción",
     category: draft.category,
     price,
+    availableQuantity,
     imageUrl,
   };
 }
