@@ -37,6 +37,7 @@ export function usePublishProduct() {
             ownerId: uid,
             seller: profile.name,
             price: result.price,
+            availableQuantity: result.availableQuantity,
             imageUrl,
           }),
         );

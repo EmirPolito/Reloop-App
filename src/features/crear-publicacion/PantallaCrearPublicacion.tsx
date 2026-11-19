@@ -272,6 +272,23 @@ export function PantallaCrearPublicacion() {
                   />
                 </View>
               ) : null}
+              <View style={styles.createPriceColumn}>
+                <Text style={styles.createFieldLabel}>Disponibles</Text>
+                <TextInput
+                  accessibilityLabel="Cantidad disponible"
+                  value={draft.quantityText}
+                  onChangeText={(quantityText) =>
+                    updateDraft({
+                      quantityText: quantityText.replace(/[^0-9]/g, ""),
+                    })
+                  }
+                  placeholder="1"
+                  placeholderTextColor={placeholderColor}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  style={[styles.input, styles.createPriceInput]}
+                />
+              </View>
               <View style={styles.createCommunityColumn}>
                 <Text style={styles.createFieldLabel}>Comunidad</Text>
                 <View style={styles.createCommunity}>

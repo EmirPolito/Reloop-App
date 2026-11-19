@@ -40,7 +40,12 @@ export function averageRatingLabel(products: Product[]): string {
 /** "Donación", "$120" o `null` cuando el producto no tiene precio. */
 export function formatProductPrice(product: Product): string | null {
   if (product.category === "donacion") return "Donación";
-  return product.price > 0 ? `$${product.price}` : null;
+  if (product.price <= 0) return null;
+  const amount = product.price.toLocaleString("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `$${amount} MXN`;
 }
 
 /** Texto de la etiqueta sobre la foto: el precio o, si no tiene, la categoría. */
