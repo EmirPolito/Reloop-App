@@ -15,12 +15,12 @@ import {
   formatProductPrice,
 } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
+import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { PRODUCT_COLORS, PRODUCT_ICONS } from "@/features/shared/constants";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
-import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import {
   IconoCorazon,
   IconoCorazonRelleno,
@@ -29,7 +29,7 @@ import {
 
 const COLOR_FAVORITO = "#F2143C";
 const COLOR_ESTRELLA = "#F5A623";
-const RADIO = 24;
+const RADIO = 22;
 
 function formatPublicationTime(createdAt: number): string {
   if (!createdAt) return "Hoy";
@@ -107,11 +107,13 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
       ]}
     >
       <View style={estilos.tarjeta}>
-        <View style={[
-          estilos.encabezado,
-          { height: compacta ? 54 : 64 },
-          compacta && estilos.encabezadoCompacto,
-        ]}>
+        <View
+          style={[
+            estilos.encabezado,
+            { height: compacta ? 54 : 64 },
+            compacta && estilos.encabezadoCompacto,
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Ver perfil de ${nombreUsuario}`}
@@ -130,15 +132,21 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             onPress={() => onOpen(item.id)}
             style={estilos.usuario}
           >
-            <Text numberOfLines={1} style={[
-              compacta ? estilos.nombreUsuarioCompacto : estilos.nombreUsuario,
-              { color: colorTexto },
-            ]}>
+            <Text
+              numberOfLines={1}
+              style={[
+                compacta
+                  ? estilos.nombreUsuarioCompacto
+                  : estilos.nombreUsuario,
+                { color: colorTexto },
+              ]}
+            >
               {nombreUsuario}
             </Text>
-            <Text numberOfLines={1} style={[
-              compacta ? estilos.tiempoCompacto : estilos.tiempo,
-            ]}>
+            <Text
+              numberOfLines={1}
+              style={[compacta ? estilos.tiempoCompacto : estilos.tiempo]}
+            >
               {formatPublicationTime(item.createdAt)}
             </Text>
           </Pressable>
@@ -154,9 +162,15 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           >
             <Animated.View style={estiloCorazon}>
               {favorite ? (
-                <IconoCorazonRelleno size={radioCorazon} color={COLOR_FAVORITO} />
+                <IconoCorazonRelleno
+                  size={radioCorazon}
+                  color={COLOR_FAVORITO}
+                />
               ) : (
-                <IconoCorazon size={radioCorazon} color={isDark ? "#F1F5F9" : "#101010"} />
+                <IconoCorazon
+                  size={radioCorazon}
+                  color={isDark ? "#F1F5F9" : "#101010"}
+                />
               )}
             </Animated.View>
           </Pressable>
@@ -202,24 +216,27 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${item.name}`}
             onPress={() => onOpen(item.id)}
-            style={[
-              estilos.pie,
-              compacta && estilos.pieCompacto,
-            ]}
+            style={[estilos.pie, compacta && estilos.pieCompacto]}
           >
-            <Text numberOfLines={1} style={[
-              compacta ? estilos.tituloCompacto : estilos.titulo,
-              { color: colorTexto },
-            ]}>
+            <Text
+              numberOfLines={1}
+              style={[
+                compacta ? estilos.tituloCompacto : estilos.titulo,
+                { color: colorTexto },
+              ]}
+            >
               {item.name}
             </Text>
             {mostrarPrecioYRanking ? (
               <View style={estilos.pieInferior}>
                 {precio ? (
-                  <Text numberOfLines={1} style={[
-                    compacta ? estilos.precioCompacto : estilos.precio,
-                    { color: colorTexto },
-                  ]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      compacta ? estilos.precioCompacto : estilos.precio,
+                      { color: colorTexto },
+                    ]}
+                  >
                     {precio}
                   </Text>
                 ) : (
@@ -231,11 +248,16 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
                     accessibilityLabel={`Calificación ${calificacion}`}
                     style={estilos.calificacion}
                   >
-                    <IconoEstrella size={compacta ? 16 : 21} color={COLOR_ESTRELLA} />
-                    <Text style={[
-                      compacta ? estilos.notaCompacta : estilos.nota,
-                      { color: colorTexto },
-                    ]}>
+                    <IconoEstrella
+                      size={compacta ? 16 : 21}
+                      color={COLOR_ESTRELLA}
+                    />
+                    <Text
+                      style={[
+                        compacta ? estilos.notaCompacta : estilos.nota,
+                        { color: colorTexto },
+                      ]}
+                    >
                       {calificacion}
                     </Text>
                   </View>
@@ -260,13 +282,13 @@ const estilos = StyleSheet.create({
   },
   tarjeta: { borderRadius: RADIO, overflow: "hidden" },
   encabezado: {
-    height: 64,
+    height: 48,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
   },
   encabezadoCompacto: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
   },
   usuario: { flex: 1, minWidth: 0, marginLeft: 6 },
   nombreUsuario: {
@@ -275,7 +297,7 @@ const estilos = StyleSheet.create({
   },
   nombreUsuarioCompacto: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
+    fontSize: 13,
   },
   tiempo: {
     marginTop: 1,
@@ -285,8 +307,8 @@ const estilos = StyleSheet.create({
   },
   tiempoCompacto: {
     marginTop: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 9,
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
     color: "#6B7280",
   },
   favorito: {
@@ -337,7 +359,7 @@ const estilos = StyleSheet.create({
   },
   tituloCompacto: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
+    fontSize: 12.5,
   },
   precio: {
     fontFamily: "Inter_500Medium",
@@ -347,7 +369,7 @@ const estilos = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     fontFamily: "Inter_500Medium",
-    fontSize: 10,
+    fontSize: 11,
   },
   acciones: { paddingHorizontal: 12, paddingBottom: 10 },
 });
