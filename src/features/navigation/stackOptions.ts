@@ -4,8 +4,8 @@ import { DefaultTheme, type NativeStackNavigationOptions } from "expo-router";
 export const STACK_SCREEN_OPTIONS: NativeStackNavigationOptions = {
   headerShown: false,
   animation: "fade",
-  // Más corto que el de siempre (~350 ms): se siente ágil y sin esperas
-  animationDuration: 170,
+  // Corto (~350 ms de serie): el cambio de pantalla se siente inmediato
+  animationDuration: 110,
   contentStyle: { backgroundColor: "transparent" },
 };
 

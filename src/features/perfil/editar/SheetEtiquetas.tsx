@@ -1,32 +1,63 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useBottomSheetAwareHandlers } from "heroui-native";
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+} from "react-native-reanimated";
 
-import { Text } from "@/features/shared/Text";
-import { SeccionEtiquetas } from "../drawer/SeccionEtiquetas";
-import { TecladoSheetCtx } from "../drawer/InputSheet";
-import { nuevoId } from "../drawer/drawerTheme";
+import { PressableSuave } from "@/components/PressableSuave";
+import { Text, TextInput } from "@/features/shared/Text";
+import {
+  PERFIL_ICONS,
+  renderPerfilIcon,
+  type IconPerfilKey,
+} from "../Perfiliconos";
 import {
   COLORES_PERFIL,
   MAX_PILDORAS,
-  type ColorPerfil,
+  TEMAS,
   type PildoraPerfilData,
 } from "../Perfiltemas";
-import { INTER } from "./editarTema";
+import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
 import { SheetEditar } from "./SheetEditar";
 
-/** Drawer de etiquetas: se editan como borrador y se guardan con un solo botón */
+/** Largo máximo de una etiqueta */
+const MAX_TEXTO_ETIQUETA = 18;
+const ICONOS = Object.keys(PERFIL_ICONS) as IconPerfilKey[];
+const ICONO_INICIAL = ICONOS[0];
+
+const nuevoId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+/**
+ * Drawer de etiquetas: campo redondo para escribir, iconos para elegir el de la etiqueta
+ * nueva y las etiquetas debajo con una × para quitarlas. Se editan como borrador (que la
+ * vista previa va mostrando) y se guardan con un solo botón.
+ */
 export function SheetEtiquetas({
   visible,
   pills,
   isDark,
   onClose,
+  onBorrador,
   onGuardar,
 }: {
   visible: boolean;
   pills: PildoraPerfilData[];
   isDark: boolean;
-  onClose: () => void;
+  /** `guardado` es true si se confirmó el cambio */
+  onClose: (guardado: boolean) => void;
+  /** Etiquetas en curso, para la vista previa en vivo */
+  onBorrador: (pills: PildoraPerfilData[]) => void;
   onGuardar: (pills: PildoraPerfilData[]) => Promise<void>;
 }) {
   return (
@@ -34,131 +65,272 @@ export function SheetEtiquetas({
       visible={visible}
       titulo="Etiquetas"
       isDark={isDark}
-      onClose={onClose}
+      onClose={() => onClose(false)}
     >
       <Contenido
         visible={visible}
         pills={pills}
         isDark={isDark}
         onClose={onClose}
+        onBorrador={onBorrador}
         onGuardar={onGuardar}
       />
     </SheetEditar>
   );
 }
 
-/**
- * Cambios sobre un borrador de etiquetas (agregar, color, icono, quitar), con el máximo y
- * los colores de Editar perfil.
- */
-function accionesBorradorEtiquetas(
-  setBorrador: Dispatch<SetStateAction<PildoraPerfilData[]>>,
-) {
-  return {
-    agregar: (text: string, icon?: string) =>
-      setBorrador((curr) => {
-        if (curr.length >= MAX_PILDORAS) return curr;
-        const color = COLORES_PERFIL[curr.length % COLORES_PERFIL.length];
-        return [...curr, { id: nuevoId(), text, color, icon }];
-      }),
-    cambiarColor: (id: string, color: ColorPerfil) =>
-      setBorrador((curr) =>
-        curr.map((x) => (x.id === id ? { ...x, color } : x)),
-      ),
-    cambiarIcono: (id: string, icon?: string) =>
-      setBorrador((curr) =>
-        curr.map((x) => (x.id === id ? { ...x, icon } : x)),
-      ),
-    quitar: (id: string) =>
-      setBorrador((curr) => curr.filter((x) => x.id !== id)),
-  };
-}
-
-/** Va dentro del sheet para poder avisarle del teclado */
 function Contenido({
   visible,
   pills,
   isDark,
   onClose,
+  onBorrador,
   onGuardar,
 }: {
   visible: boolean;
   pills: PildoraPerfilData[];
   isDark: boolean;
-  onClose: () => void;
+  onClose: (guardado: boolean) => void;
+  onBorrador: (pills: PildoraPerfilData[]) => void;
   onGuardar: (pills: PildoraPerfilData[]) => Promise<void>;
 }) {
+  const c = coloresEditar(isDark);
   const teclado = useBottomSheetAwareHandlers();
-  const [borrador, setBorrador] = useState(pills);
+  const [etiquetas, setEtiquetas] = useState(pills);
+  const [texto, setTexto] = useState("");
+  const [icono, setIcono] = useState<IconPerfilKey | undefined>(ICONO_INICIAL);
   const [guardando, setGuardando] = useState(false);
+  const llenas = etiquetas.length >= MAX_PILDORAS;
+  const limpio = texto.trim();
+  const colorCampo = isDark ? "#17233A" : "#F2F2F2";
 
   // Al abrir, el borrador parte de las etiquetas guardadas
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
   if (visible !== abiertoAntes) {
     setAbiertoAntes(visible);
-    if (visible) setBorrador(pills);
+    if (visible) {
+      setEtiquetas(pills);
+      setTexto("");
+      setIcono(ICONO_INICIAL);
+    }
   }
 
-  const { agregar, cambiarColor, cambiarIcono, quitar } =
-    accionesBorradorEtiquetas(setBorrador);
+  // La vista previa sigue el borrador mientras el drawer está abierto
+  useEffect(() => {
+    if (visible) onBorrador(etiquetas);
+  }, [visible, etiquetas, onBorrador]);
+
+  const agregar = () => {
+    if (!limpio || llenas) return;
+    if (etiquetas.some((e) => e.text.toLowerCase() === limpio.toLowerCase())) {
+      setTexto("");
+      return;
+    }
+    setEtiquetas((actuales) => [
+      ...actuales,
+      {
+        id: nuevoId(),
+        text: limpio,
+        color: COLORES_PERFIL[actuales.length % COLORES_PERFIL.length],
+        icon: icono,
+      },
+    ]);
+    setTexto("");
+    setIcono(ICONO_INICIAL);
+    Keyboard.dismiss();
+  };
 
   const guardar = async () => {
     if (guardando) return;
     setGuardando(true);
     try {
-      await onGuardar(borrador);
-      onClose();
+      await onGuardar(etiquetas);
+      onClose(true);
     } catch {
-      // El error ya se mostró; el drawer se queda abierto para reintentar
+      // Ya se avisó; el drawer se queda abierto para reintentar
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <TecladoSheetCtx.Provider value={teclado}>
-      <View style={styles.wrap}>
-        <SeccionEtiquetas
-          pills={borrador}
-          modo={isDark ? "oscuro" : "claro"}
-          onAdd={agregar}
-          onColor={cambiarColor}
-          onIcon={cambiarIcono}
-          onRemove={quitar}
+    <View style={styles.paso}>
+      <View style={[styles.campo, { backgroundColor: colorCampo }]}>
+        {icono ? renderPerfilIcon(icono, 17, c.icono) : null}
+        <TextInput
+          {...teclado}
+          value={texto}
+          onChangeText={setTexto}
+          editable={!llenas}
+          maxLength={MAX_TEXTO_ETIQUETA}
+          placeholder={
+            llenas
+              ? `Ya tienes ${MAX_PILDORAS} etiquetas`
+              : `Escribe una etiqueta (máximo ${MAX_PILDORAS})`
+          }
+          placeholderTextColor="#8E8E93"
+          selectionColor={c.texto}
+          cursorColor={c.texto}
+          underlineColorAndroid="transparent"
+          returnKeyType="done"
+          onSubmitEditing={agregar}
+          accessibilityLabel="Nueva etiqueta"
+          style={[INTER.regular, styles.input, { color: c.texto }]}
         />
+        {limpio && !llenas ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Agregar etiqueta"
+            hitSlop={6}
+            onPress={agregar}
+            style={[styles.palomita, { backgroundColor: c.texto }]}
+          >
+            <Ionicons
+              name="checkmark"
+              size={19}
+              color={isDark ? "#101010" : "#FFFFFF"}
+            />
+          </Pressable>
+        ) : null}
+      </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void guardar()}
-          style={[
-            styles.boton,
-            { backgroundColor: isDark ? "#F1F5F9" : "#1C1C1E" },
-          ]}
-        >
-          {guardando ? (
-            <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
-          ) : (
-            <Text
-              style={[
-                INTER.medium,
-                { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+      {/* Iconos para la etiqueta nueva: tocar otra vez el elegido lo quita */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        style={styles.carruselIconos}
+        contentContainerStyle={styles.iconos}
+      >
+        {ICONOS.map((clave) => {
+          const elegido = icono === clave;
+          return (
+            <Pressable
+              key={clave}
+              accessibilityRole="button"
+              accessibilityLabel={`Icono ${clave}`}
+              accessibilityState={{ selected: elegido, disabled: llenas }}
+              disabled={llenas}
+              onPress={() => setIcono(elegido ? undefined : clave)}
+              style={({ pressed }) => [
+                styles.icono,
+                elegido && { backgroundColor: isDark ? "#334155" : "#E2E2E7" },
+                (pressed || llenas) && { opacity: 0.5 },
               ]}
             >
-              Guardar
-            </Text>
-          )}
-        </Pressable>
+              {renderPerfilIcon(clave, 24, c.icono)}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.etiquetas}>
+        {etiquetas.map((etiqueta) => {
+          const tema = TEMAS[etiqueta.color] ?? TEMAS.azul;
+          return (
+            <Animated.View
+              key={etiqueta.id}
+              entering={FadeIn.duration(160)}
+              exiting={FadeOut.duration(120)}
+              layout={LinearTransition.duration(180)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: isDark ? "#ffffff17" : tema.pillBg,
+                  borderColor: tema.pillBorder,
+                },
+              ]}
+            >
+              {etiqueta.icon
+                ? renderPerfilIcon(etiqueta.icon, 15, c.icono)
+                : null}
+              <Text style={[INTER.medium, { fontSize: 13, color: c.texto }]}>
+                {etiqueta.text}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Quitar ${etiqueta.text}`}
+                hitSlop={8}
+                onPress={() =>
+                  setEtiquetas((actuales) =>
+                    actuales.filter((e) => e.id !== etiqueta.id),
+                  )
+                }
+              >
+                <Ionicons name="close" size={14} color={c.suave} />
+              </Pressable>
+            </Animated.View>
+          );
+        })}
       </View>
-    </TecladoSheetCtx.Provider>
+
+      <PressableSuave
+        accessibilityRole="button"
+        accessibilityLabel="Guardar etiquetas"
+        disabled={guardando}
+        onPress={() => void guardar()}
+        style={[styles.boton, { backgroundColor: c.texto }]}
+      >
+        {guardando ? (
+          <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
+        ) : (
+          <Text
+            style={[
+              INTER.medium,
+              { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+            ]}
+          >
+            Guardar
+          </Text>
+        )}
+      </PressableSuave>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 16, gap: 16 },
-  boton: {
+  paso: { paddingHorizontal: 17, gap: 14, minHeight: ALTO_CONTENIDO_SHEET },
+  campo: {
     height: 52,
     borderRadius: 26,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 18,
+    paddingRight: 8,
+    gap: 8,
+  },
+  input: { flex: 1, minWidth: 0, fontSize: 15, paddingVertical: 0 },
+  palomita: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+  },
+  carruselIconos: { flexGrow: 0 },
+  iconos: { gap: 12, paddingHorizontal: 2 },
+  icono: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  etiquetas: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    height: 30,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    borderWidth: 1,
+  },
+  boton: {
+    height: 50,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: "auto",
   },
 });

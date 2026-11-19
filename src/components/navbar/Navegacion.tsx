@@ -36,6 +36,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSequence,
   withSpring,
@@ -70,14 +71,15 @@ const NAV_TABS: NavTabItem[] = [
   { id: "profile", label: "Perfil", icon: "person" },
 ];
 
-/** 4 pestañas + 1 botón de crear = 5 módulos en un solo fondo */
-const INDICE_CREAR = NAV_TABS.length;
-const TOTAL_BOTONES = NAV_TABS.length + 1;
+/** 4 pestañas en la cápsula; el botón de crear va aparte, en su propio círculo */
+const TOTAL_BOTONES = NAV_TABS.length;
 const MAX_INDEX = TOTAL_BOTONES - 1;
+const SEPARACION_CREAR = 10;
 
 const ALTO_CAPSULA = 66;
 const MARGEN_CAPSULA = 5;
 const TAMANO_ICONO = 21;
+const TAMANO_ICONO_CREAR = 32;
 
 const ICONOS_LINEA: Partial<
   Record<Tab, ComponentType<{ size?: number; color?: string }>>
@@ -98,10 +100,10 @@ const ICONOS_LINEA: Partial<
  * segundo en llegar y se sentía lento.
  */
 const SPRING_PILDORA = { damping: 30, stiffness: 340, mass: 0.8 };
-const APARECER = { duration: 180, easing: Easing.out(Easing.cubic) };
+const APARECER = { duration: 120, easing: Easing.out(Easing.cubic) };
 
-const MENU_ABRIR = { duration: 240, easing: Easing.bezier(0.22, 1, 0.36, 1) };
-const MENU_CERRAR = { duration: 160, easing: Easing.out(Easing.cubic) };
+const MENU_ABRIR = { duration: 180, easing: Easing.bezier(0.22, 1, 0.36, 1) };
+const MENU_CERRAR = { duration: 110, easing: Easing.out(Easing.cubic) };
 
 const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
 const COLOR_ICONO_PUBLICACION = "#ff3762";
@@ -161,19 +163,14 @@ const TabButton = memo(function TabButton({
   onPress: (tab: Tab) => void;
   styles: Estilos;
 }) {
-  const activeStyle = useAnimatedStyle(() => {
-    const activo =
+  // Un solo cálculo por cuadro; los dos estilos solo lo leen
+  const activo = useDerivedValue(
+    () =>
       Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
-      indicadorVisible.get();
-    return { opacity: activo };
-  });
-
-  const inactiveStyle = useAnimatedStyle(() => {
-    const activo =
-      Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
-      indicadorVisible.get();
-    return { opacity: 1 - activo };
-  });
+      indicadorVisible.get(),
+  );
+  const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
+  const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - activo.get() }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
   const colorActivo = "#101010";
@@ -234,80 +231,60 @@ const TabButton = memo(function TabButton({
   );
 });
 
-/** Botón de crear integrado como 5to módulo con reacción en vivo al pasar la píldora */
+/** Botón de crear: círculo de cristal separado de la cápsula de pestañas */
 const CreateSlotButton = memo(function CreateSlotButton({
   selected,
-  posicion,
-  indicadorVisible,
   onPress,
   isDark,
   styles,
 }: {
   selected: boolean;
-  posicion: SharedValue<number>;
-  indicadorVisible: SharedValue<number>;
   onPress: () => void;
   isDark: boolean;
   styles: Estilos;
 }) {
-  const activeStyle = useAnimatedStyle(() => {
-    const activo =
-      Math.max(0, 1 - Math.abs(posicion.get() - INDICE_CREAR)) *
-      indicadorVisible.get();
-    return { opacity: activo };
-  });
+  const activo = useSharedValue(selected ? 1 : 0);
+  useEffect(() => {
+    activo.set(withTiming(selected ? 1 : 0, APARECER));
+  }, [selected, activo]);
 
-  const inactiveStyle = useAnimatedStyle(() => {
-    const activo =
-      Math.max(0, 1 - Math.abs(posicion.get() - INDICE_CREAR)) *
-      indicadorVisible.get();
-    return { opacity: 1 - activo };
-  });
+  const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - activo.get() }));
+  const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
   const colorActivo = "#101010";
 
   return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel="Publicar producto"
-      onPress={onPress}
-      scaleTo={0.92}
-      style={styles.hueco}
-    >
-      <View style={styles.icono}>
-        <Animated.View style={[styles.iconoCapa, inactiveStyle]}>
-          <NavigationIcon
-            name="add"
-            size={TAMANO_ICONO + 2}
-            color={colorInactivo}
-          />
-        </Animated.View>
-        <Animated.View style={[styles.iconoCapa, activeStyle]}>
-          <NavigationIcon
-            name="add"
-            size={TAMANO_ICONO + 2}
-            color={colorActivo}
-          />
-        </Animated.View>
-      </View>
-
-      <View style={styles.etiquetaContenedor}>
-        <Animated.Text
-          numberOfLines={1}
-          style={[styles.etiqueta, { color: colorInactivo }, inactiveStyle]}
+    <View style={[styles.sombra, styles.crearSombra]}>
+      <View style={styles.crearCirculo}>
+        <LiquidGlassSurface isDark={isDark} styles={styles} />
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityState={{ selected }}
+          accessibilityLabel="Publicar producto"
+          onPress={onPress}
+          scaleTo={0.92}
+          style={styles.hueco}
         >
-          Crear
-        </Animated.Text>
-        <Animated.Text
-          numberOfLines={1}
-          style={[styles.etiqueta, { color: colorActivo }, activeStyle]}
-        >
-          Crear
-        </Animated.Text>
+          <View style={styles.iconoCrear}>
+            <Animated.View style={[styles.iconoCapa, inactiveStyle]}>
+              <NavigationIcon
+                name="add"
+                size={TAMANO_ICONO_CREAR}
+                color={colorInactivo}
+              />
+            </Animated.View>
+            <Animated.View style={[styles.iconoCapa, activeStyle]}>
+              <NavigationIcon
+                name="add"
+                size={TAMANO_ICONO_CREAR}
+                color={colorActivo}
+              />
+            </Animated.View>
+          </View>
+        </PressableScale>
       </View>
-    </PressableScale>
+    </View>
   );
 });
 
@@ -388,7 +365,7 @@ function MenuCrear({
 /*  Navegación                                                                */
 /* -------------------------------------------------------------------------- */
 
-export function Navegacion({
+function NavegacionBase({
   activeTab,
   onNavigate,
   isDark = false,
@@ -413,8 +390,9 @@ export function Navegacion({
 
   const tabEfectivo = pendingTab ?? activeTab;
   const indiceTab = NAV_TABS.findIndex((tab) => tab.id === tabEfectivo);
-  const huecoActivo =
-    menuAbierto || tabEfectivo === "create" ? INDICE_CREAR : indiceTab;
+  // Con el menú de crear abierto (o en crear) la píldora se oculta: Crear tiene su propio fondo
+  const crearActivo = menuAbierto || tabEfectivo === "create";
+  const huecoActivo = crearActivo ? -1 : indiceTab;
 
   const huecoAnterior = useRef(huecoActivo);
   const ultimoIndiceArrastrado = useRef<number | null>(null);
@@ -534,7 +512,7 @@ export function Navegacion({
     requestAnimationFrame(() => onNavigate("create"));
   }, [cerrarMenu, onNavigate]);
 
-  const handleTabPress = useCallback(
+  const handleTabPressActual = useCallback(
     (tabId: Tab) => {
       if (tabId !== activeTab) {
         setPendingTab(tabId);
@@ -551,7 +529,7 @@ export function Navegacion({
     [activeTab, cerrarMenu, irAPestana, menuAbierto],
   );
 
-  const handleCreatePress = useCallback(() => {
+  const handleCreatePressActual = useCallback(() => {
     if (menuAbierto) {
       cerrarMenu();
     } else {
@@ -559,14 +537,22 @@ export function Navegacion({
     }
   }, [abrirMenu, cerrarMenu, menuAbierto]);
 
+  // Referencias estables: las pestañas (memo) no se vuelven a dibujar cada vez que cambia
+  // el estado de la barra, solo cuando cambia lo suyo
+  const tabPressRef = useLatestRef(handleTabPressActual);
+  const handleTabPress = useCallback(
+    (tabId: Tab) => tabPressRef.current(tabId),
+    [tabPressRef],
+  );
+  const createPressRef = useLatestRef(handleCreatePressActual);
+  const handleCreatePress = useCallback(
+    () => createPressRef.current(),
+    [createPressRef],
+  );
+
   const handleDropNavigate = useCallback(
     (targetIndex: number) => {
       ultimoIndiceArrastrado.current = targetIndex;
-
-      if (targetIndex === INDICE_CREAR) {
-        if (!menuAbierto) abrirMenu();
-        return;
-      }
 
       const targetTab = NAV_TABS[targetIndex];
       if (!targetTab) return;
@@ -580,7 +566,7 @@ export function Navegacion({
         if (menuAbierto) cerrarMenu();
       }
     },
-    [abrirMenu, activeTab, cerrarMenu, menuAbierto, onNavigate],
+    [activeTab, cerrarMenu, menuAbierto, onNavigate],
   );
 
   // El gesto llama siempre a la última versión del manejador sin volver a crearse: si se
@@ -591,7 +577,7 @@ export function Navegacion({
     [handleDropRef],
   );
 
-  /** Gesto horizontal para jalar la píldora Liquid Glass por los 5 botones y soltarla */
+  /** Gesto horizontal para jalar la píldora Liquid Glass por las 4 pestañas y soltarla */
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -742,17 +728,16 @@ export function Navegacion({
                 />
               ))}
 
-              <CreateSlotButton
-                selected={menuAbierto || tabEfectivo === "create"}
-                posicion={posicion}
-                indicadorVisible={indicadorVisible}
-                onPress={handleCreatePress}
-                isDark={isDark}
-                styles={styles}
-              />
             </View>
           </View>
         </GestureDetector>
+
+        <CreateSlotButton
+          selected={crearActivo}
+          onPress={handleCreatePress}
+          isDark={isDark}
+          styles={styles}
+        />
       </View>
     </View>
   );
@@ -823,6 +808,20 @@ function createStyles(isDark: boolean) {
 
     capsulaSombra: { flex: 1 },
 
+    crearSombra: { marginLeft: SEPARACION_CREAR },
+
+    crearCirculo: {
+      width: ALTO_CAPSULA,
+      height: ALTO_CAPSULA,
+      borderRadius: ALTO_CAPSULA / 2,
+      borderWidth: 1,
+      borderColor: colors.borde,
+      borderTopColor: colors.bordeSuperior,
+      overflow: "hidden",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
     capsula: {
       height: ALTO_CAPSULA,
       flexDirection: "row",
@@ -872,6 +871,13 @@ function createStyles(isDark: boolean) {
     icono: {
       width: TAMANO_ICONO + 3,
       height: TAMANO_ICONO + 3,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    iconoCrear: {
+      width: TAMANO_ICONO_CREAR + 4,
+      height: TAMANO_ICONO_CREAR + 4,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -952,5 +958,7 @@ function createStyles(isDark: boolean) {
     },
   });
 }
+
+export const Navegacion = memo(NavegacionBase);
 
 export default Navegacion;

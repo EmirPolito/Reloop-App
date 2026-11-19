@@ -12,7 +12,10 @@ import { Text } from "@/features/shared/Text";
 import { formatChatTime } from "@/utils/time";
 
 const COLOR_AZUL = "#1C77FF";
-const LADO_AVATAR = 50;
+const LADO_AVATAR = 58;
+const LADO_CHECK = 26;
+const GAP = 12;
+const PADDING = 12;
 /** Círculo del contador: lo bastante grande para que quepa "+9" */
 const LADO_CIRCULO = 24;
 /** Con más mensajes que esto el contador dice "+9" */
@@ -33,6 +36,9 @@ export const ChatListItem = memo(function ChatListItem({
   categoria,
   sinLeer,
   onPress,
+  onLongPress,
+  seleccionando = false,
+  marcado = false,
 }: {
   chat: Chat;
   /** Categoría de la publicación de la que parte el chat, si la hay */
@@ -40,6 +46,11 @@ export const ChatListItem = memo(function ChatListItem({
   /** Cuántos mensajes sin leer tiene (0 si está leído) */
   sinLeer: number;
   onPress: (chatId: string) => void;
+  /** Toque largo: empieza a seleccionar para eliminar */
+  onLongPress?: (chatId: string) => void;
+  /** Modo de selección: el toque marca o desmarca el chat */
+  seleccionando?: boolean;
+  marcado?: boolean;
 }) {
   const { isDark } = useAppTheme();
   const { lastMessage } = chat;
@@ -59,13 +70,29 @@ export const ChatListItem = memo(function ChatListItem({
     <PressableSuave
       accessibilityRole="button"
       accessibilityLabel={`${chat.name}. ${resumen}${hora ? `, ${hora}` : ""}${chat.unread ? `, ${conteo} sin leer` : ""}${categoria ? `, publicación de ${categoryFor(categoria).label}` : ""}`}
+      accessibilityState={seleccionando ? { selected: marcado } : undefined}
       onPress={() => onPress(chat.id)}
+      onLongPress={onLongPress ? () => onLongPress(chat.id) : undefined}
       style={styles.fila}
     >
+      {seleccionando ? (
+        <View
+          style={[
+            styles.check,
+            marcado
+              ? { backgroundColor: COLOR_AZUL, borderColor: COLOR_AZUL }
+              : { borderColor: isDark ? "#64748B" : "#C4C4CA" },
+          ]}
+        >
+          {marcado ? <Ionicons name="checkmark" size={17} color="#FFFFFF" /> : null}
+        </View>
+      ) : null}
       <AvatarVendedor
         ownerId={chat.otherId}
         fallbackName={chat.name}
         size={LADO_AVATAR}
+        // Insignia un poco más chica, más abajo y hacia la izquierda
+        ajusteInsignia={{ escala: 0.5, right: 1, bottom: -8 }}
       />
 
       <View style={styles.textos}>
@@ -128,12 +155,19 @@ export const ChatListItem = memo(function ChatListItem({
         ) : null}
       </View>
 
-      {/* Línea suave debajo: pasa también por debajo del avatar y deja libre el borde de los lados */}
+      {/* Línea suave debajo: empieza donde empiezan el nombre y el mensaje, no en el avatar */}
       <View
         pointerEvents="none"
         style={[
           styles.linea,
-          { backgroundColor: isDark ? "#ffffff24" : "rgba(0,0,0,0.11)" },
+          {
+            left:
+              PADDING +
+              (seleccionando ? LADO_CHECK + GAP : 0) +
+              LADO_AVATAR +
+              GAP,
+            backgroundColor: isDark ? "#ffffff24" : "rgba(0,0,0,0.11)",
+          },
         ]}
       />
     </PressableSuave>
@@ -145,15 +179,22 @@ const styles = StyleSheet.create({
   fila: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: GAP,
     paddingVertical: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: PADDING,
   },
-  // Cubre también el avatar: desde el margen izquierdo hasta casi el borde derecho
+  check: {
+    width: LADO_CHECK,
+    height: LADO_CHECK,
+    borderRadius: LADO_CHECK / 2,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Desde el nombre y el mensaje hasta casi el borde derecho
   linea: {
     position: "absolute",
-    bottom: 0,
-    left: 12,
+    bottom: 5,
     right: 18,
     height: StyleSheet.hairlineWidth,
   },
@@ -172,11 +213,11 @@ const styles = StyleSheet.create({
   categoriaTexto: { fontFamily: "Inter_500Medium", fontSize: 11 },
   mensaje: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14.5,
+    lineHeight: 20,
   },
   derecha: { alignItems: "flex-end", gap: 7, minWidth: LADO_CIRCULO },
-  hora: { fontFamily: "Inter_500Medium", fontSize: 11.5 },
+  hora: { fontFamily: "Inter_400Regular", fontSize: 14.5 },
   circulo: {
     minWidth: LADO_CIRCULO,
     height: LADO_CIRCULO,

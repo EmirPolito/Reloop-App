@@ -12,6 +12,7 @@ import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import {
+  deleteNotifications,
   markNotificationRead,
   markNotificationsRead,
   subscribeNotifications,
@@ -29,6 +30,8 @@ interface NotificationActions {
   /** Marca una como leída; si falla solo se registra (no bloquea la navegación). */
   markRead: (notificationId: string) => void;
   markAllRead: () => Promise<void>;
+  /** Elimina las notificaciones indicadas. */
+  remove: (notificationIds: string[]) => Promise<void>;
   /** Retira el banner de la notificación que acaba de llegar. */
   clearArrival: () => void;
 }
@@ -100,6 +103,7 @@ export function NotificationsProvider({ children }: PropsWithChildren) {
             .filter((item) => !item.read)
             .map((item) => item.id),
         ),
+      remove: (notificationIds) => deleteNotifications(uid, notificationIds),
       clearArrival: () => setArrival(null),
     }),
     [uid, notificationsRef],

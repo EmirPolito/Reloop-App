@@ -1,5 +1,5 @@
 import { usePathname } from "expo-router";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
@@ -16,7 +16,7 @@ import { estadoBarraParaRuta, type Tab } from "./routes";
 import { useAppNavigation } from "./useAppNavigation";
 
 /** Aparece o se oculta al entrar a una pantalla sin barra (conversación, publicación...) */
-const TRANSICION = { duration: 160, easing: Easing.out(Easing.cubic) };
+const TRANSICION = { duration: 110, easing: Easing.out(Easing.cubic) };
 
 /** Mientras dura la transición entre pantallas, otro toque a la barra no hace nada */
 const BLOQUEO_MS = 450;
@@ -34,6 +34,7 @@ export function BarraNavegacion() {
   const { chats } = useChats();
   const { unreadCount } = useNotifications();
   const { navigate, openNotifications } = useAppNavigation();
+  const hayChatsSinLeer = useMemo(() => chats.some((chat) => chat.unread), [chats]);
   const { visible, activeTab, notificaciones } =
     estadoBarraParaRuta(usePathname());
 
@@ -76,7 +77,7 @@ export function BarraNavegacion() {
         onOpenNotifications={notificaciones ? noop : alAbrirNotificaciones}
         notificacionesActivas={notificaciones}
         isDark={isDark}
-        hasUnreadChats={chats.some((chat) => chat.unread)}
+        hasUnreadChats={hayChatsSinLeer}
         unreadNotifications={unreadCount}
       />
     </Animated.View>

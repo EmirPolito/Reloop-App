@@ -145,6 +145,8 @@ export function SelectorAvatar({
   claveCarrusel,
   mostrarConfirmar = true,
   subirCarrusel = 0,
+  altoMinimo,
+  bajarOpciones = 0,
 }: {
   flujo: FlujoAvatar;
   photo: string | null;
@@ -156,6 +158,10 @@ export function SelectorAvatar({
   mostrarConfirmar?: boolean;
   /** Píxeles que sube el carrusel sin mover lo demás (Editar perfil lo deja en su lugar) */
   subirCarrusel?: number;
+  /** Alto mínimo del paso de inicio: el drawer no cambia de tamaño al salir el botón */
+  altoMinimo?: number;
+  /** Píxeles que bajan Tomar / Elegir (el botón de abajo no se mueve) */
+  bajarOpciones?: number;
 }) {
   const c = coloresEditar(isDark);
   const { guardarFoto, hayCambio } = flujo;
@@ -167,7 +173,7 @@ export function SelectorAvatar({
       exiting={FadeOut.duration(120)}
     >
       {flujo.paso === "inicio" ? (
-        <View style={styles.inicio}>
+        <View style={[styles.inicio, altoMinimo ? { minHeight: altoMinimo } : null]}>
           <View
             style={{
               alignSelf: "stretch",
@@ -185,7 +191,7 @@ export function SelectorAvatar({
             />
           </View>
 
-          <View style={styles.opciones}>
+          <View style={[styles.opciones, bajarOpciones ? { marginTop: -1 + bajarOpciones } : null]}>
             <Opcion
               icono="camera-outline"
               texto="Tomar"
@@ -302,7 +308,7 @@ function Opcion({
 
 const styles = StyleSheet.create({
   inicio: { alignItems: "center", gap: 22, paddingTop: 9 },
-  confirmar: { alignSelf: "stretch", paddingHorizontal: 17, marginTop: -7 },
+  confirmar: { alignSelf: "stretch", paddingHorizontal: 17, marginTop: -10 },
   confirmarBoton: {
     height: 50,
     borderRadius: 30,
@@ -311,6 +317,7 @@ const styles = StyleSheet.create({
   },
   opciones: {
     flexDirection: "row",
+    marginTop: -1,
     gap: 15,
     paddingHorizontal: 17,
     alignSelf: "stretch",

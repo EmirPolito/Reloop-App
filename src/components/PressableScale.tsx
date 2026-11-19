@@ -30,7 +30,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(
 
 // Igual que PressableFeedback de HeroUI: scale con withTiming (sin rebote),
 // controlado por un shared value `isPressed`. Duración acortada para sentirse ágil.
-const PRESS_TIMING = { duration: 160, easing: EASE_OUT };
+const PRESS_TIMING = { duration: 90, easing: EASE_OUT };
 
 export type PressableScaleProps = Omit<PressableProps, "style"> &
   LayoutAnimProps & {

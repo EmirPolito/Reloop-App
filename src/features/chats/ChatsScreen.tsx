@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PressableScale } from "@/components/PressableScale";
+import { BotonBarra } from "@/components/ui/BotonBarra";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { NotificationBellButton } from "@/components/ui/NotificationBellButton";
+import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { FondoHome } from "@/features/home/components/FondoHome";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
@@ -17,7 +19,9 @@ import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { normalizarNombre } from "@/features/perfil/username";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
-import { useChats } from "./ChatProvider";
+import { useSeleccion } from "@/hooks/useSeleccion";
+import { showAlert, showErrorAlert } from "@/utils/alerts";
+import { useChatActions, useChats } from "./ChatProvider";
 import { filterChats } from "./chatSelectors";
 import { BulkMessageIcon, BulkSearchIcon } from "./components/ChatIcons";
 import { ChatListItem } from "./components/ChatListItem";
@@ -30,7 +34,6 @@ type Filtro = "todos" | "sinLeer" | "publicaciones";
 /** Al cambiar de filtro la lista aparece con un fundido corto */
 const CAMBIO_FILTRO = FadeIn.duration(200);
 /** Mismo círculo que los botones de Notificaciones y Favoritos */
-const LADO_BOTON = 48;
 
 /**
  * Lista de chats, con el mismo aspecto que Notificaciones y Favoritos: el fondo del inicio,
@@ -40,7 +43,12 @@ const LADO_BOTON = 48;
 export function ChatsScreen() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { chats, status } = useChats();
+  const { chats: todos, status } = useChats();
+  const { deleteChats } = useChatActions();
+  // Los chats que la persona eliminó no se listan (si escriben de nuevo, reaparecen)
+  const chats = useMemo(() => todos.filter((chat) => !chat.hidden), [todos]);
+  const seleccion = useSeleccion();
+  const [menu, setMenu] = useState(false);
   const { back, openThread } = useAppNavigation();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -95,11 +103,36 @@ export function ChatsScreen() {
   ]);
 
   const texto = isDark ? "#F1F5F9" : "#101010";
-  const boton = {
-    backgroundColor: isDark ? "#ffffff1a" : "#ffffffb7",
-    borderColor: isDark ? "#ffffff33" : "#ffffff",
-  };
   const hayFiltro = filtro !== "todos" || busqueda.trim() !== "";
+
+  const { activo, marcados } = seleccion;
+  const alPulsar = useCallback(
+    (chatId: string) => (activo ? seleccion.alternar(chatId) : openThread(chatId)),
+    [activo, seleccion, openThread],
+  );
+
+  const eliminar = () => {
+    const ids = [...marcados];
+    if (ids.length === 0) return;
+    showAlert(
+      ids.length === 1 ? "¿Eliminar este chat?" : `¿Eliminar ${ids.length} chats?`,
+      "Se borran solo para ti. Si te vuelven a escribir, el chat reaparece con los mensajes nuevos.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            deleteChats(ids)
+              .then(seleccion.salir)
+              .catch((error) =>
+                showErrorAlert("No se pudieron eliminar los chats", error),
+              );
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.pantalla}>
@@ -108,25 +141,48 @@ export function ChatsScreen() {
 
       {/* Volver a la izquierda, el título al centro y la campana a la derecha */}
       <View style={styles.barra}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          onPress={back}
-          scaleTo={0.92}
-          style={[styles.botonBarra, boton]}
-        >
-          <View style={{ transform: [{ translateX: -1.5 }] }}>
-            <BackArrowIcon size={28} color={texto} />
-          </View>
-        </PressableScale>
+        {activo ? (
+          <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
+            <Ionicons name="close" size={26} color={texto} />
+          </BotonBarra>
+        ) : (
+          <BotonBarra etiqueta="Volver" onPress={back}>
+            <View style={{ transform: [{ translateX: -1.5 }] }}>
+              <BackArrowIcon size={28} color={texto} />
+            </View>
+          </BotonBarra>
+        )}
         <Text
           accessibilityRole="header"
           pointerEvents="none"
           style={[styles.titulo, { color: texto }]}
         >
-          Chats
+          {activo
+            ? marcados.size === 0
+              ? "Selecciona chats"
+              : `${marcados.size} seleccionado${marcados.size === 1 ? "" : "s"}`
+            : "Chats"}
         </Text>
-        <NotificationBellButton lado={LADO_BOTON} />
+        <View style={styles.acciones}>
+          {activo ? (
+            <BotonBarra
+              etiqueta="Eliminar chats seleccionados"
+              peligro
+              disabled={marcados.size === 0}
+              onPress={eliminar}
+            >
+              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+            </BotonBarra>
+          ) : (
+            <BotonBarra
+              etiqueta="Eliminar chats"
+              disabled={chats.length === 0}
+              onPress={() => setMenu(true)}
+            >
+              <IconoEliminarLinea size={26} color={"#FF8A1F"} />
+            </BotonBarra>
+          )}
+        </View>
       </View>
 
       <BuscadorBlanco
@@ -145,6 +201,7 @@ export function ChatsScreen() {
         <Animated.View key={filtro} entering={CAMBIO_FILTRO} style={styles.lista}>
           <FlatList
             data={visibleChats}
+            extraData={marcados}
             keyExtractor={(chat) => chat.id}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -163,7 +220,10 @@ export function ChatsScreen() {
                     ?.category
                 }
                 sinLeer={item.unread ? (sinLeerPorChat[item.id] ?? 1) : 0}
-                onPress={openThread}
+                onPress={alPulsar}
+                onLongPress={seleccion.iniciar}
+                seleccionando={activo}
+                marcado={marcados.has(item.id)}
               />
             )}
             ListEmptyComponent={
@@ -194,6 +254,24 @@ export function ChatsScreen() {
           />
         </Animated.View>
       )}
+
+      <MenuOpciones
+        visible={menu}
+        top={8 + 56}
+        onClose={() => setMenu(false)}
+        opciones={[
+          {
+            etiqueta: "Seleccionar",
+            icono: "checkmark-circle-outline",
+            onPress: () => seleccion.iniciar(),
+          },
+          {
+            etiqueta: "Seleccionar todo",
+            icono: "checkbox-outline",
+            onPress: () => seleccion.iniciarTodos(visibleChats.map((c) => c.id)),
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -207,14 +285,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  botonBarra: {
-    width: LADO_BOTON,
-    height: LADO_BOTON,
-    borderRadius: LADO_BOTON / 2,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  acciones: { flexDirection: "row", alignItems: "center", gap: 8 },
   // Centrado en la barra, sin importar el ancho de los botones
   titulo: {
     position: "absolute",

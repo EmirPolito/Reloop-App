@@ -17,6 +17,7 @@ import {
   IconoNotificacionLinea,
   IconoSolLinea,
 } from "../Perfiliconos";
+import { ConfirmarCerrarSesion } from "./ConfirmarCerrarSesion";
 import { FilaAjuste } from "./FilaAjuste";
 import { TarjetaAccion } from "./TarjetaAccion";
 import { ToggleNotificaciones, ToggleTema } from "./TogglesAnimados";
@@ -31,10 +32,17 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
   const { openLegal } = useAppNavigation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
+  const [confirmando, setConfirmando] = useState(false);
+  const [cerrando, setCerrando] = useState(false);
+
   const handleSignOut = useCallback(() => {
-    signOut().catch((error) =>
-      console.warn("No se pudo cerrar la sesión.", error),
-    );
+    setCerrando(true);
+    signOut()
+      .catch((error) => console.warn("No se pudo cerrar la sesión.", error))
+      .finally(() => {
+        setCerrando(false);
+        setConfirmando(false);
+      });
   }, [signOut]);
 
   const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
@@ -130,7 +138,14 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         labelColor="#ff2424ff"
         backgroundColor={fondoTarjeta}
         arrowColor={flecha}
-        onPress={handleSignOut}
+        onPress={() => setConfirmando(true)}
+      />
+
+      <ConfirmarCerrarSesion
+        visible={confirmando}
+        cerrando={cerrando}
+        onCancelar={() => setConfirmando(false)}
+        onConfirmar={handleSignOut}
       />
     </View>
   );

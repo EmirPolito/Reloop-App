@@ -20,7 +20,7 @@ function roundButtonStyle(isDark: boolean) {
     // Blanco liso en claro: translúcido se veía gris sobre el fondo
     backgroundColor: isDark ? "#ffffff1a" : "#FFFFFF",
     borderWidth: 2,
-    borderColor: isDark ? "#ffffff33" : "#ffffffff",
+    borderColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   } as const;
@@ -51,10 +51,10 @@ export function ThreadHeader({
   // Android: sin blur real, el tinte es más fuerte para que se lea bien.
   const tint = isIOS
     ? isDark
-      ? "#1E293B66"
+      ? "#16161666"
       : "#ffffff40"
     : isDark
-      ? "#1E293Bcc"
+      ? "#161616cc"
       : "#f6f6f6ae";
 
   return (

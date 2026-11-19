@@ -12,7 +12,7 @@ import { StyleSheet, View } from "react-native";
 import { NotificationBanner } from "@/features/notificaciones/components/NotificationBanner";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 
-type TipoAviso = "exito" | "error";
+type TipoAviso = "exito" | "error" | "eliminada";
 
 interface Aviso {
   /** Cambia con cada aviso: cada uno monta su propio banner */
@@ -59,8 +59,10 @@ export function useAvisos(): AvisosActions {
 
 /** Color fuerte del círculo de cada tipo de aviso (el icono va en blanco) */
 const COLORES: Record<TipoAviso, string> = {
-  exito: "#34D399",
-  error: "#FF6B88",
+  exito: "#10B981",
+  error: "#FF3D63",
+  // Al eliminar algo: rojo
+  eliminada: "#F20000",
 };
 
 /** Dibuja el aviso actual arriba de todo. Va en el layout de la app, junto a los banners. */
@@ -83,13 +85,20 @@ export function AvisoHost() {
         leading: (
           <View style={[estilos.circulo, { backgroundColor: fondo }]}>
             <Ionicons
-              name={aviso.tipo === "exito" ? "checkmark" : "close"}
-              size={24}
+              name={
+                aviso.tipo === "exito"
+                  ? "checkmark"
+                  : aviso.tipo === "eliminada"
+                    ? "trash"
+                    : "close"
+              }
+              size={28}
               color="#FFFFFF"
             />
           </View>
         ),
-        icono: aviso.tipo === "exito" ? "checkmark-circle" : "alert-circle",
+        // El círculo de color de la izquierda ya lleva su icono: no se repite a la derecha
+        icono: null,
         pista: "Toca para cerrar",
       }}
       // Tocarlo solo lo cierra: no hay a dónde llevar

@@ -6,6 +6,7 @@ import {
   TITULOS_AVATAR,
   useFlujoAvatar,
 } from "./SelectorAvatar";
+import { ALTO_CONTENIDO_SHEET } from "./editarTema";
 import { SheetEditar } from "./SheetEditar";
 
 /**
@@ -56,6 +57,9 @@ export function SheetAvatar({
         isDark={isDark}
         // Al reabrir el drawer el carrusel vuelve al avatar guardado
         claveCarrusel={visible ? "abierto" : "cerrado"}
+        // Mismo tamaño que el drawer del fondo, con o sin el botón negro
+        altoMinimo={ALTO_CONTENIDO_SHEET}
+        bajarOpciones={11}
       />
     </SheetEditar>
   );

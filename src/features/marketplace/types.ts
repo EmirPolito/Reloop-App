@@ -61,4 +61,8 @@ export type Chat = {
   /** Cuándo lo leyó la otra persona (ms; 0 si nunca): dice si vio mi último mensaje */
   otherReadAt: number;
   updatedAt: number;
+  /** Cuándo borró esta persona el chat (ms; 0 si nunca): oculta lo anterior a esa fecha */
+  deletedAt: number;
+  /** Borrado por esta persona y sin mensajes nuevos desde entonces: no se lista */
+  hidden: boolean;
 };

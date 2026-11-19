@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
+import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
+import { useCallback, useMemo, useState } from "react";
 import { SectionList, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PressableScale } from "@/components/PressableScale";
+import { BotonBarra } from "@/components/ui/BotonBarra";
+import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IconoNotificacionRellena } from "@/components/ui/IconoNotificacion";
@@ -22,7 +24,9 @@ import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { normalizarNombre } from "@/features/perfil/username";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
-import { showErrorAlert } from "@/utils/alerts";
+import { useSeleccion } from "@/hooks/useSeleccion";
+import { showAlert, showErrorAlert } from "@/utils/alerts";
+import type { AppNotification } from "./types";
 import { NotificationItem } from "./components/NotificationItem";
 import { useOpenNotification } from "./hooks/useOpenNotification";
 import {
@@ -47,10 +51,8 @@ const ENTRADA = FadeInDown.duration(ENTRADA_MODULO.timing.duration)
 /** Al cambiar de filtro la lista aparece con un fundido corto */
 const CAMBIO_FILTRO = FadeIn.duration(200);
 
-/** Botones redondos del encabezado y sus iconos */
-const LADO_BOTON = 48;
+/** Iconos de los botones redondos del encabezado */
 const ICONO_ATRAS = 28;
-const ICONO_LEIDAS = 24;
 
 /** Todas las notificaciones recibidas, por antigüedad, con buscador y filtros. */
 export function PantallaNotificaciones() {
@@ -58,7 +60,9 @@ export function PantallaNotificaciones() {
   const { isDark } = useAppTheme();
   const { back } = useAppNavigation();
   const { notifications, unreadCount, status } = useNotifications();
-  const { markAllRead } = useNotificationActions();
+  const { markAllRead, remove } = useNotificationActions();
+  const seleccion = useSeleccion();
+  const [menu, setMenu] = useState(false);
   const { products } = useMarketplaceState();
   const openNotification = useOpenNotification();
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -105,14 +109,42 @@ export function PantallaNotificaciones() {
 
   const texto = isDark ? "#F1F5F9" : "#101010";
   const suave = isDark ? "#94A3B8" : "#8A8A8F";
-  const boton = {
-    backgroundColor: isDark ? "#ffffff1a" : "#ffffffb7",
-    borderColor: isDark ? "#ffffff33" : "#ffffff",
-  };
 
   const marcarTodas = () => {
     markAllRead().catch((error) =>
       showErrorAlert("No se pudieron marcar como leídas", error),
+    );
+  };
+
+  const { activo, marcados } = seleccion;
+  const alPulsar = useCallback(
+    (notificacion: AppNotification) =>
+      activo ? seleccion.alternar(notificacion.id) : openNotification(notificacion),
+    [activo, seleccion, openNotification],
+  );
+
+  const eliminar = () => {
+    const ids = [...marcados];
+    if (ids.length === 0) return;
+    showAlert(
+      ids.length === 1
+        ? "¿Eliminar esta notificación?"
+        : `¿Eliminar ${ids.length} notificaciones?`,
+      "No se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            remove(ids)
+              .then(seleccion.salir)
+              .catch((error) =>
+                showErrorAlert("No se pudieron eliminar las notificaciones", error),
+              );
+          },
+        },
+      ],
     );
   };
 
@@ -133,41 +165,46 @@ export function PantallaNotificaciones() {
 
       {/* Volver a la izquierda, el título al centro y marcar como leídas a la derecha */}
       <View style={styles.barra}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          onPress={back}
-          scaleTo={0.92}
-          style={[styles.botonBarra, boton]}
-        >
-          <View style={{ transform: [{ translateX: -1.5 }] }}>
-            <BackArrowIcon size={ICONO_ATRAS} color={texto} />
-          </View>
-        </PressableScale>
+        {activo ? (
+          <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
+            <Ionicons name="close" size={26} color={texto} />
+          </BotonBarra>
+        ) : (
+          <BotonBarra etiqueta="Volver" onPress={back}>
+            <View style={{ transform: [{ translateX: -1.5 }] }}>
+              <BackArrowIcon size={ICONO_ATRAS} color={texto} />
+            </View>
+          </BotonBarra>
+        )}
 
         <Text
           accessibilityRole="header"
           pointerEvents="none"
           style={[styles.titulo, { color: texto }]}
         >
-          Notificaciones
+          {activo
+            ? marcados.size === 0
+              ? "Selecciona"
+              : `${marcados.size} seleccionada${marcados.size === 1 ? "" : "s"}`
+            : "Notificaciones"}
         </Text>
 
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Marcar todas como leídas"
-          accessibilityState={{ disabled: unreadCount === 0 }}
-          disabled={unreadCount === 0}
-          onPress={marcarTodas}
-          scaleTo={0.92}
-          style={[
-            styles.botonBarra,
-            boton,
-            unreadCount === 0 && { opacity: 0.45 },
-          ]}
-        >
-          <Ionicons name="checkmark-done" size={ICONO_LEIDAS} color={texto} />
-        </PressableScale>
+        <View style={styles.acciones}>
+          {activo ? (
+            <BotonBarra
+              etiqueta="Eliminar notificaciones seleccionadas"
+              peligro
+              disabled={marcados.size === 0}
+              onPress={eliminar}
+            >
+              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+            </BotonBarra>
+          ) : (
+            <BotonBarra etiqueta="Más opciones" onPress={() => setMenu(true)}>
+              <Ionicons name="ellipsis-horizontal" size={24} color={texto} />
+            </BotonBarra>
+          )}
+        </View>
       </View>
 
       {/* Buscador blanco, como el del inicio */}
@@ -196,6 +233,7 @@ export function PantallaNotificaciones() {
           >
             <SectionList
               sections={sections}
+              extraData={marcados}
               keyExtractor={(item) => item.id}
               stickySectionHeadersEnabled={false}
               showsVerticalScrollIndicator={false}
@@ -214,7 +252,10 @@ export function PantallaNotificaciones() {
                 <NotificationItem
                   notification={item}
                   now={now}
-                  onPress={openNotification}
+                  onPress={alPulsar}
+                  onLongPress={(n) => seleccion.iniciar(n.id)}
+                  seleccionando={activo}
+                  marcada={marcados.has(item.id)}
                 />
               )}
               ListEmptyComponent={
@@ -254,6 +295,30 @@ export function PantallaNotificaciones() {
           </Animated.View>
         </Animated.View>
       )}
+
+      <MenuOpciones
+        visible={menu}
+        top={insets.top + 8 + 56}
+        onClose={() => setMenu(false)}
+        opciones={[
+          {
+            etiqueta: "Marcar como leídas",
+            icono: "checkmark-done",
+            deshabilitada: unreadCount === 0,
+            onPress: marcarTodas,
+          },
+          {
+            etiqueta: "Seleccionar",
+            icono: "checkmark-circle-outline",
+            onPress: () => seleccion.iniciar(),
+          },
+          {
+            etiqueta: "Seleccionar todo",
+            icono: "checkbox-outline",
+            onPress: () => seleccion.iniciarTodos(visibles.map((item) => item.id)),
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -267,14 +332,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  botonBarra: {
-    width: LADO_BOTON,
-    height: LADO_BOTON,
-    borderRadius: LADO_BOTON / 2,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  acciones: { flexDirection: "row", alignItems: "center", gap: 8 },
   // Centrado en la barra, sin importar el ancho de los botones
   titulo: {
     position: "absolute",

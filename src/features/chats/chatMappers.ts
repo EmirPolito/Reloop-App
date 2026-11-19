@@ -37,6 +37,10 @@ export function mapChat(
   const reads = data.reads as Record<string, unknown> | undefined;
   const readAt = toMillis(reads?.[uid]);
   const otherReadAt = toMillis(reads?.[otherId]);
+  const deleted = data.borrados as Record<string, unknown> | undefined;
+  const deletedAt = toMillis(deleted?.[uid]);
+  const updatedAt = toMillis(data.actualizadoEn);
+  const hidden = deletedAt > 0 && deletedAt >= updatedAt;
 
   return {
     id: snapshot.id,
@@ -44,10 +48,14 @@ export function mapChat(
     name: String(data.names?.[otherId] ?? "Usuario"),
     ...(typeof data.productId === "string" ? { productId: data.productId } : {}),
     lastMessage,
-    unread: Boolean(lastMessage && lastMessage.from === "them" && lastMessage.time > readAt),
+    unread:
+      !hidden &&
+      Boolean(lastMessage && lastMessage.from === "them" && lastMessage.time > readAt),
     readAt,
     otherReadAt,
-    updatedAt: toMillis(data.actualizadoEn),
+    updatedAt,
+    deletedAt,
+    hidden,
   };
 }
 

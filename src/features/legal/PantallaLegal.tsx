@@ -29,7 +29,7 @@ export function PantallaLegal({ documento }: { documento: DocumentoLegal }) {
   const suave = isDark ? "#94A3B8" : "#6B6B6B";
   const boton = {
     backgroundColor: isDark ? "#ffffff1a" : "#ffffffb7",
-    borderColor: isDark ? "#ffffff33" : "#ffffff",
+    borderColor: "transparent",
   };
 
   return (

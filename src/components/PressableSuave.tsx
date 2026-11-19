@@ -28,7 +28,7 @@ export function PressableSuave({
   const animateTo = (toValue: number) =>
     Animated.timing(scale, {
       toValue,
-      duration: 120,
+      duration: 80,
       useNativeDriver: true,
     }).start();
 

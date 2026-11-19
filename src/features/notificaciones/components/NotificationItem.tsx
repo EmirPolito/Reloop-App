@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
+import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import {
   formatNotificationTime,
@@ -25,12 +27,21 @@ export function NotificationItem({
   notification,
   now,
   onPress,
+  onLongPress,
+  seleccionando = false,
+  marcada = false,
 }: {
   notification: AppNotification;
   /** Momento contra el que se calcula la antigüedad */
   now: number;
   onPress: (notification: AppNotification) => void;
+  /** Toque largo: empieza a seleccionar para eliminar */
+  onLongPress?: (notification: AppNotification) => void;
+  /** Modo de selección: el toque marca o desmarca la notificación */
+  seleccionando?: boolean;
+  marcada?: boolean;
 }) {
+  const { isDark } = useAppTheme();
   const message = notificationMessage(notification);
   const time = formatNotificationTime(notification.createdAt, now);
 
@@ -38,33 +49,59 @@ export function NotificationItem({
     <PressableSuave
       accessibilityRole="button"
       accessibilityLabel={`${notificationTitle(notification)}. ${notification.actorName} ${message}, ${time}${notification.read ? "" : ", sin leer"}`}
+      accessibilityState={seleccionando ? { selected: marcada } : undefined}
       onPress={() => onPress(notification)}
+      onLongPress={onLongPress ? () => onLongPress(notification) : undefined}
       style={[
         styles.tarjeta,
-        // Blanco liso, sin transparencia, también en oscuro
-        { backgroundColor: "#FFFFFF" },
+        // Blanco liso en claro; en oscuro, el mismo tono translúcido del buscador
+        { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
       ]}
     >
+      {seleccionando ? (
+        <View
+          style={[
+            styles.check,
+            marcada
+              ? { backgroundColor: COLOR_PUNTO, borderColor: COLOR_PUNTO }
+              : { borderColor: isDark ? "#64748B" : "#C4C4CA" },
+          ]}
+        >
+          {marcada ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
+        </View>
+      ) : null}
       <NotificationLeading notification={notification} size={LADO_LEADING} />
 
       <View style={styles.textos}>
-        <Text numberOfLines={1} style={[styles.titulo, { color: "#101010" }]}>
+        <Text
+          numberOfLines={1}
+          style={[styles.titulo, { color: isDark ? "#F1F5F9" : "#101010" }]}
+        >
           {notificationTitle(notification)}
         </Text>
         <Text
           numberOfLines={2}
-          style={[styles.descripcion, { color: "#6B6B70" }]}
+          style={[
+            styles.descripcion,
+            { color: isDark ? "#94A3B8" : "#6B6B70" },
+          ]}
         >
           {notification.actorName} {message}
         </Text>
       </View>
 
       <View style={styles.derecha}>
-        <Text style={[styles.tiempo, { color: "#8A8A8F" }]}>{time}</Text>
+        <Text
+          style={[styles.tiempo, { color: isDark ? "#94A3B8" : "#8A8A8F" }]}
+        >
+          {time}
+        </Text>
         <View
           style={[
             styles.punto,
-            notification.read && { backgroundColor: COLOR_PUNTO_LEIDO },
+            notification.read && {
+              backgroundColor: isDark ? "#ffffff26" : COLOR_PUNTO_LEIDO,
+            },
           ]}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
@@ -90,6 +127,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 1,
+  },
+  check: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   textos: { flex: 1, minWidth: 0, gap: 3 },
   titulo: { fontFamily: "Inter_600SemiBold", fontSize: 15 },

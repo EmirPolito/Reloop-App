@@ -98,17 +98,20 @@ export function SheetEditar({
             </BottomSheet.Title>
 
             {bloqueado ? null : (
-              <BottomSheet.Close
+              // Botón propio (como el de volver): cierra llamando directamente a `onClose`
+              <Pressable
+                accessibilityRole="button"
                 accessibilityLabel="Cerrar"
-                // Sin el resaltado oscuro de HeroUI al presionar
-                feedbackVariant="scale"
-                iconProps={{ size: 16, color: p.texto }}
+                hitSlop={8}
+                onPress={onClose}
                 style={[
                   styles.boton,
                   styles.derecha,
                   { backgroundColor: p.cerrarFondo },
                 ]}
-              />
+              >
+                <Ionicons name="close" size={18} color={p.texto} />
+              </Pressable>
             )}
           </View>
 

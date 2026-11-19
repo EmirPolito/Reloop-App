@@ -1,14 +1,16 @@
+import { Ionicons } from "@expo/vector-icons";
+import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
 import { useMemo, useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PressableScale } from "@/components/PressableScale";
+import { BotonBarra } from "@/components/ui/BotonBarra";
+import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { NotificationBellButton } from "@/components/ui/NotificationBellButton";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { FondoHome } from "@/features/home/components/FondoHome";
@@ -25,6 +27,8 @@ import { normalizarNombre } from "@/features/perfil/username";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
+import { useSeleccion } from "@/hooks/useSeleccion";
+import { showAlert } from "@/utils/alerts";
 import { HeartIcon } from "./components/HeartIcon";
 
 /** Todas o las de una categoría */
@@ -56,6 +60,8 @@ export function PantallaFavoritos() {
   const { products, loading } = useProductsByIds(favorites);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busqueda, setBusqueda] = useState("");
+  const seleccion = useSeleccion();
+  const [menu, setMenu] = useState(false);
 
   // Primero las publicaciones más recientes, como en el inicio
   const favoriteProducts = useMemo(
@@ -94,9 +100,28 @@ export function PantallaFavoritos() {
   ]);
 
   const texto = isDark ? "#F1F5F9" : "#101010";
-  const boton = {
-    backgroundColor: isDark ? "#ffffff1a" : "#ffffffb7",
-    borderColor: isDark ? "#ffffff33" : "#ffffff",
+  const { activo, marcados } = seleccion;
+
+  const eliminar = () => {
+    const ids = [...marcados];
+    if (ids.length === 0) return;
+    showAlert(
+      ids.length === 1
+        ? "¿Quitar este favorito?"
+        : `¿Quitar ${ids.length} favoritos?`,
+      undefined,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Quitar",
+          style: "destructive",
+          onPress: () => {
+            ids.forEach((id) => toggleFavorite(id));
+            seleccion.salir();
+          },
+        },
+      ],
+    );
   };
   const hayFiltro = filtro !== "todas" || busqueda.trim() !== "";
   const categoria = CATEGORIES.find((c) => c.id === filtro);
@@ -108,25 +133,46 @@ export function PantallaFavoritos() {
 
       {/* Volver a la izquierda, el título al centro y la campana a la derecha */}
       <View style={styles.barra}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          onPress={back}
-          scaleTo={0.92}
-          style={[styles.botonBarra, boton]}
-        >
-          <View style={{ transform: [{ translateX: -1.5 }] }}>
-            <BackArrowIcon size={28} color={texto} />
-          </View>
-        </PressableScale>
+        {activo ? (
+          <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
+            <Ionicons name="close" size={26} color={texto} />
+          </BotonBarra>
+        ) : (
+          <BotonBarra etiqueta="Volver" onPress={back}>
+            <View style={{ transform: [{ translateX: -1.5 }] }}>
+              <BackArrowIcon size={28} color={texto} />
+            </View>
+          </BotonBarra>
+        )}
         <Text
           accessibilityRole="header"
           pointerEvents="none"
           style={[styles.titulo, { color: texto }]}
         >
-          Favoritos
+          {activo
+            ? marcados.size === 0
+              ? "Selecciona favoritos"
+              : `${marcados.size} seleccionado${marcados.size === 1 ? "" : "s"}`
+            : "Favoritos"}
         </Text>
-        <NotificationBellButton lado={LADO_BOTON} />
+        {activo ? (
+          <BotonBarra
+            etiqueta="Quitar favoritos seleccionados"
+            peligro
+            disabled={marcados.size === 0}
+            onPress={eliminar}
+          >
+            <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+          </BotonBarra>
+        ) : (
+          <BotonBarra
+            etiqueta="Eliminar favoritos"
+            disabled={favoriteProducts.length === 0}
+            onPress={() => setMenu(true)}
+          >
+            <IconoEliminarLinea size={26} color={"#FF8A1F"} />
+          </BotonBarra>
+        )}
       </View>
 
       <BuscadorBlanco
@@ -145,6 +191,7 @@ export function PantallaFavoritos() {
         <Animated.View key={filtro} entering={CAMBIO_FILTRO} style={styles.lista}>
           <FlatList
             data={visibles}
+            extraData={marcados}
             keyExtractor={(item) => item.id}
             numColumns={2}
             columnWrapperStyle={{ gap: SEPARACION }}
@@ -166,6 +213,29 @@ export function PantallaFavoritos() {
                   onOpenSeller={openUserProfile}
                   onToggleFavorite={toggleFavorite}
                 />
+                {activo ? (
+                  // En selección, tocar la tarjeta la marca o desmarca
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Seleccionar ${item.name}`}
+                    accessibilityState={{ selected: marcados.has(item.id) }}
+                    onPress={() => seleccion.alternar(item.id)}
+                    style={StyleSheet.absoluteFill}
+                  >
+                    <View
+                      style={[
+                        styles.check,
+                        marcados.has(item.id)
+                          ? { backgroundColor: "#1C77FF", borderColor: "#1C77FF" }
+                          : { borderColor: "#FFFFFF", backgroundColor: "#00000040" },
+                      ]}
+                    >
+                      {marcados.has(item.id) ? (
+                        <Ionicons name="checkmark" size={17} color="#FFFFFF" />
+                      ) : null}
+                    </View>
+                  </Pressable>
+                ) : null}
               </View>
             )}
             ListEmptyComponent={
@@ -189,6 +259,24 @@ export function PantallaFavoritos() {
           />
         </Animated.View>
       )}
+
+      <MenuOpciones
+        visible={menu}
+        top={8 + 56}
+        onClose={() => setMenu(false)}
+        opciones={[
+          {
+            etiqueta: "Seleccionar",
+            icono: "checkmark-circle-outline",
+            onPress: () => seleccion.iniciar(),
+          },
+          {
+            etiqueta: "Seleccionar todo",
+            icono: "checkbox-outline",
+            onPress: () => seleccion.iniciarTodos(visibles.map((i) => i.id)),
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -219,6 +307,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   lista: { flex: 1 },
+  check: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   // Un poco más arriba: menos espacio sobre el icono que debajo
   vacio: { paddingTop: 110, paddingBottom: 140 },
 });
