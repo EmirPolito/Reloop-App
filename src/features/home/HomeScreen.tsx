@@ -53,7 +53,7 @@ export const HomeScreen = memo(function HomeScreen() {
   const { setQuery, toggleCategory, reload } = useMarketplaceActions();
   const toggleFavorite = useToggleFavorite();
   const { openProduct, openUserProfile } = useAppNavigation();
-  const cardWidth = useProductCardWidth();
+  const cardWidth = useProductCardWidth(2);
 
   const busqueda = modoDeBusqueda(filters.query);
   const buscaUsuarios = busqueda.modo === "usuarios";

@@ -27,7 +27,6 @@ import {
   IconoEstrella,
 } from "./IconosTarjeta";
 
-const LADO_AVATAR = 44;
 const COLOR_FAVORITO = "#F2143C";
 const COLOR_ESTRELLA = "#F5A623";
 const RADIO = 24;
@@ -42,11 +41,8 @@ function formatPublicationTime(createdAt: number): string {
 }
 
 /**
- * Tarjeta de una publicación del inicio: la foto cubre la parte de arriba de la card sin
- * marco y, encima de ella, la calificación (una estrella y su número) a la izquierda y el
- * corazón de favoritos a la derecha. Debajo, el título y, abajo, el precio y el avatar de
- * quien vende (al tocarlo se abre su perfil). Sin categoría ni descripción: la descripción
- * se ve al abrir la publicación.
+ * Tarjeta de publicación: encabezado del vendedor, foto cuadrada y pie con nombre,
+ * precio y puntuación. En tarjetas angostas reduce tipografía y controles.
  */
 export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   item,
@@ -78,6 +74,9 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
     item.category !== "mascota";
   const precio = formatProductPrice(item);
   const nombreUsuario = perfil?.name ?? item.seller;
+  const compacta = cardWidth < 260;
+  const ladoAvatar = compacta ? 32 : 44;
+  const radioCorazon = compacta ? 20 : 25;
 
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
 
@@ -108,7 +107,11 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
       ]}
     >
       <View style={estilos.tarjeta}>
-        <View style={estilos.encabezado}>
+        <View style={[
+          estilos.encabezado,
+          { height: compacta ? 54 : 64 },
+          compacta && estilos.encabezadoCompacto,
+        ]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Ver perfil de ${nombreUsuario}`}
@@ -118,7 +121,7 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             <AvatarVendedor
               ownerId={item.ownerId}
               fallbackName={nombreUsuario}
-              size={LADO_AVATAR}
+              size={ladoAvatar}
             />
           </Pressable>
           <Pressable
@@ -127,10 +130,15 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             onPress={() => onOpen(item.id)}
             style={estilos.usuario}
           >
-            <Text numberOfLines={1} style={[estilos.nombreUsuario, { color: colorTexto }]}>
+            <Text numberOfLines={1} style={[
+              compacta ? estilos.nombreUsuarioCompacto : estilos.nombreUsuario,
+              { color: colorTexto },
+            ]}>
               {nombreUsuario}
             </Text>
-            <Text numberOfLines={1} style={estilos.tiempo}>
+            <Text numberOfLines={1} style={[
+              compacta ? estilos.tiempoCompacto : estilos.tiempo,
+            ]}>
               {formatPublicationTime(item.createdAt)}
             </Text>
           </Pressable>
@@ -146,9 +154,9 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           >
             <Animated.View style={estiloCorazon}>
               {favorite ? (
-                <IconoCorazonRelleno size={25} color={COLOR_FAVORITO} />
+                <IconoCorazonRelleno size={radioCorazon} color={COLOR_FAVORITO} />
               ) : (
-                <IconoCorazon size={25} color={isDark ? "#F1F5F9" : "#101010"} />
+                <IconoCorazon size={radioCorazon} color={isDark ? "#F1F5F9" : "#101010"} />
               )}
             </Animated.View>
           </Pressable>
@@ -187,20 +195,31 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           </View>
         </Pressable>
 
-        <>
+        {acciones ? (
+          <View style={estilos.acciones}>{acciones}</View>
+        ) : (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${item.name}`}
             onPress={() => onOpen(item.id)}
-            style={estilos.pie}
+            style={[
+              estilos.pie,
+              compacta && estilos.pieCompacto,
+            ]}
           >
-            <Text numberOfLines={1} style={[estilos.titulo, { color: colorTexto }]}>
+            <Text numberOfLines={1} style={[
+              compacta ? estilos.tituloCompacto : estilos.titulo,
+              { color: colorTexto },
+            ]}>
               {item.name}
             </Text>
             {mostrarPrecioYRanking ? (
               <View style={estilos.pieInferior}>
                 {precio ? (
-                  <Text numberOfLines={1} style={[estilos.precio, { color: colorTexto }]}>
+                  <Text numberOfLines={1} style={[
+                    compacta ? estilos.precioCompacto : estilos.precio,
+                    { color: colorTexto },
+                  ]}>
                     {precio}
                   </Text>
                 ) : (
@@ -212,8 +231,11 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
                     accessibilityLabel={`Calificación ${calificacion}`}
                     style={estilos.calificacion}
                   >
-                    <IconoEstrella size={21} color={COLOR_ESTRELLA} />
-                    <Text style={[estilos.nota, { color: colorTexto }]}>
+                    <IconoEstrella size={compacta ? 16 : 21} color={COLOR_ESTRELLA} />
+                    <Text style={[
+                      compacta ? estilos.notaCompacta : estilos.nota,
+                      { color: colorTexto },
+                    ]}>
                       {calificacion}
                     </Text>
                   </View>
@@ -221,8 +243,7 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
               </View>
             ) : null}
           </Pressable>
-          {acciones ? <View style={estilos.acciones}>{acciones}</View> : null}
-        </>
+        )}
       </View>
     </View>
   );
@@ -244,20 +265,33 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
   },
-  usuario: { flex: 1, minWidth: 0, marginLeft: 9 },
+  encabezadoCompacto: {
+    paddingHorizontal: 6,
+  },
+  usuario: { flex: 1, minWidth: 0, marginLeft: 6 },
   nombreUsuario: {
-    fontFamily: "Poppins_700Bold",
+    fontFamily: "Inter_700Bold",
     fontSize: 15,
+  },
+  nombreUsuarioCompacto: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
   },
   tiempo: {
     marginTop: 1,
-    fontFamily: "Poppins_600SemiBold",
+    fontFamily: "Inter_500Medium",
     fontSize: 12,
     color: "#6B7280",
   },
+  tiempoCompacto: {
+    marginTop: 1,
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
+    color: "#6B7280",
+  },
   favorito: {
-    width: 34,
-    height: 34,
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -266,38 +300,54 @@ const estilos = StyleSheet.create({
     position: "absolute",
     right: 10,
     bottom: 10,
-    minHeight: 32,
-    paddingHorizontal: 11,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    minHeight: 24,
+    paddingHorizontal: 7,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
     alignItems: "center",
     justifyContent: "center",
   },
   disponiblesTexto: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
     color: "#111111",
   },
   pie: { paddingHorizontal: 12, paddingTop: 9, paddingBottom: 11 },
+  pieCompacto: { paddingHorizontal: 8, paddingTop: 6, paddingBottom: 7 },
   pieInferior: {
     minHeight: 28,
     marginTop: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 4,
   },
-  calificacion: { flexDirection: "row", alignItems: "center", gap: 5 },
+  calificacion: { flexDirection: "row", alignItems: "center", gap: 3 },
   nota: {
-    fontFamily: "Poppins_700Bold",
+    fontFamily: "Inter_700Bold",
     fontSize: 16,
   },
+  notaCompacta: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+  },
   titulo: {
-    fontFamily: "Poppins_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 15,
   },
+  tituloCompacto: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
   precio: {
-    fontFamily: "Poppins_600SemiBold",
+    fontFamily: "Inter_500Medium",
     fontSize: 15,
+  },
+  precioCompacto: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
   },
   acciones: { paddingHorizontal: 12, paddingBottom: 10 },
 });
