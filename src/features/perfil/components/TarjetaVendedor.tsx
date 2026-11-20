@@ -17,6 +17,7 @@ import {
   formatProductPrice,
 } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
+import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { formatNotificationTime } from "@/features/notificaciones/notificationRules";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
@@ -28,10 +29,9 @@ import { FONDOS_TARJETA, type DatosPerfil } from "../Perfiltemas";
 import { reportUser } from "../profileRepository";
 
 /** Ancho de cada foto respecto al ancho de la tarjeta (se ven dos y un pedazo de la tercera) */
-const PROPORCION_FOTO = 0.36;
-const SEPARACION_FOTOS = 14;
+const PROPORCION_FOTO = 0.32;
+const SEPARACION_FOTOS = 12;
 const COLOR_FAVORITO = "#F2143C";
-const COLOR_ESTRELLA = "#F5A623";
 
 /** Colores resueltos de la tarjeta: lo que eligió la persona o, si no, lo que pide el tema */
 export function coloresTarjetaVendedor(
@@ -123,6 +123,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   onPersonalizar: () => void;
 }) {
   const { uid } = useSessionUser();
+  const { openUserProfile } = useAppNavigation();
   const premium = useIsPremium(ownerId);
   const { favorites } = useMarketplaceState();
   const toggleFavorite = useToggleFavorite();
@@ -135,7 +136,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
 
   const c = coloresTarjetaVendedor(profile.tarjeta, isDark);
   const ultima = Math.max(0, ...items.map((item) => item.createdAt));
-  const interior = Math.max(ancho - 28, 0);
+  const interior = Math.max(ancho - 24, 0);
   const lado = Math.round(interior * PROPORCION_FOTO);
 
   const reportar = () => {
@@ -175,13 +176,20 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
 
       {/* Avatar, nombre y hora a la izquierda; calificación y menú a la derecha */}
       <View style={styles.encabezado}>
-        <UserAvatar
-          photo={profile.photo}
-          orb={profile.orb}
-          name={profile.name}
-          size={44}
-          premium={premium}
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Ver perfil de ${profile.name}`}
+          hitSlop={6}
+          onPress={() => openUserProfile(ownerId)}
+        >
+          <UserAvatar
+            photo={profile.photo}
+            orb={profile.orb}
+            name={profile.name}
+            size={38}
+            premium={premium}
+          />
+        </Pressable>
         <View style={styles.datos}>
           <Text
             numberOfLines={1}
@@ -194,7 +202,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
           </Text>
         </View>
         <View style={styles.derecha}>
-          <IconoEstrella size={18} color={COLOR_ESTRELLA} />
+          <IconoEstrella size={16} color={c.principal} />
           <Text style={[styles.calificacion, { color: c.principal }]}>
             {averageRatingLabel(items)}
           </Text>
@@ -299,9 +307,9 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
           style={[styles.botonCorazon, { backgroundColor: c.boton }]}
         >
           {guardada ? (
-            <IconoCorazonRelleno size={24} color={COLOR_FAVORITO} />
+            <IconoCorazonRelleno size={21} color={COLOR_FAVORITO} />
           ) : (
-            <IconoCorazon size={24} color={c.principal} />
+            <IconoCorazon size={21} color={c.principal} />
           )}
         </PressableSuave>
       </View>
@@ -355,26 +363,26 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
 const styles = StyleSheet.create({
   // Tarjeta
   tarjeta: {
-    borderRadius: 28,
-    padding: 14,
+    borderRadius: 26,
+    padding: 12,
     overflow: "hidden",
     boxShadow: "0 6px 20px rgba(0, 0, 0, 0.08)",
   },
   // Fila de arriba
-  encabezado: { flexDirection: "row", alignItems: "center", gap: 12 },
+  encabezado: { flexDirection: "row", alignItems: "center", gap: 10 },
   // Nombre y hora
   datos: { flex: 1, minWidth: 0, gap: 2 },
-  nombre: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
+  nombre: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
   hora: { fontFamily: "Inter_500Medium", fontSize: 12 },
   // Calificación y tres puntos, juntos a la derecha
   derecha: { flexDirection: "row", alignItems: "center", gap: 5 },
-  calificacion: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  calificacion: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   puntos: { marginLeft: 8, padding: 2 },
   // Fotos con desplazamiento lateral
-  fotos: { marginTop: 12, marginHorizontal: -14 },
-  fotosContenido: { paddingHorizontal: 14, gap: SEPARACION_FOTOS },
+  fotos: { marginTop: 10, marginHorizontal: -12 },
+  fotosContenido: { paddingHorizontal: 12, gap: SEPARACION_FOTOS },
   foto: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "rgba(120,120,128,0.2)",
   },
@@ -408,7 +416,7 @@ const styles = StyleSheet.create({
   },
   // Pie: "Post de este usuario" y el corazón
   pie: {
-    marginTop: 12,
+    marginTop: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -417,13 +425,13 @@ const styles = StyleSheet.create({
   titulo: {
     flex: 1,
     fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
-    letterSpacing: -0.4,
+    fontSize: 17,
+    letterSpacing: -0.3,
   },
   botonCorazon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -431,8 +439,8 @@ const styles = StyleSheet.create({
   cierreMenu: { ...StyleSheet.absoluteFill, zIndex: 5 },
   menu: {
     position: "absolute",
-    top: 64,
-    right: 16,
+    top: 56,
+    right: 14,
     zIndex: 6,
     minWidth: 190,
     borderRadius: 16,

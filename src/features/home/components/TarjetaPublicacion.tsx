@@ -294,7 +294,10 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
                   </View>
                 ) : null}
               </View>
-            ) : null}
+            ) : (
+              // Sin precio ni calificación: el mismo espacio, así la tarjeta no queda más chica
+              <View style={estilos.pieInferior} />
+            )}
           </Pressable>
         )}
       </View>

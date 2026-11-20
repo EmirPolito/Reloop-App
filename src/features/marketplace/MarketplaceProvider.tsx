@@ -16,6 +16,7 @@ import {
 } from "./hooks/useMarketplaceData";
 import {
   rateProduct as saveRating,
+  removeFavorites,
   reportProduct as saveReport,
   setFavorite as saveFavorite,
 } from "./productRepository";
@@ -40,6 +41,8 @@ export interface MarketplaceState {
 interface MarketplaceActions {
   /** Las acciones sobre datos devuelven la promesa para que quien llama muestre el error. */
   toggleFavorite: (productId: string) => Promise<boolean>;
+  /** Quita varios favoritos a la vez, sin avisos (Favoritos muestra uno solo) */
+  removeFavorites: (productIds: string[]) => Promise<void>;
   rateProduct: (productId: string, rating: number) => Promise<void>;
   reportProduct: (productId: string) => Promise<void>;
   setQuery: (query: string) => void;
@@ -98,6 +101,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
         await saveFavorite(uid, productId, favorite);
         return favorite;
       },
+      removeFavorites: (productIds) => removeFavorites(uid, productIds),
       rateProduct: (productId, rating) => saveRating(uid, productId, rating),
       reportProduct: (productId) => saveReport(uid, productId),
       setQuery: (query) => dispatchFilters({ type: "queryChanged", query }),

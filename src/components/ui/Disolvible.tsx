@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { View } from "react-native";
+import { Dimensions, View } from "react-native";
 
 type VistaRef = ComponentRef<typeof View>;
 
@@ -15,6 +15,8 @@ type VistaRef = ComponentRef<typeof View>;
 export interface Disolvedor {
   disolver: (destino: RefObject<VistaRef | null>) => Promise<void>;
   restaurar: () => void;
+  /** Si el elemento se ve ahora en la pantalla (los de fuera no se animan) */
+  enPantalla: () => Promise<boolean>;
 }
 
 /** Entre un elemento y el siguiente, cuánto se espera para que vuelen en cascada (ms) */
@@ -42,7 +44,14 @@ export function useEliminarConEfecto() {
   /** Si `eliminar` falla, los elementos ocultos vuelven a verse y el error se relanza */
   const eliminarConEfecto = useCallback(
     async (ids: string[], eliminar: () => Promise<void>) => {
-      const aLaVista = ids.flatMap((id) => disolvedores.current.get(id) ?? []);
+      const registrados = ids.flatMap(
+        (id) => disolvedores.current.get(id) ?? [],
+      );
+      // Solo vuelan los que se ven: animar los que están fuera de la pantalla traba el efecto
+      const visibles = await Promise.all(
+        registrados.map((item) => item.enPantalla()),
+      );
+      const aLaVista = registrados.filter((_, i) => visibles[i]);
       try {
         await Promise.all(
           aLaVista.map((item, i) =>
@@ -93,9 +102,17 @@ export function Disolvible({
       disolver: (destino) =>
         dissolve({ preset: "stream", grain: 3.5, duration: 1500, to: destino }),
       restaurar: reset,
+      enPantalla: () =>
+        new Promise((listo) => {
+          const vista = (ref as unknown as RefObject<VistaRef | null>).current;
+          if (!vista) return listo(false);
+          vista.measureInWindow((_x, y, _ancho, alto) =>
+            listo(y + alto > 0 && y < Dimensions.get("window").height),
+          );
+        }),
     });
     return () => registrar(id, null);
-  }, [registrar, id, dissolve, reset]);
+  }, [registrar, id, dissolve, reset, ref]);
 
   return (
     <View

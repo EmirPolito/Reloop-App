@@ -20,7 +20,11 @@ import { CATEGORIES } from "@/features/marketplace/data";
 import { filterProducts } from "@/features/marketplace/feedFilters";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
-import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
+import {
+  useMarketplaceActions,
+  useMarketplaceState,
+} from "@/features/marketplace/MarketplaceProvider";
 import type { CategoryId, Product } from "@/features/marketplace/types";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
@@ -67,6 +71,8 @@ export function PantallaFavoritos() {
   const { isDark } = useAppTheme();
   const { favorites } = useMarketplaceState();
   const toggleFavorite = useToggleFavorite();
+  const { removeFavorites } = useMarketplaceActions();
+  const { mostrar } = useAvisos();
   const { back, openProduct, openUserProfile } = useAppNavigation();
   const cardWidth = useProductCardWidth();
   const { products, loading } = useProductsByIds(favorites);
@@ -173,20 +179,50 @@ export function PantallaFavoritos() {
           text: "Quitar",
           style: "destructive",
           onPress: () => {
-            void eliminarConEfecto(ids, async () => {
-              const vendedores = ids.filter((id) =>
-                id.startsWith(PREFIJO_VENDEDOR),
-              );
-              if (vendedores.length > 0) {
-                quitarVendedores(
-                  vendedores.map((id) => id.slice(PREFIJO_VENDEDOR.length)),
+            // Uno solo se quita como siempre (con su aviso de siempre)
+            if (ids.length === 1 && !ids[0].startsWith(PREFIJO_VENDEDOR)) {
+              void eliminarConEfecto(ids, async () => toggleFavorite(ids[0]))
+                .then(seleccion.salir)
+                .catch((error) =>
+                  showErrorAlert("No se pudieron quitar los favoritos", error),
                 );
-              }
-              ids
-                .filter((id) => !id.startsWith(PREFIJO_VENDEDOR))
-                .forEach((id) => toggleFavorite(id));
+              return;
+            }
+            const todos =
+              ids.length >=
+              favoriteProducts.length + vendedoresGuardados.length;
+            // Varios: todo en un lote y un solo aviso arriba (no uno por favorito)
+            void eliminarConEfecto(ids, async () => {
+              await Promise.all([
+                quitarVendedores(
+                  ids
+                    .filter((id) => id.startsWith(PREFIJO_VENDEDOR))
+                    .map((id) => id.slice(PREFIJO_VENDEDOR.length)),
+                ),
+                removeFavorites(
+                  ids.filter((id) => !id.startsWith(PREFIJO_VENDEDOR)),
+                ),
+              ]);
             })
-              .then(seleccion.salir)
+              .then(() => {
+                seleccion.salir();
+                mostrar(
+                  todos
+                    ? {
+                        tipo: "sinFavorito",
+                        titulo: "Eliminaste todo",
+                        descripcion: "Tu lista de favoritos quedó vacía.",
+                      }
+                    : {
+                        tipo: "sinFavorito",
+                        titulo:
+                          ids.length === 1
+                            ? "Eliminada de favoritos"
+                            : `Eliminaste ${ids.length} favoritos`,
+                        descripcion: "Ya no aparecen en tu lista de favoritos.",
+                      },
+                );
+              })
               .catch((error) =>
                 showErrorAlert("No se pudieron quitar los favoritos", error),
               );
@@ -232,11 +268,16 @@ export function PantallaFavoritos() {
           <View ref={destinoRef} collapsable={false}>
             <BotonBarra
               etiqueta="Quitar favoritos seleccionados"
-              peligro
+              // Con algo marcado: fondo rojo e icono blanco
+              peligro={marcados.size > 0}
+              colorPeligro="#EF4444"
               disabled={marcados.size === 0}
               onPress={eliminar}
             >
-              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+              <IconoEliminarLinea
+                size={26}
+                color={marcados.size > 0 ? "#FFFFFF" : texto}
+              />
             </BotonBarra>
           </View>
         ) : (
@@ -245,7 +286,7 @@ export function PantallaFavoritos() {
             disabled={!hayFavoritos}
             onPress={() => setMenu(true)}
           >
-            <IconoEliminarLinea size={26} color={"#FF8A1F"} />
+            <IconoEliminarLinea size={26} color={isDark ? "#FFFFFF" : texto} />
           </BotonBarra>
         )}
       </View>
@@ -362,11 +403,6 @@ export function PantallaFavoritos() {
         top={8 + 56}
         onClose={() => setMenu(false)}
         opciones={[
-          {
-            etiqueta: "Seleccionar",
-            icono: "checkmark-circle-outline",
-            onPress: () => seleccion.iniciar(),
-          },
           {
             etiqueta: "Seleccionar todo",
             icono: "checkbox-outline",

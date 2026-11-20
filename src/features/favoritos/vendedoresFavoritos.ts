@@ -83,12 +83,10 @@ export function useVendedoresFavoritos() {
     [uid, ids, mostrar],
   );
 
-  /** Quita varias a la vez (el modo de selección de Favoritos), con un solo aviso si falla */
+  /** Quita varias a la vez (el modo de selección de Favoritos); quien llama avisa */
   const quitar = useCallback(
-    (sellerIds: string[]) => {
-      Promise.all(sellerIds.map((id) => guardar(uid, id, false))).catch(
-        (error) => showErrorAlert("No se pudo actualizar tus favoritos", error),
-      );
+    async (sellerIds: string[]) => {
+      await Promise.all(sellerIds.map((id) => guardar(uid, id, false)));
     },
     [uid],
   );

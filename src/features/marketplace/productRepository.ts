@@ -190,6 +190,16 @@ export async function setFavorite(
   else await deleteDoc(ref);
 }
 
+/** Quita varios favoritos en un solo lote (una sola actualización de la lista) */
+export async function removeFavorites(
+  uid: string,
+  productIds: string[],
+): Promise<void> {
+  await commitInChunks(productIds, (batch, productId) =>
+    batch.delete(doc(db, USERS, uid, "favoritos", productId)),
+  );
+}
+
 // ── Calificaciones ───────────────────────────────────────────────────────────
 
 export function subscribeMyRatings(
