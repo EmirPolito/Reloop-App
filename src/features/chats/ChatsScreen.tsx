@@ -6,6 +6,9 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BotonBarra } from "@/components/ui/BotonBarra";
+import { useEliminarConEfecto } from "@/components/ui/Disolvible";
+import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
@@ -49,6 +52,9 @@ export function ChatsScreen() {
   const chats = useMemo(() => todos.filter((chat) => !chat.hidden), [todos]);
   const seleccion = useSeleccion();
   const [menu, setMenu] = useState(false);
+  const { mostrar } = useAvisos();
+  // Hacia el botón de eliminar vuelan los chats (efecto Stream)
+  const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
   const { back, openThread } = useAppNavigation();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
@@ -72,7 +78,10 @@ export function ChatsScreen() {
   const sinLeer = chats.filter((chat) => chat.unread).length;
   const opciones: { id: Filtro; texto: string }[] = [
     { id: "todos", texto: "Todos" },
-    { id: "sinLeer", texto: sinLeer > 0 ? `Sin leer · ${sinLeer}` : "Sin leer" },
+    {
+      id: "sinLeer",
+      texto: sinLeer > 0 ? `Sin leer · ${sinLeer}` : "Sin leer",
+    },
     { id: "publicaciones", texto: "Publicaciones" },
   ];
 
@@ -107,15 +116,36 @@ export function ChatsScreen() {
 
   const { activo, marcados } = seleccion;
   const alPulsar = useCallback(
-    (chatId: string) => (activo ? seleccion.alternar(chatId) : openThread(chatId)),
+    (chatId: string) =>
+      activo ? seleccion.alternar(chatId) : openThread(chatId),
     [activo, seleccion, openThread],
   );
+
+  const avisarEliminados = (cantidad: number) =>
+    mostrar({
+      tipo: "eliminada",
+      titulo:
+        cantidad === 1 ? "Chat eliminado" : `${cantidad} chats eliminados`,
+      descripcion: "Se eliminaron solo para ti.",
+    });
+
+  /** Deslizar un chat a la izquierda lo elimina (si falla, el chat vuelve) */
+  const eliminarUno = (id: string) =>
+    deleteChats([id]).then(
+      () => avisarEliminados(1),
+      (error) => {
+        showErrorAlert("No se pudo eliminar el chat", error);
+        throw error;
+      },
+    );
 
   const eliminar = () => {
     const ids = [...marcados];
     if (ids.length === 0) return;
     showAlert(
-      ids.length === 1 ? "¿Eliminar este chat?" : `¿Eliminar ${ids.length} chats?`,
+      ids.length === 1
+        ? "¿Eliminar este chat?"
+        : `¿Eliminar ${ids.length} chats?`,
       "Se borran solo para ti. Si te vuelven a escribir, el chat reaparece con los mensajes nuevos.",
       [
         { text: "Cancelar", style: "cancel" },
@@ -123,8 +153,11 @@ export function ChatsScreen() {
           text: "Eliminar",
           style: "destructive",
           onPress: () => {
-            deleteChats(ids)
-              .then(seleccion.salir)
+            eliminarConEfecto(ids, () => deleteChats(ids))
+              .then(() => {
+                seleccion.salir();
+                avisarEliminados(ids.length);
+              })
               .catch((error) =>
                 showErrorAlert("No se pudieron eliminar los chats", error),
               );
@@ -165,14 +198,17 @@ export function ChatsScreen() {
         </Text>
         <View style={styles.acciones}>
           {activo ? (
-            <BotonBarra
-              etiqueta="Eliminar chats seleccionados"
-              peligro
-              disabled={marcados.size === 0}
-              onPress={eliminar}
-            >
-              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-            </BotonBarra>
+            // Destino del efecto: hacia aquí vuelan los chats eliminados
+            <View ref={destinoRef} collapsable={false}>
+              <BotonBarra
+                etiqueta="Eliminar chats seleccionados"
+                peligro
+                disabled={marcados.size === 0}
+                onPress={eliminar}
+              >
+                <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+              </BotonBarra>
+            </View>
           ) : (
             <BotonBarra
               etiqueta="Eliminar chats"
@@ -193,12 +229,20 @@ export function ChatsScreen() {
         personas={buscaPersonas}
       />
 
-      <FiltrosPildoras opciones={opciones} activo={filtro} onCambiar={setFiltro} />
+      <FiltrosPildoras
+        opciones={opciones}
+        activo={filtro}
+        onCambiar={setFiltro}
+      />
 
       {status === "loading" ? (
         <LoadingState />
       ) : (
-        <Animated.View key={filtro} entering={CAMBIO_FILTRO} style={styles.lista}>
+        <Animated.View
+          key={filtro}
+          entering={CAMBIO_FILTRO}
+          style={styles.lista}
+        >
           <FlatList
             data={visibleChats}
             extraData={marcados}
@@ -213,18 +257,24 @@ export function ChatsScreen() {
               paddingBottom: insets.bottom + 110,
             }}
             renderItem={({ item }) => (
-              <ChatListItem
-                chat={item}
-                categoria={
-                  products.find((product) => product.id === item.productId)
-                    ?.category
-                }
-                sinLeer={item.unread ? (sinLeerPorChat[item.id] ?? 1) : 0}
-                onPress={alPulsar}
-                onLongPress={seleccion.iniciar}
-                seleccionando={activo}
-                marcado={marcados.has(item.id)}
-              />
+              <SwipeParaEliminar
+                disabled={activo}
+                onDelete={() => eliminarUno(item.id)}
+              >
+                <ChatListItem
+                  chat={item}
+                  categoria={
+                    products.find((product) => product.id === item.productId)
+                      ?.category
+                  }
+                  sinLeer={item.unread ? (sinLeerPorChat[item.id] ?? 1) : 0}
+                  onPress={alPulsar}
+                  onLongPress={seleccion.iniciar}
+                  seleccionando={activo}
+                  marcado={marcados.has(item.id)}
+                  registrar={registrar}
+                />
+              </SwipeParaEliminar>
             )}
             ListEmptyComponent={
               chats.length === 0 ? (
@@ -268,7 +318,8 @@ export function ChatsScreen() {
           {
             etiqueta: "Seleccionar todo",
             icono: "checkbox-outline",
-            onPress: () => seleccion.iniciarTodos(visibleChats.map((c) => c.id)),
+            onPress: () =>
+              seleccion.iniciarTodos(visibleChats.map((c) => c.id)),
           },
         ]}
       />

@@ -269,7 +269,19 @@ describe("borrador de publicación", () => {
 });
 
 describe("filas del inicio", () => {
-  const two = [product({ id: "a" }), product({ id: "b" }), product({ id: "c" })];
+  const two = [product({ id: "a", ownerId: "u1" }), product({ id: "b", ownerId: "u2" }), product({ id: "c", ownerId: "u3" })];
+  it("quien tiene 3 o más publicaciones sale en una sola tarjeta, en el lugar de su primera", () => {
+    const lista = [
+      product({ id: "a", ownerId: "u1" }), product({ id: "x", ownerId: "u2" }),
+      product({ id: "b", ownerId: "u1" }), product({ id: "y", ownerId: "u3" }), product({ id: "c", ownerId: "u1" }),
+    ];
+    const rows = buildHomeFeedRows(lista, "ready");
+    assert.deepEqual(rows.slice(3).map((r) => r.type), ["seller", "products"]);
+    const tarjeta = rows[3];
+    assert.equal(tarjeta.type === "seller" && tarjeta.products.length, 3);
+    assert.equal(homeRowKey(rows[3], 3), "seller-u1");
+    assert.equal(rows[4].type === "products" && rows[4].products.length, 2);
+  });
   it("cargando: banner, categorías, título y espera", () => {
     assert.deepEqual(buildHomeFeedRows([], "loading").map((r) => r.type), ["banner", "categories", "sectionTitle", "loading"]);
   });
@@ -387,7 +399,7 @@ describe("mapeo de chats", () => {
 describe("mapeo de perfiles", () => {
   it("el perfil por defecto usa el nombre (máx. 30)", () => {
     assert.equal(defaultProfile("x".repeat(40)).name.length, 30);
-    assert.deepEqual(defaultProfile("Ana"), { photo: null, orb: null, cover: null, name: "Ana", username: null, description: "", color: "azul", pills: [], stickers: [], onboardingPendiente: false });
+    assert.deepEqual(defaultProfile("Ana"), { photo: null, orb: null, cover: null, name: "Ana", username: null, description: "", color: "azul", pills: [], tarjeta: { fondo: null, texto: null, imagen: null }, stickers: [], onboardingPendiente: false });
   });
   it("valores seguros para campos que faltan o están mal", () => {
     const p = mapProfile({ nombre: "", color: "negro", etiquetas: [{ id: "1", text: "Mate", color: "rosa", icon: "work" }, { id: 2 }, "x"], stickers: ["sticker-1", 3] }, "Respaldo");

@@ -4,6 +4,7 @@ import { isOrb } from "@/constants/orbes";
 import { PATRON_USERNAME, normalizarNombre } from "./username";
 import {
   COLORES_PERFIL,
+  DISENO_TARJETA_BASE,
   MAX_NOMBRE,
   MAX_PILDORAS,
   type ColorPerfil,
@@ -21,6 +22,7 @@ export function defaultProfile(name: string): DatosPerfil {
     description: "",
     color: "azul",
     pills: [],
+    tarjeta: DISENO_TARJETA_BASE,
     stickers: [],
     onboardingPendiente: false,
   };
@@ -68,6 +70,22 @@ export function mapProfile(
     description: typeof data.descripcion === "string" ? data.descripcion : "",
     color: isColor(data.color) ? data.color : "azul",
     pills: mapPills(data.etiquetas),
+    tarjeta: {
+      fondo:
+        typeof data.tarjetaFondo === "string" &&
+        /^#[0-9A-Fa-f]{6}$/.test(data.tarjetaFondo)
+          ? data.tarjetaFondo
+          : null,
+      texto:
+        data.tarjetaTexto === "claro" || data.tarjetaTexto === "oscuro"
+          ? data.tarjetaTexto
+          : null,
+      imagen:
+        typeof data.tarjetaImagen === "string" &&
+        data.tarjetaImagen.startsWith("https://")
+          ? data.tarjetaImagen
+          : null,
+    },
     stickers: Array.isArray(data.stickers)
       ? data.stickers.filter((id): id is string => typeof id === "string")
       : [],
@@ -88,6 +106,10 @@ export function toProfileDocument(data: DatosPerfil) {
     // Sin orbe o sin portada no se escribe el campo (al quitarlos, saveProfileData lo borra)
     ...(data.orb !== null ? { orbe: data.orb } : {}),
     ...(data.cover ? { fondoUrl: data.cover } : {}),
+    // Sin diseño propio (o al quitarlo) no se escribe el campo; saveProfileData lo borra
+    ...(data.tarjeta.fondo ? { tarjetaFondo: data.tarjeta.fondo } : {}),
+    ...(data.tarjeta.texto ? { tarjetaTexto: data.tarjeta.texto } : {}),
+    ...(data.tarjeta.imagen ? { tarjetaImagen: data.tarjeta.imagen } : {}),
     descripcion: data.description,
     color: data.color,
     // Firestore no admite `undefined`: el icono solo se escribe si existe

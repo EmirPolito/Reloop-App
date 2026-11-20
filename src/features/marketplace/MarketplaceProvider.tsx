@@ -6,7 +6,6 @@ import {
   type PropsWithChildren,
 } from "react";
 
-import { useNotify } from "@/features/notificaciones/hooks/useNotify";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
@@ -69,8 +68,6 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
   const [filters, dispatchFilters] = useReducer(filtersReducer, NO_FILTERS);
   const [universidad, setUniversidad] = useState(UNIVERSIDAD_PROPIA);
   const favoritesRef = useLatestRef(data.favorites);
-  const productsRef = useLatestRef(data.products);
-  const notify = useNotify();
   const { reload } = data;
 
   const state = useMemo<MarketplaceState>(
@@ -99,15 +96,6 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       toggleFavorite: async (productId) => {
         const favorite = !favoritesRef.current.includes(productId);
         await saveFavorite(uid, productId, favorite);
-        // Se avisa a quien publicó; de una publicación que ya no está en el inicio no se sabe quién es
-        const product = productsRef.current.find((item) => item.id === productId);
-        if (favorite && product) {
-          notify(product.ownerId, {
-            type: "favorito",
-            productId,
-            productName: product.name,
-          });
-        }
         return favorite;
       },
       rateProduct: (productId, rating) => saveRating(uid, productId, rating),
@@ -120,7 +108,7 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       clearFilters: () => dispatchFilters({ type: "filtersCleared" }),
       reload,
     }),
-    [uid, favoritesRef, productsRef, notify, reload],
+    [uid, favoritesRef, reload],
   );
 
   return (

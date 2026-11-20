@@ -108,11 +108,26 @@ export async function saveProfileData(
       ...toProfileDocument(data),
       orbe: data.orb ?? deleteField(),
       fondoUrl: data.cover ?? deleteField(),
+      tarjetaFondo: data.tarjeta.fondo ?? deleteField(),
+      tarjetaTexto: data.tarjeta.texto ?? deleteField(),
+      tarjetaImagen: data.tarjeta.imagen ?? deleteField(),
       correo: deleteField(),
       actualizadoEn: serverTimestamp(),
     },
     { merge: true },
   );
+}
+
+/** Reporta a una persona (un reporte por pareja: reportar de nuevo no cambia nada). */
+export async function reportUser(
+  reporterId: string,
+  userId: string,
+): Promise<void> {
+  await setDoc(doc(db, "reportes", `${reporterId}_u_${userId}`), {
+    usuarioId: userId,
+    reporterId,
+    creadoEn: serverTimestamp(),
+  });
 }
 
 /** Termina la configuración inicial: el onboarding no vuelve a mostrarse en ningún dispositivo. */

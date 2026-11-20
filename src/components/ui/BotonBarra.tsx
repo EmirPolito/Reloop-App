@@ -16,6 +16,7 @@ export function BotonBarra({
   onPress,
   disabled = false,
   peligro = false,
+  colorPeligro = "#FF8A1F",
   children,
 }: {
   etiqueta: string;
@@ -23,10 +24,12 @@ export function BotonBarra({
   disabled?: boolean;
   /** Fondo naranja (acción que elimina) */
   peligro?: boolean;
+  /** Color del fondo cuando es `peligro` (naranja si no se indica) */
+  colorPeligro?: string;
   children: ReactNode;
 }) {
   const { isDark } = useAppTheme();
-  const fondo = peligro ? "#FF8A1F" : isDark ? "#ffffff1a" : "#ffffffb7";
+  const fondo = peligro ? colorPeligro : isDark ? "#ffffff1a" : "#ffffffb7";
   return (
     <PressableScale
       accessibilityRole="button"

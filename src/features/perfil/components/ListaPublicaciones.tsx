@@ -42,6 +42,8 @@ const BAJADA = 12;
 const ALZADA = 24;
 /** Alto de la parte de abajo de la tarjeta (los botones de acción o el título y el precio) */
 const ALTO_PIE = 60;
+/** Pie completo de la tarjeta: los botones o el título y el precio, con su relleno */
+const ALTO_PIE_TARJETA = ALTO_PIE + 12;
 /** Lugares a cada lado del central que tienen tarjeta (más lejos no se ven) */
 const VENTANA = 3;
 /** Tarjetas que existen siempre: se reutilizan, nunca se montan ni se desmontan al cambiar */
@@ -148,7 +150,8 @@ export const ListaPublicaciones = memo(function ListaPublicaciones({
   }, [total, lugar, lugaresCiclo, dir, pos]);
 
   const cardWidth = Math.round(ancho * PROPORCION_TARJETA);
-  const altoTarjeta = 64 + cardWidth + ALTO_PIE;
+  // Todas las tarjetas (también la gris) miden lo mismo: la foto cuadrada y el pie
+  const altoTarjeta = cardWidth + ALTO_PIE_TARJETA;
 
   const eliminar = async () => {
     if (!porEliminar || eliminando) return;
@@ -324,6 +327,9 @@ const CartaAbanico = memo(function CartaAbanico({
         <TarjetaPublicacion
           item={item}
           cardWidth={cardWidth}
+          // En el perfil ya se sabe de quién es: sin avatar ni nombre arriba, y todas del mismo alto
+          sinEncabezado
+          alto={altoTarjeta}
           favorite={favorite}
           onOpen={onOpen}
           onOpenSeller={onOpenSeller}

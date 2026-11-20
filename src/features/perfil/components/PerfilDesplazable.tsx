@@ -369,6 +369,7 @@ export function PerfilDesplazable({
           <PublicacionesPerfil
             publicaciones={publicaciones.items}
             anuncios={SIN_ANUNCIOS}
+            perfil={profile}
             status={publicaciones.status}
             isOwn={publicaciones.isOwn}
             isDark={isDark}

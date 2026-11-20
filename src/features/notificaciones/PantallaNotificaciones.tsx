@@ -6,6 +6,9 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BotonBarra } from "@/components/ui/BotonBarra";
+import { useEliminarConEfecto } from "@/components/ui/Disolvible";
+import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
@@ -63,6 +66,9 @@ export function PantallaNotificaciones() {
   const { markAllRead, remove } = useNotificationActions();
   const seleccion = useSeleccion();
   const [menu, setMenu] = useState(false);
+  const { mostrar } = useAvisos();
+  // Hacia el botón de eliminar vuelan las tarjetas (efecto Stream)
+  const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
   const { products } = useMarketplaceState();
   const openNotification = useOpenNotification();
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -119,9 +125,42 @@ export function PantallaNotificaciones() {
   const { activo, marcados } = seleccion;
   const alPulsar = useCallback(
     (notificacion: AppNotification) =>
-      activo ? seleccion.alternar(notificacion.id) : openNotification(notificacion),
+      activo
+        ? seleccion.alternar(notificacion.id)
+        : openNotification(notificacion),
     [activo, seleccion, openNotification],
   );
+
+  /** Las tarjetas a la vista vuelan al botón; al terminar se eliminan de verdad */
+  const avisarEliminadas = (cantidad: number) =>
+    mostrar({
+      tipo: "eliminada",
+      titulo:
+        cantidad === 1
+          ? "Notificación eliminada"
+          : `${cantidad} notificaciones eliminadas`,
+      descripcion: "Se eliminaron correctamente.",
+    });
+
+  const eliminarNotificaciones = (ids: string[]) =>
+    eliminarConEfecto(ids, () => remove(ids))
+      .then(() => {
+        seleccion.salir();
+        avisarEliminadas(ids.length);
+      })
+      .catch((error) =>
+        showErrorAlert("No se pudieron eliminar las notificaciones", error),
+      );
+
+  /** Deslizar una tarjeta a la izquierda la elimina (si falla, la tarjeta vuelve) */
+  const eliminarUna = (id: string) =>
+    remove([id]).then(
+      () => avisarEliminadas(1),
+      (error) => {
+        showErrorAlert("No se pudo eliminar la notificación", error);
+        throw error;
+      },
+    );
 
   const eliminar = () => {
     const ids = [...marcados];
@@ -137,11 +176,7 @@ export function PantallaNotificaciones() {
           text: "Eliminar",
           style: "destructive",
           onPress: () => {
-            remove(ids)
-              .then(seleccion.salir)
-              .catch((error) =>
-                showErrorAlert("No se pudieron eliminar las notificaciones", error),
-              );
+            void eliminarNotificaciones(ids);
           },
         },
       ],
@@ -191,14 +226,18 @@ export function PantallaNotificaciones() {
 
         <View style={styles.acciones}>
           {activo ? (
-            <BotonBarra
-              etiqueta="Eliminar notificaciones seleccionadas"
-              peligro
-              disabled={marcados.size === 0}
-              onPress={eliminar}
-            >
-              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-            </BotonBarra>
+            // Destino del efecto: hacia aquí vuelan las tarjetas eliminadas
+            <View ref={destinoRef} collapsable={false}>
+              <BotonBarra
+                etiqueta="Eliminar notificaciones seleccionadas"
+                peligro
+                colorPeligro="#EF4444"
+                disabled={marcados.size === 0}
+                onPress={eliminar}
+              >
+                <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+              </BotonBarra>
+            </View>
           ) : (
             <BotonBarra etiqueta="Más opciones" onPress={() => setMenu(true)}>
               <Ionicons name="ellipsis-horizontal" size={24} color={texto} />
@@ -249,14 +288,22 @@ export function PantallaNotificaciones() {
                 </Text>
               )}
               renderItem={({ item }) => (
-                <NotificationItem
-                  notification={item}
-                  now={now}
-                  onPress={alPulsar}
-                  onLongPress={(n) => seleccion.iniciar(n.id)}
-                  seleccionando={activo}
-                  marcada={marcados.has(item.id)}
-                />
+                <SwipeParaEliminar
+                  disabled={activo}
+                  radio={22}
+                  separacion={9}
+                  onDelete={() => eliminarUna(item.id)}
+                >
+                  <NotificationItem
+                    notification={item}
+                    now={now}
+                    onPress={alPulsar}
+                    onLongPress={(n) => seleccion.iniciar(n.id)}
+                    seleccionando={activo}
+                    marcada={marcados.has(item.id)}
+                    registrar={registrar}
+                  />
+                </SwipeParaEliminar>
               )}
               ListEmptyComponent={
                 <IllustratedEmptyState
@@ -315,7 +362,8 @@ export function PantallaNotificaciones() {
           {
             etiqueta: "Seleccionar todo",
             icono: "checkbox-outline",
-            onPress: () => seleccion.iniciarTodos(visibles.map((item) => item.id)),
+            onPress: () =>
+              seleccion.iniciarTodos(visibles.map((item) => item.id)),
           },
         ]}
       />

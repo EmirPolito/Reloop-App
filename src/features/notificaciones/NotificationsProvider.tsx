@@ -66,7 +66,12 @@ export function NotificationsProvider({ children }: PropsWithChildren) {
     () =>
       subscribeNotifications(
         uid,
-        (notifications, arrivals) => {
+        (todas, todasLasLlegadas) => {
+          // "Guardaron tu publicación en favoritos" ya no se muestra (ni las que había)
+          const notifications = todas.filter((item) => item.type !== "favorito");
+          const arrivals = todasLasLlegadas.filter(
+            (item) => item.type !== "favorito",
+          );
           setState({
             notifications,
             unreadCount: notifications.filter((item) => !item.read).length,

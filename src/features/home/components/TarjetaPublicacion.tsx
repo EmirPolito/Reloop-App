@@ -52,6 +52,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   onOpenSeller,
   onToggleFavorite,
   acciones,
+  sinEncabezado = false,
+  alto,
 }: {
   item: Product;
   cardWidth: number;
@@ -62,6 +64,10 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   onToggleFavorite: (productId: string) => void;
   /** Si se pasa, va en lugar del avatar, el título y el precio (el perfil propio) */
   acciones?: ReactNode;
+  /** Sin la fila de arriba (avatar, nombre y hora): en el perfil de esa persona ya se sabe quién es */
+  sinEncabezado?: boolean;
+  /** Alto fijo de la tarjeta (el perfil las quiere todas del mismo alto, también la vacía) */
+  alto?: number;
 }) {
   const { isDark } = useAppTheme();
   const perfil = usePerfilDe(item.ownerId);
@@ -102,79 +108,82 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
         estilos.sombra,
         {
           width: cardWidth,
+          ...(alto ? { height: alto } : {}),
           backgroundColor: isDark ? "#1B2230" : "#FFFFFF",
         },
       ]}
     >
       <View style={estilos.tarjeta}>
-        <View
-          style={[
-            estilos.encabezado,
-            { height: compacta ? 54 : 64 },
-            compacta && estilos.encabezadoCompacto,
-          ]}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Ver perfil de ${nombreUsuario}`}
-            onPress={() => onOpenSeller(item.ownerId)}
-            hitSlop={6}
+        {sinEncabezado ? null : (
+          <View
+            style={[
+              estilos.encabezado,
+              { height: compacta ? 54 : 64 },
+              compacta && estilos.encabezadoCompacto,
+            ]}
           >
-            <AvatarVendedor
-              ownerId={item.ownerId}
-              fallbackName={nombreUsuario}
-              size={ladoAvatar}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Abrir ${item.name}`}
-            onPress={() => onOpen(item.id)}
-            style={estilos.usuario}
-          >
-            <Text
-              numberOfLines={1}
-              style={[
-                compacta
-                  ? estilos.nombreUsuarioCompacto
-                  : estilos.nombreUsuario,
-                { color: colorTexto },
-              ]}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Ver perfil de ${nombreUsuario}`}
+              onPress={() => onOpenSeller(item.ownerId)}
+              hitSlop={6}
             >
-              {nombreUsuario}
-            </Text>
-            <Text
-              numberOfLines={1}
-              style={[compacta ? estilos.tiempoCompacto : estilos.tiempo]}
+              <AvatarVendedor
+                ownerId={item.ownerId}
+                fallbackName={nombreUsuario}
+                size={ladoAvatar}
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir ${item.name}`}
+              onPress={() => onOpen(item.id)}
+              style={estilos.usuario}
             >
-              {formatPublicationTime(item.createdAt)}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              favorite ? "Quitar de favoritos" : "Agregar a favoritos"
-            }
-            accessibilityState={{ selected: favorite }}
-            onPress={alternarFavorito}
-            hitSlop={10}
-            style={estilos.favorito}
-          >
-            <Animated.View style={estiloCorazon}>
-              {favorite ? (
-                <IconoCorazonRelleno
-                  size={radioCorazon}
-                  color={COLOR_FAVORITO}
-                />
-              ) : (
-                <IconoCorazon
-                  size={radioCorazon}
-                  color={isDark ? "#F1F5F9" : "#101010"}
-                />
-              )}
-            </Animated.View>
-          </Pressable>
-        </View>
+              <Text
+                numberOfLines={1}
+                style={[
+                  compacta
+                    ? estilos.nombreUsuarioCompacto
+                    : estilos.nombreUsuario,
+                  { color: colorTexto },
+                ]}
+              >
+                {nombreUsuario}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={[compacta ? estilos.tiempoCompacto : estilos.tiempo]}
+              >
+                {formatPublicationTime(item.createdAt)}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                favorite ? "Quitar de favoritos" : "Agregar a favoritos"
+              }
+              accessibilityState={{ selected: favorite }}
+              onPress={alternarFavorito}
+              hitSlop={10}
+              style={estilos.favorito}
+            >
+              <Animated.View style={estiloCorazon}>
+                {favorite ? (
+                  <IconoCorazonRelleno
+                    size={radioCorazon}
+                    color={COLOR_FAVORITO}
+                  />
+                ) : (
+                  <IconoCorazon
+                    size={radioCorazon}
+                    color={isDark ? "#F1F5F9" : "#101010"}
+                  />
+                )}
+              </Animated.View>
+            </Pressable>
+          </View>
+        )}
 
         <Pressable
           accessibilityRole="button"
@@ -208,6 +217,28 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             </Text>
           </View>
         </Pressable>
+
+        {sinEncabezado && !acciones ? (
+          // Sin encabezado, el favorito va sobre la foto
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              favorite ? "Quitar de favoritos" : "Agregar a favoritos"
+            }
+            accessibilityState={{ selected: favorite }}
+            onPress={alternarFavorito}
+            hitSlop={8}
+            style={estilos.favoritoSobreFoto}
+          >
+            <Animated.View style={estiloCorazon}>
+              {favorite ? (
+                <IconoCorazonRelleno size={20} color={COLOR_FAVORITO} />
+              ) : (
+                <IconoCorazon size={20} color="#FFFFFF" />
+              )}
+            </Animated.View>
+          </Pressable>
+        ) : null}
 
         {acciones ? (
           <View style={estilos.acciones}>{acciones}</View>
@@ -316,6 +347,17 @@ const estilos = StyleSheet.create({
     height: 30,
     alignItems: "center",
     justifyContent: "center",
+  },
+  favoritoSobreFoto: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.38)",
   },
   foto: { alignItems: "center", justifyContent: "center" },
   disponibles: {

@@ -11,7 +11,6 @@ import { TarjetaPremium } from "@/features/premium/components/TarjetaPremium";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { showComingSoonAlert } from "@/utils/alerts";
 import { AjustesPerfil } from "./components/AjustesPerfil";
 import {
   BotonHeaderPerfil,
@@ -29,7 +28,7 @@ export function PantallaPerfil() {
   const { uid } = useSessionUser();
   const { products: mine, status: mineStatus } = useUserProducts(uid);
   const { followersCount } = useFollowers(uid);
-  const { openProduct, openEditProfile } = useAppNavigation();
+  const { openProduct, openEditProfile, openPremium } = useAppNavigation();
   const premium = useIsPremium(uid);
 
   return (
@@ -57,11 +56,10 @@ export function PantallaPerfil() {
       pie={
         <>
           <View style={styles.premium}>
-            {/* La pantalla de ReLoop Premium llega con la fase de pagos y promociones */}
             <TarjetaPremium
               activa={premium}
               isDark={isDark}
-              onPress={() => showComingSoonAlert("ReLoop Premium")}
+              onPress={openPremium}
             />
           </View>
           <AjustesPerfil isDark={isDark} />

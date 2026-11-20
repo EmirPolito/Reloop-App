@@ -1,4 +1,5 @@
 import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData";
+import { agruparPorVendedor } from "@/features/marketplace/sellerGroups";
 import type { Product } from "@/features/marketplace/types";
 
 /** Filas del inicio: banner, categorías fijas, título de sección y los productos de dos en dos. */
@@ -8,13 +9,13 @@ export type HomeFeedRow =
   /** `count`: publicaciones mostradas (`null` mientras cargan) */
   | { type: "sectionTitle"; count: number | null }
   | { type: "products"; products: Product[] }
+  /** Quien tiene 3 o más publicaciones a la vista: todas en su tarjeta */
+  | { type: "seller"; ownerId: string; products: Product[] }
   /** Modo "@" del buscador: resultados de personas en lugar del feed */
   | { type: "users"; term: string }
   | { type: "empty" }
   | { type: "loading" }
   | { type: "error" };
-
-const PRODUCTS_PER_ROW = 2;
 
 export function buildHomeFeedRows(
   products: Product[],
@@ -36,12 +37,7 @@ export function buildHomeFeedRows(
     rows.push({ type: status === "error" ? "error" : "empty" });
     return rows;
   }
-  for (let index = 0; index < products.length; index += PRODUCTS_PER_ROW) {
-    rows.push({
-      type: "products",
-      products: products.slice(index, index + PRODUCTS_PER_ROW),
-    });
-  }
+  rows.push(...agruparPorVendedor(products));
   return rows;
 }
 
@@ -51,7 +47,7 @@ export function buildUserSearchRows(term: string): HomeFeedRow[] {
 }
 
 export function homeRowKey(row: HomeFeedRow, index: number): string {
-  return row.type === "products"
-    ? `products-${row.products[0]?.id ?? index}`
-    : row.type;
+  if (row.type === "products") return `products-${row.products[0]?.id ?? index}`;
+  if (row.type === "seller") return `seller-${row.ownerId}`;
+  return row.type;
 }

@@ -19,6 +19,12 @@ export async function saveOwnProfile(
     ...next,
     photo: next.photo ? await uploadImage(next.photo) : null,
     cover: next.cover ? await uploadImage(next.cover) : null,
+    tarjeta: {
+      ...next.tarjeta,
+      imagen: next.tarjeta.imagen
+        ? await uploadImage(next.tarjeta.imagen)
+        : null,
+    },
   };
   const renamed = data.name !== previous.name;
 

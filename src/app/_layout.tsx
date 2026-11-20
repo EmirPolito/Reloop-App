@@ -1,3 +1,4 @@
+import { DissolveProvider } from "dissolve-ui";
 import { useFonts } from "expo-font";
 import { Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -105,9 +106,12 @@ export default function RootLayout() {
           <AppThemeProvider>
             <AuthProvider>
               <SplashGate>
-                <AppFrame>
-                  <RootNavigator />
-                </AppFrame>
+                {/* Sobre el navegador: el efecto de disolver sobrevive al cambiar de pantalla */}
+                <DissolveProvider>
+                  <AppFrame>
+                    <RootNavigator />
+                  </AppFrame>
+                </DissolveProvider>
               </SplashGate>
             </AuthProvider>
           </AppThemeProvider>

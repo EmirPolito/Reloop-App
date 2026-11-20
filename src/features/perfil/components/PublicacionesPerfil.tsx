@@ -6,8 +6,15 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData";
 import type { Product } from "@/features/marketplace/types";
 import { IconoAnuncios, IconoPublicaciones } from "../Perfiliconos";
+import { SheetTarjeta } from "../editar/SheetTarjeta";
+import { useProfile } from "../ProfileProvider";
+import type { DatosPerfil, DisenoTarjeta } from "../Perfiltemas";
+import { showErrorAlert } from "@/utils/alerts";
 import { FilaPestanas, type Pestana } from "./FilaPestanas";
 import { ListaPublicaciones } from "./ListaPublicaciones";
+import { TarjetaVendedor } from "./TarjetaVendedor";
+import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
+
 
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];
@@ -48,6 +55,7 @@ const VACIO: Record<
 export function PublicacionesPerfil({
   publicaciones,
   anuncios,
+  perfil,
   status,
   isOwn,
   isDark,
@@ -55,6 +63,8 @@ export function PublicacionesPerfil({
   style,
 }: {
   publicaciones: Product[];
+  /** Perfil de quien publica: su nombre, avatar y el diseño de la tarjeta */
+  perfil: DatosPerfil;
   anuncios: Product[];
   status: FeedStatus;
   isOwn: boolean;
@@ -64,12 +74,37 @@ export function PublicacionesPerfil({
   style?: StyleProp<ViewStyle>;
 }) {
   const [activa, setActiva] = useState<Pestana>("publicaciones");
+  const { profile: propio, saveProfile } = useProfile();
+  const [disenando, setDisenando] = useState(false);
+  const guardarDiseno = async (tarjeta: DisenoTarjeta) => {
+    try {
+      await saveProfile({ ...propio, tarjeta });
+    } catch (error) {
+      showErrorAlert("No se pudo guardar el diseño", error);
+      throw error;
+    }
+  };
   const colorIconoVacio = isDark ? "#475569" : "#e4e4e4ff";
 
   /** Contenido de una pestaña: abanico, carga o estado vacío */
   const contenido = (pestana: Pestana) => {
     const items = pestana === "publicaciones" ? publicaciones : anuncios;
     const vacio = VACIO[pestana][isOwn ? "propio" : "ajeno"];
+    if (pestana === "publicaciones" && items.length >= MIN_PARA_TARJETA) {
+      return (
+        <View style={styles.abanico}>
+          <TarjetaVendedor
+            items={items}
+            profile={perfil}
+            ownerId={items[0].ownerId}
+            isOwn={isOwn}
+            isDark={isDark}
+            onOpen={onOpen}
+            onPersonalizar={() => setDisenando(true)}
+          />
+        </View>
+      );
+    }
     if (items.length) {
       return (
         <View style={styles.abanico}>
@@ -122,6 +157,17 @@ export function PublicacionesPerfil({
           );
         })}
       </View>
+
+      {isOwn ? (
+        <SheetTarjeta
+          visible={disenando}
+          diseno={propio.tarjeta}
+          nombre={propio.name}
+          isDark={isDark}
+          onClose={() => setDisenando(false)}
+          onGuardar={guardarDiseno}
+        />
+      ) : null}
     </View>
   );
 }

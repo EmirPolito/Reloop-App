@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
+import { Disolvible, type Disolvedor } from "@/components/ui/Disolvible";
+import { TextoSobreRojo } from "@/components/ui/SwipeParaEliminar";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import {
@@ -12,6 +14,8 @@ import {
 import type { AppNotification } from "../types";
 import { NotificationLeading } from "./NotificationLeading";
 
+/** Hasta dónde llega la sombra de la tarjeta (radio 10 + desplazamiento 3) */
+const SOMBRA = 14;
 const COLOR_PUNTO = "#1C77FF";
 /** Punto de una notificación ya leída: un gris casi blanco (neutral-100) */
 const COLOR_PUNTO_LEIDO = "#ECECEE";
@@ -30,6 +34,7 @@ export function NotificationItem({
   onLongPress,
   seleccionando = false,
   marcada = false,
+  registrar,
 }: {
   notification: AppNotification;
   /** Momento contra el que se calcula la antigüedad */
@@ -40,74 +45,88 @@ export function NotificationItem({
   /** Modo de selección: el toque marca o desmarca la notificación */
   seleccionando?: boolean;
   marcada?: boolean;
+  /** La pantalla guarda cómo disolver esta tarjeta (y la quita al desmontarse) */
+  registrar?: (id: string, disolvedor: Disolvedor | null) => void;
 }) {
   const { isDark } = useAppTheme();
   const message = notificationMessage(notification);
   const time = formatNotificationTime(notification.createdAt, now);
 
   return (
-    <PressableSuave
-      accessibilityRole="button"
-      accessibilityLabel={`${notificationTitle(notification)}. ${notification.actorName} ${message}, ${time}${notification.read ? "" : ", sin leer"}`}
-      accessibilityState={seleccionando ? { selected: marcada } : undefined}
-      onPress={() => onPress(notification)}
-      onLongPress={onLongPress ? () => onLongPress(notification) : undefined}
-      style={[
-        styles.tarjeta,
-        // Blanco liso en claro; en oscuro, el mismo tono translúcido del buscador
-        { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
-      ]}
+    // El margen va en el envoltorio y la sombra dentro de su captura (ver Disolvible)
+    <Disolvible
+      id={notification.id}
+      registrar={registrar}
+      sombra={SOMBRA}
+      margenInferior={0}
     >
-      {seleccionando ? (
-        <View
-          style={[
-            styles.check,
-            marcada
-              ? { backgroundColor: COLOR_PUNTO, borderColor: COLOR_PUNTO }
-              : { borderColor: isDark ? "#64748B" : "#C4C4CA" },
-          ]}
-        >
-          {marcada ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
+      <PressableSuave
+        accessibilityRole="button"
+        accessibilityLabel={`${notificationTitle(notification)}. ${notification.actorName} ${message}, ${time}${notification.read ? "" : ", sin leer"}`}
+        accessibilityState={seleccionando ? { selected: marcada } : undefined}
+        onPress={() => onPress(notification)}
+        onLongPress={onLongPress ? () => onLongPress(notification) : undefined}
+        style={[
+          styles.tarjeta,
+          // Blanco liso en claro; en oscuro, el mismo tono translúcido del buscador
+          { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
+        ]}
+      >
+        {seleccionando ? (
+          <View
+            style={[
+              styles.check,
+              marcada
+                ? { backgroundColor: COLOR_PUNTO, borderColor: COLOR_PUNTO }
+                : { borderColor: isDark ? "#64748B" : "#C4C4CA" },
+            ]}
+          >
+            {marcada ? (
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            ) : null}
+          </View>
+        ) : null}
+        <NotificationLeading notification={notification} size={LADO_LEADING} />
+
+        <View style={styles.textos}>
+          <Text
+            numberOfLines={1}
+            style={[styles.titulo, { color: isDark ? "#F1F5F9" : "#101010" }]}
+          >
+            {notificationTitle(notification)}
+          </Text>
+          {/* En oscuro la tarjeta es translúcida: al deslizar, el gris se aclara sobre el rojo */}
+          <TextoSobreRojo
+            numberOfLines={2}
+            colorBase={isDark ? "#94A3B8" : "#6B6B70"}
+            colorSobreRojo={isDark ? undefined : "#6B6B70"}
+            style={styles.descripcion}
+          >
+            {notification.actorName} {message}
+          </TextoSobreRojo>
         </View>
-      ) : null}
-      <NotificationLeading notification={notification} size={LADO_LEADING} />
 
-      <View style={styles.textos}>
-        <Text
-          numberOfLines={1}
-          style={[styles.titulo, { color: isDark ? "#F1F5F9" : "#101010" }]}
-        >
-          {notificationTitle(notification)}
-        </Text>
-        <Text
-          numberOfLines={2}
-          style={[
-            styles.descripcion,
-            { color: isDark ? "#94A3B8" : "#6B6B70" },
-          ]}
-        >
-          {notification.actorName} {message}
-        </Text>
-      </View>
-
-      <View style={styles.derecha}>
-        <Text
-          style={[styles.tiempo, { color: isDark ? "#94A3B8" : "#8A8A8F" }]}
-        >
-          {time}
-        </Text>
-        <View
-          style={[
-            styles.punto,
-            notification.read && {
-              backgroundColor: isDark ? "#ffffff26" : COLOR_PUNTO_LEIDO,
-            },
-          ]}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
-      </View>
-    </PressableSuave>
+        <View style={styles.derecha}>
+          <TextoSobreRojo
+            colorBase={isDark ? "#94A3B8" : "#8A8A8F"}
+            colorSobreRojo={isDark ? undefined : "#8A8A8F"}
+            style={styles.tiempo}
+          >
+            {time}
+          </TextoSobreRojo>
+          <View
+            style={[
+              styles.punto,
+              notification.read && {
+                backgroundColor: isDark ? "#ffffff26" : COLOR_PUNTO_LEIDO,
+              },
+            ]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+        </View>
+      </PressableSuave>
+    </Disolvible>
   );
 }
 
@@ -118,7 +137,6 @@ const styles = StyleSheet.create({
     gap: 11,
     padding: 12,
     borderRadius: 22,
-    marginBottom: 9,
     // El fondo de abajo es casi blanco: un borde fino y una sombra suave separan cada tarjeta
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(0, 0, 0, 0.01)",

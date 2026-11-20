@@ -12,6 +12,43 @@ export interface PildoraPerfilData {
   icon?: string;
 }
 
+/** Color del texto de la tarjeta de publicaciones (claro sobre fondos oscuros y al revés) */
+export type TextoTarjeta = "claro" | "oscuro";
+
+/**
+ * Diseño de la tarjeta de publicaciones del perfil (con 3 o más publicaciones). Cada campo en
+ * `null` se resuelve según el tema de la app.
+ */
+export interface DisenoTarjeta {
+  /** Color de fondo (#RRGGBB) */
+  fondo: string | null;
+  texto: TextoTarjeta | null;
+  /** Imagen de fondo opcional: va sobre el color */
+  imagen: string | null;
+}
+
+export const DISENO_TARJETA_BASE: DisenoTarjeta = {
+  fondo: null,
+  texto: null,
+  imagen: null,
+};
+
+/** Colores de fondo para elegir, con el texto que mejor se lee sobre cada uno */
+export const FONDOS_TARJETA: {
+  color: string;
+  nombre: string;
+  texto: TextoTarjeta;
+}[] = [
+  { color: "#FFFFFF", nombre: "Blanco", texto: "oscuro" },
+  { color: "#F1F5F9", nombre: "Gris", texto: "oscuro" },
+  { color: "#DBEAFE", nombre: "Azul", texto: "oscuro" },
+  { color: "#FCE7F3", nombre: "Rosa", texto: "oscuro" },
+  { color: "#DCFCE7", nombre: "Verde", texto: "oscuro" },
+  { color: "#FEF3C7", nombre: "Amarillo", texto: "oscuro" },
+  { color: "#1F2937", nombre: "Grafito", texto: "claro" },
+  { color: "#000000", nombre: "Negro", texto: "claro" },
+];
+
 /** Todo lo que el usuario puede personalizar desde el drawer */
 export interface DatosPerfil {
   photo: string | null;
@@ -30,6 +67,8 @@ export interface DatosPerfil {
   color: ColorPerfil;
   /** Máximo MAX_PILDORAS */
   pills: PildoraPerfilData[];
+  /** Diseño de la tarjeta de publicaciones */
+  tarjeta: DisenoTarjeta;
   /** Ya no se muestran; se conserva porque las reglas de Firestore exigen la lista */
   stickers: string[];
   /**

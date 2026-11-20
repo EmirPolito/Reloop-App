@@ -5,7 +5,6 @@ import {
   CorazonActivoIcon,
   type IconProps,
 } from "@/components/iconos";
-import { PremiumBadge } from "@/components/ui/PremiumBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { IconoMensaje } from "@/features/perfil/Perfiliconos";
@@ -25,14 +24,12 @@ const ICONOS: Record<
 
 /** El icono ocupa algo más de la mitad del círculo */
 const PROPORCION_ICONO = 0.62;
-/** La insignia sobre un círculo con icono mide un poco más de un tercio de este */
-const PROPORCION_INSIGNIA = 0.4;
 
 /**
  * Lo que va a la izquierda de una notificación (en el banner y en la lista): el avatar de
  * la persona si empezó a seguirte (su foto o avatar de ahora, con sus iniciales mientras
- * llega) y, para el resto, un icono dentro de un círculo. Si quien la provocó tiene
- * Premium, su insignia se ve en la esquina en ambos casos.
+ * llega) y, para el resto, un icono dentro de un círculo. La insignia Premium de quien la
+ * provocó solo se ve en el avatar, nunca sobre el círculo con icono.
  */
 export function NotificationLeading({
   notification,
@@ -46,34 +43,20 @@ export function NotificationLeading({
 
   if (notification.type !== "seguidor") {
     const { Icono, color } = ICONOS[notification.type];
-    const insignia = Math.round(size * PROPORCION_INSIGNIA);
     return (
-      <View style={{ width: size, height: size }}>
-        <View
-          style={[
-            styles.centrado,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              // Fondo fuerte (el color del tipo) con el icono blanco
-              backgroundColor: color,
-            },
-          ]}
-        >
-          <Icono size={size * PROPORCION_ICONO} color="#FFFFFF" />
-        </View>
-        {premium ? (
-          <View
-            pointerEvents="none"
-            style={[
-              styles.insignia,
-              { width: insignia, height: insignia, right: -1, bottom: -5 },
-            ]}
-          >
-            <PremiumBadge size={insignia} variant="static" />
-          </View>
-        ) : null}
+      <View
+        style={[
+          styles.centrado,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            // Fondo fuerte (el color del tipo) con el icono blanco
+            backgroundColor: color,
+          },
+        ]}
+      >
+        <Icono size={size * PROPORCION_ICONO} color="#FFFFFF" />
       </View>
     );
   }
@@ -91,5 +74,4 @@ export function NotificationLeading({
 
 const styles = StyleSheet.create({
   centrado: { alignItems: "center", justifyContent: "center" },
-  insignia: { position: "absolute" },
 });

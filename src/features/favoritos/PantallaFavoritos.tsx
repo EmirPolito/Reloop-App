@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BotonBarra } from "@/components/ui/BotonBarra";
+import { Disolvible, useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
@@ -20,7 +21,7 @@ import { filterProducts } from "@/features/marketplace/feedFilters";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
 import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
-import type { CategoryId } from "@/features/marketplace/types";
+import type { CategoryId, Product } from "@/features/marketplace/types";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { normalizarNombre } from "@/features/perfil/username";
@@ -28,8 +29,11 @@ import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { useSeleccion } from "@/hooks/useSeleccion";
-import { showAlert } from "@/utils/alerts";
+import { showAlert, showErrorAlert } from "@/utils/alerts";
 import { HeartIcon } from "./components/HeartIcon";
+import { CapaSeleccion } from "./CapaSeleccion";
+import { TarjetaVendedorFavorita } from "./TarjetaVendedorFavorita";
+import { useVendedoresFavoritos } from "./vendedoresFavoritos";
 
 /** Todas o las de una categoría */
 type Filtro = "todas" | CategoryId;
@@ -38,6 +42,14 @@ const OPCIONES: { id: Filtro; texto: string }[] = [
   { id: "todas", texto: "Todas" },
   ...CATEGORIES.map((c) => ({ id: c.id, texto: c.label })),
 ];
+
+/** Las tarjetas de vendedor guardadas van primero; las publicaciones sueltas, de dos en dos */
+type Bloque =
+  | { type: "seller"; ownerId: string }
+  | { type: "products"; products: Product[] };
+
+/** En la selección, las tarjetas de vendedor llevan este prefijo (para no confundirse con una publicación) */
+const PREFIJO_VENDEDOR = "v:";
 
 /** Al cambiar de filtro la lista aparece con un fundido corto */
 const CAMBIO_FILTRO = FadeIn.duration(200);
@@ -62,6 +74,10 @@ export function PantallaFavoritos() {
   const [busqueda, setBusqueda] = useState("");
   const seleccion = useSeleccion();
   const [menu, setMenu] = useState(false);
+  // Hacia el botón de quitar vuelan las tarjetas (efecto Stream)
+  const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
+  const { ids: vendedoresGuardados, quitar: quitarVendedores } =
+    useVendedoresFavoritos();
 
   // Primero las publicaciones más recientes, como en el inicio
   const favoriteProducts = useMemo(
@@ -73,8 +89,13 @@ export function PantallaFavoritos() {
   const modoBusqueda = modoDeBusqueda(busqueda);
   const buscaPersonas = modoBusqueda.modo === "usuarios";
   const vendedores = useMemo(
-    () => [...new Set(favoriteProducts.map((item) => item.ownerId))],
-    [favoriteProducts],
+    () => [
+      ...new Set([
+        ...favoriteProducts.map((item) => item.ownerId),
+        ...vendedoresGuardados,
+      ]),
+    ],
+    [favoriteProducts, vendedoresGuardados],
   );
   const perfiles = usePerfilDe.varias(vendedores);
 
@@ -99,6 +120,42 @@ export function PantallaFavoritos() {
     perfiles,
   ]);
 
+  // Tarjetas de vendedor guardadas: solo con "Todas" y, si se busca, por su nombre o usuario
+  const vendedoresVisibles = useMemo(() => {
+    if (filtro !== "todas") return [];
+    const termino = buscaPersonas
+      ? modoBusqueda.termino
+      : normalizarNombre(busqueda.trim());
+    if (!termino) return vendedoresGuardados;
+    return vendedoresGuardados.filter((id) => {
+      const perfil = perfiles.get(id);
+      return (
+        (perfil?.username ?? "").includes(termino) ||
+        normalizarNombre(perfil?.name ?? "").includes(termino)
+      );
+    });
+  }, [
+    filtro,
+    buscaPersonas,
+    modoBusqueda.termino,
+    busqueda,
+    vendedoresGuardados,
+    perfiles,
+  ]);
+
+  const bloques = useMemo<Bloque[]>(() => {
+    const filas: Bloque[] = vendedoresVisibles.map((ownerId) => ({
+      type: "seller",
+      ownerId,
+    }));
+    for (let i = 0; i < visibles.length; i += 2) {
+      filas.push({ type: "products", products: visibles.slice(i, i + 2) });
+    }
+    return filas;
+  }, [vendedoresVisibles, visibles]);
+  const hayFavoritos =
+    favoriteProducts.length > 0 || vendedoresGuardados.length > 0;
+
   const texto = isDark ? "#F1F5F9" : "#101010";
   const { activo, marcados } = seleccion;
 
@@ -116,8 +173,23 @@ export function PantallaFavoritos() {
           text: "Quitar",
           style: "destructive",
           onPress: () => {
-            ids.forEach((id) => toggleFavorite(id));
-            seleccion.salir();
+            void eliminarConEfecto(ids, async () => {
+              const vendedores = ids.filter((id) =>
+                id.startsWith(PREFIJO_VENDEDOR),
+              );
+              if (vendedores.length > 0) {
+                quitarVendedores(
+                  vendedores.map((id) => id.slice(PREFIJO_VENDEDOR.length)),
+                );
+              }
+              ids
+                .filter((id) => !id.startsWith(PREFIJO_VENDEDOR))
+                .forEach((id) => toggleFavorite(id));
+            })
+              .then(seleccion.salir)
+              .catch((error) =>
+                showErrorAlert("No se pudieron quitar los favoritos", error),
+              );
           },
         },
       ],
@@ -156,18 +228,21 @@ export function PantallaFavoritos() {
             : "Favoritos"}
         </Text>
         {activo ? (
-          <BotonBarra
-            etiqueta="Quitar favoritos seleccionados"
-            peligro
-            disabled={marcados.size === 0}
-            onPress={eliminar}
-          >
-            <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-          </BotonBarra>
+          // Destino del efecto: hacia aquí vuelan las tarjetas quitadas
+          <View ref={destinoRef} collapsable={false}>
+            <BotonBarra
+              etiqueta="Quitar favoritos seleccionados"
+              peligro
+              disabled={marcados.size === 0}
+              onPress={eliminar}
+            >
+              <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+            </BotonBarra>
+          </View>
         ) : (
           <BotonBarra
             etiqueta="Eliminar favoritos"
-            disabled={favoriteProducts.length === 0}
+            disabled={!hayFavoritos}
             onPress={() => setMenu(true)}
           >
             <IconoEliminarLinea size={26} color={"#FF8A1F"} />
@@ -183,18 +258,28 @@ export function PantallaFavoritos() {
         personas={buscaPersonas}
       />
 
-      <FiltrosPildoras opciones={OPCIONES} activo={filtro} onCambiar={setFiltro} />
+      <FiltrosPildoras
+        opciones={OPCIONES}
+        activo={filtro}
+        onCambiar={setFiltro}
+      />
 
-      {loading && favoriteProducts.length === 0 ? (
+      {loading && !hayFavoritos ? (
         <LoadingState />
       ) : (
-        <Animated.View key={filtro} entering={CAMBIO_FILTRO} style={styles.lista}>
+        <Animated.View
+          key={filtro}
+          entering={CAMBIO_FILTRO}
+          style={styles.lista}
+        >
           <FlatList
-            data={visibles}
+            data={bloques}
             extraData={marcados}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={{ gap: SEPARACION }}
+            keyExtractor={(bloque) =>
+              bloque.type === "seller"
+                ? `seller-${bloque.ownerId}`
+                : `products-${bloque.products[0].id}`
+            }
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{
@@ -203,41 +288,53 @@ export function PantallaFavoritos() {
               // Espacio para que la barra de navegación no tape la última publicación
               paddingBottom: insets.bottom + 110,
             }}
-            renderItem={({ item }) => (
-              <View style={{ marginBottom: SEPARACION }}>
-                <TarjetaPublicacion
-                  item={item}
-                  cardWidth={cardWidth}
-                  favorite
+            renderItem={({ item: bloque }) =>
+              bloque.type === "seller" ? (
+                <TarjetaVendedorFavorita
+                  ownerId={bloque.ownerId}
+                  isDark={isDark}
                   onOpen={openProduct}
-                  onOpenSeller={openUserProfile}
-                  onToggleFavorite={toggleFavorite}
+                  separacion={SEPARACION}
+                  registrar={registrar}
+                  seleccionando={activo}
+                  marcada={marcados.has(PREFIJO_VENDEDOR + bloque.ownerId)}
+                  onAlternar={() =>
+                    seleccion.alternar(PREFIJO_VENDEDOR + bloque.ownerId)
+                  }
                 />
-                {activo ? (
-                  // En selección, tocar la tarjeta la marca o desmarca
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Seleccionar ${item.name}`}
-                    accessibilityState={{ selected: marcados.has(item.id) }}
-                    onPress={() => seleccion.alternar(item.id)}
-                    style={StyleSheet.absoluteFill}
-                  >
-                    <View
-                      style={[
-                        styles.check,
-                        marcados.has(item.id)
-                          ? { backgroundColor: "#1C77FF", borderColor: "#1C77FF" }
-                          : { borderColor: "#FFFFFF", backgroundColor: "#00000040" },
-                      ]}
+              ) : (
+                <View style={styles.fila}>
+                  {bloque.products.map((item) => (
+                    <Disolvible
+                      key={item.id}
+                      id={item.id}
+                      registrar={registrar}
+                      sombra={14}
+                      margenInferior={SEPARACION}
                     >
-                      {marcados.has(item.id) ? (
-                        <Ionicons name="checkmark" size={17} color="#FFFFFF" />
-                      ) : null}
-                    </View>
-                  </Pressable>
-                ) : null}
-              </View>
-            )}
+                      {/* La capa de selección cubre solo la tarjeta, no el relleno de la sombra */}
+                      <View>
+                        <TarjetaPublicacion
+                          item={item}
+                          cardWidth={cardWidth}
+                          favorite
+                          onOpen={openProduct}
+                          onOpenSeller={openUserProfile}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                        {activo ? (
+                          <CapaSeleccion
+                            etiqueta={`Seleccionar ${item.name}`}
+                            marcada={marcados.has(item.id)}
+                            onPress={() => seleccion.alternar(item.id)}
+                          />
+                        ) : null}
+                      </View>
+                    </Disolvible>
+                  ))}
+                </View>
+              )
+            }
             ListEmptyComponent={
               <IllustratedEmptyState
                 icon={<HeartIcon size={80} />}
@@ -273,7 +370,11 @@ export function PantallaFavoritos() {
           {
             etiqueta: "Seleccionar todo",
             icono: "checkbox-outline",
-            onPress: () => seleccion.iniciarTodos(visibles.map((i) => i.id)),
+            onPress: () =>
+              seleccion.iniciarTodos([
+                ...vendedoresVisibles.map((id) => PREFIJO_VENDEDOR + id),
+                ...visibles.map((i) => i.id),
+              ]),
           },
         ]}
       />
@@ -307,17 +408,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   lista: { flex: 1 },
-  check: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  // Dos publicaciones sueltas lado a lado
+  fila: { flexDirection: "row", gap: SEPARACION },
   // Un poco más arriba: menos espacio sobre el icono que debajo
   vacio: { paddingTop: 110, paddingBottom: 140 },
 });

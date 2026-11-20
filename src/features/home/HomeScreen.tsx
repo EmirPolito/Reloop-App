@@ -18,6 +18,7 @@ import {
   universidadPorId,
 } from "@/features/marketplace/universidades";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { TarjetaVendedorDe } from "@/features/perfil/components/TarjetaVendedorDe";
 import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
@@ -141,6 +142,18 @@ export const HomeScreen = memo(function HomeScreen() {
               }
               icon={query ? "search" : "sell"}
             />
+          );
+        case "seller":
+          return (
+            // Ancho completo (no una fila de dos): la tarjeta mide sus fotos según su ancho
+            <View style={{ width: "100%", marginBottom: 16 }}>
+              <TarjetaVendedorDe
+                ownerId={item.ownerId}
+                products={item.products}
+                isDark={isDark}
+                onOpen={openProduct}
+              />
+            </View>
           );
         case "products":
           return (

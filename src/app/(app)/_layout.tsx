@@ -25,6 +25,7 @@ export default function AppLayout() {
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="notificaciones" />
         <Stack.Screen name="legal/[documento]" />
+        <Stack.Screen name="premium" />
       </Stack>
       {/* La barra de navegación: una sola, fuera de la pila, así no se duplica ni se anima por
           separado al ir y volver de notificaciones o de un perfil */}

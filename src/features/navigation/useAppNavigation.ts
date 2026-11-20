@@ -24,6 +24,8 @@ export function useAppNavigation() {
       /** Política de privacidad o términos, en su propia pantalla */
       openLegal: (documento: DocumentoLegalId) =>
         router.push({ pathname: "/legal/[documento]", params: { documento } }),
+      /** Planes de ReLoop Premium y anuncios */
+      openPremium: () => router.push("/premium"),
       openThread: (chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */
