@@ -1,14 +1,20 @@
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
+import { PressableScale } from "@/components/PressableScale";
+import {
+  GROSOR_LUPA,
+  PildoraCristal,
+} from "@/features/busqueda/components/PildoraCristal";
 import { IconoBusqueda } from "@/features/home/components/IconosTarjeta";
+import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 
 /**
- * Buscador blanco en forma de píldora (el de notificaciones y favoritos, igual al del
- * inicio). Con `personas` muestra la etiqueta "@ Personas": el texto empieza con "@" y se
- * busca por usuario.
+ * Buscador de cristal en forma de píldora (notificaciones, favoritos y chats), igual al del
+ * inicio y al del módulo de búsqueda: mismo alto, lupa, letra y la X para borrar. Con
+ * `personas` muestra la etiqueta "@ Personas": el texto empieza con "@" y se busca por usuario.
  */
 export function BuscadorBlanco({
   value,
@@ -27,13 +33,12 @@ export function BuscadorBlanco({
   const texto = isDark ? "#F1F5F9" : "#101010";
 
   return (
-    <View
-      style={[
-        styles.buscador,
-        { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
-      ]}
-    >
-      <IconoBusqueda size={22} color={isDark ? "#E3DEED" : "#4A4D57"} />
+    <PildoraCristal style={styles.buscador}>
+      <IconoBusqueda
+        size={22}
+        color={isDark ? "#E3DEED" : "#4A4D57"}
+        grosorExtra={GROSOR_LUPA}
+      />
       <TextInput
         accessibilityLabel={accessibilityLabel}
         value={value}
@@ -55,27 +60,43 @@ export function BuscadorBlanco({
           <Text style={styles.etiquetaPersonasTexto}>@ Personas</Text>
         </Animated.View>
       ) : null}
-    </View>
+      {value ? (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel="Borrar texto"
+          hitSlop={10}
+          onPress={() => onChangeText("")}
+          style={[
+            styles.limpiar,
+            {
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.18)"
+                : "rgba(0,0,0,0.12)",
+            },
+          ]}
+        >
+          <AppIcon name="close" size={11} color={texto} />
+        </PressableScale>
+      ) : null}
+    </PildoraCristal>
   );
 }
 
 const styles = StyleSheet.create({
-  buscador: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    minHeight: 54,
-    marginHorizontal: 15,
-    marginTop: 18,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-  },
+  buscador: { marginHorizontal: 15, marginTop: 18 },
   entrada: {
     flex: 1,
     minWidth: 0,
-    paddingVertical: 10,
+    paddingVertical: 0,
     fontFamily: "Inter_500Medium",
     fontSize: 15,
+  },
+  limpiar: {
+    width: 20,
+    height: 20,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
   },
   etiquetaPersonas: {
     height: 32,

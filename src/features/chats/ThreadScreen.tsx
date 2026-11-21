@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { FondoHome } from "@/features/home/components/FondoHome";
 import { useProduct } from "@/features/marketplace/hooks/useProductsByIds";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -40,8 +39,6 @@ import {
 } from "./threadLayout";
 
 const NO_IMAGES: string[] = [];
-/** Fondo liso de la conversación: un poco menos blanco que el de los chats */
-const FONDO_CONVERSACION = "#F4F4F6";
 
 export function ThreadScreen({ chatId }: { chatId: string }) {
   const insets = useSafeAreaInsets();
@@ -164,13 +161,6 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
 
   return (
     <View style={styles.fill}>
-      {/* El fondo de los chats, sin sus colores: solo el blanco liso de abajo */}
-      <FondoHome
-        intensidad={0}
-        dentroDeEscena={false}
-        colorBase={FONDO_CONVERSACION}
-      />
-
       {/* 1. Los mensajes van PRIMERO y sin marginTop:
           ocupan toda la pantalla y pasan por detrás del header */}
       <Animated.ScrollView

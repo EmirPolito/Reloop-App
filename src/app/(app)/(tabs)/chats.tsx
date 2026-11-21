@@ -3,7 +3,7 @@ import { ChatsScreen } from "@/features/chats/ChatsScreen";
 
 export default function ChatsRoute() {
   return (
-    <TabScene>
+    <TabScene efecto="modulo">
       <ChatsScreen />
     </TabScene>
   );

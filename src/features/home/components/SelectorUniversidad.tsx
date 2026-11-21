@@ -20,6 +20,7 @@ import {
   UNIVERSIDADES,
   universidadPorId,
 } from "@/features/marketplace/universidades";
+import { PildoraCristal } from "@/features/busqueda/components/PildoraCristal";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 
@@ -80,26 +81,22 @@ export function SelectorUniversidad() {
         accessibilityLabel={`Universidad: ${actual.sigla}. Cambiar`}
         accessibilityState={{ expanded: posicion !== null }}
         onPress={abrir}
-        // Mismo círculo que el de la campana: mismo tamaño, fondo y borde
-        style={[
-          estilos.boton,
-          {
-            backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
-            borderColor: "transparent",
-          },
-        ]}
+        // Mismo círculo de cristal que la campana (el estilo del buscador)
+        style={estilos.lado}
       >
-        {actual.logo ? (
-          <Image
-            source={actual.logo}
-            contentFit="contain"
-            style={estilos.logo}
-          />
-        ) : (
-          <Text style={[estilos.sigla, { color: colorTexto }]}>
-            {actual.sigla.slice(0, 3)}
-          </Text>
-        )}
+        <PildoraCristal contentStyle={estilos.boton}>
+          {actual.logo ? (
+            <Image
+              source={actual.logo}
+              contentFit="contain"
+              style={estilos.logo}
+            />
+          ) : (
+            <Text style={[estilos.sigla, { color: colorTexto }]}>
+              {actual.sigla.slice(0, 3)}
+            </Text>
+          )}
+        </PildoraCristal>
       </Pressable>
 
       <Modal
@@ -216,12 +213,13 @@ export function SelectorUniversidad() {
 
 const estilos = StyleSheet.create({
   // Círculo del tamaño del botón de notificaciones, solo con el logo (o las 3 letras)
+  lado: { width: LADO_BOTON, height: LADO_BOTON },
   boton: {
     width: LADO_BOTON,
     height: LADO_BOTON,
-    borderRadius: LADO_BOTON / 2,
-    borderWidth: 2,
-    alignItems: "center",
+    minHeight: LADO_BOTON,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     justifyContent: "center",
   },
   logo: { width: 26, height: 26 },

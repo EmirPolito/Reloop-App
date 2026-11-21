@@ -23,9 +23,20 @@ import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { memo, useCallback, useMemo } from "react";
-import { FlatList, View } from "react-native";
+import { View, type LayoutChangeEvent } from "react-native";
+import Animated, {
+  useAnimatedScrollHandler,
+  useDerivedValue,
+  useSharedValue,
+} from "react-native-reanimated";
+import {
+  BuscadorEnLista,
+  BuscadorFlotante,
+  MARGEN_FIJO,
+} from "./components/BuscadorFlotante";
+import { ALTO_PILDORA } from "@/features/busqueda/components/PildoraCristal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryRow } from "./components/CategoryRow";
-import { FondoHome } from "./components/FondoHome";
 import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
@@ -36,10 +47,6 @@ import {
   homeRowKey,
   type HomeFeedRow,
 } from "./feedRows";
-/** Posición de la fila de categorías (cabecera = 0, banner = 1): queda fija al hacer scroll. */
-const STICKY_HEADER_INDICES = [2];
-/** En el modo "@" no hay fila de categorías que fijar */
-const SIN_STICKY: number[] = [];
 
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
@@ -51,10 +58,12 @@ export const HomeScreen = memo(function HomeScreen() {
     filters,
     universidad,
   } = useMarketplaceState();
-  const { setQuery, toggleCategory, reload } = useMarketplaceActions();
+  const { toggleCategory, reload } = useMarketplaceActions();
   const toggleFavorite = useToggleFavorite();
-  const { openProduct, openUserProfile } = useAppNavigation();
+  const { openProduct, openUserProfile, openSearch } = useAppNavigation();
   const cardWidth = useProductCardWidth(2);
+  // La pestaña llega hasta arriba del todo: la lista deja libre la barra de estado
+  const { top: arriba } = useSafeAreaInsets();
 
   const busqueda = modoDeBusqueda(filters.query);
   const buscaUsuarios = busqueda.modo === "usuarios";
@@ -86,17 +95,81 @@ export const HomeScreen = memo(function HomeScreen() {
   );
   const { query, category: activeCategory } = filters;
 
+  // Posiciones para el buscador flotante y sus píldoras de categorías (hilo de UI)
+  const scrollY = useSharedValue(0);
+  const buscadorY = useSharedValue(-1);
+  const altoCabecera = useSharedValue(0);
+  const altoBanner = useSharedValue(0);
+  const altoCategorias = useSharedValue(0);
+  const alHacerScroll = useAnimatedScrollHandler((event) => {
+    scrollY.set(event.contentOffset.y);
+  });
+  const alMedirBuscador = useCallback(
+    (event: LayoutChangeEvent) =>
+      buscadorY.set(arriba + event.nativeEvent.layout.y),
+    [buscadorY, arriba],
+  );
+  const alMedirCabecera = useCallback(
+    (event: LayoutChangeEvent) =>
+      altoCabecera.set(event.nativeEvent.layout.height),
+    [altoCabecera],
+  );
+  const alMedirBanner = useCallback(
+    (event: LayoutChangeEvent) =>
+      altoBanner.set(event.nativeEvent.layout.height),
+    [altoBanner],
+  );
+  const alMedirCategorias = useCallback(
+    (event: LayoutChangeEvent) =>
+      altoCategorias.set(event.nativeEvent.layout.height),
+    [altoCategorias],
+  );
+  // Las píldoras aparecen cuando la fila de categorías ya quedó oculta tras el buscador fijo
+  const umbralPildoras = useDerivedValue(() =>
+    altoCategorias.get() > 0
+      ? arriba +
+        altoCabecera.get() +
+        altoBanner.get() +
+        altoCategorias.get() -
+        (arriba + MARGEN_FIJO + ALTO_PILDORA)
+      : 0,
+  );
+  const cabecera = useMemo(
+    () => (
+      <View onLayout={alMedirCabecera}>
+        <HomeHeader
+          onLayoutBuscador={alMedirBuscador}
+          buscador={
+            <BuscadorEnLista
+              scrollY={scrollY}
+              reposoY={buscadorY}
+              arriba={arriba}
+              onPress={openSearch}
+            />
+          }
+        />
+      </View>
+    ),
+    [alMedirCabecera, alMedirBuscador, scrollY, buscadorY, arriba, openSearch],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: HomeFeedRow }) => {
       switch (item.type) {
         case "banner":
-          return <FeedIntro />;
+          return (
+            <View onLayout={alMedirBanner}>
+              <FeedIntro />
+            </View>
+          );
         case "categories":
           return (
-            <CategoryRow
-              activeCategory={activeCategory}
-              onToggleCategory={toggleCategory}
-            />
+            <View onLayout={alMedirCategorias}>
+              <CategoryRow
+                activeCategory={activeCategory}
+                onToggleCategory={toggleCategory}
+              />
+            </View>
           );
         case "sectionTitle":
           return (
@@ -190,27 +263,36 @@ export const HomeScreen = memo(function HomeScreen() {
       toggleFavorite,
       toggleCategory,
       reload,
+      alMedirBanner,
+      alMedirCategorias,
     ],
   );
 
   return (
     <View style={{ flex: 1 }}>
-      <FondoHome />
-      <FlatList
+      <Animated.FlatList
         style={styles.homeList}
         data={rows}
         keyExtractor={homeRowKey}
-        stickyHeaderIndices={buscaUsuarios ? SIN_STICKY : STICKY_HEADER_INDICES}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.productsContent}
-        ListHeaderComponent={
-          <HomeHeader query={query} onChangeQuery={setQuery} />
-        }
+        contentContainerStyle={[styles.productsContent, { paddingTop: arriba }]}
+        ListHeaderComponent={cabecera}
+        onScroll={alHacerScroll}
+        scrollEventThrottle={16}
         renderItem={renderItem}
         initialNumToRender={6}
         maxToRenderPerBatch={4}
         windowSize={7}
         removeClippedSubviews
+      />
+      <BuscadorFlotante
+        scrollY={scrollY}
+        reposoY={buscadorY}
+        arriba={arriba}
+        umbralPildoras={umbralPildoras}
+        activeCategory={activeCategory}
+        onToggleCategory={toggleCategory}
+        onPress={openSearch}
       />
     </View>
   );

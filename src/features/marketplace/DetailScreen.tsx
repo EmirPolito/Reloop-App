@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { conSalida } from "@/components/salidaModulo";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -47,7 +48,7 @@ export function DetailScreen({ productId }: { productId: string }) {
   if (!product) {
     return (
       <View style={styles.fill}>
-        <BackHeader title="Publicación" onBack={back} />
+        <BackHeader title="Publicación" onBack={() => conSalida(back)} />
         {loading ? (
           <LoadingState />
         ) : (
@@ -120,7 +121,7 @@ export function DetailScreen({ productId }: { productId: string }) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Volver"
-          onPress={back}
+          onPress={() => conSalida(back)}
           style={[styles.detailBack, { top: insets.top + 10 }]}
         >
           <AppIcon

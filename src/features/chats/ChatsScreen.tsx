@@ -1,21 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { conSalida } from "@/components/salidaModulo";
 import { BotonBarra } from "@/components/ui/BotonBarra";
 import { useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
+import {
+  CabeceraFlotante,
+  useScrollCabecera,
+} from "@/components/ui/CabeceraFlotante";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
-import { FondoHome } from "@/features/home/components/FondoHome";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
@@ -39,7 +43,7 @@ const CAMBIO_FILTRO = FadeIn.duration(200);
 /** Mismo círculo que los botones de Notificaciones y Favoritos */
 
 /**
- * Lista de chats, con el mismo aspecto que Notificaciones y Favoritos: el fondo del inicio,
+ * Lista de chats, con el mismo aspecto que Notificaciones y Favoritos: el fondo de la app,
  * el título al centro con volver y campana, un buscador blanco (con "@" busca por persona),
  * píldoras de filtro y una tarjeta por conversación.
  */
@@ -52,11 +56,16 @@ export function ChatsScreen() {
   const chats = useMemo(() => todos.filter((chat) => !chat.hidden), [todos]);
   const seleccion = useSeleccion();
   const [menu, setMenu] = useState(false);
+  // Alto del encabezado flotante: la lista empieza debajo de él
+  const [altoCabecera, setAltoCabecera] = useState(0);
   const { mostrar } = useAvisos();
   // Hacia el botón de eliminar vuelan los chats (efecto Stream)
   const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
   const { back, openThread } = useAppNavigation();
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const { desplazado, alHacerScroll, reiniciar } = useScrollCabecera();
+  // Cada filtro monta la lista de nuevo, desde arriba
+  useEffect(reiniciar, [filtro, reiniciar]);
   const [busqueda, setBusqueda] = useState("");
 
   const productIds = useMemo(
@@ -169,74 +178,10 @@ export function ChatsScreen() {
 
   return (
     <View style={styles.pantalla}>
-      {/* El mismo fondo que Notificaciones y Favoritos */}
-      <FondoHome intensidad={0.7} />
-
-      {/* Volver a la izquierda, el título al centro y la campana a la derecha */}
-      <View style={styles.barra}>
-        {activo ? (
-          <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
-            <Ionicons name="close" size={26} color={texto} />
-          </BotonBarra>
-        ) : (
-          <BotonBarra etiqueta="Volver" onPress={back}>
-            <View style={{ transform: [{ translateX: -1.5 }] }}>
-              <BackArrowIcon size={28} color={texto} />
-            </View>
-          </BotonBarra>
-        )}
-        <Text
-          accessibilityRole="header"
-          pointerEvents="none"
-          style={[styles.titulo, { color: texto }]}
-        >
-          {activo
-            ? marcados.size === 0
-              ? "Selecciona chats"
-              : `${marcados.size} seleccionado${marcados.size === 1 ? "" : "s"}`
-            : "Chats"}
-        </Text>
-        <View style={styles.acciones}>
-          {activo ? (
-            // Destino del efecto: hacia aquí vuelan los chats eliminados
-            <View ref={destinoRef} collapsable={false}>
-              <BotonBarra
-                etiqueta="Eliminar chats seleccionados"
-                peligro
-                disabled={marcados.size === 0}
-                onPress={eliminar}
-              >
-                <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-              </BotonBarra>
-            </View>
-          ) : (
-            <BotonBarra
-              etiqueta="Eliminar chats"
-              disabled={chats.length === 0}
-              onPress={() => setMenu(true)}
-            >
-              <IconoEliminarLinea size={26} color={"#FF8A1F"} />
-            </BotonBarra>
-          )}
-        </View>
-      </View>
-
-      <BuscadorBlanco
-        value={busqueda}
-        onChangeText={setBusqueda}
-        placeholder="Buscar chats o @usuario"
-        accessibilityLabel="Buscar conversaciones"
-        personas={buscaPersonas}
-      />
-
-      <FiltrosPildoras
-        opciones={opciones}
-        activo={filtro}
-        onCambiar={setFiltro}
-      />
-
       {status === "loading" ? (
-        <LoadingState />
+        <View style={{ paddingTop: altoCabecera }}>
+          <LoadingState />
+        </View>
       ) : (
         <Animated.View
           key={filtro}
@@ -244,6 +189,8 @@ export function ChatsScreen() {
           style={styles.lista}
         >
           <FlatList
+            onScroll={alHacerScroll}
+            scrollEventThrottle={16}
             data={visibleChats}
             extraData={marcados}
             keyExtractor={(chat) => chat.id}
@@ -252,7 +199,7 @@ export function ChatsScreen() {
             contentContainerStyle={{
               // Más ancha que otras listas: los chats abarcan más de lado a lado
               paddingHorizontal: 6,
-              paddingTop: 12,
+              paddingTop: altoCabecera + 12,
               // Espacio para que la barra de navegación no tape el último chat
               paddingBottom: insets.bottom + 110,
             }}
@@ -305,6 +252,81 @@ export function ChatsScreen() {
         </Animated.View>
       )}
 
+      {/* Encabezado flotante, sin tarjeta de fondo: la lista pasa por detrás */}
+      <CabeceraFlotante
+        paddingTop={8}
+        desplazado={desplazado}
+        onAlto={setAltoCabecera}
+      >
+        {/* Volver a la izquierda, el título al centro y la campana a la derecha */}
+        <View style={styles.barra}>
+          {activo ? (
+            <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
+              <Ionicons name="close" size={26} color={texto} />
+            </BotonBarra>
+          ) : (
+            <BotonBarra etiqueta="Volver" onPress={() => conSalida(back)}>
+              <View style={{ transform: [{ translateX: -1.5 }] }}>
+                <BackArrowIcon size={28} color={texto} />
+              </View>
+            </BotonBarra>
+          )}
+          <Text
+            accessibilityRole="header"
+            pointerEvents="none"
+            style={[styles.titulo, { color: texto }]}
+          >
+            {activo
+              ? marcados.size === 0
+                ? "Selecciona chats"
+                : `${marcados.size} seleccionado${marcados.size === 1 ? "" : "s"}`
+              : "Chats"}
+          </Text>
+          <View style={styles.acciones}>
+            {activo ? (
+              // Destino del efecto: hacia aquí vuelan los chats eliminados
+              <View ref={destinoRef} collapsable={false}>
+                <BotonBarra
+                  etiqueta="Eliminar chats seleccionados"
+                  // Con algo elegido: fondo rojo e icono blanco (igual en oscuro)
+                  peligro={marcados.size > 0}
+                  colorPeligro="#EF4444"
+                  disabled={marcados.size === 0}
+                  onPress={eliminar}
+                >
+                  <IconoEliminarLinea
+                    size={26}
+                    color={marcados.size > 0 ? "#FFFFFF" : texto}
+                  />
+                </BotonBarra>
+              </View>
+            ) : (
+              <BotonBarra
+                etiqueta="Eliminar chats"
+                disabled={chats.length === 0}
+                onPress={() => setMenu(true)}
+              >
+                <IconoEliminarLinea size={26} color={texto} />
+              </BotonBarra>
+            )}
+          </View>
+        </View>
+
+        <BuscadorBlanco
+          value={busqueda}
+          onChangeText={setBusqueda}
+          placeholder="Buscar chats o @usuario"
+          accessibilityLabel="Buscar conversaciones"
+          personas={buscaPersonas}
+        />
+
+        <FiltrosPildoras
+          opciones={opciones}
+          activo={filtro}
+          onCambiar={setFiltro}
+        />
+      </CabeceraFlotante>
+
       <MenuOpciones
         visible={menu}
         top={8 + 56}
@@ -328,7 +350,7 @@ export function ChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  pantalla: { flex: 1, paddingTop: 8 },
+  pantalla: { flex: 1 },
   barra: {
     height: 56,
     paddingHorizontal: 16,

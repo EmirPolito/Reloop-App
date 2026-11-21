@@ -2,14 +2,17 @@ import type { ReactNode } from "react";
 import { StyleSheet } from "react-native";
 
 import { PressableScale } from "@/components/PressableScale";
-import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import {
+  ALTO_PILDORA,
+  PildoraCristal,
+} from "@/features/busqueda/components/PildoraCristal";
 
-/** Lado de los botones redondos del encabezado */
-export const LADO_BOTON_BARRA = 48;
+/** Lado de los botones redondos del encabezado: el alto de los buscadores */
+export const LADO_BOTON_BARRA = ALTO_PILDORA;
 
 /**
- * Botón redondo del encabezado (volver, eliminar...): el borde es del mismo color que el
- * fondo, así no se ve ningún aro.
+ * Botón redondo de cristal del encabezado (volver, eliminar...), igual al botón de volver
+ * del módulo de búsqueda.
  */
 export function BotonBarra({
   etiqueta,
@@ -28,8 +31,6 @@ export function BotonBarra({
   colorPeligro?: string;
   children: ReactNode;
 }) {
-  const { isDark } = useAppTheme();
-  const fondo = peligro ? colorPeligro : isDark ? "#ffffff1a" : "#ffffffb7";
   return (
     <PressableScale
       accessibilityRole="button"
@@ -38,13 +39,14 @@ export function BotonBarra({
       disabled={disabled}
       onPress={onPress}
       scaleTo={0.92}
-      style={[
-        styles.boton,
-        { backgroundColor: fondo, borderColor: "transparent" },
-        disabled && { opacity: 0.45 },
-      ]}
+      style={disabled && styles.apagado}
     >
-      {children}
+      <PildoraCristal
+        contentStyle={styles.boton}
+        relleno={peligro ? colorPeligro : undefined}
+      >
+        {children}
+      </PildoraCristal>
     </PressableScale>
   );
 }
@@ -53,9 +55,10 @@ const styles = StyleSheet.create({
   boton: {
     width: LADO_BOTON_BARRA,
     height: LADO_BOTON_BARRA,
-    borderRadius: LADO_BOTON_BARRA / 2,
-    borderWidth: 2,
-    alignItems: "center",
+    minHeight: LADO_BOTON_BARRA,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     justifyContent: "center",
   },
+  apagado: { opacity: 0.45 },
 });

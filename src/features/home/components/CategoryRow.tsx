@@ -45,7 +45,7 @@ const CategoryControl = memo(function CategoryControl({
   );
 });
 
-/** Fila fija de categorías; tocar una la activa y volver a tocarla la desactiva. */
+/** Fila de categorías del inicio; tocar una la activa y volver a tocarla la desactiva. */
 export function CategoryRow({
   activeCategory,
   onToggleCategory,

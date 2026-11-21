@@ -16,6 +16,10 @@ import { useLatestRef } from "@/hooks/useLatestRef";
 import type { IconName } from "@/features/shared/constants";
 import { BlurView } from "expo-blur";
 import {
+  coloresCristal,
+  fondoCristalVisto,
+} from "@/features/busqueda/components/PildoraCristal";
+import {
   memo,
   useCallback,
   useEffect,
@@ -76,10 +80,10 @@ const TOTAL_BOTONES = NAV_TABS.length;
 const MAX_INDEX = TOTAL_BOTONES - 1;
 const SEPARACION_CREAR = 10;
 
-const ALTO_CAPSULA = 66;
+const ALTO_CAPSULA = 60;
 const MARGEN_CAPSULA = 5;
-const TAMANO_ICONO = 21;
-const TAMANO_ICONO_CREAR = 32;
+const TAMANO_ICONO = 23;
+const TAMANO_ICONO_CREAR = 34;
 
 const ICONOS_LINEA: Partial<
   Record<Tab, ComponentType<{ size?: number; color?: string }>>
@@ -111,8 +115,8 @@ const COLOR_ICONO_PUBLICACION = "#ff3762";
 type Estilos = ReturnType<typeof createStyles>;
 
 /**
- * Superficie Liquid Glass: desenfoque nativo (iOS/Web), tinte translúcido
- * y reflejo especular superior para simular refracción de borde curvo.
+ * Superficie de cristal, igual a la de los buscadores (`PildoraCristal`): el tinte va debajo
+ * y el desenfoque encima, sin reflejo ni brillos (se veía metálico y más transparente).
  */
 const LiquidGlassSurface = memo(function LiquidGlassSurface({
   isDark,
@@ -123,25 +127,29 @@ const LiquidGlassSurface = memo(function LiquidGlassSurface({
 }) {
   return (
     <>
-      {Platform.OS !== "android" && (
-        <BlurView
-          intensity={55}
-          tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
       <View
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, styles.cristalTinte]}
       />
-      <View pointerEvents="none" style={styles.reflejoSuperior} />
+      {Platform.OS !== "android" && (
+        <BlurView
+          intensity={30}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
     </>
   );
 });
 
 /**
- * Pestaña de la cápsula con icono y etiqueta del módulo debajo.
+ * Pestaña de la cápsula: solo el icono (el nombre del módulo queda para el lector de pantalla).
+ * El toque no lo atiende ella sino el gesto de la cápsula (ver `gestoCapsula`); aquí solo se
+ * encoge un poco mientras se presiona.
  */
+/** Acción del lector de pantalla para activar una pestaña */
+const ACCION_ACTIVAR = [{ name: "activate" as const }];
+
 const TabButton = memo(function TabButton({
   tab,
   indice,
@@ -151,6 +159,7 @@ const TabButton = memo(function TabButton({
   showBadge,
   isDark,
   onPress,
+  presionado,
   styles,
 }: {
   tab: NavTabItem;
@@ -161,6 +170,8 @@ const TabButton = memo(function TabButton({
   showBadge: boolean;
   isDark: boolean;
   onPress: (tab: Tab) => void;
+  /** Índice de la pestaña bajo el dedo (-1 si ninguna) */
+  presionado: SharedValue<number>;
   styles: Estilos;
 }) {
   // Un solo cálculo por cuadro; los dos estilos solo lo leen
@@ -171,19 +182,30 @@ const TabButton = memo(function TabButton({
   );
   const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
   const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - activo.get() }));
+  const escalaStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scale: withTiming(presionado.get() === indice ? 0.92 : 1, {
+          duration: 90,
+        }),
+      },
+    ],
+  }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = "#101010";
+  // Sobre la pastilla gris: oscuro en claro y claro en oscuro
+  const colorActivo = isDark ? "#F1F5F9" : "#101010";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
   return (
-    <PressableScale
+    <Animated.View
+      accessible
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       accessibilityLabel={tab.label}
-      onPress={() => onPress(tab.id)}
-      scaleTo={0.92}
-      style={styles.hueco}
+      accessibilityActions={ACCION_ACTIVAR}
+      onAccessibilityAction={() => onPress(tab.id)}
+      style={[styles.hueco, escalaStyle]}
     >
       <View style={styles.icono}>
         <Animated.View style={[styles.iconoCapa, inactiveStyle]}>
@@ -213,21 +235,7 @@ const TabButton = memo(function TabButton({
         {showBadge ? <View style={styles.punto} /> : null}
       </View>
 
-      <View style={styles.etiquetaContenedor}>
-        <Animated.Text
-          numberOfLines={1}
-          style={[styles.etiqueta, { color: colorInactivo }, inactiveStyle]}
-        >
-          {tab.label}
-        </Animated.Text>
-        <Animated.Text
-          numberOfLines={1}
-          style={[styles.etiqueta, { color: colorActivo }, activeStyle]}
-        >
-          {tab.label}
-        </Animated.Text>
-      </View>
-    </PressableScale>
+    </Animated.View>
   );
 });
 
@@ -403,6 +411,9 @@ function NavegacionBase({
   const arrastrando = useSharedValue(0);
   const inicioArrastre = useSharedValue(0);
   const anchoHueco = useSharedValue(0);
+  // El ancho de la píldora va como estilo normal (cambia solo al medir): animarlo obligaba a
+  // recalcular el layout en cada cuadro del deslizamiento
+  const [anchoPildora, setAnchoPildora] = useState(0);
 
   /** Desliza la píldora a un hueco con el estiramiento de siempre (todo en el hilo de UI) */
   const moverPildora = useCallback(
@@ -501,6 +512,7 @@ function NavegacionBase({
         (e.nativeEvent.layout.width - MARGEN_CAPSULA * 2) / TOTAL_BOTONES;
       if (nuevoAncho > 0 && nuevoAncho !== anchoHueco.get()) {
         anchoHueco.set(nuevoAncho);
+        setAnchoPildora(nuevoAncho);
       }
     },
     [anchoHueco],
@@ -581,7 +593,9 @@ function NavegacionBase({
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetX([-8, 8])
+        // A partir de lo que el toque ya no acepta (14): un toque con el dedo un poco movido
+        // sigue siendo toque y no se convierte en un arrastre que no navega
+        .activeOffsetX([-14, 14])
         .onStart((e) => {
           const ancho = anchoHueco.get();
           if (ancho <= 0) return;
@@ -661,13 +675,53 @@ function NavegacionBase({
     ],
   );
 
+  /**
+   * El toque de las pestañas lo atiende un gesto nativo de la cápsula, no un Pressable dentro
+   * de ella: el Pressable competía con el arrastre de la píldora y a veces se perdía el toque
+   * (había que tocar varias veces). Con el toque y el arrastre en el mismo sistema, el primero
+   * que se reconoce gana y el otro se cancela, así un solo toque siempre navega.
+   */
+  const presionado = useSharedValue(-1);
+  const tocarHueco = useCallback(
+    (hueco: number) => {
+      const tab = NAV_TABS[hueco];
+      if (tab) handleTabPress(tab.id);
+    },
+    [handleTabPress],
+  );
+  const gestoCapsula = useMemo(() => {
+    const huecoEn = (x: number) => {
+      "worklet";
+      const ancho = anchoHueco.get();
+      if (ancho <= 0) return -1;
+      return Math.min(
+        Math.max(Math.floor((x - MARGEN_CAPSULA) / ancho), 0),
+        MAX_INDEX,
+      );
+    };
+    const toque = Gesture.Tap()
+      .maxDistance(14)
+      .onBegin((e) => {
+        presionado.set(huecoEn(e.x));
+      })
+      // La regla cree que se lee una ref al dibujar: `tocarHueco` solo corre al tocar
+      // eslint-disable-next-line react-hooks/refs
+      .onEnd((e, exito) => {
+        const hueco = huecoEn(e.x);
+        if (exito && hueco >= 0) scheduleOnRN(tocarHueco, hueco);
+      })
+      .onFinalize(() => {
+        presionado.set(-1);
+      });
+    return Gesture.Race(panGesture, toque);
+  }, [panGesture, anchoHueco, presionado, tocarHueco]);
+
   const indicadorStyle = useAnimatedStyle(() => {
     const ancho = anchoHueco.get();
     const lift = arrastrando.get();
     const stretch = estirar.get();
 
     return {
-      width: ancho,
       opacity: ancho > 0 ? indicadorVisible.get() : 0,
       transform: [
         { translateX: posicion.get() * ancho },
@@ -699,7 +753,7 @@ function NavegacionBase({
       />
 
       <View style={[styles.navigationRow, { bottom: bottomInset }]}>
-        <GestureDetector gesture={panGesture}>
+        <GestureDetector gesture={gestoCapsula}>
           <View style={[styles.sombra, styles.capsulaSombra]}>
             <View
               accessibilityRole="tablist"
@@ -710,7 +764,11 @@ function NavegacionBase({
 
               <Animated.View
                 pointerEvents="none"
-                style={[styles.indicador, indicadorStyle]}
+                style={[
+                  styles.indicador,
+                  { width: anchoPildora },
+                  indicadorStyle,
+                ]}
               />
 
               {NAV_TABS.map((tab, indice) => (
@@ -724,6 +782,7 @@ function NavegacionBase({
                   showBadge={tab.id === "chats" && hasUnreadChats}
                   isDark={isDark}
                   onPress={handleTabPress}
+                  presionado={presionado}
                   styles={styles}
                 />
               ))}
@@ -747,38 +806,30 @@ function NavegacionBase({
 /*  Estilos Liquid Glass                                                      */
 /* -------------------------------------------------------------------------- */
 
+/** La sombra suave de los buscadores de cristal (`sombraCristal`), sin brillos internos */
+const SOMBRA_CRISTAL = "0 4px 14px rgba(0, 0, 0, 0.08)";
+
 function createStyles(isDark: boolean) {
-  const android = Platform.OS === "android";
+  // Borde: el del cristal de los buscadores
+  const vidrio = coloresCristal(isDark);
   const colors = isDark
     ? {
-        cristal: android ? "rgba(30, 30, 34, 0.94)" : "rgba(28, 28, 32, 0.62)",
-        borde: "rgba(255, 255, 255, 0.16)",
-        bordeSuperior: "rgba(255, 255, 255, 0.34)",
-        reflejo: "rgba(255, 255, 255, 0.10)",
+        cristal: fondoCristalVisto(true),
+        borde: vidrio.borde,
+        bordeSuperior: vidrio.borde,
         separador: "rgba(255, 255, 255, 0.10)",
-        indicador: "#FFFFFF",
-        bordeIndicador: "rgba(255, 255, 255, 0.9)",
-        sombra:
-          "0 10px 28px rgba(0, 0, 0, 0.42), inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 2px rgba(0, 0, 0, 0.35)",
-        sombraIndicador:
-          "0 4px 12px rgba(0, 0, 0, 0.32), inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 1.5px rgba(0, 0, 0, 0.08)",
+        indicador: "rgba(255, 255, 255, 0.14)",
+        sombra: SOMBRA_CRISTAL,
         fondoContador: "#222226",
         text: "#FFFFFF",
       }
     : {
-        cristal: android
-          ? "rgba(248, 248, 250, 0.96)"
-          : "rgba(255, 255, 255, 0.72)",
-        borde: "rgba(255, 255, 255, 0.85)",
-        bordeSuperior: "#FFFFFF",
-        reflejo: "rgba(255, 255, 255, 0.65)",
+        cristal: fondoCristalVisto(false),
+        borde: vidrio.borde,
+        bordeSuperior: vidrio.borde,
         separador: "rgba(0, 0, 0, 0.06)",
-        indicador: "#FFFFFF",
-        bordeIndicador: "#FFFFFF",
-        sombra:
-          "0 10px 28px rgba(0, 0, 0, 0.12), inset 0 1.5px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.06)",
-        sombraIndicador:
-          "0 3px 10px rgba(0, 0, 0, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 1.5px rgba(0, 0, 0, 0.05)",
+        indicador: "rgba(120, 120, 128, 0.14)",
+        sombra: SOMBRA_CRISTAL,
         fondoContador: "#EBEBEF",
         text: "#101010",
       };
@@ -838,26 +889,14 @@ function createStyles(isDark: boolean) {
       backgroundColor: colors.cristal,
     },
 
-    reflejoSuperior: {
-      position: "absolute",
-      top: 0,
-      left: 18,
-      right: 18,
-      height: 1.5,
-      borderRadius: 1,
-      backgroundColor: colors.reflejo,
-    },
-
     indicador: {
       position: "absolute",
       left: MARGEN_CAPSULA,
       top: MARGEN_CAPSULA,
       bottom: MARGEN_CAPSULA,
       borderRadius: (ALTO_CAPSULA - MARGEN_CAPSULA * 2) / 2,
+      // Plana (sin sombra ni borde): un gris claro transparente
       backgroundColor: colors.indicador,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.bordeIndicador,
-      boxShadow: colors.sombraIndicador,
     },
 
     hueco: {
@@ -865,7 +904,6 @@ function createStyles(isDark: boolean) {
       height: "100%",
       alignItems: "center",
       justifyContent: "center",
-      gap: 3,
     },
 
     icono: {
@@ -890,21 +928,6 @@ function createStyles(isDark: boolean) {
       bottom: 0,
       alignItems: "center",
       justifyContent: "center",
-    },
-
-    etiquetaContenedor: {
-      height: 12,
-      width: "100%",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    etiqueta: {
-      position: "absolute",
-      fontSize: 11,
-      lineHeight: 12,
-      fontFamily: "Inter_600SemiBold",
-      letterSpacing: -0.1,
     },
 
     punto: {

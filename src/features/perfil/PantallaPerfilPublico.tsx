@@ -1,5 +1,6 @@
 import { View } from "react-native";
 
+import { conSalida } from "@/components/salidaModulo";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
@@ -43,7 +44,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   if (status === "loading") {
     return (
       <View style={baseStyles.fill}>
-        <BackHeader title="Perfil" onBack={back} />
+        <BackHeader title="Perfil" onBack={() => conSalida(back)} />
         <LoadingState />
       </View>
     );

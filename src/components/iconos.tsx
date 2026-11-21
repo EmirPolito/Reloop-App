@@ -171,7 +171,8 @@ export function AgregarIcon({ size = 24, color }: IconProps) {
       <Path
         d="M12 4V20M4 12H20"
         stroke={color}
-        strokeWidth="2"
+        // Más delgado: a su tamaño en la barra se veía muy relleno
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

@@ -55,6 +55,8 @@ export function BarraNavegacion() {
     accion();
   }, []);
 
+  // Desde la barra se navega al instante (sin esperar la salida animada del módulo, que solo
+  // se usa con su botón de volver): el toque responde y la pantalla nueva entra con su efecto
   const alIrAPestana = useCallback(
     (tab: Tab) => conBloqueo(tab, () => navigate(tab)),
     [conBloqueo, navigate],

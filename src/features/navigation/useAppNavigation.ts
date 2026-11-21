@@ -21,6 +21,8 @@ export function useAppNavigation() {
         router.push({ pathname: "/user/[id]", params: { id: userId } }),
       openEditProfile: () => router.push("/editar-perfil"),
       openNotifications: () => router.push("/notificaciones"),
+      /** Módulo de búsqueda (se abre encima del inicio) */
+      openSearch: () => router.push("/buscar"),
       /** Política de privacidad o términos, en su propia pantalla */
       openLegal: (documento: DocumentoLegalId) =>
         router.push({ pathname: "/legal/[documento]", params: { documento } }),

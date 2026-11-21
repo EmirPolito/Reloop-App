@@ -13,20 +13,35 @@ export function IllustratedEmptyState({
   title,
   message,
   style,
+  conInter = false,
 }: {
   icon: ReactNode;
   title: string;
   message: string;
   style?: StyleProp<ViewStyle>;
+  /** Título y leyenda con Inter (en lugar de la letra de siempre) */
+  conInter?: boolean;
 }) {
   const { isDark } = useAppTheme();
   return (
     <View style={[styles.container, style]}>
       <View style={styles.icon}>{icon}</View>
-      <Text style={[styles.title, { color: isDark ? "#ffffff" : "#101010" }]}>
+      <Text
+        style={[
+          styles.title,
+          { color: isDark ? "#ffffff" : "#101010" },
+          conInter && styles.titleInter,
+        ]}
+      >
         {title}
       </Text>
-      <Text style={[styles.message, { color: isDark ? "#9ca3af" : "#696969" }]}>
+      <Text
+        style={[
+          styles.message,
+          { color: isDark ? "#9ca3af" : "#696969" },
+          conInter && styles.messageInter,
+        ]}
+      >
         {message}
       </Text>
     </View>
@@ -45,6 +60,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 4,
     textAlign: "center",
+  },
+  titleInter: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
+  messageInter: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13.5,
+    lineHeight: 20,
   },
   message: {
     fontSize: 12.5,

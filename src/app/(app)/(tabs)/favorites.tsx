@@ -3,7 +3,7 @@ import { PantallaFavoritos } from "@/features/favoritos";
 
 export default function FavoritesRoute() {
   return (
-    <TabScene>
+    <TabScene efecto="modulo">
       <PantallaFavoritos />
     </TabScene>
   );

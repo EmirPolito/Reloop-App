@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 
+import { PildoraCristal } from "@/features/busqueda/components/PildoraCristal";
+
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
@@ -11,8 +13,8 @@ import {
 } from "./IconoNotificacion";
 
 /**
- * Botón circular con la campana del encabezado de las pestañas: abre las notificaciones y
- * muestra cuántas hay sin leer.
+ * Botón circular de cristal (el estilo del buscador) con la campana del encabezado del
+ * inicio: abre las notificaciones y muestra cuántas hay sin leer.
  */
 export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
   const { isDark } = useAppTheme();
@@ -23,14 +25,7 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
     <Pressable
       onPress={openNotifications}
       style={({ pressed }) => [
-        styles.boton,
-        {
-          width: lado,
-          height: lado,
-          // El borde es del mismo color que el fondo: no se ve ningún aro
-          backgroundColor: isDark ? "#ffffff1f" : "#ffffff6d",
-          borderColor: "transparent",
-        },
+        { width: lado, height: lado },
         pressed && { transform: [{ scale: 0.98 }] },
       ]}
       accessibilityRole="button"
@@ -40,15 +35,23 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
           : "Notificaciones"
       }
     >
-      {/* De contorno; rellena cuando hay notificaciones sin leer */}
-      {unreadCount > 0 ? (
-        <IconoNotificacionRellena
-          size={24}
-          color={isDark ? "#FFFFFF" : "#23242C"}
-        />
-      ) : (
-        <IconoNotificacion size={24} color={isDark ? "#FFFFFF" : "#23242C"} />
-      )}
+      <PildoraCristal
+        contentStyle={[
+          styles.boton,
+          { width: lado, height: lado, minHeight: lado },
+        ]}
+      >
+        {/* De contorno; rellena cuando hay notificaciones sin leer */}
+        {unreadCount > 0 ? (
+          <IconoNotificacionRellena
+            size={24}
+            color={isDark ? "#FFFFFF" : "#23242C"}
+          />
+        ) : (
+          <IconoNotificacion size={24} color={isDark ? "#FFFFFF" : "#23242C"} />
+        )}
+      </PildoraCristal>
+      {/* Fuera del cristal, que recorta lo que sale de él */}
       {unreadCount > 0 ? (
         <View style={styles.contador}>
           <Text style={styles.contadorTexto}>
@@ -62,11 +65,8 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
 
 const styles = StyleSheet.create({
   boton: {
-    height: 45,
-    width: 45,
-    borderWidth: 2,
-    borderRadius: 30,
-    alignItems: "center",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     justifyContent: "center",
   },
   contador: {

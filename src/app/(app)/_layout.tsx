@@ -19,13 +19,27 @@ export default function AppLayout() {
     <SessionProviders key={user.uid} user={user}>
       <Stack screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="product/[id]" />
+        {/* Sin la animación de la pila: entra y sale con la de los módulos (TabScene) */}
+        <Stack.Screen name="product/[id]" options={{ animation: "none" }} />
         <Stack.Screen name="chat/[id]" />
-        <Stack.Screen name="user/[id]" />
-        <Stack.Screen name="editar-perfil" />
-        <Stack.Screen name="notificaciones" />
+        {/* Sin la animación de la pila: entran y salen con la de los módulos (TabScene) */}
+        <Stack.Screen name="user/[id]" options={{ animation: "none" }} />
+        <Stack.Screen name="editar-perfil" options={{ animation: "none" }} />
+        {/* Sin la animación de la pila: entra y sale con la de los módulos (TabScene) */}
+        <Stack.Screen name="notificaciones" options={{ animation: "none" }} />
         <Stack.Screen name="legal/[documento]" />
         <Stack.Screen name="premium" />
+        {/* Encima del inicio, que se sigue viendo detrás: la transición la anima el módulo.
+            "contained": dentro de la pila y no como modal nativo encima de toda la app. Así el
+            efecto de disolver (que se dibuja sobre la pila) se ve: con "transparentModal" el
+            polvo quedaba detrás del módulo y solo se veía el hueco en blanco */}
+        <Stack.Screen
+          name="buscar"
+          options={{
+            presentation: "containedTransparentModal",
+            animation: "none",
+          }}
+        />
       </Stack>
       {/* La barra de navegación: una sola, fuera de la pila, así no se duplica ni se anima por
           separado al ir y volver de notificaciones o de un perfil */}

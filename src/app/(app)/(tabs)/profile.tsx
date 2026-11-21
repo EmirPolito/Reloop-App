@@ -3,7 +3,7 @@ import { PantallaPerfil } from "@/features/perfil";
 
 export default function ProfileRoute() {
   return (
-    <TabScene>
+    <TabScene efecto="modulo">
       <PantallaPerfil />
     </TabScene>
   );

@@ -33,7 +33,11 @@ export default function TabsLayout() {
             freezeOnBlur: true,
           }}
         >
-          <Tabs.Screen name="index" />
+          {/* El inicio también llega hasta arriba: su buscador flota con neblina detrás de la hora */}
+          <Tabs.Screen
+            name="index"
+            options={{ sceneStyle: { backgroundColor: "transparent" } }}
+          />
           <Tabs.Screen name="favorites" />
           <Tabs.Screen name="create" />
           <Tabs.Screen name="chats" />

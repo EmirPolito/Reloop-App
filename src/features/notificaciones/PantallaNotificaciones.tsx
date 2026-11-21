@@ -1,16 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionList, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { conSalida } from "@/components/salidaModulo";
 import { BotonBarra } from "@/components/ui/BotonBarra";
 import { useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
+import {
+  CabeceraFlotante,
+  useScrollCabecera,
+} from "@/components/ui/CabeceraFlotante";
 import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
 import { IconoNotificacionRellena } from "@/components/ui/IconoNotificacion";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
@@ -18,7 +23,6 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { FondoHome } from "@/features/home/components/FondoHome";
 import { CATEGORIES } from "@/features/marketplace/data";
 import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
 import type { CategoryId } from "@/features/marketplace/types";
@@ -66,12 +70,17 @@ export function PantallaNotificaciones() {
   const { markAllRead, remove } = useNotificationActions();
   const seleccion = useSeleccion();
   const [menu, setMenu] = useState(false);
+  // Alto del encabezado flotante: la lista empieza debajo de él
+  const [altoCabecera, setAltoCabecera] = useState(0);
   const { mostrar } = useAvisos();
   // Hacia el botón de eliminar vuelan las tarjetas (efecto Stream)
   const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
   const { products } = useMarketplaceState();
   const openNotification = useOpenNotification();
   const [filtro, setFiltro] = useState<Filtro>("todas");
+  const { desplazado, alHacerScroll, reiniciar } = useScrollCabecera();
+  // Cada filtro monta la lista de nuevo, desde arriba
+  useEffect(reiniciar, [filtro, reiniciar]);
   const [busqueda, setBusqueda] = useState("");
   // Un solo "ahora" para toda la lista: las antigüedades no bailan entre renders
   const [now] = useState(() => Date.now());
@@ -194,75 +203,11 @@ export function PantallaNotificaciones() {
   ];
 
   return (
-    <View style={[styles.pantalla, { paddingTop: insets.top + 8 }]}>
-      {/* El mismo fondo del inicio, con los colores de arriba un poco menos marcados */}
-      <FondoHome intensidad={0.7} dentroDeEscena={false} />
-
-      {/* Volver a la izquierda, el título al centro y marcar como leídas a la derecha */}
-      <View style={styles.barra}>
-        {activo ? (
-          <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
-            <Ionicons name="close" size={26} color={texto} />
-          </BotonBarra>
-        ) : (
-          <BotonBarra etiqueta="Volver" onPress={back}>
-            <View style={{ transform: [{ translateX: -1.5 }] }}>
-              <BackArrowIcon size={ICONO_ATRAS} color={texto} />
-            </View>
-          </BotonBarra>
-        )}
-
-        <Text
-          accessibilityRole="header"
-          pointerEvents="none"
-          style={[styles.titulo, { color: texto }]}
-        >
-          {activo
-            ? marcados.size === 0
-              ? "Selecciona"
-              : `${marcados.size} seleccionada${marcados.size === 1 ? "" : "s"}`
-            : "Notificaciones"}
-        </Text>
-
-        <View style={styles.acciones}>
-          {activo ? (
-            // Destino del efecto: hacia aquí vuelan las tarjetas eliminadas
-            <View ref={destinoRef} collapsable={false}>
-              <BotonBarra
-                etiqueta="Eliminar notificaciones seleccionadas"
-                peligro
-                colorPeligro="#EF4444"
-                disabled={marcados.size === 0}
-                onPress={eliminar}
-              >
-                <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-              </BotonBarra>
-            </View>
-          ) : (
-            <BotonBarra etiqueta="Más opciones" onPress={() => setMenu(true)}>
-              <Ionicons name="ellipsis-horizontal" size={24} color={texto} />
-            </BotonBarra>
-          )}
-        </View>
-      </View>
-
-      {/* Buscador blanco, como el del inicio */}
-      <BuscadorBlanco
-        value={busqueda}
-        onChangeText={setBusqueda}
-        placeholder="Buscar notificaciones o @usuario"
-        accessibilityLabel="Buscar notificaciones"
-        personas={buscaPersonas}
-      />
-
-      <FiltrosPildoras
-        opciones={opciones}
-        activo={filtro}
-        onCambiar={setFiltro}
-      />
-
+    <View style={styles.pantalla}>
       {status === "loading" ? (
-        <LoadingState />
+        <View style={{ paddingTop: altoCabecera }}>
+          <LoadingState />
+        </View>
       ) : (
         <Animated.View entering={ENTRADA} style={styles.lista}>
           <Animated.View
@@ -271,6 +216,8 @@ export function PantallaNotificaciones() {
             style={styles.lista}
           >
             <SectionList
+              onScroll={alHacerScroll}
+              scrollEventThrottle={16}
               sections={sections}
               extraData={marcados}
               keyExtractor={(item) => item.id}
@@ -279,6 +226,7 @@ export function PantallaNotificaciones() {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{
                 paddingHorizontal: 15,
+                paddingTop: altoCabecera,
                 // Espacio para que la barra de navegación no tape la última tarjeta
                 paddingBottom: insets.bottom + 110,
               }}
@@ -342,6 +290,76 @@ export function PantallaNotificaciones() {
           </Animated.View>
         </Animated.View>
       )}
+
+      {/* Encabezado flotante, sin tarjeta de fondo: la lista pasa por detrás */}
+      <CabeceraFlotante
+        paddingTop={insets.top + 8}
+        desplazado={desplazado}
+        onAlto={setAltoCabecera}
+      >
+        {/* Volver a la izquierda, el título al centro y marcar como leídas a la derecha */}
+        <View style={styles.barra}>
+          {activo ? (
+            <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
+              <Ionicons name="close" size={26} color={texto} />
+            </BotonBarra>
+          ) : (
+            <BotonBarra etiqueta="Volver" onPress={() => conSalida(back)}>
+              <View style={{ transform: [{ translateX: -1.5 }] }}>
+                <BackArrowIcon size={ICONO_ATRAS} color={texto} />
+              </View>
+            </BotonBarra>
+          )}
+
+          <Text
+            accessibilityRole="header"
+            pointerEvents="none"
+            style={[styles.titulo, { color: texto }]}
+          >
+            {activo
+              ? marcados.size === 0
+                ? "Selecciona"
+                : `${marcados.size} seleccionada${marcados.size === 1 ? "" : "s"}`
+              : "Notificaciones"}
+          </Text>
+
+          <View style={styles.acciones}>
+            {activo ? (
+              // Destino del efecto: hacia aquí vuelan las tarjetas eliminadas
+              <View ref={destinoRef} collapsable={false}>
+                <BotonBarra
+                  etiqueta="Eliminar notificaciones seleccionadas"
+                  peligro
+                  colorPeligro="#EF4444"
+                  disabled={marcados.size === 0}
+                  onPress={eliminar}
+                >
+                  <IconoEliminarLinea size={26} color={"#FFFFFF"} />
+                </BotonBarra>
+              </View>
+            ) : (
+              <BotonBarra etiqueta="Más opciones" onPress={() => setMenu(true)}>
+                <Ionicons name="ellipsis-horizontal" size={24} color={texto} />
+              </BotonBarra>
+            )}
+          </View>
+        </View>
+
+        {/* Buscador blanco, como el del inicio */}
+        <BuscadorBlanco
+          value={busqueda}
+          onChangeText={setBusqueda}
+          placeholder="Buscar notificaciones o @usuario"
+          accessibilityLabel="Buscar notificaciones"
+          personas={buscaPersonas}
+        />
+
+        <FiltrosPildoras
+          opciones={opciones}
+          activo={filtro}
+          onCambiar={setFiltro}
+        />
+      </CabeceraFlotante>
 
       <MenuOpciones
         visible={menu}

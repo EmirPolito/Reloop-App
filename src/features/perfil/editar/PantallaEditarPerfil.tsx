@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { conSalida } from "@/components/salidaModulo";
 import { PressableScale } from "@/components/PressableScale";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
@@ -241,7 +242,7 @@ export function PantallaEditarPerfil() {
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel="Volver al perfil"
-          onPress={back}
+          onPress={() => conSalida(back)}
           scaleTo={0.92}
           hitSlop={6}
           style={styles.botonVolver}
