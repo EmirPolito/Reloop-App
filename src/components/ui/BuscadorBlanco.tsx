@@ -3,7 +3,7 @@ import { StyleSheet, TextInput } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { PressableScale } from "@/components/PressableScale";
-import { TRANSICION_MODULO_RAPIDA } from "@/constants/motion";
+import { TRANSICION_MODULO } from "@/constants/motion";
 import {
   GROSOR_LUPA,
   PildoraCristal,
@@ -48,7 +48,7 @@ export function BuscadorBlanco({
     if (!autoFocus) return;
     const espera = setTimeout(
       () => entrada.current?.focus(),
-      TRANSICION_MODULO_RAPIDA.entrada.duration,
+      TRANSICION_MODULO.entrada.duration,
     );
     return () => clearTimeout(espera);
   }, [autoFocus]);

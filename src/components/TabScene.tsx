@@ -8,12 +8,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import {
-  ENTRADA_MODULO,
-  TRANSICION_MODULO,
-  TRANSICION_MODULO_RAPIDA,
-} from "@/constants/motion";
-import { registrarSalida, tomarEntradaRapida } from "./salidaModulo";
+import { ENTRADA_MODULO, TRANSICION_MODULO } from "@/constants/motion";
+import { registrarSalida } from "./salidaModulo";
 
 const IS_WEB = Platform.OS === "web";
 
@@ -22,8 +18,9 @@ const IS_WEB = Platform.OS === "web";
  * corre en el hilo de UI con un solo valor compartido, sin renderizar la pestaña de nuevo.
  * Con "Reducir movimiento" activo, Reanimated salta al estado final y no hay animación.
  *
- * Con `efecto="modulo"` entra y sale como el módulo de búsqueda (más despacio, y con salida
- * animada antes de navegar fuera: ver `conSalida`). Sirve también para pantallas de la pila.
+ * Con `efecto="modulo"` entra y sale como el módulo de búsqueda (con la transición corta de
+ * módulo, y con salida animada antes de navegar fuera: ver `conSalida`). Sirve también para
+ * pantallas de la pila.
  *
  * En la web, además, oculta la pestaña sin foco (React Navigation la deja dibujada). En iOS y
  * Android no hace falta: react-native-screens ya las desacopla.
@@ -31,16 +28,11 @@ const IS_WEB = Platform.OS === "web";
 export function TabScene({
   children,
   efecto = "pestana",
-}: PropsWithChildren<{
-  /** "moduloRapido": como "modulo", con la transición corta (el buscador de chats) */
-  efecto?: "pestana" | "modulo" | "moduloRapido";
-}>) {
+}: PropsWithChildren<{ efecto?: "pestana" | "modulo" }>) {
   const progress = useSharedValue(0);
-  const modulo = efecto !== "pestana";
-  const transicion =
-    efecto === "moduloRapido" ? TRANSICION_MODULO_RAPIDA : TRANSICION_MODULO;
+  const modulo = efecto === "modulo";
   const desplazamiento = modulo
-    ? transicion.desplazamiento
+    ? TRANSICION_MODULO.desplazamiento
     : ENTRADA_MODULO.desplazamiento;
 
   useFocusEffect(
@@ -48,21 +40,13 @@ export function TabScene({
       progress.set(
         withTiming(
           1,
-          !modulo
-            ? ENTRADA_MODULO.timing
-            : // Tras una salida corta (el buscador de chats), la entrada también es corta
-              tomarEntradaRapida()
-              ? TRANSICION_MODULO_RAPIDA.entrada
-              : transicion.entrada,
+          modulo ? TRANSICION_MODULO.entrada : ENTRADA_MODULO.timing,
         ),
       );
       const quitarSalida = modulo
-        ? registrarSalida((despues, rapida) => {
-            const salida = rapida
-              ? TRANSICION_MODULO_RAPIDA.salida
-              : transicion.salida;
+        ? registrarSalida((despues) => {
             progress.set(
-              withTiming(0, salida, (terminado) => {
+              withTiming(0, TRANSICION_MODULO.salida, (terminado) => {
                 if (terminado) scheduleOnRN(despues);
               }),
             );
@@ -72,7 +56,7 @@ export function TabScene({
         quitarSalida?.();
         progress.set(0);
       };
-    }, [progress, modulo, transicion]),
+    }, [progress, modulo]),
   );
 
   const animatedStyle = useAnimatedStyle(() => {

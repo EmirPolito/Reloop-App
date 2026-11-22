@@ -34,6 +34,8 @@ export function ThreadHeader({
   const { isDark, styles } = useAppTheme();
   const insets = useSafeAreaInsets();
   const iconColor = isDark ? "#FFFFFF" : "#101010";
+  // Blanco sólido en claro: el cristal translúcido tomaba el gris de la capa del encabezado
+  const fondoBoton = isDark ? undefined : "#FFFFFF";
   const isIOS = Platform.OS === "ios";
 
   // iOS: el blur hace el vidrio, el tinte es suave.
@@ -83,7 +85,11 @@ export function ThreadHeader({
         />
       )}
 
-      <BotonBarra etiqueta="Volver a los chats" onPress={onBack}>
+      <BotonBarra
+        etiqueta="Volver a los chats"
+        onPress={onBack}
+        fondo={fondoBoton}
+      >
         <View style={{ transform: [{ translateX: -1.5 }] }}>
           <BackArrowIcon size={28} color={iconColor} />
         </View>
@@ -121,7 +127,11 @@ export function ThreadHeader({
       </View>
 
       {/* Botón derecho de menú */}
-      <BotonBarra etiqueta="Más opciones" onPress={onOpenMenu}>
+      <BotonBarra
+        etiqueta="Más opciones"
+        onPress={onOpenMenu}
+        fondo={fondoBoton}
+      >
         <View style={{ transform: [{ translateY: -0.5 }] }}>
           <CategoryIcon size={22} color={iconColor} />
         </View>

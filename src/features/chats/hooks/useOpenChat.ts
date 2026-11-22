@@ -42,8 +42,8 @@ export function useOpenChat() {
           product,
         });
         if (intro) notify(other.id, { type: "mensaje", chatId, text: intro });
-        // El módulo en pantalla sale con la animación corta y luego entra la conversación
-        conSalida(() => openThread(chatId), true);
+        // El módulo en pantalla sale con su animación y luego entra la conversación
+        conSalida(() => openThread(chatId));
       } catch (error) {
         showErrorAlert("No se pudo abrir el chat", error);
       } finally {

@@ -39,7 +39,7 @@ const ESCALA_LEADING_RECOGIDO = 0.82;
 const ANCHO_MAXIMO = 370; // Ancho máximo (tablets o pantallas grandes)
 const ALTO_ABIERTA = 65; // Alto de la card en mobile
 const MARGEN = 16; // Margen lateral: más margen = card menos ancha
-const BAJAR_CAPA = 16; // Distancia extra bajo la zona segura (sube/baja la card)
+const BAJAR_CAPA = 6; // Distancia extra bajo la zona segura (sube/baja la card)
 
 const ASOMAR = { duration: 320, easing: EASE_OUT_CUBIC };
 // Entrada con la misma curva suave que la salida

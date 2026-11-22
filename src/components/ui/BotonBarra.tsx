@@ -19,6 +19,7 @@ export function BotonBarra({
   onPress,
   disabled = false,
   peligro = false,
+  fondo,
   colorPeligro = "#FF8A1F",
   children,
 }: {
@@ -27,6 +28,11 @@ export function BotonBarra({
   disabled?: boolean;
   /** Fondo naranja (acción que elimina) */
   peligro?: boolean;
+  /**
+   * Fondo sólido en lugar del cristal translúcido (p. ej., sobre la capa del encabezado del
+   * chat, que lo teñía de gris)
+   */
+  fondo?: string;
   /** Color del fondo cuando es `peligro` (naranja si no se indica) */
   colorPeligro?: string;
   children: ReactNode;
@@ -43,7 +49,7 @@ export function BotonBarra({
     >
       <PildoraCristal
         contentStyle={styles.boton}
-        relleno={peligro ? colorPeligro : undefined}
+        relleno={peligro ? colorPeligro : fondo}
       >
         {children}
       </PildoraCristal>

@@ -45,7 +45,7 @@ const ESTILO_INPUT = {
 } as const;
 
 /** Cuánto sube de más el composer cuando el teclado está abierto (px) */
-const HUECO_SOBRE_TECLADO = 8;
+export const HUECO_SOBRE_TECLADO = 8;
 
 /** Claves estables para las miniaturas (así la salida y el reacomodo animan la correcta). */
 function usePreviewKeys(images: string[]): string[] {

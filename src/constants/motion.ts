@@ -14,21 +14,11 @@ export const ENTRADA_MODULO = {
 
 /**
  * Entrada y salida de los módulos con su propio efecto (búsqueda, favoritos, chats,
- * notificaciones y perfil): fundido con un desplazamiento corto, sin rebote. Entra despacio
- * para que no se sienta brusco y sale más rápido para que cerrar se sienta inmediato.
+ * notificaciones, perfil, conversación...): fundido con un desplazamiento corto, sin rebote.
+ * Corta para que entrar y salir se sienta rápido pero suave (antes 350/200 ms se sentía lento).
  */
 const CURVA_MODULO = Easing.bezier(0.4, 0, 0.2, 1);
 export const TRANSICION_MODULO = {
-  desplazamiento: 12,
-  entrada: { duration: 350, easing: CURVA_MODULO },
-  salida: { duration: 200, easing: CURVA_MODULO },
-} as const;
-
-/**
- * La misma transición, más corta: para el buscador de chats (salir de Chats al tocar la lupa,
- * y entrar y salir del buscador), que se sentía lento con la duración de los demás módulos.
- */
-export const TRANSICION_MODULO_RAPIDA = {
   desplazamiento: 10,
   entrada: { duration: 220, easing: CURVA_MODULO },
   salida: { duration: 130, easing: CURVA_MODULO },

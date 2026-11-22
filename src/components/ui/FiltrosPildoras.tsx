@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   Pressable,
@@ -20,10 +19,7 @@ import {
   fondoCristalSuave,
   sombraCristalSuave,
 } from "@/components/ui/cristalSuave";
-import {
-  CON_DESENFOQUE,
-  coloresCristal,
-} from "@/features/busqueda/components/PildoraCristal";
+import { coloresCristal } from "@/features/busqueda/components/PildoraCristal";
 import { colorElegida } from "@/features/busqueda/components/PildoraOpcion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
@@ -116,13 +112,7 @@ export function FiltrosPildoras<T extends string>({
           },
         ]}
       >
-        {CON_DESENFOQUE ? (
-          <BlurView
-            intensity={30}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
+        {/* Sin desenfoque, igual que la barra de chats: con él el blanco se notaba más */}
         <ScrollView
           ref={scroll}
           horizontal

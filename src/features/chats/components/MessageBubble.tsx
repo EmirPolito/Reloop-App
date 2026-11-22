@@ -155,10 +155,11 @@ export const MessageBubble = memo(function MessageBubble({
         {
           maxWidth: isMe ? "78%" : undefined,
           flexShrink: 1,
-          paddingHorizontal: hasImages && !hasText ? 0 : 15,
-          paddingVertical: hasImages && !hasText ? 0 : 8,
+          // Un poco más de aire dentro y entre una burbuja y otra
+          paddingHorizontal: hasImages && !hasText ? 0 : 16,
+          paddingVertical: hasImages && !hasText ? 0 : 10,
           borderRadius: 13,
-          marginVertical: 3.5,
+          marginVertical: 5,
           alignSelf: isMe ? "flex-end" : "auto",
           ...(hasImages && !hasText
             ? {
@@ -172,19 +173,11 @@ export const MessageBubble = memo(function MessageBubble({
               ? {
                   backgroundColor: "#272727ff",
                   borderBottomRightRadius: 3.5,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 2,
-                  elevation: 1,
                 }
               : {
+                  // Sin sombra: era casi invisible y, al subir la lista con el teclado, recalcular
+                  // la sombra de cada burbuja en cada cuadro se sentía como lag
                   backgroundColor: isDark ? "#2A2B32" : "#FFFFFF",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 2,
-                  elevation: 0.5,
                 }),
         },
       ]}
@@ -197,8 +190,8 @@ export const MessageBubble = memo(function MessageBubble({
             styles.messageText,
             {
               left: 3,
-              fontSize: 13.5,
-              lineHeight: 20,
+              fontSize: 14.5,
+              lineHeight: 20.5,
               paddingBottom: 1,
               fontWeight: "400",
               marginTop: hasImages ? 6 : 0,

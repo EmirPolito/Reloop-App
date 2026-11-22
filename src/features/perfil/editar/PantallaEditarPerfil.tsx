@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { conSalida } from "@/components/salidaModulo";
 import { PressableScale } from "@/components/PressableScale";
+import { estiloTarjetaCristal } from "@/components/ui/cristalSuave";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
@@ -14,7 +15,7 @@ import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { showErrorAlert } from "@/utils/alerts";
-import { FilaAjuste } from "../components/FilaAjuste";
+import { FilaAjuste, ListaAjustes } from "../components/FilaAjuste";
 import { coloresTarjeta, fondoPerfil } from "../perfilEstilos";
 import {
   IconoCaritaLinea,
@@ -71,8 +72,9 @@ export function PantallaEditarPerfil() {
   const { uid } = useSessionUser();
   const premium = useIsPremium(uid);
   const fondo = fondoPerfil(isDark);
-  const { fondoTarjeta, textoFila, flecha } = coloresTarjeta(isDark);
-  const rowBg = isDark ? "#1b1b1b0e" : "#ffffffff";
+  const { textoFila, flecha } = coloresTarjeta(isDark);
+  // Las opciones sin fondo propio: el estilo de cristal es solo de la tarjeta
+  const rowBg = "transparent";
   const mutedColor = isDark ? "#8b8b8bff" : "#9CA3AF";
   const colorIcono = isDark ? "#FFFFFF" : "#101010";
 
@@ -172,62 +174,64 @@ export function PantallaEditarPerfil() {
           />
 
           <View style={styles.contenedor}>
-            <View style={[styles.tarjeta, { backgroundColor: fondoTarjeta }]}>
-              <Text style={[styles.etiquetaTarjeta, { color: mutedColor }]}>
-                Personalizar
-              </Text>
-              <FilaAjuste
-                bg={rowBg}
-                icon={iconoSvg(
-                  <IconoImagenLinea size={24} color={colorIcono} />,
-                )}
-                label="Fondo de perfil"
-                textColor={textoFila}
-                onPress={() => abrir("fondo")}
-                right={derecha()}
-              />
-              <FilaAjuste
-                bg={rowBg}
-                icon={iconoSvg(
-                  <IconoCaritaLinea size={24} color={colorIcono} />,
-                )}
-                label="Foto o avatar de perfil"
-                textColor={textoFila}
-                onPress={() => abrir("avatar")}
-                right={derecha()}
-              />
-              <FilaAjuste
-                bg={rowBg}
-                icon={icono("pricetag-outline")}
-                label="Etiquetas"
-                textColor={textoFila}
-                onPress={() => abrir("etiquetas")}
-                right={derecha(`${profile.pills.length}/${MAX_PILDORAS}`)}
-              />
-              <FilaAjuste
-                bg={rowBg}
-                icon={icono("text-outline")}
-                label="Nombre"
-                textColor={textoFila}
-                onPress={() => abrir("nombre")}
-                right={derecha(profile.name)}
-              />
-              <FilaAjuste
-                bg={rowBg}
-                icon={icono("at-outline")}
-                label="Username"
-                textColor={textoFila}
-                onPress={() => abrir("username")}
-                right={derecha(profile.username ? `@${profile.username}` : "")}
-              />
-              <FilaAjuste
-                bg={rowBg}
-                icon={icono("document-text-outline")}
-                label="Descripción"
-                textColor={textoFila}
-                onPress={() => abrir("descripcion")}
-                right={derecha()}
-              />
+            {/* Con el estilo de la tarjeta de los chats */}
+            <View style={[styles.tarjeta, estiloTarjetaCristal(isDark)]}>
+              <ListaAjustes isDark={isDark}>
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={iconoSvg(
+                    <IconoImagenLinea size={24} color={colorIcono} />,
+                  )}
+                  label="Fondo de perfil"
+                  textColor={textoFila}
+                  onPress={() => abrir("fondo")}
+                  right={derecha()}
+                />
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={iconoSvg(
+                    <IconoCaritaLinea size={24} color={colorIcono} />,
+                  )}
+                  label="Foto o avatar de perfil"
+                  textColor={textoFila}
+                  onPress={() => abrir("avatar")}
+                  right={derecha()}
+                />
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={icono("pricetag-outline")}
+                  label="Etiquetas"
+                  textColor={textoFila}
+                  onPress={() => abrir("etiquetas")}
+                  right={derecha(`${profile.pills.length}/${MAX_PILDORAS}`)}
+                />
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={icono("text-outline")}
+                  label="Nombre"
+                  textColor={textoFila}
+                  onPress={() => abrir("nombre")}
+                  right={derecha(profile.name)}
+                />
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={icono("at-outline")}
+                  label="Username"
+                  textColor={textoFila}
+                  onPress={() => abrir("username")}
+                  right={derecha(
+                    profile.username ? `@${profile.username}` : "",
+                  )}
+                />
+                <FilaAjuste
+                  bg={rowBg}
+                  icon={icono("document-text-outline")}
+                  label="Descripción"
+                  textColor={textoFila}
+                  onPress={() => abrir("descripcion")}
+                  right={derecha()}
+                />
+              </ListaAjustes>
             </View>
           </View>
         </ScrollView>
@@ -343,19 +347,13 @@ const styles = StyleSheet.create({
   },
   contenedor: { paddingHorizontal: 16 },
   // Misma tarjeta que General en el perfil
+  // Igual que las tarjetas del perfil: poco relleno arriba y abajo, y la línea de borde a borde
   tarjeta: {
     borderRadius: 21,
-    paddingVertical: 15,
-    paddingHorizontal: 4,
+    paddingVertical: 4.5,
+    paddingHorizontal: 0,
     marginTop: 26,
     gap: 10,
-    elevation: 1,
-  },
-  etiquetaTarjeta: {
-    paddingHorizontal: 10,
-    fontFamily: "Inter_400Regular",
-    fontWeight: "500",
-    marginBottom: 5,
   },
   derecha: {
     flexDirection: "row",

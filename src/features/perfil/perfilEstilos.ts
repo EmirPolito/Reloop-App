@@ -31,21 +31,4 @@ export const estilosPerfil = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
-  // Tarjeta de una sola acción (cerrar sesión, enviar mensaje)
-  tarjetaAccion: {
-    marginTop: 19,
-    height: 60,
-    borderRadius: 21,
-    paddingHorizontal: 17,
-    gap: 10,
-    elevation: 0.4,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  tarjetaAccionTexto: {
-    flex: 1,
-    fontSize: 14.5,
-    fontFamily: "Inter_400Regular",
-  },
 });

@@ -1,4 +1,5 @@
 import { useDissolve } from "dissolve-ui";
+import * as Haptics from "expo-haptics";
 import {
   useCallback,
   useEffect,
@@ -38,12 +39,23 @@ const ABRE_CON = 24;
 const INTENCION = 150;
 /** Más allá del botón la fila se sigue arrastrando libre, hasta el borde izquierdo */
 const RESISTENCIA = 1;
-/** Fracción del ancho que hay que jalar para que, al soltar, se elimine sin tocar el botón */
-const UMBRAL_ELIMINAR = 0.6;
+/**
+ * Fracción del ancho a partir de la cual la fila se desliza sola hasta el borde (todavía con el
+ * dedo encima) y, al soltar, se elimina sin tocar el botón
+ */
+const UMBRAL_ELIMINAR = 0.55;
 /** Un desliz rápido (px/s) elimina sin tocar el botón */
-const RAPIDO_ELIMINA = 1100;
-/** Lo mínimo que hay que mover la fila para que un desliz rápido elimine (no un roce) */
-const MINIMO_RAPIDO = 40;
+const RAPIDO_ELIMINA = 800;
+/** Con el dedo casi quieto (px/s), los movimientos menores a ZONA_MUERTA (px) se ignoran */
+const DEDO_QUIETO = 60;
+const ZONA_MUERTA = 5;
+/** Lo que tarda la fila en deslizarse sola hasta el borde al pasar el umbral */
+const DESLIZ_ARMADO = { duration: 150, easing: CALM };
+/**
+ * Lo mínimo que hay que haber deslizado la fila (fracción del ancho) para que un desliz rápido
+ * elimine: antes bastaban 40 px y un desliz corto pero rápido ya eliminaba el chat
+ */
+const MINIMO_RAPIDO = 0.4;
 /**
  * Resorte al soltar: hereda la velocidad del dedo, así la fila resbala y se acomoda suave en
  * lugar de frenar en seco. Sin pasarse del destino (no rebota).
@@ -73,7 +85,9 @@ function soltarAbierta(cerrar: () => void) {
  * Fila que se desliza a la izquierda y deja ver el botón Eliminar a su derecha (como Mail): el
  * rojo va pegado al borde de la fila y la empuja, no se pinta detrás de ella. Con un desliz
  * corto queda abierta mostrando el botón (no se regresa). Se elimina de dos formas: tocando el
- * botón, o con un desliz rápido (o jalando más del 60 % del ancho) y soltando. Al soltar,
+ * botón, o con un desliz rápido; o jalando más de la mitad del ancho, cuando la fila se
+ * desliza sola hasta el borde (con una vibración ligera) y al soltar se elimina. Con el dedo
+ * casi quieto encima, el pulso no la mueve. Al soltar,
  * un resorte hereda la velocidad del dedo para que resbale en lugar de frenar en seco. En las dos
  * la fila se vuelve polvo (dissolve-ui), la lista se cierra y entonces corre `onDelete`. Si
  * falla, la fila vuelve. Tocar la fila abierta la cierra.
@@ -104,6 +118,8 @@ export function DeslizarConBoton({
   const medido = useSharedValue(0);
   // Dónde estaba la fila al empezar a arrastrar
   const inicio = useSharedValue(0);
+  // Si ya pasó el umbral: la fila está (o va) en el borde, y al soltar se elimina
+  const armada = useSharedValue(false);
   const [abierta, setAbierta] = useState(false);
   const [eliminando, setEliminando] = useState(false);
 
@@ -132,6 +148,11 @@ export function DeslizarConBoton({
   }, [disabled, tx]);
   // Al desmontar deja de ser la abierta
   useEffect(() => () => soltarAbierta(cerrar), [cerrar]);
+
+  /** Vibración ligera al pasar el umbral: avisa que al soltar se elimina */
+  const vibrar = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  };
 
   const eliminar = async () => {
     try {
@@ -170,20 +191,44 @@ export function DeslizarConBoton({
     // así la fila no brinca esos píxeles de golpe y sigue al dedo desde donde está
     .onStart((e) => {
       inicio.set(tx.get() - e.translationX);
+      armada.set(false);
     })
     // Se calcula desde donde empezó el dedo (no sumando cuadro a cuadro): sin acumular errores
     .onUpdate((e) => {
       const crudo = inicio.get() + e.translationX;
+      let destino: number;
       if (crudo > 0) {
         // Hacia la derecha no hay nada: banda elástica corta
-        tx.set(crudo * 0.2);
+        destino = crudo * 0.2;
       } else if (crudo < -ANCHO_BOTON) {
         // Pasado el botón el rojo sigue creciendo hasta el borde de la fila
         const extra = (-crudo - ANCHO_BOTON) * RESISTENCIA;
-        tx.set(-Math.min(ANCHO_BOTON + extra, ancho.get()));
+        destino = -Math.min(ANCHO_BOTON + extra, ancho.get());
       } else {
-        tx.set(crudo);
+        destino = crudo;
       }
+
+      // Pasó el umbral: se nota que la quieres eliminar y se desliza sola hasta el borde
+      const pasa = -crudo > ancho.get() * UMBRAL_ELIMINAR;
+      if (pasa !== armada.get()) {
+        armada.set(pasa);
+        if (pasa) {
+          tx.set(withTiming(-ancho.get(), DESLIZ_ARMADO));
+          scheduleOnRN(vibrar);
+          return;
+        }
+      }
+      // Armada, se queda en el borde aunque el dedo se mueva un poco
+      if (armada.get()) return;
+
+      // Dedo casi quieto: el pulso no mueve la fila (si no, temblaba al sostenerla)
+      if (
+        Math.abs(e.velocityX) < DEDO_QUIETO &&
+        Math.abs(destino - tx.get()) < ZONA_MUERTA
+      ) {
+        return;
+      }
+      tx.set(destino);
     })
     .onEnd((e) => {
       const jalado = -tx.get();
@@ -191,10 +236,10 @@ export function DeslizarConBoton({
       // Venía abierta y el dedo fue hacia la derecha: es para cerrarla
       const veniaAbierta = inicio.get() <= -ANCHO_BOTON / 2;
 
-      // Desliz rápido a la izquierda, o jalada casi completa: se elimina sola
+      // Ya deslizada hasta el borde (armada), o un desliz rápido a la izquierda: se elimina
       if (
-        jalado > ancho.get() * UMBRAL_ELIMINAR ||
-        (v < -RAPIDO_ELIMINA && jalado > MINIMO_RAPIDO)
+        armada.get() ||
+        (v < -RAPIDO_ELIMINA && jalado > ancho.get() * MINIMO_RAPIDO)
       ) {
         tx.set(
           // Un tramo corto y fijo hasta el borde (un resorte tardaba en asentarse y el polvo

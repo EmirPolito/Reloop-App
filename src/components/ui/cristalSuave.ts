@@ -1,21 +1,34 @@
-import {
-  CON_DESENFOQUE,
-  coloresCristal,
-} from "@/features/busqueda/components/PildoraCristal";
+import { coloresCristal } from "@/features/busqueda/components/PildoraCristal";
 
 /**
- * Fondo de la tarjeta de los chats y de las barras de píldoras (chats, favoritos y notificaciones): el cristal de los botones de arriba, pero
- * en claro más transparente (en oscuro, el mismo).
+ * Fondo de la tarjeta de los chats y de las barras de píldoras (chats, favoritos y
+ * notificaciones): el mismo blanco translúcido que el buscador y los botones de arriba.
  */
 export function fondoCristalSuave(isDark: boolean) {
-  if (isDark) return coloresCristal(true).fondo;
-  return CON_DESENFOQUE ? "rgba(255,255,255,0.34)" : "rgba(255,255,255,0.55)";
+  return coloresCristal(isDark).fondo;
 }
 
-/** Sombra de la tarjeta y las píldoras: más suave que la de los botones de arriba */
+/** Sombra de la tarjeta y las píldoras: suave, pero lo justo para separarlas del fondo */
 export const sombraCristalSuave = {
   shadowColor: "#000000",
-  shadowOpacity: 0.04,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.07,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 4 },
 } as const;
+
+/** Esquinas de las tarjetas de cristal (la de los chats) */
+export const RADIO_TARJETA_CRISTAL = 26;
+
+/**
+ * La tarjeta de los chats: blanco translúcido, borde de luz y sombra suave. La usan también
+ * las tarjetas del perfil (General, Legal, Cerrar sesión) y la de Editar perfil.
+ */
+export function estiloTarjetaCristal(isDark: boolean) {
+  return {
+    backgroundColor: fondoCristalSuave(isDark),
+    borderColor: coloresCristal(isDark).borde,
+    borderWidth: 1,
+    borderRadius: RADIO_TARJETA_CRISTAL,
+    ...sombraCristalSuave,
+  } as const;
+}

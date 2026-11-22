@@ -417,5 +417,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   // Un poco más arriba: menos espacio sobre el icono que debajo
-  vacio: { paddingTop: 138, paddingBottom: 162 },
+  // A la misma altura que en favoritos (su lista empieza 12 más abajo y su vacío lleva 110)
+  vacio: { paddingTop: 122, paddingBottom: 162 },
 });

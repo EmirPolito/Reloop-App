@@ -78,8 +78,7 @@ export function BuscarChatsScreen() {
 
   const salir = () => {
     guardarTexto();
-    // Salida corta, y Chats vuelve a entrar con la entrada corta
-    conSalida(back, true);
+    conSalida(back);
   };
 
   const texto = isDark ? "#F1F5F9" : "#101010";

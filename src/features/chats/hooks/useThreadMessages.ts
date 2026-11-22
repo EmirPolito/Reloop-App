@@ -12,8 +12,6 @@ interface Thread {
   chatId: string;
   messages: ChatMessage[];
   status: ChatsStatus;
-  /** Mensajes que ya había al abrir el chat: solo los siguientes se animan. */
-  initialCount: number;
 }
 
 /** Mensajes de un chat en tiempo real. */
@@ -27,16 +25,7 @@ export function useThreadMessages(chatId: string, deletedAt = 0) {
         chatId,
         uid,
         deletedAt,
-        (messages) =>
-          setThread((current) => ({
-            chatId,
-            messages,
-            status: "ready",
-            initialCount:
-              current?.chatId === chatId && current.status === "ready"
-                ? current.initialCount
-                : messages.length,
-          })),
+        (messages) => setThread({ chatId, messages, status: "ready" }),
         (error) => {
           console.warn(
             "No se pudo leer los mensajes.",
@@ -46,7 +35,6 @@ export function useThreadMessages(chatId: string, deletedAt = 0) {
             chatId,
             messages: NO_MESSAGES,
             status: "error",
-            initialCount: 0,
           });
         },
       ),
@@ -58,6 +46,5 @@ export function useThreadMessages(chatId: string, deletedAt = 0) {
   return {
     messages: current?.messages ?? NO_MESSAGES,
     status: current?.status ?? ("loading" as ChatsStatus),
-    initialCount: current?.initialCount ?? 0,
   };
 }

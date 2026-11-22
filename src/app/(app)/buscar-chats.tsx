@@ -3,7 +3,7 @@ import { BuscarChatsScreen } from "@/features/chats/BuscarChatsScreen";
 
 export default function BuscarChatsRoute() {
   return (
-    <TabScene efecto="moduloRapido">
+    <TabScene efecto="modulo">
       <BuscarChatsScreen />
     </TabScene>
   );

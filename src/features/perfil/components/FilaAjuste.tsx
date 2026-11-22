@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, Fragment, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
@@ -46,6 +46,37 @@ export function FilaAjuste({
   );
 }
 
+/**
+ * Opciones de una tarjeta (ajustes del perfil y de Editar perfil) separadas por una línea
+ * fina que abarca todo el ancho de la tarjeta.
+ */
+export function ListaAjustes({
+  isDark,
+  children,
+}: {
+  isDark: boolean;
+  children: ReactNode;
+}) {
+  const filas = Children.toArray(children);
+  return (
+    <View>
+      {filas.map((fila, indice) => (
+        <Fragment key={indice}>
+          {indice > 0 ? (
+            <View
+              style={[
+                styles.linea,
+                { backgroundColor: isDark ? "#ffffff1f" : "rgba(0,0,0,0.09)" },
+              ]}
+            />
+          ) : null}
+          {fila}
+        </Fragment>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   // configuracion del contenido de las tarjetas de General y Legal
   row: {
@@ -53,9 +84,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 55,
     borderRadius: 17,
-    paddingHorizontal: 15,
+    // La tarjeta ya no tiene relleno a los lados: el contenido queda donde estaba (4 + 15)
+    paddingHorizontal: 19,
     gap: 13.5,
   },
   rowIcon: { width: 20, alignItems: "center", justifyContent: "center" },
   rowLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
+  // De borde a borde de la tarjeta
+  linea: { height: StyleSheet.hairlineWidth },
 });

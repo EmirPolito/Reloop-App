@@ -11,13 +11,13 @@ import { DeslizarConBoton } from "@/components/ui/DeslizarConBoton";
 import { useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { coloresCristal } from "@/features/busqueda/components/PildoraCristal";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { IconoBusqueda } from "@/features/home/components/IconosTarjeta";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useSiguiendo } from "@/features/perfil/hooks/useSiguiendo";
+import { coloresCristal } from "@/features/busqueda/components/PildoraCristal";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { useSeleccion } from "@/hooks/useSeleccion";
@@ -110,16 +110,14 @@ export function ChatsScreen() {
 
   const texto = isDark ? "#F1F5F9" : "#101010";
   const hayFiltro = filtro !== "todos";
-  // El mismo cristal que los botones de arriba (fondo translúcido, desenfoque y borde de luz)
-  const cristal = coloresCristal(isDark);
 
   const { activo, marcados } = seleccion;
   const alPulsar = useCallback(
     (chatId: string) =>
       activo
         ? seleccion.alternar(chatId)
-        : // Chats sale con la animación corta y luego entra la conversación
-          conSalida(() => openThread(chatId), true),
+        : // Chats sale con su animación y luego entra la conversación
+          conSalida(() => openThread(chatId)),
     [activo, seleccion, openThread],
   );
 
@@ -223,8 +221,8 @@ export function ChatsScreen() {
             <>
               <BotonBarra
                 etiqueta="Buscar chats"
-                // Chats sale con la animación corta y luego entra la búsqueda
-                onPress={() => conSalida(openChatSearch, true)}
+                // Chats sale con su animación y luego entra la búsqueda
+                onPress={() => conSalida(openChatSearch)}
               >
                 <IconoBusqueda size={24} color={texto} grosorExtra={0.5} />
               </BotonBarra>
@@ -287,7 +285,7 @@ export function ChatsScreen() {
                 styles.tarjeta,
                 {
                   backgroundColor: fondoCristalSuave(isDark),
-                  borderColor: cristal.borde,
+                  borderColor: coloresCristal(isDark).borde,
                 },
               ]}
             >

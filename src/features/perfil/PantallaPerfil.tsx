@@ -73,5 +73,6 @@ export function PantallaPerfil() {
 
 const styles = StyleSheet.create({
   // Mismo margen lateral que las tarjetas de General y Legal, y la separación entre tarjetas
-  premium: { paddingHorizontal: 15, marginTop: 52 },
+  // Más separado de las publicaciones
+  premium: { paddingHorizontal: 15, marginTop: 104 },
 });

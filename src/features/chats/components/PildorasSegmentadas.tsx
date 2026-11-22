@@ -50,7 +50,6 @@ export function PildorasSegmentadas<T extends string>({
   }));
 
   // El mismo cristal que los botones de arriba (sin su sombra)
-  const cristal = coloresCristal(isDark);
   // La elegida: fondo oscuro con letra blanca (en oscuro, al revés), como en favoritos
   const texto = colorElegida(isDark).texto;
   const apagado = isDark ? "#94A3B8" : "#6B6B72";
@@ -63,7 +62,7 @@ export function PildorasSegmentadas<T extends string>({
           styles.barra,
           {
             backgroundColor: fondoCristalSuave(isDark),
-            borderColor: cristal.borde,
+            borderColor: coloresCristal(isDark).borde,
           },
         ]}
       >
