@@ -9,7 +9,7 @@ export type HomeFeedRow =
   /** `count`: publicaciones mostradas (`null` mientras cargan) */
   | { type: "sectionTitle"; count: number | null }
   | { type: "products"; products: Product[] }
-  /** Quien tiene 3 o más publicaciones a la vista: todas en su tarjeta */
+  /** Quien tiene insignia y 3 o más publicaciones a la vista: todas en su tarjeta */
   | { type: "seller"; ownerId: string; products: Product[] }
   /** Modo "@" del buscador: resultados de personas en lugar del feed */
   | { type: "users"; term: string }
@@ -20,6 +20,8 @@ export type HomeFeedRow =
 export function buildHomeFeedRows(
   products: Product[],
   status: FeedStatus,
+  /** Quienes tienen insignia (Premium): solo ellos salen en tarjeta grande */
+  conInsignia: ReadonlySet<string>,
 ): HomeFeedRow[] {
   const rows: HomeFeedRow[] = [
     { type: "banner" },
@@ -37,7 +39,7 @@ export function buildHomeFeedRows(
     rows.push({ type: status === "error" ? "error" : "empty" });
     return rows;
   }
-  rows.push(...agruparPorVendedor(products));
+  rows.push(...agruparPorVendedor(products, conInsignia));
   return rows;
 }
 
@@ -47,7 +49,8 @@ export function buildUserSearchRows(term: string): HomeFeedRow[] {
 }
 
 export function homeRowKey(row: HomeFeedRow, index: number): string {
-  if (row.type === "products") return `products-${row.products[0]?.id ?? index}`;
+  if (row.type === "products")
+    return `products-${row.products[0]?.id ?? index}`;
   if (row.type === "seller") return `seller-${row.ownerId}`;
   return row.type;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
@@ -14,6 +14,7 @@ import { FilaPestanas, type Pestana } from "./FilaPestanas";
 import { ListaPublicaciones } from "./ListaPublicaciones";
 import { TarjetaVendedor } from "./TarjetaVendedor";
 import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
+import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];
@@ -84,36 +85,37 @@ export function PublicacionesPerfil({
     }
   };
   const colorIconoVacio = isDark ? "#475569" : "#e4e4e4ff";
+  // La tarjeta grande solo es para quien tiene insignia (Premium)
+  const dueno = publicaciones[0]?.ownerId;
+  const duenos = useMemo(() => (dueno ? [dueno] : []), [dueno]);
+  const conInsignia = useDuenosPremium(duenos).has(dueno ?? "");
 
   /** Contenido de una pestaña: abanico, carga o estado vacío */
   const contenido = (pestana: Pestana) => {
     const items = pestana === "publicaciones" ? publicaciones : anuncios;
     const vacio = VACIO[pestana][isOwn ? "propio" : "ajeno"];
-    if (pestana === "publicaciones" && items.length >= MIN_PARA_TARJETA) {
-      return (
-        <View style={styles.abanico}>
-          <TarjetaVendedor
-            items={items}
-            profile={perfil}
-            ownerId={items[0].ownerId}
-            isOwn={isOwn}
-            isDark={isDark}
-            onOpen={onOpen}
-            onPersonalizar={() => setDisenando(true)}
-            enPerfil
-          />
-        </View>
-      );
-    }
     if (items.length) {
       return (
         <View style={styles.abanico}>
-          <ListaPublicaciones
-            items={items}
-            isDark={isDark}
-            isOwn={isOwn}
-            onOpen={onOpen}
-          />
+          {/* Con insignia y 3 o más, arriba la tarjeta grande; debajo siempre las publicaciones una por
+              una (en el perfil propio, con republicar, editar y eliminar) */}
+          {pestana === "publicaciones" &&
+          conInsignia &&
+          items.length >= MIN_PARA_TARJETA ? (
+            <View style={styles.tarjetaGrande}>
+              <TarjetaVendedor
+                items={items}
+                profile={perfil}
+                ownerId={items[0].ownerId}
+                isOwn={isOwn}
+                isDark={isDark}
+                onOpen={onOpen}
+                onPersonalizar={() => setDisenando(true)}
+                enPerfil
+              />
+            </View>
+          ) : null}
+          <ListaPublicaciones items={items} isOwn={isOwn} onOpen={onOpen} />
         </View>
       );
     }
@@ -177,6 +179,8 @@ export function PublicacionesPerfil({
 const styles = StyleSheet.create({
   /** Separación entre las pestañas y la lista de publicaciones */
   abanico: { marginTop: 14 },
+  /** Separación entre la tarjeta grande y las publicaciones de abajo */
+  tarjetaGrande: { marginBottom: 22 },
   /** Pestaña inactiva: fuera del flujo (no ocupa alto) e invisible, pero montada */
   oculta: { position: "absolute", top: 0, left: 0, right: 0, opacity: 0 },
 });

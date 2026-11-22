@@ -70,5 +70,11 @@
     "test:domain": "tsx --test tests/domain.test.ts",
     "test:rules": "node tests/run-emulators.mjs emulators:exec --only auth,firestore --project demo-reloop \"node tests/firestore-rules.test.mjs\""
   },
-  "private": true
+  "private": true,
+  "reanimated": {
+    "staticFeatureFlags": {
+      "IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS": true,
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
+  }
 }

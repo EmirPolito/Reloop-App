@@ -7,10 +7,15 @@ import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
 import { createProduct } from "@/features/marketplace/productRepository";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useProfile } from "@/features/perfil/ProfileProvider";
+import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { uploadImage } from "@/lib/cloudinary";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
-import { buildNewProduct, validateDraft, type ProductDraft } from "../draftRules";
+import {
+  buildNewProduct,
+  validateDraft,
+  type ProductDraft,
+} from "../draftRules";
 
 /**
  * Valida el borrador, sube la foto a Cloudinary, guarda la publicación y vuelve al inicio.
@@ -22,6 +27,8 @@ export function usePublishProduct() {
   const { profile } = useProfile();
   const { clearFilters } = useMarketplaceActions();
   const { products: mias } = useUserProducts(uid);
+  // La tarjeta grande solo es para quien tiene insignia (Premium)
+  const premium = useIsPremium(uid);
   const { mostrar } = useAvisos();
   const { navigate } = useAppNavigation();
   const [publishing, setPublishing] = useState(false);
@@ -50,12 +57,12 @@ export function usePublishProduct() {
         clearFilters();
         navigate("home");
         // Con la publicación que completa la tarjeta, se avisa cómo se verán y que se pueden diseñar
-        if (mias.length + 1 === MIN_PARA_TARJETA) {
+        if (premium && mias.length + 1 === MIN_PARA_TARJETA) {
           mostrar({
             tipo: "exito",
             titulo: "Tus publicaciones tienen nueva vista",
             descripcion:
-              "Con 3 se acomodan en una tarjeta con desplazamiento lateral. Diséñala desde tu perfil, en los tres puntos.",
+              "Con 3 se acomodan en una tarjeta con desplazamiento lateral. Diséñala desde tu perfil, con el lápiz.",
           });
         }
         return true;
@@ -66,7 +73,7 @@ export function usePublishProduct() {
         setPublishing(false);
       }
     },
-    [uid, profile.name, clearFilters, navigate, mias.length, mostrar],
+    [uid, profile.name, clearFilters, navigate, mias.length, mostrar, premium],
   );
 
   return { publish, publishing };

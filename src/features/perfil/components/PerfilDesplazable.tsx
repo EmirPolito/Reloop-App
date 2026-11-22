@@ -242,6 +242,31 @@ export function PerfilDesplazable({
             paddingBottom: 115,
           }}
         >
+          {/* Relleno encima de la portada (fuera del contenido, solo se ve al estirar en iOS): si
+              el estiramiento llega un cuadro tarde, en el hueco se ve la portada y no el fondo
+              blanco parpadeando */}
+          <View
+            pointerEvents="none"
+            style={[
+              styles.rellenoPortada,
+              { backgroundColor: conPortada ? "#000000" : cielo[0] },
+            ]}
+          >
+            {conPortada && profile.cover ? (
+              <Image
+                source={{
+                  uri:
+                    optimizedImageUrl(profile.cover, ANCHO_PORTADA) ??
+                    profile.cover,
+                }}
+                contentFit="cover"
+                contentPosition="bottom"
+                cachePolicy="memory-disk"
+                style={[StyleSheet.absoluteFill, { opacity: 0.8 }]}
+              />
+            ) : null}
+          </View>
+
           {/* Portada: dentro del scroll y detrás del avatar (que se dibuja después) */}
           <Animated.View
             pointerEvents="none"
@@ -506,6 +531,9 @@ export function Estadistica({
   );
 }
 
+/** Alto del relleno de encima de la portada: más de lo que se puede estirar */
+const RELLENO_PORTADA = 800;
+
 /** Imagen (o degradado) de la portada y el velo de arriba; llena su contenedor */
 export function CapaPortada({
   cover,
@@ -561,6 +589,15 @@ export function formatearNumero(valor: number): string {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  // Bloque alto justo encima del inicio del contenido
+  rellenoPortada: {
+    position: "absolute",
+    top: -RELLENO_PORTADA,
+    left: 0,
+    right: 0,
+    height: RELLENO_PORTADA,
+    overflow: "hidden",
+  },
   portada: {
     position: "absolute",
     top: 0,

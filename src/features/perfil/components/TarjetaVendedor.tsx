@@ -1,10 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { memo, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+// El de gesture-handler: coordina su gesto horizontal con el scroll vertical de la lista (con
+// el de React Native los dos peleaban el arrastre y las fotos temblaban)
+import { ScrollView } from "react-native-gesture-handler";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useVendedoresFavoritos } from "@/features/favoritos/vendedoresFavoritos";
 import { IconoEstrella } from "@/features/home/components/IconosTarjeta";
 import {
   averageRatingLabel,
@@ -18,9 +22,8 @@ import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
-import { useVendedoresFavoritos } from "@/features/favoritos/vendedoresFavoritos";
-import { COLORES_DESTACADO, type DatosPerfil } from "../Perfiltemas";
 import { IconoEditar, IconoPuntosVertical } from "../Perfiliconos";
+import { COLORES_DESTACADO, type DatosPerfil } from "../Perfiltemas";
 import { reportUser } from "../profileRepository";
 import { CorazonConEfecto } from "./CorazonConEfecto";
 
@@ -254,12 +257,13 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            // Se detiene al inicio de una foto, con la inercia del dedo (un flick avanza varias)
             snapToInterval={lado + SEPARACION_FOTOS}
+            snapToAlignment="start"
             decelerationRate="fast"
-            // Que el arrastre se quede en horizontal: si la lista de arriba también se mueve un
-            // poco con el dedo, las fotos tiemblan
+            // El arrastre se queda en horizontal y la lista vertical no se mueve a la vez
             directionalLockEnabled
-            disableIntervalMomentum
+            nestedScrollEnabled
             style={styles.fotos}
             contentContainerStyle={styles.fotosContenido}
           >
@@ -383,7 +387,7 @@ const styles = StyleSheet.create({
   // Tarjeta
   // Va sobre la franja, sin sombra: se ve pegada a ella
   tarjeta: {
-    borderRadius: 30,
+    borderRadius: 26,
     padding: 12,
     paddingBottom: 8,
     overflow: "hidden",
@@ -444,7 +448,7 @@ const styles = StyleSheet.create({
   },
   // Marco con la franja: esquinas de abajo más largas que las de la tarjeta
   marco: {
-    borderRadius: 34,
+    borderRadius: 30,
     overflow: "hidden",
     boxShadow: "0 6px 20px rgba(0, 0, 0, 0.08)",
   },

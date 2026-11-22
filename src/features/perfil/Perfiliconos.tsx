@@ -582,47 +582,6 @@ export function IconoCerrarSesionLinea({
   );
 }
 
-/** Flecha hacia la izquierda, de contorno: la de la derecha en espejo */
-export function IconoFlechaIzquierda({
-  size = 24,
-  color = "#000000",
-}: IconoProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G
-        transform="translate(24, 0) scale(-1, 1)"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <Path d="M19.75 11.7257L4.75 11.7257" />
-        <Path d="M13.6997 5.70124C13.6997 5.70124 19.7497 8.96224 19.7497 11.7242C19.7497 14.4882 13.6997 17.7502 13.6997 17.7502" />
-      </G>
-    </Svg>
-  );
-}
-
-/** Flecha hacia la derecha, de contorno — Iconly Light Arrow Right */
-export function IconoFlechaDerecha({
-  size = 24,
-  color = "#000000",
-}: IconoProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <G
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <Path d="M19.75 11.7257L4.75 11.7257" />
-        <Path d="M13.6997 5.70124C13.6997 5.70124 19.7497 8.96224 19.7497 11.7242C19.7497 14.4882 13.6997 17.7502 13.6997 17.7502" />
-      </G>
-    </Svg>
-  );
-}
-
 /** Sol de contorno (Lucide Sun): modo claro */
 export function IconoSolLinea({ size = 24, color = "#F59E0B" }: IconoProps) {
   return (

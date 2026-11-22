@@ -90,6 +90,7 @@ export const HomeScreen = memo(function HomeScreen() {
         : buildHomeFeedRows(
             premiumPrimero(filterProducts(products, filters), premium),
             status,
+            premium,
           ),
     [buscaUsuarios, busqueda.termino, products, filters, status, premium],
   );
