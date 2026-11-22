@@ -30,7 +30,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   const { profile: storedProfile, status } = usePublicProfile(userId);
   const { products: userProducts, status: productsStatus } =
     useUserProducts(userId);
-  const { back, openProduct } = useAppNavigation();
+  const { back, openProduct, openFollows } = useAppNavigation();
   const openChat = useOpenChat();
   const { followersCount, isFollowing, pending, toggleFollow } =
     useFollowers(userId);
@@ -88,6 +88,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
           seguidores: followersCount,
           reputacion: averageRatingLabel(userProducts),
         }}
+        onSeguidores={() => openFollows(userId)}
         publicaciones={{
           items: userProducts,
           status: productsStatus,

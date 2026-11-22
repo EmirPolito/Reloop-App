@@ -14,6 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { conSalida } from "@/components/salidaModulo";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -55,6 +56,8 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
   const { back, openProduct, openUserProfile } = useAppNavigation();
   const { pickImages } = useImagePicker();
   const [messageDraft, setMessageDraft] = useDraft(`message:${chatId}`);
+  // Sale con la animación corta de módulo y luego regresa
+  const volver = useCallback(() => conSalida(back, true), [back]);
 
   const [showMenu, setShowMenu] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>(NO_IMAGES);
@@ -141,7 +144,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
     const notFound = chatsStatus === "error" || messagesStatus === "error";
     return (
       <View style={styles.fill}>
-        <BackHeader title="Chat" onBack={back} />
+        <BackHeader title="Chat" onBack={volver} />
         {notFound ? (
           <Animated.View entering={FadeIn.duration(250)}>
             <EmptyState
@@ -174,7 +177,8 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
             paddingBottom:
               Math.max(insets.bottom, 16) +
               (selectedImages.length > 0 ? 140 : 50) +
-              5,
+              // Aire entre el último mensaje y el input
+              22,
           },
         ]}
         scrollIndicatorInsets={{ top: fixedTop }}
@@ -216,7 +220,7 @@ export function ThreadScreen({ chatId }: { chatId: string }) {
       <ThreadHeader
         contactId={activeChat.otherId}
         contactName={activeChat.name}
-        onBack={back}
+        onBack={volver}
         onOpenProfile={() => openUserProfile(activeChat.otherId)}
         onOpenMenu={() => setShowMenu(true)}
       />

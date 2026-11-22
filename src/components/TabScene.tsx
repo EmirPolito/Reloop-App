@@ -8,8 +8,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { ENTRADA_MODULO, TRANSICION_MODULO } from "@/constants/motion";
-import { registrarSalida } from "./salidaModulo";
+import {
+  ENTRADA_MODULO,
+  TRANSICION_MODULO,
+  TRANSICION_MODULO_RAPIDA,
+} from "@/constants/motion";
+import { registrarSalida, tomarEntradaRapida } from "./salidaModulo";
 
 const IS_WEB = Platform.OS === "web";
 
@@ -27,11 +31,16 @@ const IS_WEB = Platform.OS === "web";
 export function TabScene({
   children,
   efecto = "pestana",
-}: PropsWithChildren<{ efecto?: "pestana" | "modulo" }>) {
+}: PropsWithChildren<{
+  /** "moduloRapido": como "modulo", con la transición corta (el buscador de chats) */
+  efecto?: "pestana" | "modulo" | "moduloRapido";
+}>) {
   const progress = useSharedValue(0);
-  const modulo = efecto === "modulo";
+  const modulo = efecto !== "pestana";
+  const transicion =
+    efecto === "moduloRapido" ? TRANSICION_MODULO_RAPIDA : TRANSICION_MODULO;
   const desplazamiento = modulo
-    ? TRANSICION_MODULO.desplazamiento
+    ? transicion.desplazamiento
     : ENTRADA_MODULO.desplazamiento;
 
   useFocusEffect(
@@ -39,13 +48,21 @@ export function TabScene({
       progress.set(
         withTiming(
           1,
-          modulo ? TRANSICION_MODULO.entrada : ENTRADA_MODULO.timing,
+          !modulo
+            ? ENTRADA_MODULO.timing
+            : // Tras una salida corta (el buscador de chats), la entrada también es corta
+              tomarEntradaRapida()
+              ? TRANSICION_MODULO_RAPIDA.entrada
+              : transicion.entrada,
         ),
       );
       const quitarSalida = modulo
-        ? registrarSalida((despues) => {
+        ? registrarSalida((despues, rapida) => {
+            const salida = rapida
+              ? TRANSICION_MODULO_RAPIDA.salida
+              : transicion.salida;
             progress.set(
-              withTiming(0, TRANSICION_MODULO.salida, (terminado) => {
+              withTiming(0, salida, (terminado) => {
                 if (terminado) scheduleOnRN(despues);
               }),
             );
@@ -55,7 +72,7 @@ export function TabScene({
         quitarSalida?.();
         progress.set(0);
       };
-    }, [progress, modulo]),
+    }, [progress, modulo, transicion]),
   );
 
   const animatedStyle = useAnimatedStyle(() => {

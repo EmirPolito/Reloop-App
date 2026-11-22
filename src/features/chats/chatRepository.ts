@@ -41,7 +41,10 @@ export function subscribeChats(
   onData: (chats: Chat[]) => void,
   onError: OnError,
 ): Unsubscribe {
-  const mine = query(collection(db, CHATS), where("participants", "array-contains", uid));
+  const mine = query(
+    collection(db, CHATS),
+    where("participants", "array-contains", uid),
+  );
   return onSnapshot(
     mine,
     (snapshot) =>
@@ -140,13 +143,19 @@ export async function openChat(input: {
         actualizadoEn: now,
       });
       if (intro) {
-        transaction.set(introRef, { from: me.id, text: intro, images: [], creadoEn: now });
+        transaction.set(introRef, {
+          from: me.id,
+          text: intro,
+          images: [],
+          creadoEn: now,
+        });
       }
       return intro;
     }
 
     const introduced: unknown = existing.data().introducedProducts;
-    const alreadyIntroduced = Array.isArray(introduced) && product && introduced.includes(product.id);
+    const alreadyIntroduced =
+      Array.isArray(introduced) && product && introduced.includes(product.id);
     if (!product || !intro || alreadyIntroduced) return null;
 
     transaction.update(chatRef, {
@@ -156,7 +165,12 @@ export async function openChat(input: {
       [`reads.${me.id}`]: now,
       actualizadoEn: now,
     });
-    transaction.set(introRef, { from: me.id, text: intro, images: [], creadoEn: now });
+    transaction.set(introRef, {
+      from: me.id,
+      text: intro,
+      images: [],
+      creadoEn: now,
+    });
     return intro;
   });
 
@@ -191,25 +205,37 @@ export async function sendMessage(
 }
 
 export async function markChatRead(chatId: string, uid: string): Promise<void> {
-  await updateDoc(doc(db, CHATS, chatId), { [`reads.${uid}`]: serverTimestamp() });
+  await updateDoc(doc(db, CHATS, chatId), {
+    [`reads.${uid}`]: serverTimestamp(),
+  });
 }
 
 /**
  * "Elimina" chats solo para esta persona: queda una marca con la fecha y lo anterior deja de
  * verse; si la otra persona escribe después, el chat reaparece solo con lo nuevo.
  */
-export async function deleteChatsForMe(uid: string, chatIds: string[]): Promise<void> {
+export async function deleteChatsForMe(
+  uid: string,
+  chatIds: string[],
+): Promise<void> {
   await commitInChunks(chatIds, (batch, id) =>
-    batch.update(doc(db, CHATS, id), { [`borrados.${uid}`]: serverTimestamp() }),
+    batch.update(doc(db, CHATS, id), {
+      [`borrados.${uid}`]: serverTimestamp(),
+    }),
   );
 }
 
 /** Actualiza el nombre propio en los chats en los que se participa y que aún muestran otro. */
 export async function updateMyChatName(me: ChatParty): Promise<void> {
   const mine = await getDocs(
-    query(collection(db, CHATS), where("participants", "array-contains", me.id)),
+    query(
+      collection(db, CHATS),
+      where("participants", "array-contains", me.id),
+    ),
   );
-  const outdated = mine.docs.filter((item) => item.data().names?.[me.id] !== me.name);
+  const outdated = mine.docs.filter(
+    (item) => item.data().names?.[me.id] !== me.name,
+  );
   await commitInChunks(outdated, (batch, item) =>
     batch.update(item.ref, { [`names.${me.id}`]: me.name }),
   );

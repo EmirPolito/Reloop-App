@@ -38,8 +38,16 @@ export function useThreadMessages(chatId: string, deletedAt = 0) {
                 : messages.length,
           })),
         (error) => {
-          console.warn("No se pudo leer los mensajes.", describeFirestoreError(error));
-          setThread({ chatId, messages: NO_MESSAGES, status: "error", initialCount: 0 });
+          console.warn(
+            "No se pudo leer los mensajes.",
+            describeFirestoreError(error),
+          );
+          setThread({
+            chatId,
+            messages: NO_MESSAGES,
+            status: "error",
+            initialCount: 0,
+          });
         },
       ),
     [chatId, uid, deletedAt],

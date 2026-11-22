@@ -6,7 +6,8 @@ import { useAuth } from "@/features/auth/AuthProvider";
 /** Cuántas búsquedas recientes se recuerdan */
 const MAXIMO = 8;
 
-const clave = (uid: string) => `reloop:busqueda:recientes:${uid}`;
+const clave = (espacio: string, uid: string) =>
+  `reloop:${espacio}:recientes:${uid}`;
 
 function leer(valor: string | null): string[] {
   try {
@@ -21,16 +22,17 @@ function leer(valor: string | null): string[] {
 
 /**
  * Búsquedas recientes de cada cuenta, guardadas en este dispositivo. La más nueva va
- * primero y no se repiten (sin distinguir mayúsculas).
+ * primero y no se repiten (sin distinguir mayúsculas). `espacio` separa listas distintas
+ * (la búsqueda del inicio y la de chats).
  */
-export function useBusquedasRecientes() {
+export function useBusquedasRecientes(espacio = "busqueda") {
   const uid = useAuth().user?.uid ?? "";
   const [recientes, setRecientes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!uid) return;
     let vigente = true;
-    AsyncStorage.getItem(clave(uid))
+    AsyncStorage.getItem(clave(espacio, uid))
       .then((valor) => {
         if (vigente) setRecientes(leer(valor));
       })
@@ -38,14 +40,14 @@ export function useBusquedasRecientes() {
     return () => {
       vigente = false;
     };
-  }, [uid]);
+  }, [espacio, uid]);
 
   const cambiar = useCallback(
     (cambio: (lista: string[]) => string[]) => {
       setRecientes((lista) => {
         const nueva = cambio(lista);
         if (uid) {
-          AsyncStorage.setItem(clave(uid), JSON.stringify(nueva)).catch(
+          AsyncStorage.setItem(clave(espacio, uid), JSON.stringify(nueva)).catch(
             (error) =>
               console.warn("No se pudieron guardar las búsquedas.", error),
           );
@@ -53,7 +55,7 @@ export function useBusquedasRecientes() {
         return nueva;
       });
     },
-    [uid],
+    [espacio, uid],
   );
 
   const agregar = useCallback(

@@ -49,6 +49,7 @@ export function TarjetaVendedorFavorita({
         />
         {seleccionando ? (
           <CapaSeleccion
+            radio={26}
             etiqueta={`Seleccionar la tarjeta de ${products[0].seller}`}
             marcada={marcada}
             onPress={onAlternar}

@@ -1,19 +1,27 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+
+import { colorSeleccion } from "@/components/ui/colorSeleccion";
+import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
 /**
  * Capa que, en el modo de selección de Favoritos, cubre una tarjeta: tocarla la marca o la
- * desmarca (con un círculo arriba a la izquierda).
+ * desmarca. Marcada, la tarjeta se pinta con una capa roja clara (como los chats elegidos),
+ * sin círculo ni palomita.
  */
 export function CapaSeleccion({
   etiqueta,
   marcada,
   onPress,
+  radio,
 }: {
   etiqueta: string;
   marcada: boolean;
   onPress: () => void;
+  /** Esquinas de la tarjeta que cubre: la capa las sigue */
+  radio: number;
 }) {
+  const { isDark } = useAppTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,32 +30,17 @@ export function CapaSeleccion({
       onPress={onPress}
       style={StyleSheet.absoluteFill}
     >
-      <View
-        style={[
-          styles.check,
-          marcada
-            ? { backgroundColor: "#1C77FF", borderColor: "#1C77FF" }
-            : { borderColor: "#FFFFFF", backgroundColor: "#00000040" },
-        ]}
-      >
-        {marcada ? (
-          <Ionicons name="checkmark" size={17} color="#FFFFFF" />
-        ) : null}
-      </View>
+      {marcada ? (
+        <Animated.View
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(150)}
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { borderRadius: radio, backgroundColor: colorSeleccion(isDark) },
+          ]}
+        />
+      ) : null}
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  check: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

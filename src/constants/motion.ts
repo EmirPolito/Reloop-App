@@ -23,3 +23,13 @@ export const TRANSICION_MODULO = {
   entrada: { duration: 350, easing: CURVA_MODULO },
   salida: { duration: 200, easing: CURVA_MODULO },
 } as const;
+
+/**
+ * La misma transición, más corta: para el buscador de chats (salir de Chats al tocar la lupa,
+ * y entrar y salir del buscador), que se sentía lento con la duración de los demás módulos.
+ */
+export const TRANSICION_MODULO_RAPIDA = {
+  desplazamiento: 10,
+  entrada: { duration: 220, easing: CURVA_MODULO },
+  salida: { duration: 130, easing: CURVA_MODULO },
+} as const;

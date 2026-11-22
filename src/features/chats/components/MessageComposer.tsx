@@ -14,6 +14,10 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
+import {
+  ALTO_PILDORA,
+  PildoraCristal,
+} from "@/features/busqueda/components/PildoraCristal";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { TextInput } from "@/features/shared/Text";
@@ -28,6 +32,17 @@ const PREVIEW_CONTAINER_IN = FadeInDown.delay(120)
 const PREVIEW_CONTAINER_OUT = FadeOutDown.duration(240);
 const PREVIEW_ITEM_OUT = FadeOut.duration(220);
 const PREVIEW_LAYOUT = LinearTransition.duration(320).easing(SOFT_EASE);
+
+/** Lado del botón de adjuntar, dentro de la píldora del input */
+const LADO_ADJUNTAR = 40;
+/** La píldora del input: el alto del buscador, con el botón de adjuntar a la izquierda */
+const ESTILO_INPUT = {
+  height: ALTO_PILDORA,
+  minHeight: ALTO_PILDORA,
+  paddingLeft: (ALTO_PILDORA - 2 - LADO_ADJUNTAR) / 2,
+  paddingRight: 14,
+  paddingVertical: 0,
+} as const;
 
 /** Cuánto sube de más el composer cuando el teclado está abierto (px) */
 const HUECO_SOBRE_TECLADO = 8;
@@ -170,33 +185,19 @@ export function MessageComposer({
         </Animated.ScrollView>
       )}
 
-      {/* Fila del input + botón enviar — Sin fondo */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-            // El mismo color del buscador de Chats
-            backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
-            borderWidth: 2,
-            borderColor: "transparent",
-            borderRadius: 32,
-            paddingHorizontal: 6,
-            paddingVertical: 3,
-            marginRight: 8,
-            minHeight: 54,
-          }}
-        >
-          <Pressable
+      {/* Fila del input + botón enviar. El input es la píldora de cristal de los buscadores */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <PildoraCristal style={{ flex: 1 }} contentStyle={ESTILO_INPUT}>
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel="Adjuntar fotos"
             onPress={onPickImages}
+            scaleTo={0.9}
             style={{
-              width: 46,
-              height: 46,
-              borderRadius: 30,
-              backgroundColor: isDark ? "#ffffff14" : "#e8e8e8cc",
+              width: LADO_ADJUNTAR,
+              height: LADO_ADJUNTAR,
+              borderRadius: LADO_ADJUNTAR / 2,
+              backgroundColor: isDark ? "#ffffff14" : "#0000000d",
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -206,7 +207,7 @@ export function MessageComposer({
               size={24}
               color={isDark ? "#F1F5F9" : "#101010"}
             />
-          </Pressable>
+          </PressableScale>
 
           <TextInput
             accessibilityLabel="Escribe un mensaje"
@@ -222,15 +223,15 @@ export function MessageComposer({
                 flex: 1,
                 backgroundColor: "transparent",
                 borderWidth: 0,
-                paddingVertical: 1,
-                paddingLeft: 10,
-                top: 1,
+                paddingVertical: 0,
+                paddingLeft: 0,
+                fontFamily: "Inter_500Medium",
                 fontSize: 15,
-                color: isDark ? "#FFFFFF" : "#000000",
+                color: isDark ? "#F1F5F9" : "#101010",
               },
             ]}
           />
-        </View>
+        </PildoraCristal>
 
         <SendButton onPress={onSendPress} sending={sending} />
       </View>

@@ -46,11 +46,15 @@ export function mapChat(
     id: snapshot.id,
     otherId,
     name: String(data.names?.[otherId] ?? "Usuario"),
-    ...(typeof data.productId === "string" ? { productId: data.productId } : {}),
+    ...(typeof data.productId === "string"
+      ? { productId: data.productId }
+      : {}),
     lastMessage,
     unread:
       !hidden &&
-      Boolean(lastMessage && lastMessage.from === "them" && lastMessage.time > readAt),
+      Boolean(
+        lastMessage && lastMessage.from === "them" && lastMessage.time > readAt,
+      ),
     readAt,
     otherReadAt,
     updatedAt,

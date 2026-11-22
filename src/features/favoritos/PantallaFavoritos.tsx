@@ -70,6 +70,11 @@ const LADO_BOTON = 48;
  * centro, un buscador blanco (con "@" busca por quien vende), píldoras por categoría y las
  * publicaciones con la misma tarjeta del inicio.
  */
+/** Esquinas de la tarjeta de una publicación (las de TarjetaPublicacion) */
+const RADIO_PUBLICACION = 22;
+/** Al quitar varios, cuántos hacen el efecto de volar al bote */
+const MAX_ANIMADOS = 3;
+
 export function PantallaFavoritos() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
@@ -201,18 +206,23 @@ export function PantallaFavoritos() {
               ids.length >=
               favoriteProducts.length + vendedoresGuardados.length;
             // Varios: todo en un lote y un solo aviso arriba (no uno por favorito)
-            void eliminarConEfecto(ids, async () => {
-              await Promise.all([
-                quitarVendedores(
-                  ids
-                    .filter((id) => id.startsWith(PREFIJO_VENDEDOR))
-                    .map((id) => id.slice(PREFIJO_VENDEDOR.length)),
-                ),
-                removeFavorites(
-                  ids.filter((id) => !id.startsWith(PREFIJO_VENDEDOR)),
-                ),
-              ]);
-            })
+            // Solo los primeros vuelan al bote: con muchos a la vez el efecto se trababa
+            void eliminarConEfecto(
+              ids,
+              async () => {
+                await Promise.all([
+                  quitarVendedores(
+                    ids
+                      .filter((id) => id.startsWith(PREFIJO_VENDEDOR))
+                      .map((id) => id.slice(PREFIJO_VENDEDOR.length)),
+                  ),
+                  removeFavorites(
+                    ids.filter((id) => !id.startsWith(PREFIJO_VENDEDOR)),
+                  ),
+                ]);
+              },
+              MAX_ANIMADOS,
+            )
               .then(() => {
                 seleccion.salir();
                 mostrar(
@@ -309,6 +319,7 @@ export function PantallaFavoritos() {
                         />
                         {activo ? (
                           <CapaSeleccion
+                            radio={RADIO_PUBLICACION}
                             etiqueta={`Seleccionar ${item.name}`}
                             marcada={marcados.has(item.id)}
                             onPress={() => seleccion.alternar(item.id)}
@@ -380,7 +391,7 @@ export function PantallaFavoritos() {
                 // Con algo marcado: fondo rojo e icono blanco
                 peligro={marcados.size > 0}
                 colorPeligro="#EF4444"
-                disabled={marcados.size === 0}
+                // Sin nada elegido se ve blanco (no apagado) y no hace nada
                 onPress={eliminar}
               >
                 <IconoEliminarLinea
@@ -390,9 +401,9 @@ export function PantallaFavoritos() {
               </BotonBarra>
             </View>
           ) : (
+            // Siempre blanco, haya o no favoritos (sin favoritos, la opción del menú se apaga)
             <BotonBarra
               etiqueta="Eliminar favoritos"
-              disabled={!hayFavoritos}
               onPress={() => setMenu(true)}
             >
               <IconoEliminarLinea
@@ -420,12 +431,14 @@ export function PantallaFavoritos() {
 
       <MenuOpciones
         visible={menu}
-        top={8 + 56}
+        // La pestaña empieza bajo la barra de estado; el menú se mide desde arriba de la ventana
+        top={insets.top + 8 + 56}
         onClose={() => setMenu(false)}
         opciones={[
           {
             etiqueta: "Seleccionar todo",
             icono: "checkbox-outline",
+            deshabilitada: vendedoresVisibles.length + visibles.length === 0,
             onPress: () =>
               seleccion.iniciarTodos([
                 ...vendedoresVisibles.map((id) => PREFIJO_VENDEDOR + id),

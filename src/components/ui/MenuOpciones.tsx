@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Fragment, type ComponentProps } from "react";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
 
-import { PressableSuave } from "@/components/PressableSuave";
+import { PressableScale } from "@/components/PressableScale";
+import { EASE_OUT } from "@/constants/motion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 
@@ -15,8 +16,9 @@ export interface OpcionMenu {
 }
 
 /**
- * Tarjeta de opciones que sale bajo el botón del encabezado (arriba a la derecha). Tocar
- * fuera la cierra. Va dentro de la pantalla, a pantalla completa y sobre todo lo demás.
+ * Tarjeta de opciones que sale bajo el botón del encabezado (arriba a la derecha), con el mismo
+ * diseño que el menú de la conversación: fondo que oscurece un poco la pantalla, tarjeta blanca
+ * redondeada, icono a la izquierda del texto y una línea entre opciones. Tocar fuera la cierra.
  */
 export function MenuOpciones({
   visible,
@@ -25,78 +27,85 @@ export function MenuOpciones({
   onClose,
 }: {
   visible: boolean;
-  /** Distancia desde arriba de la pantalla hasta la tarjeta */
+  /** Distancia desde arriba de la pantalla (la ventana, con la barra de estado) hasta la tarjeta */
   top: number;
   opciones: OpcionMenu[];
   onClose: () => void;
 }) {
   const { isDark } = useAppTheme();
-  if (!visible) return null;
+  const tinta = isDark ? "#F1F5F9" : "#101010";
 
-  const texto = isDark ? "#F1F5F9" : "#101010";
   return (
-    <View style={styles.capa} pointerEvents="box-none">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Cerrar menú"
+        style={[styles.fondo, { paddingTop: top + 4 }]}
         onPress={onClose}
-        style={StyleSheet.absoluteFill}
-      />
-      <Animated.View
-        entering={FadeIn.duration(120)}
-        exiting={FadeOut.duration(90)}
-        style={[
-          styles.tarjeta,
-          { top, backgroundColor: isDark ? "#262626" : "#FFFFFF" },
-        ]}
       >
-        {opciones.map((opcion, indice) => (
-          <PressableSuave
-            key={opcion.etiqueta}
-            accessibilityRole="button"
-            accessibilityLabel={opcion.etiqueta}
-            disabled={opcion.deshabilitada}
-            onPress={() => {
-              onClose();
-              opcion.onPress();
-            }}
-            style={[
-              styles.opcion,
-              indice > 0 && {
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderTopColor: isDark ? "#ffffff1f" : "#0000001a",
-              },
-              opcion.deshabilitada && { opacity: 0.45 },
-            ]}
-          >
-            <Text style={[styles.etiqueta, { color: texto }]}>
-              {opcion.etiqueta}
-            </Text>
-            <Ionicons name={opcion.icono} size={20} color={texto} />
-          </PressableSuave>
-        ))}
-      </Animated.View>
-    </View>
+        <Animated.View
+          entering={FadeInUp.duration(150).easing(EASE_OUT)}
+          style={[
+            styles.tarjeta,
+            { backgroundColor: isDark ? "#1E293B" : "#FFFFFF" },
+          ]}
+        >
+          {opciones.map((opcion, indice) => (
+            <Fragment key={opcion.etiqueta}>
+              {indice > 0 ? (
+                <View
+                  style={[
+                    styles.linea,
+                    { backgroundColor: isDark ? "#334155" : "#f5f5f5ff" },
+                  ]}
+                />
+              ) : null}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={opcion.etiqueta}
+                accessibilityState={{ disabled: opcion.deshabilitada }}
+                disabled={opcion.deshabilitada}
+                scaleTo={0.97}
+                onPress={() => {
+                  onClose();
+                  opcion.onPress();
+                }}
+                style={[styles.opcion, opcion.deshabilitada && styles.apagada]}
+              >
+                <Ionicons name={opcion.icono} size={21} color={tinta} />
+                <Text style={[styles.etiqueta, { color: tinta }]}>
+                  {opcion.etiqueta}
+                </Text>
+              </PressableScale>
+            </Fragment>
+          ))}
+        </Animated.View>
+      </Pressable>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  capa: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, elevation: 50 },
-  tarjeta: {
-    position: "absolute",
-    right: 16,
-    minWidth: 208,
-    borderRadius: 18,
-    paddingHorizontal: 6,
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.18)",
+  fondo: {
+    flex: 1,
+    backgroundColor: "#00000028",
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
+    paddingRight: 15,
   },
+  tarjeta: { borderRadius: 20, paddingVertical: 5, minWidth: 170 },
   opcion: {
-    height: 48,
-    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
   },
-  etiqueta: { fontFamily: "Inter_500Medium", fontSize: 15 },
+  apagada: { opacity: 0.45 },
+  linea: { height: 1 },
+  etiqueta: { marginLeft: 13, fontSize: 14.5, fontWeight: "500" },
 });

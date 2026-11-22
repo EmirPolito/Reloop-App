@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { PressableSuave } from "@/components/PressableSuave";
+import { colorSeleccion } from "@/components/ui/colorSeleccion";
 import { Disolvible, type Disolvedor } from "@/components/ui/Disolvible";
 import { TextoSobreRojo } from "@/components/ui/SwipeParaEliminar";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
@@ -14,8 +16,7 @@ import { Text } from "@/features/shared/Text";
 import { formatChatTime } from "@/utils/time";
 
 const COLOR_AZUL = "#1C77FF";
-const LADO_AVATAR = 58;
-const LADO_CHECK = 26;
+const LADO_AVATAR = 52;
 const GAP = 12;
 const PADDING = 12;
 /** Círculo del contador: lo bastante grande para que quepa "+9" */
@@ -42,6 +43,7 @@ export const ChatListItem = memo(function ChatListItem({
   seleccionando = false,
   marcado = false,
   registrar,
+  ultimo = false,
 }: {
   chat: Chat;
   /** Categoría de la publicación de la que parte el chat, si la hay */
@@ -56,6 +58,8 @@ export const ChatListItem = memo(function ChatListItem({
   marcado?: boolean;
   /** La pantalla guarda cómo disolver este chat al eliminarlo (efecto Stream) */
   registrar?: (id: string, disolvedor: Disolvedor | null) => void;
+  /** El último de la lista no lleva línea debajo */
+  ultimo?: boolean;
 }) {
   const { isDark } = useAppTheme();
   const { lastMessage } = chat;
@@ -82,26 +86,26 @@ export const ChatListItem = memo(function ChatListItem({
         onLongPress={onLongPress ? () => onLongPress(chat.id) : undefined}
         style={styles.fila}
       >
-        {seleccionando ? (
-          <View
+        {/* Elegido para eliminar: una capa de color sobre toda la fila (detrás del contenido) */}
+        {seleccionando && marcado ? (
+          <Animated.View
+            entering={FadeIn.duration(150)}
+            exiting={FadeOut.duration(150)}
+            pointerEvents="none"
             style={[
-              styles.check,
-              marcado
-                ? { backgroundColor: COLOR_AZUL, borderColor: COLOR_AZUL }
-                : { borderColor: isDark ? "#64748B" : "#C4C4CA" },
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: colorSeleccion(isDark),
+              },
             ]}
-          >
-            {marcado ? (
-              <Ionicons name="checkmark" size={17} color="#FFFFFF" />
-            ) : null}
-          </View>
+          />
         ) : null}
         <AvatarVendedor
           ownerId={chat.otherId}
           fallbackName={chat.name}
           size={LADO_AVATAR}
           // Insignia un poco más chica, más abajo y hacia la izquierda
-          ajusteInsignia={{ escala: 0.5, right: 1, bottom: -8 }}
+          ajusteInsignia={{ escala: 0.5, right: 1, bottom: -7 }}
         />
 
         <View style={styles.textos}>
@@ -170,20 +174,18 @@ export const ChatListItem = memo(function ChatListItem({
         </View>
 
         {/* Línea suave debajo: empieza donde empiezan el nombre y el mensaje, no en el avatar */}
-        <View
-          pointerEvents="none"
-          style={[
-            styles.linea,
-            {
-              left:
-                PADDING +
-                (seleccionando ? LADO_CHECK + GAP : 0) +
-                LADO_AVATAR +
-                GAP,
-              backgroundColor: isDark ? "#ffffff24" : "rgba(0,0,0,0.11)",
-            },
-          ]}
-        />
+        {ultimo ? null : (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.linea,
+              {
+                left: PADDING + LADO_AVATAR + GAP,
+                backgroundColor: isDark ? "#ffffff24" : "rgba(0,0,0,0.11)",
+              },
+            ]}
+          />
+        )}
       </PressableSuave>
     </Disolvible>
   );
@@ -195,26 +197,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: GAP,
-    paddingVertical: 16,
+    paddingVertical: 13,
     paddingHorizontal: PADDING,
-  },
-  check: {
-    width: LADO_CHECK,
-    height: LADO_CHECK,
-    borderRadius: LADO_CHECK / 2,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
   },
   // Desde el nombre y el mensaje hasta casi el borde derecho
   linea: {
     position: "absolute",
-    bottom: 5,
+    bottom: 0,
     right: 18,
     height: StyleSheet.hairlineWidth,
   },
   textos: { flex: 1, minWidth: 0, gap: 3 },
-  nombre: { flexShrink: 1, fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  nombre: { flexShrink: 1, fontFamily: "Inter_600SemiBold", fontSize: 14.5 },
   filaNombre: { flexDirection: "row", alignItems: "center", gap: 7 },
   categoria: {
     flexShrink: 0,
@@ -228,11 +222,11 @@ const styles = StyleSheet.create({
   categoriaTexto: { fontFamily: "Inter_500Medium", fontSize: 11 },
   mensaje: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14.5,
-    lineHeight: 20,
+    fontSize: 13.5,
+    lineHeight: 19,
   },
   derecha: { alignItems: "flex-end", gap: 7, minWidth: LADO_CIRCULO },
-  hora: { fontFamily: "Inter_400Regular", fontSize: 14.5 },
+  hora: { fontFamily: "Inter_400Regular", fontSize: 13 },
   circulo: {
     minWidth: LADO_CIRCULO,
     height: LADO_CIRCULO,

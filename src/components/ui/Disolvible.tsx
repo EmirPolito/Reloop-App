@@ -33,17 +33,19 @@ export function useEliminarConEfecto() {
   const destinoRef = useRef<VistaRef>(null);
   const disolvedores = useRef(new Map<string, Disolvedor>());
 
-  const registrar = useCallback(
-    (id: string, disolvedor: Disolvedor | null) => {
-      if (disolvedor) disolvedores.current.set(id, disolvedor);
-      else disolvedores.current.delete(id);
-    },
-    [],
-  );
+  const registrar = useCallback((id: string, disolvedor: Disolvedor | null) => {
+    if (disolvedor) disolvedores.current.set(id, disolvedor);
+    else disolvedores.current.delete(id);
+  }, []);
 
   /** Si `eliminar` falla, los elementos ocultos vuelven a verse y el error se relanza */
   const eliminarConEfecto = useCallback(
-    async (ids: string[], eliminar: () => Promise<void>) => {
+    async (
+      ids: string[],
+      eliminar: () => Promise<void>,
+      /** Cuántos animar como mucho: con muchos a la vez el efecto se traba (los demás solo se quitan) */
+      maxAnimados = Infinity,
+    ) => {
       const registrados = ids.flatMap(
         (id) => disolvedores.current.get(id) ?? [],
       );
@@ -51,7 +53,9 @@ export function useEliminarConEfecto() {
       const visibles = await Promise.all(
         registrados.map((item) => item.enPantalla()),
       );
-      const aLaVista = registrados.filter((_, i) => visibles[i]);
+      const aLaVista = registrados
+        .filter((_, i) => visibles[i])
+        .slice(0, maxAnimados);
       try {
         await Promise.all(
           aLaVista.map((item, i) =>

@@ -21,12 +21,15 @@ export default function AppLayout() {
         <Stack.Screen name="(tabs)" />
         {/* Sin la animación de la pila: entra y sale con la de los módulos (TabScene) */}
         <Stack.Screen name="product/[id]" options={{ animation: "none" }} />
-        <Stack.Screen name="chat/[id]" />
+        {/* Sin la animación de la pila: entra y sale con la del módulo (corta) */}
+        <Stack.Screen name="chat/[id]" options={{ animation: "none" }} />
         {/* Sin la animación de la pila: entran y salen con la de los módulos (TabScene) */}
         <Stack.Screen name="user/[id]" options={{ animation: "none" }} />
+        <Stack.Screen name="seguidores/[id]" options={{ animation: "none" }} />
         <Stack.Screen name="editar-perfil" options={{ animation: "none" }} />
         {/* Sin la animación de la pila: entra y sale con la de los módulos (TabScene) */}
         <Stack.Screen name="notificaciones" options={{ animation: "none" }} />
+        <Stack.Screen name="buscar-chats" options={{ animation: "none" }} />
         <Stack.Screen name="legal/[documento]" />
         <Stack.Screen name="premium" />
         {/* Encima del inicio, que se sigue viendo detrás: la transición la anima el módulo.

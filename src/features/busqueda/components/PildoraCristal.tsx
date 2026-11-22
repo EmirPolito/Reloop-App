@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     minHeight: ALTO_PILDORA,
-    paddingHorizontal: 18,
+    paddingHorizontal: 15,
     paddingVertical: 6,
     borderRadius: 999,
     overflow: "hidden",

@@ -21,31 +21,44 @@ interface Respuesta {
  * Busca personas mientras se escribe: espera a que se deje de teclear y descarta las
  * respuestas de términos que ya cambiaron, así una respuesta lenta nunca pisa a la última.
  */
-export function useUserSearch(termino: string): EstadoBusquedaUsuarios & {
+export function useUserSearch(
+  termino: string,
+  /** Con `false` no consulta (p. ej., el buscador de chats sin texto: no muestra resultados) */
+  activo = true,
+): EstadoBusquedaUsuarios & {
   reintentar: () => void;
 } {
   const [intento, setIntento] = useState(0);
   const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
 
   useEffect(() => {
+    if (!activo) return;
     let vigente = true;
     const espera = setTimeout(() => {
       searchUsers(termino)
         .then((usuarios) => {
           if (vigente) {
-            setRespuesta({ termino, intento, resultado: { estado: "listo", usuarios } });
+            setRespuesta({
+              termino,
+              intento,
+              resultado: { estado: "listo", usuarios },
+            });
           }
         })
         .catch((error) => {
-          console.warn("No se pudo buscar personas.", describeFirestoreError(error));
-          if (vigente) setRespuesta({ termino, intento, resultado: { estado: "error" } });
+          console.warn(
+            "No se pudo buscar personas.",
+            describeFirestoreError(error),
+          );
+          if (vigente)
+            setRespuesta({ termino, intento, resultado: { estado: "error" } });
         });
     }, ESPERA_MS);
     return () => {
       vigente = false;
       clearTimeout(espera);
     };
-  }, [termino, intento]);
+  }, [termino, intento, activo]);
 
   const reintentar = useCallback(() => setIntento((n) => n + 1), []);
   const actual =

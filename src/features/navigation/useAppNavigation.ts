@@ -19,6 +19,9 @@ export function useAppNavigation() {
         router.push({ pathname: "/product/[id]", params: { id: productId } }),
       openUserProfile: (userId: string) =>
         router.push({ pathname: "/user/[id]", params: { id: userId } }),
+      /** Seguidores y seguidos de una persona, en una sola lista */
+      openFollows: (userId: string) =>
+        router.push({ pathname: "/seguidores/[id]", params: { id: userId } }),
       openEditProfile: () => router.push("/editar-perfil"),
       openNotifications: () => router.push("/notificaciones"),
       /** Módulo de búsqueda (se abre encima del inicio) */
@@ -28,6 +31,8 @@ export function useAppNavigation() {
         router.push({ pathname: "/legal/[documento]", params: { documento } }),
       /** Planes de ReLoop Premium y anuncios */
       openPremium: () => router.push("/premium"),
+      /** Buscador de chats, en su propia pantalla */
+      openChatSearch: () => router.push("/buscar-chats"),
       openThread: (chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */

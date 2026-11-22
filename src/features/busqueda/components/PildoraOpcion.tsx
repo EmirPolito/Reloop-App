@@ -6,7 +6,7 @@ import { Text } from "@/features/shared/Text";
 import { PildoraCristal } from "./PildoraCristal";
 
 /** Alto de las píldoras de debajo de los buscadores */
-export const ALTO_PILDORA_OPCION = 40;
+export const ALTO_PILDORA_OPCION = 38;
 
 /**
  * Sombra de las píldoras: más corta que la del buscador. Van en una fila con scroll, que recorta
@@ -15,7 +15,7 @@ export const ALTO_PILDORA_OPCION = 40;
 export const sombraPildora = {
   shadowOpacity: 0.05,
   shadowRadius: 6,
-  shadowOffset: { width: 0, height: 2 },
+  shadowOffset: { width: 0, height: 0 },
 } as const;
 
 /** Fondo y texto de una píldora elegida */
@@ -63,7 +63,7 @@ function PildoraOpcionBase<T extends string>({
                 ? colorElegida(isDark).texto
                 : isDark
                   ? "#F1F5F9"
-                  : "#101010",
+                  : "#181818ff",
             },
           ]}
         >
@@ -105,11 +105,11 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     justifyContent: "center",
   },
-  texto: { fontSize: 14, fontWeight: "500" },
+  texto: { fontSize: 13.5, fontWeight: "500" },
   fila: { width: "100%", maxWidth: 760, alignSelf: "center", marginBottom: -4 },
   // Margen arriba y abajo para que no se corte la sombra de las píldoras
   filaContenido: {
-    gap: 10,
+    gap: 9,
     paddingHorizontal: 16,
     paddingTop: 8,
     // Lo bastante para que la sombra no se recorte; el margen negativo de la fila lo compensa

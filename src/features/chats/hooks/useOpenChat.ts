@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 
+import { conSalida } from "@/components/salidaModulo";
 import type { Product } from "@/features/marketplace/types";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useNotify } from "@/features/notificaciones/hooks/useNotify";
@@ -41,7 +42,8 @@ export function useOpenChat() {
           product,
         });
         if (intro) notify(other.id, { type: "mensaje", chatId, text: intro });
-        openThread(chatId);
+        // El módulo en pantalla sale con la animación corta y luego entra la conversación
+        conSalida(() => openThread(chatId), true);
       } catch (error) {
         showErrorAlert("No se pudo abrir el chat", error);
       } finally {

@@ -93,6 +93,7 @@ export function PerfilDesplazable({
   derecha,
   acciones,
   stats,
+  onSeguidores,
   publicaciones,
   pie,
 }: {
@@ -107,6 +108,8 @@ export function PerfilDesplazable({
   /** Debajo de la descripción: Mensaje y Seguir (perfil ajeno) */
   acciones?: ReactNode;
   stats: { publicaciones: number; seguidores: number; reputacion: string };
+  /** Al tocar Seguidores: abre la lista de seguidores y seguidos */
+  onSeguidores?: () => void;
   publicaciones: {
     items: Product[];
     status: FeedStatus;
@@ -348,12 +351,21 @@ export function PerfilDesplazable({
                 suave={suave}
               />
               <View style={[styles.linea, { backgroundColor: colorLinea }]} />
-              <Estadistica
-                valor={formatearNumero(stats.seguidores)}
-                etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
-                colorTexto={colorTexto}
-                suave={suave}
-              />
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="Ver seguidores y seguidos"
+                disabled={!onSeguidores}
+                onPress={onSeguidores}
+                scaleTo={0.96}
+                style={styles.estadisticaBoton}
+              >
+                <Estadistica
+                  valor={formatearNumero(stats.seguidores)}
+                  etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
+              </PressableScale>
               <View style={[styles.linea, { backgroundColor: colorLinea }]} />
               <Estadistica
                 valor={stats.reputacion}
@@ -627,6 +639,7 @@ const styles = StyleSheet.create({
   // Tres estadísticas a todo el ancho, más abajo que las píldoras para que no se vean juntas
   stats: { flexDirection: "row", alignItems: "center", marginTop: 30 },
   estadistica: { flex: 1, alignItems: "center", gap: 2 },
+  estadisticaBoton: { flex: 1 },
   estadisticaValor: {
     fontFamily: "Inter_500Medium",
     fontSize: 17,

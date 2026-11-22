@@ -130,6 +130,18 @@ service cloud.firestore {
           && request.resource.data.creadoEn == request.time;
       }
 
+      // Siguiendo: el espejo de seguidores, desde quien sigue. El id del doc es el uid de la
+      // persona seguida. Cualquiera con sesión ve la lista (pestaña Seguidos del perfil); solo
+      // la dueña la escribe.
+      match /siguiendo/{followedId} {
+        allow read: if signedIn();
+        allow delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && followedId != uid
+          && request.resource.data.keys().hasOnly(['creadoEn'])
+          && request.resource.data.creadoEn == request.time;
+      }
+
       // Notificaciones: las escribe quien las provoca (seguir, guardar, comentar o escribir) y
       // solo las lee su destinataria. El id es fijo por persona y motivo, así que nadie puede
       // acumularle copias: repetir la acción renueva la misma notificación.

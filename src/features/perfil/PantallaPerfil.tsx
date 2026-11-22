@@ -28,7 +28,8 @@ export function PantallaPerfil() {
   const { uid } = useSessionUser();
   const { products: mine, status: mineStatus } = useUserProducts(uid);
   const { followersCount } = useFollowers(uid);
-  const { openProduct, openEditProfile, openPremium } = useAppNavigation();
+  const { openProduct, openEditProfile, openPremium, openFollows } =
+    useAppNavigation();
   const premium = useIsPremium(uid);
 
   return (
@@ -47,6 +48,7 @@ export function PantallaPerfil() {
         seguidores: followersCount,
         reputacion: averageRatingLabel(mine),
       }}
+      onSeguidores={() => openFollows(uid)}
       publicaciones={{
         items: mine,
         status: mineStatus,

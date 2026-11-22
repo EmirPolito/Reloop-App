@@ -1,7 +1,9 @@
+import { useEffect, useRef, type ComponentRef } from "react";
 import { StyleSheet, TextInput } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { PressableScale } from "@/components/PressableScale";
+import { TRANSICION_MODULO_RAPIDA } from "@/constants/motion";
 import {
   GROSOR_LUPA,
   PildoraCristal,
@@ -22,15 +24,34 @@ export function BuscadorBlanco({
   placeholder,
   accessibilityLabel,
   personas = false,
+  autoFocus = false,
+  onSubmitEditing,
 }: {
   value: string;
   onChangeText: (texto: string) => void;
   placeholder: string;
   accessibilityLabel: string;
   personas?: boolean;
+  /**
+   * Abre el teclado al montar (pantallas que solo sirven para buscar). Espera a que termine la
+   * entrada del módulo: abrirlo durante la animación la hacía sentir lenta y pesada
+   */
+  autoFocus?: boolean;
+  /** Al pulsar "Buscar" en el teclado */
+  onSubmitEditing?: () => void;
 }) {
   const { isDark } = useAppTheme();
   const texto = isDark ? "#F1F5F9" : "#101010";
+  const entrada = useRef<ComponentRef<typeof TextInput>>(null);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    const espera = setTimeout(
+      () => entrada.current?.focus(),
+      TRANSICION_MODULO_RAPIDA.entrada.duration,
+    );
+    return () => clearTimeout(espera);
+  }, [autoFocus]);
 
   return (
     <PildoraCristal style={styles.buscador}>
@@ -40,6 +61,7 @@ export function BuscadorBlanco({
         grosorExtra={GROSOR_LUPA}
       />
       <TextInput
+        ref={entrada}
         accessibilityLabel={accessibilityLabel}
         value={value}
         onChangeText={onChangeText}
@@ -48,6 +70,7 @@ export function BuscadorBlanco({
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
+        onSubmitEditing={onSubmitEditing}
         style={[styles.entrada, { color: texto }]}
       />
       {personas ? (

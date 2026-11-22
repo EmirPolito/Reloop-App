@@ -260,6 +260,16 @@ await expectDenied("A quita a B de sus seguidores", () => deleteDoc(doc(A.db, "u
 await expectDenied("B sigue con un campo extra", () => setDoc(follower(A, B), { creadoEn: serverTimestamp(), extra: 1 }));
 await expectOk("B deja de seguir a A", () => deleteDoc(follower(A, B)));
 
+// ── SIGUIENDO ───────────────────────────────────────────────────────────────
+const following = (by, owner) => doc(by.db, "usuarios", by.uid, "siguiendo", owner.uid);
+await expectOk("B guarda que sigue a A", () => setDoc(following(B, A), { creadoEn: serverTimestamp() }));
+await expectOk("B ve a quién sigue", async () => { if ((await getDocs(collection(B.db, "usuarios", B.uid, "siguiendo"))).size !== 1) throw new Error("cantidad"); });
+await expectOk("A ve a quién sigue B (pestaña Seguidos)", async () => { if ((await getDocs(collection(A.db, "usuarios", B.uid, "siguiendo"))).size !== 1) throw new Error("cantidad"); });
+await expectDenied("A se guarda como seguida de sí misma", () => setDoc(following(A, A), { creadoEn: serverTimestamp() }));
+await expectDenied("A escribe en el siguiendo de B", () => setDoc(doc(A.db, "usuarios", B.uid, "siguiendo", A.uid), { creadoEn: serverTimestamp() }));
+await expectDenied("B guarda con un campo extra", () => setDoc(following(B, A), { creadoEn: serverTimestamp(), extra: 1 }));
+await expectOk("B deja de seguir a A (siguiendo)", () => deleteDoc(following(B, A)));
+
 // ── PUBLICACIONES ───────────────────────────────────────────────────────────
 await expectOk("A publica una venta (5/1)", () => createProduct(A, "p-venta"));
 await expectOk("A publica una donación (0/0, sin precio)", () => createProduct(A, "p-dona", { category: "donacion", price: 0, ratingTotal: 0, ratingCount: 0 }));

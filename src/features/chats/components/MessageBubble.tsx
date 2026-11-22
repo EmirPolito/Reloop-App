@@ -270,9 +270,7 @@ export const MessageBubble = memo(function MessageBubble({
         gap: SEPARACION_AVATAR,
       }}
     >
-      <View
-        style={{ width: LADO_AVATAR, height: LADO_AVATAR, marginTop: 3 }}
-      >
+      <View style={{ width: LADO_AVATAR, height: LADO_AVATAR, marginTop: 3 }}>
         {showAvatar ? (
           <AvatarVendedor
             ownerId={contactId}

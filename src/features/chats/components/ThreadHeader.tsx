@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
+import { BotonBarra } from "@/components/ui/BotonBarra";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import {
   THREAD_HEADER_CONTENT_HEIGHT,
@@ -12,21 +13,10 @@ import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { BackArrowIcon, CategoryIcon } from "./ThreadIcons";
 
-function roundButtonStyle(isDark: boolean) {
-  return {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    // Blanco liso en claro: translúcido se veía gris sobre el fondo
-    backgroundColor: isDark ? "#ffffff1a" : "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
-}
-
-/** Encabezado flotante del chat: volver, contacto (abre su perfil) y menú. */
+/**
+ * Encabezado flotante del chat: volver, contacto (abre su perfil) y menú. Los botones son los
+ * redondos de cristal de los demás módulos (Chats, Favoritos...), del mismo tamaño.
+ */
 export function ThreadHeader({
   contactId,
   contactName,
@@ -43,7 +33,6 @@ export function ThreadHeader({
 }) {
   const { isDark, styles } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const buttonStyle = roundButtonStyle(isDark);
   const iconColor = isDark ? "#FFFFFF" : "#101010";
   const isIOS = Platform.OS === "ios";
 
@@ -94,17 +83,11 @@ export function ThreadHeader({
         />
       )}
 
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel="Volver a los chats"
-        onPress={onBack}
-        scaleTo={0.92}
-        style={buttonStyle}
-      >
+      <BotonBarra etiqueta="Volver a los chats" onPress={onBack}>
         <View style={{ transform: [{ translateX: -1.5 }] }}>
           <BackArrowIcon size={28} color={iconColor} />
         </View>
-      </PressableScale>
+      </BotonBarra>
 
       {/* Centro: avatar (abre el perfil) + nombre del contacto debajo */}
       <View style={{ alignItems: "center", flex: 1, marginHorizontal: 10 }}>
@@ -138,17 +121,11 @@ export function ThreadHeader({
       </View>
 
       {/* Botón derecho de menú */}
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel="Más opciones"
-        onPress={onOpenMenu}
-        scaleTo={0.92}
-        style={buttonStyle}
-      >
+      <BotonBarra etiqueta="Más opciones" onPress={onOpenMenu}>
         <View style={{ transform: [{ translateY: -0.5 }] }}>
           <CategoryIcon size={22} color={iconColor} />
         </View>
-      </PressableScale>
+      </BotonBarra>
     </View>
   );
 }

@@ -1,49 +1,34 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
 import { ActivityIndicator, View, type ViewStyle } from "react-native";
 
 import { PressableScale } from "@/components/PressableScale";
-import { ESTILO_BOTON_ACCION } from "@/features/perfil/Perfiltemas";
+import { ALTO_PILDORA } from "@/features/busqueda/components/PildoraCristal";
 import { SendIcon } from "./ThreadIcons";
+
+/** Mismo fondo que la burbuja de mis mensajes */
+const COLOR_MI_BURBUJA = "#272727";
 
 // Estilos fuera del componente: referencias estables, cero trabajo al re-renderizar
 const SEND_BUTTON_STYLE: ViewStyle = {
-  width: 56,
-  height: 56,
-  marginRight: 4,
-  opacity: 1, // Siempre con opacidad completa
-};
-
-const SEND_GRADIENT_STYLE: ViewStyle = {
-  width: "100%",
-  height: "100%",
-  borderRadius: 28,
+  width: ALTO_PILDORA,
+  height: ALTO_PILDORA,
+  borderRadius: ALTO_PILDORA / 2,
+  backgroundColor: COLOR_MI_BURBUJA,
   alignItems: "center",
   justifyContent: "center",
-  borderWidth: 0.3,
-  borderColor: "#7ebaffff",
-  shadowColor: "#2563EB",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 3,
-  overflow: "hidden",
+  // La sombra suave de la burbuja, apenas más marcada por ser un botón
+  shadowColor: "#000000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.12,
+  shadowRadius: 6,
+  elevation: 2,
 };
 
-const SEND_GLOSS_STYLE: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 2,
-  right: 2,
-  height: 24,
-  borderTopLeftRadius: 23,
-  borderTopRightRadius: 23,
-  borderBottomLeftRadius: 15,
-  borderBottomRightRadius: 15,
-};
-
-// Memoizado: no se re-renderiza al escribir ni al enviar, así ninguna
-// actualización de React puede interrumpir la animación del botón.
+/**
+ * Botón de enviar: círculo del alto del input, con el fondo de la burbuja de mis mensajes.
+ * Memoizado: no se re-renderiza al escribir ni al enviar, así ninguna actualización de React
+ * interrumpe su animación al presionarlo.
+ */
 export const SendButton = memo(function SendButton({
   onPress,
   sending = false,
@@ -52,41 +37,21 @@ export const SendButton = memo(function SendButton({
   /** Se están subiendo las fotos: en lugar del avión se muestra un indicador. */
   sending?: boolean;
 }) {
-  const botonTema = ESTILO_BOTON_ACCION;
-
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel="Enviar mensaje"
       onPress={onPress}
-      scaleTo={0.92}
+      scaleTo={0.9}
       style={SEND_BUTTON_STYLE}
     >
-      <LinearGradient
-        colors={botonTema.colors}
-        locations={[0, 0.54, 1]}
-        style={[
-          SEND_GRADIENT_STYLE,
-          {
-            borderColor: botonTema.borderColor,
-            shadowColor: botonTema.shadowColor,
-          },
-        ]}
-      >
-        {/* Reflejo superior en cúpula (Glossy Dome) */}
-        <LinearGradient
-          colors={["#ffffff73", "#ffffff0d"]}
-          style={SEND_GLOSS_STYLE}
-        />
-
-        {sending ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <View style={{ transform: [{ translateX: 0.5 }] }}>
-            <SendIcon size={35} color="#ffffff" />
-          </View>
-        )}
-      </LinearGradient>
+      {sending ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <View style={{ transform: [{ translateX: 0.5 }] }}>
+          <SendIcon size={30} color="#ffffff" />
+        </View>
+      )}
     </PressableScale>
   );
 });

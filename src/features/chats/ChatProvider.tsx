@@ -57,7 +57,10 @@ export function ChatProvider({ children }: PropsWithChildren) {
         uid,
         (chats) => setState({ chats, status: "ready" }),
         (error) => {
-          console.warn("No se pudo leer los chats.", describeFirestoreError(error));
+          console.warn(
+            "No se pudo leer los chats.",
+            describeFirestoreError(error),
+          );
           setState((current) => ({ ...current, status: "error" }));
         },
       ),
