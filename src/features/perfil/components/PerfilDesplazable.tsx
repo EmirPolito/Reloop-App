@@ -1,5 +1,10 @@
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
+
+import {
+  BloqueoScrollContext,
+  useBloqueoScroll,
+} from "@/components/bloqueoScroll";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState, type ReactNode } from "react";
 import { Platform, StyleSheet, View } from "react-native";
@@ -136,8 +141,12 @@ export function PerfilDesplazable({
   const [fallaPortada, setFallaPortada] = useState<string | null>(null);
   const esIOS = Platform.OS === "ios";
 
+  // Mientras se arrastran las fotos de la tarjeta grande, el perfil no se mueve
+  const { bloqueo, propsBloqueo } = useBloqueoScroll();
   const onScroll = useAnimatedScrollHandler({
     onScroll: (e) => {
+      // Un contenido más ancho que la vista es el carrusel de la tarjeta grande, no el perfil
+      if (e.contentSize.width > e.layoutMeasurement.width + 1) return;
       scrollY.set(e.contentOffset.y);
     },
     onBeginDrag: () => {
@@ -185,13 +194,11 @@ export function PerfilDesplazable({
       Extrapolation.CLAMP,
     ),
   );
-  // Portada: vive dentro del scroll (sube con el contenido, sin ningún cálculo por cuadro).
-  // Solo al estirar hacia abajo (iOS) se agranda anclada arriba.
+  // Portada: vive dentro del scroll y se mueve con él de forma nativa (nunca se compensa su
+  // posición, que llegaría un cuadro tarde y la haría temblar respecto al avatar). Al estirar
+  // hacia abajo (iOS) solo crece hacia arriba desde su base, cubriendo el hueco de encima.
   const estiloEstiramiento = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: -estirado.get() },
-      { scale: 1 + estirado.get() / altoPortada },
-    ],
+    transform: [{ scale: 1 + estirado.get() / altoPortada }],
   }));
 
   // Header fijo: la portada ya colapsada, encima del contenido
@@ -228,274 +235,287 @@ export function PerfilDesplazable({
   const ladoMarco = LADO_AVATAR + BORDE_AVATAR * 2;
 
   return (
-    <PausaBrilloContext.Provider value={desplazando}>
-      <View style={{ flex: 1, backgroundColor: fondo }}>
-        <Animated.ScrollView
-          style={styles.scroll}
-          onScroll={onScroll}
-          // Sin `scrollEventThrottle`: Animated.ScrollView usa 1 (un evento por cuadro). Con 16
-          // las animaciones del header y las pestañas iban a ~60 Hz y se sentían pegajosas en
-          // pantallas de 120 Hz
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingTop: altoPortada,
-            paddingBottom: 115,
-          }}
-        >
-          {/* Relleno encima de la portada (fuera del contenido, solo se ve al estirar en iOS): si
+    <BloqueoScrollContext.Provider value={bloqueo}>
+      <PausaBrilloContext.Provider value={desplazando}>
+        <View style={{ flex: 1, backgroundColor: fondo }}>
+          <Animated.ScrollView
+            animatedProps={propsBloqueo}
+            style={styles.scroll}
+            onScroll={onScroll}
+            // Sin `scrollEventThrottle`: Animated.ScrollView usa 1 (un evento por cuadro). Con 16
+            // las animaciones del header y las pestañas iban a ~60 Hz y se sentían pegajosas en
+            // pantallas de 120 Hz
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: altoPortada,
+              paddingBottom: 115,
+            }}
+          >
+            {/* Relleno encima de la portada (fuera del contenido, solo se ve al estirar en iOS): si
               el estiramiento llega un cuadro tarde, en el hueco se ve la portada y no el fondo
               blanco parpadeando */}
-          <View
-            pointerEvents="none"
-            style={[
-              styles.rellenoPortada,
-              { backgroundColor: conPortada ? "#000000" : cielo[0] },
-            ]}
-          >
-            {conPortada && profile.cover ? (
-              <Image
-                source={{
-                  uri:
-                    optimizedImageUrl(profile.cover, ANCHO_PORTADA) ??
-                    profile.cover,
-                }}
-                contentFit="cover"
-                contentPosition="bottom"
-                cachePolicy="memory-disk"
-                style={[StyleSheet.absoluteFill, { opacity: 0.8 }]}
-              />
-            ) : null}
-          </View>
-
-          {/* Portada: dentro del scroll y detrás del avatar (que se dibuja después) */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.portada,
-              { height: altoPortada },
-              estiloEstiramiento,
-            ]}
-          >
-            <CapaPortada
-              cover={conPortada ? profile.cover : null}
-              cielo={cielo}
-              insetTop={insets.top}
-              onError={() => setFallaPortada(profile.cover)}
-            />
-          </Animated.View>
-
-          {/* Avatar (sobresale de la portada) y, a su derecha, números de estadísticas */}
-          <View
-            style={[
-              styles.filaAvatar,
-              { marginTop: -SOLAPE_AVATAR - BORDE_AVATAR },
-            ]}
-          >
-            <Animated.View
+            <View
+              pointerEvents="none"
               style={[
-                {
-                  width: ladoMarco,
-                  height: ladoMarco,
-                  borderRadius: ladoMarco / 2,
-                  padding: BORDE_AVATAR,
-                  backgroundColor: fondo,
-                  transformOrigin: "left bottom",
-                },
-                estiloAvatar,
+                styles.rellenoPortada,
+                { backgroundColor: conPortada ? "#000000" : cielo[0] },
               ]}
             >
-              <View style={styles.avatar}>
-                <PerfilAvatar
-                  photo={profile.photo}
-                  orb={profile.orb}
-                  color={profile.color}
-                  name={profile.name}
-                  placeholder={placeholder}
+              {conPortada && profile.cover ? (
+                <Image
+                  source={{
+                    uri:
+                      optimizedImageUrl(profile.cover, ANCHO_PORTADA) ??
+                      profile.cover,
+                  }}
+                  contentFit="cover"
+                  contentPosition="bottom"
+                  cachePolicy="memory-disk"
+                  // Desenfocada: si se asoma un instante, no se nota la orilla
+                  blurRadius={24}
+                  style={StyleSheet.absoluteFill}
                 />
-              </View>
-            </Animated.View>
-
-            {/* Píldoras a la derecha del avatar, debajo de la portada */}
-            {profile.pills.length > 0 ? (
-              <View style={styles.pildorasAvatar}>
-                {profile.pills.map((pill) => (
-                  <PildoraPerfil
-                    key={pill.id}
-                    text={pill.text}
-                    color={pill.color}
-                    icon={pill.icon}
-                    isDark={isDark}
-                  />
-                ))}
-              </View>
-            ) : null}
-          </View>
-
-          {/* Nombre, @username, descripción, estadísticas y acciones */}
-          <View style={styles.info}>
-            <View
-              style={styles.filaNombre}
-              onLayout={(e) => {
-                const { y, height } = e.nativeEvent.layout;
-                // `info` empieza tras la fila del avatar: se suma su posición
-                finNombre.set(
-                  altoPortada +
-                    (ladoMarco - SOLAPE_AVATAR) +
-                    ESPACIO_NOMBRE +
-                    y +
-                    height,
-                );
-              }}
-            >
-              <Text
-                numberOfLines={2}
-                style={[styles.nombre, { color: colorTexto }]}
-              >
-                {profile.name}
-              </Text>
-              {premium ? (
-                <PremiumBadge size={24} style={styles.insigniaNombre} />
               ) : null}
             </View>
-            {profile.username ? (
-              <Text style={[styles.usuario, { color: suave }]}>
-                {conArroba(profile.username)}
-              </Text>
-            ) : null}
 
-            <Text style={[styles.descripcion, { color: colorTexto }]}>
-              {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
-            </Text>
-
-            {/* Las tres estadísticas, sin iconos, separadas por dos líneas finas */}
-            <View style={styles.stats}>
-              <Estadistica
-                valor={formatearNumero(stats.publicaciones)}
-                etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
-                colorTexto={colorTexto}
-                suave={suave}
+            {/* Portada: dentro del scroll y detrás del avatar (que se dibuja después) */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.portada,
+                { height: altoPortada },
+                estiloEstiramiento,
+              ]}
+            >
+              <CapaPortada
+                cover={conPortada ? profile.cover : null}
+                cielo={cielo}
+                insetTop={insets.top}
+                onError={() => setFallaPortada(profile.cover)}
               />
-              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel="Ver seguidores y seguidos"
-                disabled={!onSeguidores}
-                onPress={onSeguidores}
-                scaleTo={0.96}
-                style={styles.estadisticaBoton}
+            </Animated.View>
+
+            {/* Avatar (sobresale de la portada) y, a su derecha, números de estadísticas */}
+            <View
+              style={[
+                styles.filaAvatar,
+                { marginTop: -SOLAPE_AVATAR - BORDE_AVATAR },
+              ]}
+            >
+              <Animated.View
+                style={[
+                  {
+                    width: ladoMarco,
+                    height: ladoMarco,
+                    borderRadius: ladoMarco / 2,
+                    padding: BORDE_AVATAR,
+                    backgroundColor: fondo,
+                    transformOrigin: "left bottom",
+                  },
+                  estiloAvatar,
+                ]}
               >
-                <Estadistica
-                  valor={formatearNumero(stats.seguidores)}
-                  etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
-                  colorTexto={colorTexto}
-                  suave={suave}
-                />
-              </PressableScale>
-              <View style={[styles.linea, { backgroundColor: colorLinea }]} />
-              <Estadistica
-                valor={stats.reputacion}
-                etiqueta="Valoración"
-                colorTexto={colorTexto}
-                suave={suave}
-              />
+                <View style={styles.avatar}>
+                  <PerfilAvatar
+                    photo={profile.photo}
+                    orb={profile.orb}
+                    color={profile.color}
+                    name={profile.name}
+                    placeholder={placeholder}
+                  />
+                </View>
+              </Animated.View>
+
+              {/* Píldoras a la derecha del avatar, debajo de la portada */}
+              {profile.pills.length > 0 ? (
+                <View style={styles.pildorasAvatar}>
+                  {profile.pills.map((pill) => (
+                    <PildoraPerfil
+                      key={pill.id}
+                      text={pill.text}
+                      color={pill.color}
+                      icon={pill.icon}
+                      isDark={isDark}
+                    />
+                  ))}
+                </View>
+              ) : null}
             </View>
 
-            {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
-          </View>
-
-          <PublicacionesPerfil
-            publicaciones={publicaciones.items}
-            anuncios={SIN_ANUNCIOS}
-            perfil={profile}
-            status={publicaciones.status}
-            isOwn={publicaciones.isOwn}
-            isDark={isDark}
-            onOpen={publicaciones.onOpen}
-            style={styles.pestanas}
-          />
-
-          {pie}
-        </Animated.ScrollView>
-
-        {/* Header fijo: el trozo de la portada que queda al colapsar, encima del contenido (el
-            avatar y el resto pasan por debajo). Aparece por opacidad: la capa no cambia nunca
-            de orden respecto al scroll, que en iOS reordenaría sus vistas a mitad del gesto. */}
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.headerFijo, { height: altoHeader }, estiloHeaderFijo]}
-        >
-          <View
-            style={[
-              styles.portada,
-              {
-                height: altoPortada,
-                transform: [{ translateY: -RECORRIDO }],
-              },
-            ]}
-          >
-            <CapaPortada
-              cover={conPortada ? profile.cover : null}
-              cielo={cielo}
-              insetTop={insets.top}
-              onError={() => setFallaPortada(profile.cover)}
-            />
-          </View>
-          <Animated.View style={[StyleSheet.absoluteFill, estiloDesenfoque]}>
-            {/* En Android el desenfoque no está activo en la app: lo suple el velo */}
-            {Platform.OS !== "android" ? (
-              <BlurView
-                intensity={28}
-                tint="dark"
-                style={StyleSheet.absoluteFill}
-              />
-            ) : null}
-            <View style={[StyleSheet.absoluteFill, styles.veloColapsado]} />
-          </Animated.View>
-        </Animated.View>
-
-        {/* Botones y título pequeño: fijos sobre el header */}
-        <View
-          pointerEvents="box-none"
-          style={[styles.barra, { top: insets.top, height: ALTO_HEADER }]}
-        >
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[styles.titulo, estiloTitulo]}
-          >
-            {/* El avatar entra al header junto con el nombre cuando el grande se esconde */}
-            <View style={styles.avatarHeader}>
-              <UserAvatar
-                photo={profile.photo}
-                orb={profile.orb}
-                name={profile.name}
-                size={LADO_AVATAR_HEADER}
-              />
-            </View>
-            <View style={styles.textoTitulo}>
-              <View style={styles.filaTitulo}>
-                <Text numberOfLines={1} style={styles.tituloNombre}>
+            {/* Nombre, @username, descripción, estadísticas y acciones */}
+            <View style={styles.info}>
+              <View
+                style={styles.filaNombre}
+                onLayout={(e) => {
+                  const { y, height } = e.nativeEvent.layout;
+                  // `info` empieza tras la fila del avatar: se suma su posición
+                  finNombre.set(
+                    altoPortada +
+                      (ladoMarco - SOLAPE_AVATAR) +
+                      ESPACIO_NOMBRE +
+                      y +
+                      height,
+                  );
+                }}
+              >
+                <Text
+                  numberOfLines={2}
+                  style={[styles.nombre, { color: colorTexto }]}
+                >
                   {profile.name}
                 </Text>
                 {premium ? (
-                  <PremiumBadge
-                    size={18}
-                    variant="static"
-                    style={{ marginTop: 2, marginLeft: -2 }}
-                  />
+                  <PremiumBadge size={24} style={styles.insigniaNombre} />
                 ) : null}
               </View>
-              <Text numberOfLines={1} style={styles.tituloSub}>
-                {stats.publicaciones}{" "}
-                {stats.publicaciones === 1 ? "subido" : "subidos"}
+              {profile.username ? (
+                <Text style={[styles.usuario, { color: suave }]}>
+                  {conArroba(profile.username)}
+                </Text>
+              ) : null}
+
+              <Text style={[styles.descripcion, { color: colorTexto }]}>
+                {profile.description.trim() || DESCRIPCION_POR_DEFECTO}
               </Text>
+
+              {/* Las tres estadísticas, sin iconos, separadas por dos líneas finas */}
+              <View style={styles.stats}>
+                <Estadistica
+                  valor={formatearNumero(stats.publicaciones)}
+                  etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
+                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver seguidores y seguidos"
+                  disabled={!onSeguidores}
+                  onPress={onSeguidores}
+                  scaleTo={0.96}
+                  style={styles.estadisticaBoton}
+                >
+                  <Estadistica
+                    valor={formatearNumero(stats.seguidores)}
+                    etiqueta={
+                      stats.seguidores === 1 ? "Seguidor" : "Seguidores"
+                    }
+                    colorTexto={colorTexto}
+                    suave={suave}
+                  />
+                </PressableScale>
+                <View style={[styles.linea, { backgroundColor: colorLinea }]} />
+                <Estadistica
+                  valor={stats.reputacion}
+                  etiqueta="Valoración"
+                  colorTexto={colorTexto}
+                  suave={suave}
+                />
+              </View>
+
+              {acciones ? (
+                <View style={styles.acciones}>{acciones}</View>
+              ) : null}
             </View>
+
+            <PublicacionesPerfil
+              publicaciones={publicaciones.items}
+              anuncios={SIN_ANUNCIOS}
+              perfil={profile}
+              status={publicaciones.status}
+              isOwn={publicaciones.isOwn}
+              isDark={isDark}
+              onOpen={publicaciones.onOpen}
+              style={styles.pestanas}
+            />
+
+            {pie}
+          </Animated.ScrollView>
+
+          {/* Header fijo: el trozo de la portada que queda al colapsar, encima del contenido (el
+            avatar y el resto pasan por debajo). Aparece por opacidad: la capa no cambia nunca
+            de orden respecto al scroll, que en iOS reordenaría sus vistas a mitad del gesto. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.headerFijo,
+              { height: altoHeader },
+              estiloHeaderFijo,
+            ]}
+          >
+            <View
+              style={[
+                styles.portada,
+                {
+                  height: altoPortada,
+                  transform: [{ translateY: -RECORRIDO }],
+                },
+              ]}
+            >
+              <CapaPortada
+                cover={conPortada ? profile.cover : null}
+                cielo={cielo}
+                insetTop={insets.top}
+                onError={() => setFallaPortada(profile.cover)}
+              />
+            </View>
+            <Animated.View style={[StyleSheet.absoluteFill, estiloDesenfoque]}>
+              {/* En Android el desenfoque no está activo en la app: lo suple el velo */}
+              {Platform.OS !== "android" ? (
+                <BlurView
+                  intensity={28}
+                  tint="dark"
+                  style={StyleSheet.absoluteFill}
+                />
+              ) : null}
+              <View style={[StyleSheet.absoluteFill, styles.veloColapsado]} />
+            </Animated.View>
           </Animated.View>
-          <View style={styles.derecha}>{derecha}</View>
+
+          {/* Botones y título pequeño: fijos sobre el header */}
+          <View
+            pointerEvents="box-none"
+            style={[styles.barra, { top: insets.top, height: ALTO_HEADER }]}
+          >
+            <Animated.View
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[styles.titulo, estiloTitulo]}
+            >
+              {/* El avatar entra al header junto con el nombre cuando el grande se esconde */}
+              <View style={styles.avatarHeader}>
+                <UserAvatar
+                  photo={profile.photo}
+                  orb={profile.orb}
+                  name={profile.name}
+                  size={LADO_AVATAR_HEADER}
+                />
+              </View>
+              <View style={styles.textoTitulo}>
+                <View style={styles.filaTitulo}>
+                  <Text numberOfLines={1} style={styles.tituloNombre}>
+                    {profile.name}
+                  </Text>
+                  {premium ? (
+                    <PremiumBadge
+                      size={18}
+                      variant="static"
+                      style={{ marginTop: 2, marginLeft: -2 }}
+                    />
+                  ) : null}
+                </View>
+                <Text numberOfLines={1} style={styles.tituloSub}>
+                  {stats.publicaciones}{" "}
+                  {stats.publicaciones === 1 ? "subido" : "subidos"}
+                </Text>
+              </View>
+            </Animated.View>
+            <View style={styles.derecha}>{derecha}</View>
+          </View>
         </View>
-      </View>
-    </PausaBrilloContext.Provider>
+      </PausaBrilloContext.Provider>
+    </BloqueoScrollContext.Provider>
   );
 }
 
@@ -604,7 +624,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     overflow: "hidden",
-    transformOrigin: "top",
+    transformOrigin: "bottom",
   },
   headerFijo: {
     position: "absolute",

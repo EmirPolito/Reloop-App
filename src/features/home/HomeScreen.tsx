@@ -1,3 +1,7 @@
+import {
+  BloqueoScrollContext,
+  useBloqueoScroll,
+} from "@/components/bloqueoScroll";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -102,6 +106,8 @@ export const HomeScreen = memo(function HomeScreen() {
   const altoCabecera = useSharedValue(0);
   const altoBanner = useSharedValue(0);
   const altoCategorias = useSharedValue(0);
+  // Mientras se arrastran las fotos de una tarjeta grande, la lista no se mueve
+  const { bloqueo, propsBloqueo } = useBloqueoScroll();
   const alHacerScroll = useAnimatedScrollHandler((event) => {
     // Los carruseles horizontales de las tarjetas también mandan sus eventos aquí (con y = 0):
     // sin este filtro el buscador flotante y las píldoras parpadeaban al arrastrar las fotos.
@@ -274,31 +280,37 @@ export const HomeScreen = memo(function HomeScreen() {
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <Animated.FlatList
-        style={styles.homeList}
-        data={rows}
-        keyExtractor={homeRowKey}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.productsContent, { paddingTop: arriba }]}
-        ListHeaderComponent={cabecera}
-        onScroll={alHacerScroll}
-        scrollEventThrottle={16}
-        renderItem={renderItem}
-        initialNumToRender={6}
-        maxToRenderPerBatch={4}
-        windowSize={7}
-        removeClippedSubviews
-      />
-      <BuscadorFlotante
-        scrollY={scrollY}
-        reposoY={buscadorY}
-        arriba={arriba}
-        umbralPildoras={umbralPildoras}
-        activeCategory={activeCategory}
-        onToggleCategory={toggleCategory}
-        onPress={openSearch}
-      />
-    </View>
+    <BloqueoScrollContext.Provider value={bloqueo}>
+      <View style={{ flex: 1 }}>
+        <Animated.FlatList
+          animatedProps={propsBloqueo}
+          style={styles.homeList}
+          data={rows}
+          keyExtractor={homeRowKey}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.productsContent,
+            { paddingTop: arriba },
+          ]}
+          ListHeaderComponent={cabecera}
+          onScroll={alHacerScroll}
+          scrollEventThrottle={16}
+          renderItem={renderItem}
+          initialNumToRender={6}
+          maxToRenderPerBatch={4}
+          windowSize={7}
+          removeClippedSubviews
+        />
+        <BuscadorFlotante
+          scrollY={scrollY}
+          reposoY={buscadorY}
+          arriba={arriba}
+          umbralPildoras={umbralPildoras}
+          activeCategory={activeCategory}
+          onToggleCategory={toggleCategory}
+          onPress={openSearch}
+        />
+      </View>
+    </BloqueoScrollContext.Provider>
   );
 });

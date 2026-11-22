@@ -2,9 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { memo, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-// El de gesture-handler: coordina su gesto horizontal con el scroll vertical de la lista (con
-// el de React Native los dos peleaban el arrastre y las fotos temblaban)
-import { ScrollView } from "react-native-gesture-handler";
+import Animated, { useAnimatedScrollHandler } from "react-native-reanimated";
+
+import { useBloqueoDeLista } from "@/components/bloqueoScroll";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -159,6 +159,21 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   const { ids: vendedoresFavoritos, alternar } = useVendedoresFavoritos();
   const guardada = vendedoresFavoritos.includes(ownerId);
   const [ancho, setAncho] = useState(0);
+  // Mientras se arrastran las fotos, la lista que contiene la tarjeta no se mueve (todo en
+  // el hilo de UI): el dedo mueve solo el carrusel
+  const bloqueo = useBloqueoDeLista();
+  const alDeslizarFotos = useAnimatedScrollHandler({
+    onBeginDrag: () => {
+      bloqueo?.set(1);
+    },
+    onEndDrag: () => {
+      bloqueo?.set(0);
+    },
+    // Por si el fin del arrastre no llegara: la lista nunca se queda bloqueada
+    onMomentumEnd: () => {
+      bloqueo?.set(0);
+    },
+  });
   const [menu, setMenu] = useState(false);
   // Un solo "ahora" por dibujo de la tarjeta: la hora no cambia entre renders
   const [ahora] = useState(() => Date.now());
@@ -254,16 +269,16 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
 
         {/* Fotos: se desplazan a los lados y se detienen en cada una */}
         {lado > 0 ? (
-          <ScrollView
+          <Animated.ScrollView
+            onScroll={alDeslizarFotos}
             horizontal
             showsHorizontalScrollIndicator={false}
             // Se detiene al inicio de una foto, con la inercia del dedo (un flick avanza varias)
             snapToInterval={lado + SEPARACION_FOTOS}
             snapToAlignment="start"
             decelerationRate="fast"
-            // El arrastre se queda en horizontal y la lista vertical no se mueve a la vez
+            // El arrastre se queda en horizontal
             directionalLockEnabled
-            nestedScrollEnabled
             style={styles.fotos}
             contentContainerStyle={styles.fotosContenido}
           >
@@ -310,7 +325,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
                 </View>
               );
             })}
-          </ScrollView>
+          </Animated.ScrollView>
         ) : null}
 
         <View style={styles.pie}>
