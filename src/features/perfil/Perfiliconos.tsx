@@ -864,7 +864,7 @@ export function IconoEliminarLinea({ size = 24, color = "#000000" }: IconoProps)
       <G
         transform="translate(3, 2)"
         stroke={color}
-        strokeWidth={1.5}
+        strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       >

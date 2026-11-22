@@ -2,11 +2,14 @@
 export interface SeccionLegal {
   titulo: string;
   parrafos: string[];
+  /** Lista corta debajo de los párrafos (una idea por renglón) */
+  puntos?: string[];
 }
 
 export interface DocumentoLegal {
   titulo: string;
-  actualizado: string;
+  /** Línea pequeña bajo el título (la fecha de actualización); opcional */
+  actualizado?: string;
   secciones: SeccionLegal[];
 }
 
@@ -30,7 +33,7 @@ export const POLITICA_PRIVACIDAD: DocumentoLegal = {
     {
       titulo: "Quién puede verlos",
       parrafos: [
-        "Tu perfil, tus publicaciones y tus comentarios los ve cualquier persona con una cuenta verificada en ReLoop.",
+        "Tu perfil, tus publicaciones y tus comentarios los ve cualquier persona con una cuenta verificada en Reloop.",
         "Tus mensajes solo los ven las dos personas del chat. Tus favoritos, calificaciones, reportes y notificaciones solo los ves tú.",
         "Tu correo no aparece en tu perfil ni lo ven otras personas.",
       ],
@@ -50,7 +53,7 @@ export const POLITICA_PRIVACIDAD: DocumentoLegal = {
     {
       titulo: "Tus derechos",
       parrafos: [
-        "Puedes editar tu perfil cuando quieras desde Editar perfil. Para pedir una copia de tus datos o que eliminemos tu cuenta, escríbenos al equipo de ReLoop.",
+        "Puedes editar tu perfil cuando quieras desde Editar perfil. Para pedir una copia de tus datos o que eliminemos tu cuenta, escríbenos al equipo de Reloop.",
       ],
     },
   ],
@@ -61,9 +64,9 @@ export const TERMINOS_CONDICIONES: DocumentoLegal = {
   actualizado: "Última actualización: noviembre de 2026",
   secciones: [
     {
-      titulo: "Qué es ReLoop",
+      titulo: "Qué es Reloop",
       parrafos: [
-        "ReLoop es un espacio para que la comunidad universitaria venda, intercambie, done o adopte entre sí. ReLoop no vende nada ni participa en los acuerdos entre personas.",
+        "Reloop es un espacio para que la comunidad universitaria venda, intercambie, done o adopte entre sí. Reloop no vende nada ni participa en los acuerdos entre personas.",
       ],
     },
     {
@@ -83,7 +86,7 @@ export const TERMINOS_CONDICIONES: DocumentoLegal = {
       titulo: "Acuerdos entre personas",
       parrafos: [
         "El precio, la entrega y el pago los acuerdan directamente quienes participan. Reúnete en lugares públicos del campus y revisa el artículo antes de pagar.",
-        "ReLoop no garantiza la calidad de los artículos ni responde por los acuerdos entre usuarios.",
+        "Reloop no garantiza la calidad de los artículos ni responde por los acuerdos entre usuarios.",
       ],
     },
     {
@@ -101,10 +104,55 @@ export const TERMINOS_CONDICIONES: DocumentoLegal = {
   ],
 };
 
+/** Qué es ReLoop, cómo nació y por qué: se lee como créditos y cierra con los fundadores */
+export const ACERCA_DE_LA_APP: DocumentoLegal = {
+  titulo: "Acerca de la app",
+  secciones: [
+    {
+      titulo: "Nuestra historia",
+      parrafos: [
+        "Reloop nació en un entorno universitario, donde la compraventa entre estudiantes dependía de grupos de mensajería.",
+        "Esos grupos eran difíciles de seguir: las publicaciones se perdían entre conversaciones, el spam era constante y, conforme la comunidad crecía, terminó dividida en varios grupos.",
+      ],
+    },
+    {
+      titulo: "Nuestro propósito",
+      parrafos: [
+        "Creamos Reloop para ofrecer un espacio ordenado y confiable donde comprar, vender y compartir dentro de una comunidad sea sencillo.",
+      ],
+    },
+    {
+      titulo: "Qué ofrece",
+      parrafos: [
+        "Las publicaciones se organizan por categorías, para que cada persona encuentre lo que busca sin esfuerzo.",
+      ],
+      puntos: [
+        "Compra, venta e intercambio de artículos",
+        "Donaciones y adopción de mascotas",
+        "Comida casera",
+      ],
+    },
+    {
+      titulo: "Confianza",
+      parrafos: [
+        "ReLoop está pensada para comunidades universitarias. La comunicación se realiza por chat dentro de la app, para que cada acuerdo se haga con tranquilidad.",
+        "Los pagos no se hacen a través de la app: se acuerdan entre las personas, en efectivo o por transferencia bancaria, y la entrega se hace en persona.",
+      ],
+    },
+    {
+      titulo: "Nuestra visión",
+      parrafos: [
+        "Ser el punto de encuentro de cada comunidad universitaria: un solo lugar, ordenado y cercano, para comprar, vender, intercambiar, donar, encontrar un hogar para una mascota o compartir comida casera.",
+      ],
+    },
+  ],
+};
+
 /** Documentos que se pueden abrir en su propia pantalla (`/legal/[documento]`) */
 export const DOCUMENTOS_LEGALES = {
   privacidad: POLITICA_PRIVACIDAD,
   terminos: TERMINOS_CONDICIONES,
+  acerca: ACERCA_DE_LA_APP,
 } as const satisfies Record<string, DocumentoLegal>;
 
 export type DocumentoLegalId = keyof typeof DOCUMENTOS_LEGALES;

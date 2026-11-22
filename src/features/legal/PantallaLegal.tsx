@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
+  cancelAnimation,
+  Easing,
   FadeInDown,
+  scrollTo,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useDerivedValue,
+  useReducedMotion,
   useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,14 +39,28 @@ const TRAMO_NEBLINA = 24;
 const EXTRA_NEBLINA = 16;
 /** Cuánto baja, desde la hora, la parte que tapa casi por completo */
 const BAJO_CORTE = 22;
+/** Créditos: espera antes de empezar a desplazarse solo (ms) */
+const ESPERA_CREDITOS = 2000;
+/** Créditos: velocidad del desplazamiento automático, lenta para ir leyendo (px/s) */
+const VELOCIDAD_CREDITOS = 9;
 
 /**
  * Documento legal (política de privacidad o términos) en su propia pantalla, para leerlo
  * desde los ajustes del perfil. Encabezado flotante sin tarjeta: botón de volver de cristal y
  * título al centro; el texto pasa por detrás y, al hacer scroll, aparece una neblina del color
  * del fondo que lo difumina bajo el título.
+ *
+ * Con `creditos` (Acerca de la app) se lee como unos créditos: más aire entre apartados, a los
+ * 2 s empieza a desplazarse solo, lento, hasta el final (se detiene si la persona lo toca), y
+ * cierra con lo que se pase en `creditos` (el logo y los fundadores).
  */
-export function PantallaLegal({ documento }: { documento: DocumentoLegal }) {
+export function PantallaLegal({
+  documento,
+  creditos,
+}: {
+  documento: DocumentoLegal;
+  creditos?: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
   const { back } = useAppNavigation();
@@ -49,9 +70,52 @@ export function PantallaLegal({ documento }: { documento: DocumentoLegal }) {
   const [altoCabecera, setAltoCabecera] = useState(0);
 
   const desplazado = useSharedValue(0);
-  const alHacerScroll = useAnimatedScrollHandler((event) => {
-    desplazado.set(event.contentOffset.y);
+  // Créditos: a dónde lleva el desplazamiento automático (-1 = no está desplazando)
+  const destinoAuto = useSharedValue(-1);
+  // La persona tocó el scroll: el automático ya no empieza o se detiene donde va
+  const tocado = useSharedValue(false);
+  const alHacerScroll = useAnimatedScrollHandler({
+    onScroll: (event) => desplazado.set(event.contentOffset.y),
+    onBeginDrag: () => {
+      tocado.set(true);
+      cancelAnimation(destinoAuto);
+      destinoAuto.set(-1);
+    },
   });
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  useDerivedValue(() => {
+    const y = destinoAuto.get();
+    if (y >= 0) scrollTo(scrollRef, 0, y, false);
+  });
+  const reducido = useReducedMotion();
+  // Medidas del scroll: se leen al momento de arrancar, sin volver a programar la espera cada
+  // vez que cambian (antes cada nueva medida cancelaba la espera y nunca arrancaba)
+  const medidas = useRef({ vista: 0, contenido: 0 });
+  const [medido, setMedido] = useState(false);
+  const medir = (cambio: Partial<{ vista: number; contenido: number }>) => {
+    Object.assign(medidas.current, cambio);
+    if (medidas.current.vista > 0 && medidas.current.contenido > 0) {
+      setMedido(true);
+    }
+  };
+  const conCreditos = creditos != null;
+  useEffect(() => {
+    if (!conCreditos || reducido || !medido) return;
+    const espera = setTimeout(() => {
+      const maximo = medidas.current.contenido - medidas.current.vista;
+      if (maximo <= 0 || tocado.get()) return;
+      const desde = desplazado.get();
+      destinoAuto.set(desde);
+      destinoAuto.set(
+        withTiming(maximo, {
+          duration: ((maximo - desde) / VELOCIDAD_CREDITOS) * 1000,
+          easing: Easing.linear,
+        }),
+      );
+    }, ESPERA_CREDITOS);
+    return () => clearTimeout(espera);
+  }, [conCreditos, reducido, medido, desplazado, destinoAuto, tocado]);
+
   const estiloNeblina = useAnimatedStyle(() => ({
     opacity: Math.min(Math.max(desplazado.get() / TRAMO_NEBLINA, 0), 1),
   }));
@@ -67,22 +131,32 @@ export function PantallaLegal({ documento }: { documento: DocumentoLegal }) {
     <View style={styles.pantalla}>
       <Animated.View entering={ENTRADA} style={styles.pantalla}>
         <Animated.ScrollView
+          ref={scrollRef}
           onScroll={alHacerScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
+          onLayout={(e) => medir({ vista: e.nativeEvent.layout.height })}
+          onContentSizeChange={(_, alto) => medir({ contenido: alto })}
           contentContainerStyle={[
             styles.contenido,
+            creditos ? styles.contenidoCreditos : null,
             {
-              paddingTop: altoCabecera + 14,
-              paddingBottom: insets.bottom + 32,
+              // En los créditos el texto empieza más separado del encabezado
+              paddingTop: altoCabecera + (creditos ? 34 : 14),
+              paddingBottom: insets.bottom + (creditos ? 12 : 32),
             },
           ]}
         >
-          <Text style={[styles.actualizado, { color: suave }]}>
-            {documento.actualizado}
-          </Text>
+          {documento.actualizado ? (
+            <Text style={[styles.actualizado, { color: suave }]}>
+              {documento.actualizado}
+            </Text>
+          ) : null}
           {documento.secciones.map((seccion) => (
-            <View key={seccion.titulo} style={styles.seccion}>
+            <View
+              key={seccion.titulo}
+              style={[styles.seccion, creditos ? styles.seccionCreditos : null]}
+            >
               <Text
                 accessibilityRole="header"
                 style={[styles.seccionTitulo, { color: texto }]}
@@ -94,8 +168,29 @@ export function PantallaLegal({ documento }: { documento: DocumentoLegal }) {
                   {parrafo}
                 </Text>
               ))}
+              {seccion.puntos ? (
+                <View style={styles.puntos}>
+                  {seccion.puntos.map((punto) => (
+                    <View key={punto} style={styles.punto}>
+                      <View
+                        style={[styles.vineta, { backgroundColor: suave }]}
+                      />
+                      <Text
+                        style={[
+                          styles.parrafo,
+                          styles.textoPunto,
+                          { color: texto },
+                        ]}
+                      >
+                        {punto}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </View>
           ))}
+          {creditos}
         </Animated.ScrollView>
       </Animated.View>
 
@@ -154,6 +249,13 @@ const styles = StyleSheet.create({
   contenido: { paddingHorizontal: 20, gap: 18 },
   actualizado: { fontFamily: "Inter_400Regular", fontSize: 13 },
   seccion: { gap: 6 },
+  // Créditos: más aire entre apartados y entre párrafos, para leerlo por partes
+  contenidoCreditos: { gap: 36 },
+  seccionCreditos: { gap: 10 },
+  puntos: { gap: 8, marginTop: 4 },
+  punto: { flexDirection: "row", alignItems: "center", gap: 10 },
+  vineta: { width: 5, height: 5, borderRadius: 2.5 },
+  textoPunto: { flex: 1 },
   seccionTitulo: { fontFamily: "Inter_600SemiBold", fontSize: 15.5 },
   parrafo: { fontFamily: "Inter_400Regular", fontSize: 14.5, lineHeight: 21 },
 });

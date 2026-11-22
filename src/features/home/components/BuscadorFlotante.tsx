@@ -39,6 +39,11 @@ const HASTA_PILDORAS = 8 + ALTO_PILDORA_OPCION;
 const SUBIDA_SIN_PILDORAS = HASTA_PILDORAS - 8;
 /** Tramo de scroll en el que aparece la neblina, justo antes de que el buscador quede fijo */
 const TRAMO_NEBLINA = 24;
+/** Lo que la neblina baja de más, además de su cola normal (igual que en las páginas legales) */
+const EXTRA_NEBLINA = 16;
+/** Del borde de arriba de la pantalla al final de la neblina, sin contar `fijo` */
+const ALTO_NEBLINA =
+  ALTO_PILDORA + HASTA_PILDORAS + COLA_NEBLINA + EXTRA_NEBLINA;
 
 const EASE = Easing.out(Easing.cubic);
 /** Las píldoras bajan desde detrás del buscador; al irse, solo se desvanecen */
@@ -190,16 +195,13 @@ export const BuscadorFlotante = memo(function BuscadorFlotante({
         style={[
           styles.neblina,
           // Por capas desde el buscador, a lo largo de las píldoras y apenas debajo de ellas
-          { height: fijo + ALTO_PILDORA + HASTA_PILDORAS + COLA_NEBLINA },
+          { height: fijo + ALTO_NEBLINA },
           estiloNeblina,
         ]}
       >
         <Neblina
           style={StyleSheet.absoluteFill}
-          corte={
-            (fijo + ALTO_PILDORA) /
-            (fijo + ALTO_PILDORA + HASTA_PILDORAS + COLA_NEBLINA)
-          }
+          corte={(fijo + ALTO_PILDORA) / (fijo + ALTO_NEBLINA)}
         />
       </Animated.View>
       {/* Sin fijar no recibe toques: así no tapa el logo ni la campana */}

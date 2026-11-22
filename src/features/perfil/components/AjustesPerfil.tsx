@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
+import { PressableScale } from "@/components/PressableScale";
 import { estiloTarjetaCristal } from "@/components/ui/cristalSuave";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
@@ -152,9 +153,17 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         <Text style={[styles.nota, { color: mutedColor }]}>
           Versión {VERSION}
         </Text>
-        <View style={styles.desarrollado}>
+        {/* Enlace a la página de qué es ReLoop, cómo empezó y por qué */}
+        <PressableScale
+          accessibilityRole="link"
+          accessibilityLabel="Acerca de la app"
+          onPress={() => openLegal("acerca")}
+          scaleTo={0.96}
+          hitSlop={10}
+          style={styles.desarrollado}
+        >
           <Text style={[styles.desarrolladoTexto, { color: textoFila }]}>
-            Con la app
+            Acerca de
           </Text>
           <Image
             accessibilityLabel="ReLoop"
@@ -167,7 +176,7 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           {/* <Text style={[styles.desarrolladoTexto, { color: textoFila }]}>
             puedes
           </Text> */}
-        </View>
+        </PressableScale>
 
         <Text style={[styles.nota, { color: mutedColor }]}>
           Dale una segunda vida a lo que ya no necesitas.

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import Animated, {
   Easing,
@@ -15,7 +15,8 @@ import { Circle, G, Path, Svg } from "react-native-svg";
 import { IconoNotificacionLinea, IconoLunaLinea } from "../Perfiliconos";
 
 /** Misma curva con rebote del toggle original (cubic-bezier(0.68, -0.55, 0.265, 1.55)) */
-const REBOTE = Easing.bezier(0.34, 1.3, 0.64, 1);
+// Rebote suavizado: se pasa menos del final y se asienta sin brinco
+const REBOTE = Easing.bezier(0.32, 1.12, 0.6, 1);
 
 // Medidas del tamaño "md" del original: pista 56x32, borde 2, bolita 24 a 2 px del borde
 const ANCHO = 56;
@@ -32,16 +33,29 @@ interface ToggleProps {
   accessibilityLabel: string;
 }
 
-/** Progreso 0→1 animado con rebote; el valor puede pasarse de 1 un instante, como en el original */
+/**
+ * Progreso 0→1 animado con rebote; el valor puede pasarse de 1 un instante, como en el original.
+ * `ir` lo anima en el momento del toque, sin esperar a que el padre vuelva a renderizar (el
+ * cambio de tema re-renderiza toda la app y el switch se quedaba quieto mientras tanto).
+ */
 function useProgreso(value: boolean, duracion: number) {
   const progreso = useSharedValue(value ? 1 : 0);
-  useEffect(() => {
-    progreso.value = withTiming(value ? 1 : 0, {
-      duration: duracion,
-      easing: REBOTE,
-    });
-  }, [value, duracion, progreso]);
-  return progreso;
+  // A dónde va la animación: si el valor nuevo ya es ese, no se reinicia a medio camino
+  const destino = useRef(value);
+  const ir = useCallback(
+    (encendido: boolean) => {
+      if (destino.current === encendido) return;
+      destino.current = encendido;
+      progreso.value = withTiming(encendido ? 1 : 0, {
+        duration: duracion,
+        easing: REBOTE,
+      });
+    },
+    [duracion, progreso],
+  );
+  // Si el valor cambia desde fuera (no por un toque), también se anima
+  useEffect(() => ir(value), [value, ir]);
+  return { progreso, ir };
 }
 
 /** Pista + bolita comunes: los colores y el contenido de la bolita los pone cada toggle */
@@ -50,12 +64,14 @@ function ToggleBase({
   onValueChange,
   accessibilityLabel,
   progreso,
+  ir,
   pista,
   borde,
   bolita,
   children,
 }: ToggleProps & {
   progreso: SharedValue<number>;
+  ir: (encendido: boolean) => void;
   /** [apagado, encendido] */
   pista: [string, string];
   borde: [string, string];
@@ -76,7 +92,12 @@ function ToggleBase({
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value }}
-      onPress={() => onValueChange(!value)}
+      onPress={() => {
+        // Primero arranca la animación y en el siguiente frame se avisa al padre: así el
+        // re-render (pesado con el tema) no retrasa el movimiento
+        ir(!value);
+        requestAnimationFrame(() => onValueChange(!value));
+      }}
       hitSlop={8}
     >
       <Animated.View style={[styles.pista, estiloPista]}>
@@ -118,7 +139,7 @@ function SolRelleno({ color }: { color: string }) {
  * gira y se encoge mientras aparece la luna (port del ThemeToggle web, tamaño md).
  */
 export function ToggleTema({ value, onValueChange, accessibilityLabel }: ToggleProps) {
-  const progreso = useProgreso(value, 320);
+  const { progreso, ir } = useProgreso(value, 300);
 
   const estiloSol = useAnimatedStyle(() => ({
     opacity: interpolate(progreso.value, [0, 1], [1, 0], Extrapolation.CLAMP),
@@ -141,6 +162,7 @@ export function ToggleTema({ value, onValueChange, accessibilityLabel }: ToggleP
       onValueChange={onValueChange}
       accessibilityLabel={accessibilityLabel}
       progreso={progreso}
+      ir={ir}
       pista={["#fef3c7", "#1a1838"]}
       borde={["#e8d5b7", "#2d2a4e"]}
       bolita={["#ff9500", "#e8e6f0"]}
@@ -165,7 +187,7 @@ export function ToggleNotificaciones({
   accessibilityLabel,
   isDark,
 }: ToggleProps & { isDark: boolean }) {
-  const progreso = useProgreso(value, 300);
+  const { progreso, ir } = useProgreso(value, 280);
 
   // Balanceo de campana: 0 → -22° → 16° → 0 (en los extremos queda recta)
   const balanceo = (p: number) => {
@@ -187,6 +209,7 @@ export function ToggleNotificaciones({
       onValueChange={onValueChange}
       accessibilityLabel={accessibilityLabel}
       progreso={progreso}
+      ir={ir}
       pista={isDark ? ["#2a2a30", "#4628bc"] : ["#E5E7EB", "#c9bcff"]}
       borde={isDark ? ["#3d3d46", "#5b3fd6"] : ["#d1d5db", "#8567ff"]}
       bolita={["#FFFFFF", "#FFFFFF"]}

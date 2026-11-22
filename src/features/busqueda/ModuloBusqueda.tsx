@@ -17,6 +17,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { useDissolve } from "dissolve-ui";
+import { useFocusEffect } from "expo-router";
 import Animated, {
   FadeInDown,
   FadeOut,
@@ -31,6 +32,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
 import { PressableScale } from "@/components/PressableScale";
+import { conSalida, registrarSalida } from "@/components/salidaModulo";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { BulkSearchIcon } from "@/features/chats/components/ChatIcons";
 import { MARGEN_FIJO } from "@/features/home/components/BuscadorFlotante";
@@ -172,28 +174,44 @@ export function ModuloBusqueda() {
 
   const entradaRef = useRef<ComponentRef<typeof TextInput>>(null);
   const progreso = useSharedValue(0);
-  // El teclado sube cuando el módulo ya entró: los dos movimientos juntos se ven bruscos
-  const enfocar = useCallback(() => entradaRef.current?.focus(), []);
-  useEffect(() => {
-    progreso.set(
-      withTiming(1, ENTRADA, (terminado) => {
-        if (terminado) scheduleOnRN(enfocar);
-      }),
-    );
-  }, [progreso, enfocar]);
+  // El teclado sube cuando el módulo ya entró: los dos movimientos juntos se ven bruscos.
+  // Solo la primera vez: al volver de una publicación se quedan los resultados sin teclado
+  const yaEnfocado = useRef(false);
+  const enfocar = useCallback(() => {
+    if (yaEnfocado.current) return;
+    yaEnfocado.current = true;
+    entradaRef.current?.focus();
+  }, []);
+  // Como los demás módulos (`TabScene` con efecto "modulo"): entra cada vez que recibe el
+  // foco (también al volver de una publicación o un perfil) y registra su salida, para que
+  // salga animado antes de navegar fuera
+  useFocusEffect(
+    useCallback(() => {
+      progreso.set(
+        withTiming(1, ENTRADA, (terminado) => {
+          if (terminado) scheduleOnRN(enfocar);
+        }),
+      );
+      const quitarSalida = registrarSalida((despues) => {
+        Keyboard.dismiss();
+        progreso.set(
+          withTiming(0, SALIDA, (terminado) => {
+            if (terminado) scheduleOnRN(despues);
+          }),
+        );
+      });
+      return () => {
+        quitarSalida();
+        progreso.set(0);
+      };
+    }, [progreso, enfocar]),
+  );
   const estilo = useAnimatedStyle(() => ({
     opacity: progreso.get(),
     transform: [{ translateY: (1 - progreso.get()) * DESPLAZAMIENTO }],
   }));
 
-  const cerrar = useCallback(() => {
-    Keyboard.dismiss();
-    progreso.set(
-      withTiming(0, SALIDA, (terminado) => {
-        if (terminado) scheduleOnRN(back);
-      }),
-    );
-  }, [progreso, back]);
+  const cerrar = useCallback(() => conSalida(back), [back]);
 
   // Las mismas publicaciones que el inicio: las de la universidad elegida
   const products = useMemo(
@@ -221,14 +239,14 @@ export function ModuloBusqueda() {
   const abrirProducto = useCallback(
     (productId: string) => {
       agregar(texto);
-      openProduct(productId);
+      conSalida(() => openProduct(productId));
     },
     [agregar, texto, openProduct],
   );
   const abrirPersona = useCallback(
     (uid: string) => {
       agregar(texto);
-      openUserProfile(uid);
+      conSalida(() => openUserProfile(uid));
     },
     [agregar, texto, openUserProfile],
   );
