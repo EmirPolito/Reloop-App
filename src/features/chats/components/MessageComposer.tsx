@@ -84,7 +84,7 @@ export function MessageComposer({
   onOpenImage: (images: string[], index: number) => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { isDark, styles } = useAppTheme();
+  const { isDark } = useAppTheme();
   const previewKeys = usePreviewKeys(images);
   // Sube el composer sobre el teclado (iOS y Android edge-to-edge); sin teclado no se mueve
   const keyboard = useAnimatedKeyboard();
@@ -217,19 +217,20 @@ export function MessageComposer({
             placeholderTextColor={isDark ? "#B3AEC0" : "#828690"}
             returnKeyType="send"
             onSubmitEditing={onSubmit}
-            style={[
-              styles.messageInput,
-              {
-                flex: 1,
-                backgroundColor: "transparent",
-                borderWidth: 0,
-                paddingVertical: 0,
-                paddingLeft: 0,
-                fontFamily: "Inter_500Medium",
-                fontSize: 15,
-                color: isDark ? "#F1F5F9" : "#101010",
-              },
-            ]}
+            // Ocupa todo el alto de la píldora desde el primer render: con minHeight el placeholder
+            // quedaba más abajo hasta enfocar. Placeholder y texto comparten letra y tamaño.
+            style={{
+              flex: 1,
+              minWidth: 0,
+              alignSelf: "stretch",
+              paddingVertical: 0,
+              paddingLeft: 0,
+              paddingRight: 14,
+              textAlignVertical: "center",
+              fontFamily: "Inter_500Medium",
+              fontSize: 15,
+              color: isDark ? "#F1F5F9" : "#101010",
+            }}
           />
         </PildoraCristal>
 

@@ -78,7 +78,14 @@ const ENTRADA_VISTA = FadeInDown.duration(ENTRADA.duration)
   });
 const SALIDA_VISTA = FadeOut.duration(SALIDA.duration).easing(SALIDA.easing);
 /** Las recientes que quedan se acomodan suave cuando una se va */
-const ACOMODO = LinearTransition.duration(240).easing(ENTRADA.easing);
+const DURACION_ACOMODO = 420;
+const ACOMODO = LinearTransition.duration(DURACION_ACOMODO).easing(
+  ENTRADA.easing,
+);
+/** El título de recientes se desvanece cuando se va la última */
+const SALIDA_RECIENTES = FadeOut.duration(240);
+/** Duración del polvo al quitar una búsqueda reciente */
+const DURACION_POLVO = 1500;
 /** Scroll en el que la neblina termina de aparecer */
 const TRAMO_NEBLINA = 24;
 /** Botón de volver: del alto del buscador, sin pasarlo */
@@ -114,6 +121,30 @@ export function ModuloBusqueda() {
   const toggleFavorite = useToggleFavorite();
   const cardWidth = useProductCardWidth(2);
   const { recientes, agregar, quitar } = useBusquedasRecientes();
+  // El acomodo suave solo se activa al quitar una reciente: al entrar al módulo (cabecera
+  // medida, recientes cargadas) todo aparece en su lugar, sin deslizarse
+  const [acomodando, setAcomodando] = useState(false);
+  const finAcomodo = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (finAcomodo.current) clearTimeout(finAcomodo.current);
+    },
+    [],
+  );
+  const empezarQuitar = useCallback(() => {
+    if (finAcomodo.current) clearTimeout(finAcomodo.current);
+    setAcomodando(true);
+  }, []);
+  const terminarQuitar = useCallback(
+    (reciente: string) => {
+      quitar(reciente);
+      finAcomodo.current = setTimeout(
+        () => setAcomodando(false),
+        DURACION_ACOMODO + 100,
+      );
+    },
+    [quitar],
+  );
 
   const [texto, setTexto] = useState("");
   const [categoria, setCategoria] = useState<CategoryId | null>(null);
@@ -347,7 +378,10 @@ export function ModuloBusqueda() {
               keyboardDismissMode="on-drag"
             >
               {recientes.length > 0 ? (
-                <View>
+                <Animated.View
+                  exiting={acomodando ? SALIDA_RECIENTES : undefined}
+                  layout={acomodando ? ACOMODO : undefined}
+                >
                   <Text
                     style={[styles.tituloSeccion, { color: colores.suave }]}
                   >
@@ -359,12 +393,16 @@ export function ModuloBusqueda() {
                       texto={reciente}
                       colores={colores}
                       onElegir={elegirTexto}
-                      onQuitar={quitar}
+                      acomodar={acomodando}
+                      onEmpezarQuitar={empezarQuitar}
+                      onQuitar={terminarQuitar}
                     />
                   ))}
-                </View>
+                </Animated.View>
               ) : null}
-              <View
+              {/* Sube suave junto con las recientes cuando se quita una */}
+              <Animated.View
+                layout={acomodando ? ACOMODO : undefined}
                 style={recientes.length > 0 ? styles.seccionSiguiente : null}
               >
                 <Text style={[styles.tituloSeccion, { color: colores.suave }]}>
@@ -380,7 +418,7 @@ export function ModuloBusqueda() {
                     onElegir={elegirIdea}
                   />
                 ))}
-              </View>
+              </Animated.View>
             </Animated.ScrollView>
           )}
         </Animated.View>
@@ -539,18 +577,23 @@ const FilaIdea = memo(function FilaIdea({
 
 /**
  * Búsqueda reciente. Al quitarla se vuelve polvo que el viento se lleva (efecto Dust de
- * dissolve-ui, desde la izquierda); cuando ya no ocupa su lugar se quita de verdad y las demás
+ * dissolve-ui, desde la izquierda); cuando el polvo termina se quita de verdad y las demás
  * suben suave. La fila sigue oculta hasta que se quita, así no parpadea.
  */
 const FilaReciente = memo(function FilaReciente({
   texto,
   colores,
   onElegir,
+  acomodar,
+  onEmpezarQuitar,
   onQuitar,
 }: {
   texto: string;
   colores: { texto: string; suave: string; caja: string };
   onElegir: (texto: string) => void;
+  /** Solo mientras se quita una: las filas se acomodan suave */
+  acomodar: boolean;
+  onEmpezarQuitar: () => void;
   onQuitar: (texto: string) => void;
 }) {
   const { ref, dissolving, dissolve } = useDissolve();
@@ -559,8 +602,16 @@ const FilaReciente = memo(function FilaReciente({
   const quitarConPolvo = async () => {
     if (quitando) return;
     setQuitando(true);
+    onEmpezarQuitar();
     try {
-      await dissolve({ preset: "dust", grain: 3, duration: 1500 });
+      const inicio = Date.now();
+      await dissolve({ preset: "dust", grain: 3, duration: DURACION_POLVO });
+      // dissolve() resuelve al 60 % del efecto; las demás suben hasta que el polvo termina.
+      // Si resolvió de inmediato (movimiento reducido o sin captura) no hay polvo que esperar.
+      const transcurrido = Date.now() - inicio;
+      if (transcurrido >= DURACION_POLVO * 0.5) {
+        await new Promise((r) => setTimeout(r, DURACION_POLVO - transcurrido));
+      }
     } catch {
       // El efecto es solo visual (en la web no puede capturar la fila): se quita igual
     }
@@ -568,7 +619,7 @@ const FilaReciente = memo(function FilaReciente({
   };
 
   return (
-    <Animated.View layout={ACOMODO}>
+    <Animated.View layout={acomodar ? ACOMODO : undefined}>
       <View
         // Los tipos de dissolve-ui declaran el ref con View como tipo, no como componente
         ref={ref as unknown as RefObject<ComponentRef<typeof View>>}

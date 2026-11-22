@@ -4,13 +4,13 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { conSalida } from "@/components/salidaModulo";
 import { PressableScale } from "@/components/PressableScale";
+import { conSalida } from "@/components/salidaModulo";
 import { estiloTarjetaCristal } from "@/components/ui/cristalSuave";
 import { ENTRADA_MODULO } from "@/constants/motion";
-import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
@@ -49,7 +49,12 @@ const CIERRE_DRAWER_MS = 450;
 const MONTAJE_DRAWER_MS = 80;
 
 type Sheet =
-  "fondo" | "avatar" | "etiquetas" | "nombre" | "username" | "descripcion";
+  | "fondo"
+  | "avatar"
+  | "etiquetas"
+  | "nombre"
+  | "username"
+  | "descripcion";
 
 /** Cambios en curso que la vista previa muestra antes de guardarlos */
 interface Borrador {
@@ -350,9 +355,9 @@ const styles = StyleSheet.create({
   // Igual que las tarjetas del perfil: poco relleno arriba y abajo, y la línea de borde a borde
   tarjeta: {
     borderRadius: 21,
-    paddingVertical: 4.5,
+    paddingVertical: 2,
     paddingHorizontal: 0,
-    marginTop: 26,
+    marginTop: 30,
     gap: 10,
   },
   derecha: {

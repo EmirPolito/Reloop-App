@@ -24,7 +24,7 @@ const ENTRADA = FadeInDown.duration(ENTRADA_MODULO.timing.duration)
 
 const AZUL = "#0785FF";
 const GRADIENTE_AZUL: [string, string] = ["#2075fd", "#00aafe"];
-const AMARILLO_PALOMITA = "#ffd93e";
+const AMARILLO_PALOMITA = "#00aafe";
 
 type PlanId = "anuncio" | "premium";
 
@@ -162,7 +162,7 @@ export function PantallaPremium() {
             >
               <View style={styles.icono}>
                 {elegido === "premium" ? (
-                  <PremiumBadge size={164} />
+                  <PremiumBadge size={164} color="#00aeffff" />
                 ) : (
                   <IconoAnuncio size={104} color={colorAnuncio} />
                 )}
