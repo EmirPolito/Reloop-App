@@ -19,7 +19,7 @@ export function SectionTitle({
 }) {
   const { styles } = useAppTheme();
   return (
-    <View style={[styles.sectionHeader, { marginTop: 32 }]}>
+    <View style={[styles.sectionHeader, { marginTop: 42 }]}>
       <Text
         numberOfLines={1}
         style={[

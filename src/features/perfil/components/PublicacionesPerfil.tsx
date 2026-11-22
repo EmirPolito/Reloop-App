@@ -15,7 +15,6 @@ import { ListaPublicaciones } from "./ListaPublicaciones";
 import { TarjetaVendedor } from "./TarjetaVendedor";
 import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
 
-
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];
 
@@ -101,6 +100,7 @@ export function PublicacionesPerfil({
             isDark={isDark}
             onOpen={onOpen}
             onPersonalizar={() => setDisenando(true)}
+            enPerfil
           />
         </View>
       );
@@ -109,11 +109,11 @@ export function PublicacionesPerfil({
       return (
         <View style={styles.abanico}>
           <ListaPublicaciones
-              items={items}
-              isDark={isDark}
-              isOwn={isOwn}
-              onOpen={onOpen}
-            />
+            items={items}
+            isDark={isDark}
+            isOwn={isOwn}
+            onOpen={onOpen}
+          />
         </View>
       );
     }
@@ -162,7 +162,9 @@ export function PublicacionesPerfil({
         <SheetTarjeta
           visible={disenando}
           diseno={propio.tarjeta}
-          nombre={propio.name}
+          items={publicaciones}
+          perfil={perfil}
+          ownerId={publicaciones[0]?.ownerId ?? ""}
           isDark={isDark}
           onClose={() => setDisenando(false)}
           onGuardar={guardarDiseno}

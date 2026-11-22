@@ -29,6 +29,7 @@ import { ETIQUETA_BUSQUEDA } from "@/features/busqueda/frasesBusqueda";
 import { CATEGORIES } from "@/features/marketplace/data";
 import type { CategoryId } from "@/features/marketplace/types";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import { CATEGORY_IMAGES_CRISTAL } from "@/features/shared/constants";
 import { IconoBusqueda } from "./IconosTarjeta";
 
 /** Separación con el borde de arriba cuando el buscador ya quedó fijo */
@@ -220,6 +221,7 @@ export const BuscadorFlotante = memo(function BuscadorFlotante({
                   key={category.id}
                   valor={category.id}
                   etiqueta={category.label}
+                  icono={CATEGORY_IMAGES_CRISTAL[category.id]}
                   seleccionado={activeCategory === category.id}
                   isDark={isDark}
                   onPress={onToggleCategory}

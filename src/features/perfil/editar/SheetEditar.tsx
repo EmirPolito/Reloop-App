@@ -20,6 +20,7 @@ export function SheetEditar({
   onBack,
   permitirArrastrarContenido = true,
   bloqueado = false,
+  hostName,
   children,
 }: {
   visible: boolean;
@@ -31,6 +32,11 @@ export function SheetEditar({
   permitirArrastrarContenido?: boolean;
   /** No se puede cerrar (sin X, sin arrastrar ni tocar fuera): configuración inicial */
   bloqueado?: boolean;
+  /**
+   * Capa donde se dibuja (un `PortalHost` con ese nombre). La de HeroUI está por encima de los
+   * providers de la sesión: el contenido que los necesita usa `HOST_SESION`.
+   */
+  hostName?: string;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -48,7 +54,7 @@ export function SheetEditar({
     >
       {/* En iOS, sin la ventana nativa de HeroUI (FullWindowOverlay): esa ventana tapa a la
           galería y la foto elegida no regresaba. Como vista normal, la galería se abre encima. */}
-      <BottomSheet.Portal disableFullWindowOverlay>
+      <BottomSheet.Portal disableFullWindowOverlay hostName={hostName}>
         <BottomSheet.Overlay />
         <BottomSheet.Content
           enablePanDownToClose={!bloqueado}
@@ -121,6 +127,9 @@ export function SheetEditar({
     </BottomSheet>
   );
 }
+
+/** Capa de drawers dentro de los providers de la sesión (su `PortalHost` va en el layout de la app) */
+export const HOST_SESION = "sesion";
 
 const RADIO_CARD = 35;
 /** Fondo de la card: [claro, oscuro] */

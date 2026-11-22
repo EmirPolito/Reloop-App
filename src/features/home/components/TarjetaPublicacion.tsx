@@ -30,6 +30,8 @@ import {
 const COLOR_FAVORITO = "#F2143C";
 const COLOR_ESTRELLA = "#F5A623";
 const RADIO = 22;
+/** Borde blanco de la tarjeta */
+const BORDE = 3;
 
 function formatPublicationTime(createdAt: number): string {
   if (!createdAt) return "Hoy";
@@ -83,6 +85,9 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   const compacta = cardWidth < 260;
   const ladoAvatar = compacta ? 32 : 44;
   const radioCorazon = compacta ? 20 : 25;
+  // La foto no llega a los lados: deja este aire y tiene sus propias esquinas redondeadas
+  const margenFoto = compacta ? 6 : 8;
+  const ladoFoto = Math.round(cardWidth - BORDE * 2 - margenFoto * 2);
 
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
 
@@ -109,7 +114,9 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
         {
           width: cardWidth,
           ...(alto ? { height: alto } : {}),
-          backgroundColor: isDark ? "#1B2230" : "#FFFFFF",
+          // Gris muy claro (neutral-50) con borde blanco; en oscuro, el borde apenas se ve
+          backgroundColor: isDark ? "#1B2230" : "#FAFAFA",
+          borderColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
         },
       ]}
     >
@@ -118,7 +125,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           <View
             style={[
               estilos.encabezado,
-              { height: compacta ? 54 : 64 },
+              // Un poco menos de aire arriba del avatar (el de abajo se queda igual)
+              { height: compacta ? 50 : 60, paddingBottom: 4 },
               compacta && estilos.encabezadoCompacto,
             ]}
           >
@@ -189,10 +197,21 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           accessibilityRole="button"
           accessibilityLabel={`Abrir ${item.name}`}
           onPress={() => onOpen(item.id)}
+          style={{
+            marginHorizontal: margenFoto,
+            // Sin encabezado la foto va arriba: el mismo aire que a los lados
+            marginTop: sinEncabezado ? margenFoto : 0,
+          }}
         >
           <LinearGradient
             colors={PRODUCT_COLORS[item.category]}
-            style={[estilos.foto, { height: Math.round(cardWidth) }]}
+            style={[
+              estilos.foto,
+              {
+                height: ladoFoto,
+                borderRadius: RADIO - BORDE - margenFoto / 2 + 4,
+              },
+            ]}
           >
             {imageUri ? (
               <Image
@@ -210,12 +229,6 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
               />
             )}
           </LinearGradient>
-          <View style={estilos.disponibles}>
-            <Text style={estilos.disponiblesTexto}>
-              {item.availableQuantity}{" "}
-              {item.availableQuantity === 1 ? "Disponible" : "Disponibles"}
-            </Text>
-          </View>
         </Pressable>
 
         {sinEncabezado && !acciones ? (
@@ -228,7 +241,10 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             accessibilityState={{ selected: favorite }}
             onPress={alternarFavorito}
             hitSlop={8}
-            style={estilos.favoritoSobreFoto}
+            style={[
+              estilos.favoritoSobreFoto,
+              { top: 8 + margenFoto, right: 8 + margenFoto },
+            ]}
           >
             <Animated.View style={estiloCorazon}>
               {favorite ? (
@@ -308,13 +324,14 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
 const estilos = StyleSheet.create({
   sombra: {
     borderRadius: RADIO,
+    borderWidth: BORDE,
     shadowColor: "#000000",
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 1,
   },
-  tarjeta: { borderRadius: RADIO, overflow: "hidden" },
+  tarjeta: { borderRadius: RADIO - BORDE, overflow: "hidden" },
   encabezado: {
     height: 48,
     flexDirection: "row",
@@ -353,8 +370,6 @@ const estilos = StyleSheet.create({
   },
   favoritoSobreFoto: {
     position: "absolute",
-    top: 8,
-    right: 8,
     width: 34,
     height: 34,
     borderRadius: 17,
@@ -362,28 +377,12 @@ const estilos = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.38)",
   },
-  foto: { alignItems: "center", justifyContent: "center" },
-  disponibles: {
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-    minHeight: 24,
-    paddingHorizontal: 7,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  disponiblesTexto: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 10,
-    color: "#111111",
-  },
-  pie: { paddingHorizontal: 12, paddingTop: 9, paddingBottom: 11 },
-  pieCompacto: { paddingHorizontal: 8, paddingTop: 6, paddingBottom: 7 },
+  foto: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  pie: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8 },
+  pieCompacto: { paddingHorizontal: 8, paddingTop: 6, paddingBottom: 5 },
   pieInferior: {
-    minHeight: 28,
-    marginTop: 3,
+    minHeight: 22,
+    marginTop: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -391,11 +390,11 @@ const estilos = StyleSheet.create({
   },
   calificacion: { flexDirection: "row", alignItems: "center", gap: 3 },
   nota: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_400Regular",
     fontSize: 16,
   },
   notaCompacta: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_400Regular",
     fontSize: 12,
   },
   titulo: {
@@ -406,15 +405,16 @@ const estilos = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 12.5,
   },
+  // Mismo tipo y tamaño que el número de la calificación
   precio: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
   },
   precioCompacto: {
     flexShrink: 1,
     minWidth: 0,
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
   },
   acciones: { paddingHorizontal: 12, paddingBottom: 10 },
 });

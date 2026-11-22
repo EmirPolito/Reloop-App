@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { memo, type PropsWithChildren } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
@@ -33,6 +34,7 @@ function PildoraOpcionBase<T extends string>({
   isDark,
   onPress,
   sutil = false,
+  icono,
 }: {
   valor: T;
   etiqueta: string;
@@ -41,6 +43,8 @@ function PildoraOpcionBase<T extends string>({
   onPress: (valor: T) => void;
   /** Con una sombra mínima: apenas levantada (las categorías de los resultados de búsqueda) */
   sutil?: boolean;
+  /** Icono a la izquierda del texto (las categorías flotantes del inicio) */
+  icono?: number;
 }) {
   return (
     <PressableScale
@@ -51,10 +55,13 @@ function PildoraOpcionBase<T extends string>({
     >
       <PildoraCristal
         style={sutil ? styles.sombraSutil : sombraPildora}
-        contentStyle={styles.pildora}
+        contentStyle={[styles.pildora, icono != null && styles.conIcono]}
         opaco
         relleno={seleccionado ? colorElegida(isDark).fondo : undefined}
       >
+        {icono != null ? (
+          <Image source={icono} contentFit="contain" style={styles.icono} />
+        ) : null}
         <Text
           style={[
             styles.texto,
@@ -105,6 +112,9 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     justifyContent: "center",
   },
+  // El icono pegado a la izquierda: menos relleno de ese lado
+  conIcono: { paddingLeft: 10, paddingRight: 18, gap: 6 },
+  icono: { width: 26, height: 26 },
   texto: { fontSize: 13.5, fontWeight: "500" },
   fila: { width: "100%", maxWidth: 760, alignSelf: "center", marginBottom: -4 },
   // Margen arriba y abajo para que no se corte la sombra de las píldoras

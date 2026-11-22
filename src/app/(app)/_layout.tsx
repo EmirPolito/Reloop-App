@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { PortalHost } from "heroui-native/portal";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { AvisoHost } from "@/features/avisos/AvisosProvider";
@@ -6,6 +7,7 @@ import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
 import { NotificationBannerHost } from "@/features/notificaciones/components/NotificationBannerHost";
 import { BarraNavegacion } from "@/features/navigation/BarraNavegacion";
 import { SheetBienvenida } from "@/features/onboarding/SheetBienvenida";
+import { HOST_SESION } from "@/features/perfil/editar/SheetEditar";
 import { SessionProviders } from "@/features/session/SessionProviders";
 
 export const unstable_settings = { initialRouteName: "(tabs)" };
@@ -53,6 +55,8 @@ export default function AppLayout() {
       <AvisoHost />
       {/* Configuración inicial de las cuentas nuevas (no se puede cerrar hasta terminar) */}
       <SheetBienvenida />
+      {/* Capa de drawers que necesitan la sesión (p. ej., la vista previa de la tarjeta) */}
+      <PortalHost name={HOST_SESION} />
     </SessionProviders>
   );
 }

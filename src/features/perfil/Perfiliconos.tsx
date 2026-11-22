@@ -437,6 +437,22 @@ export function IconoMas({ size = 18, color = "#000000" }: IconoProps) {
   );
 }
 
+/** Tres puntos en vertical (menú de opciones), con trazo de 1.7 */
+export function IconoPuntosVertical({
+  size = 22,
+  color = "#000000",
+}: IconoProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <G fill={color} stroke={color} strokeWidth={1.7}>
+        <Circle cx={12} cy={5.5} r={0.9} />
+        <Circle cx={12} cy={12} r={0.9} />
+        <Circle cx={12} cy={18.5} r={0.9} />
+      </G>
+    </Svg>
+  );
+}
+
 /** Sol relleno (modo claro) */
 export function IconoSol({ size = 24, color = "#F59E0B" }: IconoProps) {
   return (
@@ -858,7 +874,10 @@ export function IconoCaritaLinea({ size = 24, color = "#000000" }: IconoProps) {
 }
 
 /** Eliminar / papelera (Iconly Light Delete) */
-export function IconoEliminarLinea({ size = 24, color = "#000000" }: IconoProps) {
+export function IconoEliminarLinea({
+  size = 24,
+  color = "#000000",
+}: IconoProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <G

@@ -102,6 +102,10 @@ export const HomeScreen = memo(function HomeScreen() {
   const altoBanner = useSharedValue(0);
   const altoCategorias = useSharedValue(0);
   const alHacerScroll = useAnimatedScrollHandler((event) => {
+    // Los carruseles horizontales de las tarjetas también mandan sus eventos aquí (con y = 0):
+    // sin este filtro el buscador flotante y las píldoras parpadeaban al arrastrar las fotos.
+    // La lista solo se mueve en vertical: un contenido más ancho que la vista es de un carrusel.
+    if (event.contentSize.width > event.layoutMeasurement.width + 1) return;
     scrollY.set(event.contentOffset.y);
   });
   const alMedirBuscador = useCallback(

@@ -5,7 +5,10 @@ import { PATRON_USERNAME, normalizarNombre } from "./username";
 import {
   COLORES_PERFIL,
   DISENO_TARJETA_BASE,
+  esColorDestacado,
   MAX_NOMBRE,
+  MAX_DESTACADO,
+  MAX_NOTA,
   MAX_PILDORAS,
   type ColorPerfil,
   type DatosPerfil,
@@ -85,6 +88,21 @@ export function mapProfile(
         data.tarjetaImagen.startsWith("https://")
           ? data.tarjetaImagen
           : null,
+      destacado:
+        typeof data.tarjetaDestacado === "string" &&
+        data.tarjetaDestacado.trim()
+          ? data.tarjetaDestacado.slice(0, MAX_DESTACADO)
+          : null,
+      nota:
+        typeof data.tarjetaNota === "string" && data.tarjetaNota.trim()
+          ? data.tarjetaNota.slice(0, MAX_NOTA)
+          : null,
+      colorDestacado: esColorDestacado(data.tarjetaColorDestacado)
+        ? data.tarjetaColorDestacado
+        : null,
+      colorNota: esColorDestacado(data.tarjetaColorNota)
+        ? data.tarjetaColorNota
+        : null,
     },
     stickers: Array.isArray(data.stickers)
       ? data.stickers.filter((id): id is string => typeof id === "string")
@@ -110,6 +128,16 @@ export function toProfileDocument(data: DatosPerfil) {
     ...(data.tarjeta.fondo ? { tarjetaFondo: data.tarjeta.fondo } : {}),
     ...(data.tarjeta.texto ? { tarjetaTexto: data.tarjeta.texto } : {}),
     ...(data.tarjeta.imagen ? { tarjetaImagen: data.tarjeta.imagen } : {}),
+    ...(data.tarjeta.destacado
+      ? { tarjetaDestacado: data.tarjeta.destacado }
+      : {}),
+    ...(data.tarjeta.nota ? { tarjetaNota: data.tarjeta.nota } : {}),
+    ...(data.tarjeta.colorDestacado
+      ? { tarjetaColorDestacado: data.tarjeta.colorDestacado }
+      : {}),
+    ...(data.tarjeta.colorNota
+      ? { tarjetaColorNota: data.tarjeta.colorNota }
+      : {}),
     descripcion: data.description,
     color: data.color,
     // Firestore no admite `undefined`: el icono solo se escribe si existe

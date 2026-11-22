@@ -20,34 +20,63 @@ export type TextoTarjeta = "claro" | "oscuro";
  * `null` se resuelve según el tema de la app.
  */
 export interface DisenoTarjeta {
-  /** Color de fondo (#RRGGBB) */
+  /** Color de fondo (#RRGGBB): ya no se elige (la tarjeta sigue el tema); se borra al guardar */
   fondo: string | null;
   texto: TextoTarjeta | null;
   /** Imagen de fondo opcional: va sobre el color */
   imagen: string | null;
+  /** Franja de abajo (opcional): una palabra o frase corta resaltada en una píldora… */
+  destacado: string | null;
+  /** …y el mensaje que la acompaña (lo que la persona quiera contar) */
+  nota: string | null;
+  /** Color de la píldora; `null` = con los colores invertidos del texto */
+  colorDestacado: ColorDestacado | null;
+  /** Color del mensaje; `null` = el color del texto de la tarjeta */
+  colorNota: ColorDestacado | null;
 }
+
+/** Colores para elegir de la píldora de la franja, con el texto que se lee sobre cada uno */
+export const COLORES_DESTACADO = {
+  // `suelto`: el color usado como texto (el mensaje de la franja), legible sobre fondo claro
+  amarillo: {
+    fondo: "#FFCC00",
+    texto: "#101010",
+    suelto: "#D49A00",
+    nombre: "Amarillo",
+  },
+  rojo: {
+    fondo: "#E5202E",
+    texto: "#FFFFFF",
+    suelto: "#E5202E",
+    nombre: "Rojo",
+  },
+  verde: {
+    fondo: "#22A355",
+    texto: "#FFFFFF",
+    suelto: "#1F9D55",
+    nombre: "Verde",
+  },
+} as const;
+export type ColorDestacado = keyof typeof COLORES_DESTACADO;
+
+/** `true` si el valor es uno de los colores de la píldora */
+export function esColorDestacado(valor: unknown): valor is ColorDestacado {
+  return typeof valor === "string" && Object.hasOwn(COLORES_DESTACADO, valor);
+}
+
+/** Largo máximo de la píldora y del mensaje de la franja de la tarjeta */
+export const MAX_DESTACADO = 20;
+export const MAX_NOTA = 60;
 
 export const DISENO_TARJETA_BASE: DisenoTarjeta = {
   fondo: null,
   texto: null,
   imagen: null,
+  destacado: null,
+  nota: null,
+  colorDestacado: null,
+  colorNota: null,
 };
-
-/** Colores de fondo para elegir, con el texto que mejor se lee sobre cada uno */
-export const FONDOS_TARJETA: {
-  color: string;
-  nombre: string;
-  texto: TextoTarjeta;
-}[] = [
-  { color: "#FFFFFF", nombre: "Blanco", texto: "oscuro" },
-  { color: "#F1F5F9", nombre: "Gris", texto: "oscuro" },
-  { color: "#DBEAFE", nombre: "Azul", texto: "oscuro" },
-  { color: "#FCE7F3", nombre: "Rosa", texto: "oscuro" },
-  { color: "#DCFCE7", nombre: "Verde", texto: "oscuro" },
-  { color: "#FEF3C7", nombre: "Amarillo", texto: "oscuro" },
-  { color: "#1F2937", nombre: "Grafito", texto: "claro" },
-  { color: "#000000", nombre: "Negro", texto: "claro" },
-];
 
 /** Todo lo que el usuario puede personalizar desde el drawer */
 export interface DatosPerfil {

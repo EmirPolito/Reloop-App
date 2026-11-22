@@ -21,6 +21,8 @@ service cloud.firestore {
       return d.keys().hasOnly(['uid', 'nombre', 'nombreNormalizado', 'username', 'usernameNormalized',
                                'fotoUrl', 'orbe', 'fondoUrl', 'descripcion', 'color',
                                'tarjetaFondo', 'tarjetaTexto', 'tarjetaImagen',
+                               'tarjetaDestacado', 'tarjetaNota', 'tarjetaColorDestacado',
+                               'tarjetaColorNota',
                                'etiquetas', 'stickers', 'onboardingPendiente', 'creadoEn', 'actualizadoEn'])
         // Configuración inicial pendiente (solo cuentas nuevas)
         && (!('onboardingPendiente' in d) || d.onboardingPendiente is bool)
@@ -39,6 +41,10 @@ service cloud.firestore {
         && (!('tarjetaFondo' in d) || (d.tarjetaFondo is string && d.tarjetaFondo.matches('^#[0-9A-Fa-f]{6}$')))
         && (!('tarjetaTexto' in d) || d.tarjetaTexto in ['claro', 'oscuro'])
         && (!('tarjetaImagen' in d) || (d.tarjetaImagen is string && d.tarjetaImagen.matches('https://.*')))
+        && (!('tarjetaDestacado' in d) || (d.tarjetaDestacado is string && d.tarjetaDestacado.size() <= 20))
+        && (!('tarjetaNota' in d) || (d.tarjetaNota is string && d.tarjetaNota.size() <= 60))
+        && (!('tarjetaColorDestacado' in d) || d.tarjetaColorDestacado in ['amarillo', 'rojo', 'verde'])
+        && (!('tarjetaColorNota' in d) || d.tarjetaColorNota in ['amarillo', 'rojo', 'verde'])
         && d.actualizadoEn == request.time;
     }
 

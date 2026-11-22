@@ -1,47 +1,97 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableSuave } from "@/components/PressableSuave";
-import { Text } from "@/features/shared/Text";
-import { useImagePicker } from "@/hooks/useImagePicker";
+import type { Product } from "@/features/marketplace/types";
+import { Text, TextInput } from "@/features/shared/Text";
 import {
-  coloresTarjetaVendedor,
-  FondoImagenTarjeta,
-  primerNombre,
+  NOTA_POR_DEFECTO,
+  TarjetaVendedor,
 } from "../components/TarjetaVendedor";
 import {
-  FONDOS_TARJETA,
+  COLORES_DESTACADO,
+  MAX_DESTACADO,
+  MAX_NOTA,
+  type ColorDestacado,
+  type DatosPerfil,
   type DisenoTarjeta,
-  type TextoTarjeta,
 } from "../Perfiltemas";
 import { INTER, coloresEditar } from "./editarTema";
-import { SheetEditar } from "./SheetEditar";
+import { HOST_SESION, SheetEditar } from "./SheetEditar";
+
+/** Orden de los colores al tocar el círculo de un campo (`null` = el del texto de la tarjeta) */
+const CICLO_COLORES: (ColorDestacado | null)[] = [
+  null,
+  "amarillo",
+  "rojo",
+  "verde",
+];
+function siguienteColor(actual: ColorDestacado | null) {
+  return CICLO_COLORES[
+    (CICLO_COLORES.indexOf(actual) + 1) % CICLO_COLORES.length
+  ];
+}
+
+/** Palomita que se lee sobre el color de un círculo (oscura sobre amarillo y blanco) */
+function colorPalomita(relleno: string) {
+  return relleno === "#FFFFFF" || relleno === COLORES_DESTACADO.amarillo.fondo
+    ? "#101010"
+    : "#FFFFFF";
+}
 
 /**
- * Drawer del diseño de la tarjeta de publicaciones: color de fondo, color del texto (para que
- * se lea sobre fondos oscuros o con imagen) y una imagen de fondo opcional. Arriba, una
- * muestra de cómo queda.
+ * Lo que se guarda: sin color de fondo, color del texto ni imagen (la tarjeta sigue el tema;
+ * los que hubiera de antes se borran) y sin textos vacíos
+ */
+function normalizar(diseno: DisenoTarjeta): DisenoTarjeta {
+  return {
+    ...diseno,
+    fondo: null,
+    texto: null,
+    imagen: null,
+    destacado: diseno.destacado?.trim() || null,
+    nota: diseno.nota?.trim() || null,
+  };
+}
+
+/**
+ * Drawer del diseño de la tarjeta de publicaciones: la franja de abajo (la píldora y el
+ * mensaje, cada uno con un círculo dentro del campo que cambia su color), la vista previa con
+ * la tarjeta real y el botón de guardar. Todo va en un scroll para que nunca se salga del drawer.
  */
 export function SheetTarjeta({
   visible,
   diseno,
-  nombre,
+  items,
+  perfil,
+  ownerId,
   isDark,
   onClose,
   onGuardar,
 }: {
   visible: boolean;
   diseno: DisenoTarjeta;
-  /** Nombre de la persona, para la muestra ("Post de ...") */
-  nombre: string;
+  /** Publicaciones y perfil de la persona, para la vista previa con la tarjeta real */
+  items: Product[];
+  perfil: DatosPerfil;
+  ownerId: string;
   isDark: boolean;
   onClose: () => void;
   /** Guarda el diseño; si falla lanza (y ya avisó) */
   onGuardar: (diseno: DisenoTarjeta) => Promise<void>;
 }) {
   const c = coloresEditar(isDark);
-  const { pickCoverImage, isPicking } = useImagePicker();
+  const insets = useSafeAreaInsets();
+  const { height: altoVentana } = useWindowDimensions();
   const [borrador, setBorrador] = useState(diseno);
   const [guardando, setGuardando] = useState(false);
 
@@ -52,27 +102,14 @@ export function SheetTarjeta({
     if (visible) setBorrador(diseno);
   }
 
-  const colores = coloresTarjetaVendedor(borrador, isDark);
-  const textoActual: TextoTarjeta =
-    borrador.texto ??
-    FONDOS_TARJETA.find((f) => f.color === borrador.fondo)?.texto ??
-    (colores.principal === "#FFFFFF" ? "claro" : "oscuro");
-
-  const elegirColor = (color: string, texto: TextoTarjeta) =>
-    // Al cambiar el fondo, el texto pasa al que mejor se lee sobre él
-    setBorrador((b) => ({ ...b, fondo: color, texto }));
-
-  const elegirImagen = async () => {
-    if (isPicking) return;
-    const uri = await pickCoverImage();
-    if (uri) setBorrador((b) => ({ ...b, imagen: uri }));
-  };
+  const vista = normalizar(borrador);
+  const fondoCampo = isDark ? "#17233A" : "#F2F2F2";
 
   const guardar = async () => {
     if (guardando) return;
     setGuardando(true);
     try {
-      await onGuardar(borrador);
+      await onGuardar(normalizar(borrador));
       onClose();
     } catch {
       // Ya se avisó; se queda abierto para reintentar
@@ -81,112 +118,110 @@ export function SheetTarjeta({
     }
   };
 
+  /**
+   * Círculo dentro de un campo, a la izquierda: sin borde, con el color elegido y una palomita;
+   * al tocarlo pasa al siguiente color
+   */
+  const circulo = (
+    valor: ColorDestacado | null,
+    etiqueta: string,
+    onCambio: (valor: ColorDestacado | null) => void,
+  ) => {
+    // Automático: el color del texto de la franja (sigue el tema)
+    const relleno = valor
+      ? COLORES_DESTACADO[valor].fondo
+      : isDark
+        ? "#FFFFFF"
+        : "#101010";
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Cambiar el color de ${etiqueta}`}
+        accessibilityValue={{
+          text: valor ? COLORES_DESTACADO[valor].nombre : "Automático",
+        }}
+        hitSlop={8}
+        onPress={() => onCambio(siguienteColor(valor))}
+        style={[styles.circulo, { backgroundColor: relleno }]}
+      >
+        <Ionicons name="checkmark" size={16} color={colorPalomita(relleno)} />
+      </Pressable>
+    );
+  };
+
   return (
     <SheetEditar
       visible={visible}
       titulo="Diseño de la tarjeta"
       isDark={isDark}
       onClose={onClose}
+      // El contenido se desplaza: solo la línea de arriba arrastra el drawer
+      permitirArrastrarContenido={false}
+      // La vista previa es la tarjeta real: necesita la sesión, el tema y los favoritos
+      hostName={HOST_SESION}
     >
-      <View style={styles.cuerpo}>
-        {/* Muestra */}
-        <View style={[styles.muestra, { backgroundColor: colores.fondo }]}>
-          {borrador.imagen ? (
-            <FondoImagenTarjeta uri={borrador.imagen} color={colores.fondo} />
-          ) : null}
-          <Text style={[styles.muestraTexto, { color: colores.principal }]}>
-            Post de {primerNombre(nombre)}
-          </Text>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        // El alto que deja el drawer (ventana menos zona segura, encabezado y márgenes)
+        style={{ maxHeight: altoVentana - insets.top - insets.bottom - 130 }}
+        contentContainerStyle={styles.cuerpo}
+      >
+        <Text style={[INTER.medium, styles.etiqueta, { color: c.suave }]}>
+          Inferior (puedes cambiar el color)
+        </Text>
+        <View style={[styles.campo, { backgroundColor: fondoCampo }]}>
+          {circulo(borrador.colorDestacado, "la píldora", (valor) =>
+            setBorrador((b) => ({ ...b, colorDestacado: valor })),
+          )}
+          <TextInput
+            value={borrador.destacado ?? ""}
+            onChangeText={(t) => setBorrador((b) => ({ ...b, destacado: t }))}
+            maxLength={MAX_DESTACADO}
+            placeholder="Texto resaltado (ej. Nuevo)"
+            placeholderTextColor={c.suave}
+            selectionColor={c.texto}
+            accessibilityLabel="Texto resaltado de la franja"
+            style={[INTER.medium, styles.input, { color: c.texto }]}
+          />
+        </View>
+        <View style={[styles.campo, { backgroundColor: fondoCampo }]}>
+          {circulo(borrador.colorNota, "el mensaje", (valor) =>
+            setBorrador((b) => ({ ...b, colorNota: valor })),
+          )}
+          <TextInput
+            value={borrador.nota ?? ""}
+            onChangeText={(t) => setBorrador((b) => ({ ...b, nota: t }))}
+            maxLength={MAX_NOTA}
+            placeholder={NOTA_POR_DEFECTO}
+            placeholderTextColor={c.suave}
+            selectionColor={c.texto}
+            accessibilityLabel="Mensaje de la franja"
+            style={[INTER.medium, styles.input, { color: c.texto }]}
+          />
         </View>
 
-        <Text style={[INTER.medium, styles.etiqueta, { color: c.suave }]}>
-          Fondo
+        <Text
+          style={[
+            INTER.medium,
+            styles.etiqueta,
+            styles.separada,
+            { color: c.suave },
+          ]}
+        >
+          Vista previa
         </Text>
-        <View style={styles.colores}>
-          {FONDOS_TARJETA.map((f) => {
-            const elegido = borrador.fondo === f.color;
-            return (
-              <Pressable
-                key={f.color}
-                accessibilityRole="button"
-                accessibilityLabel={`Fondo ${f.nombre}`}
-                accessibilityState={{ selected: elegido }}
-                onPress={() => elegirColor(f.color, f.texto)}
-                style={[
-                  styles.color,
-                  { backgroundColor: f.color, borderColor: c.divisor },
-                  elegido && { borderColor: c.texto, borderWidth: 2.5 },
-                ]}
-              />
-            );
-          })}
-        </View>
-
-        <Text style={[INTER.medium, styles.etiqueta, { color: c.suave }]}>
-          Color del texto
-        </Text>
-        <View style={styles.fila}>
-          {(["oscuro", "claro"] as const).map((valor) => {
-            const elegido = textoActual === valor;
-            return (
-              <PressableSuave
-                key={valor}
-                accessibilityRole="button"
-                accessibilityLabel={`Texto ${valor}`}
-                accessibilityState={{ selected: elegido }}
-                onPress={() => setBorrador((b) => ({ ...b, texto: valor }))}
-                style={[
-                  styles.opcion,
-                  { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
-                  elegido && { borderColor: c.texto, borderWidth: 2 },
-                ]}
-              >
-                <Text
-                  style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}
-                >
-                  {valor === "oscuro" ? "Oscuro" : "Claro"}
-                </Text>
-              </PressableSuave>
-            );
-          })}
-        </View>
-
-        <Text style={[INTER.medium, styles.etiqueta, { color: c.suave }]}>
-          Imagen de fondo (opcional)
-        </Text>
-        <View style={styles.fila}>
-          <PressableSuave
-            accessibilityRole="button"
-            accessibilityLabel="Elegir imagen de fondo"
-            disabled={isPicking || guardando}
-            onPress={() => void elegirImagen()}
-            style={[
-              styles.opcion,
-              { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
-            ]}
-          >
-            <Ionicons name="images-outline" size={20} color={c.texto} />
-            <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>
-              Elegir
-            </Text>
-          </PressableSuave>
-          {borrador.imagen ? (
-            <PressableSuave
-              accessibilityRole="button"
-              accessibilityLabel="Quitar imagen de fondo"
-              disabled={guardando}
-              onPress={() => setBorrador((b) => ({ ...b, imagen: null }))}
-              style={[
-                styles.opcion,
-                { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
-              ]}
-            >
-              <Ionicons name="trash-outline" size={20} color={c.texto} />
-              <Text style={[INTER.medium, { fontSize: 14.5, color: c.texto }]}>
-                Quitar
-              </Text>
-            </PressableSuave>
-          ) : null}
+        {/* La tarjeta real con el diseño del borrador; solo para ver, no se toca */}
+        <View pointerEvents="none">
+          <TarjetaVendedor
+            items={items}
+            profile={{ ...perfil, tarjeta: vista }}
+            ownerId={ownerId}
+            isOwn
+            isDark={isDark}
+            onOpen={() => {}}
+            onPersonalizar={() => {}}
+          />
         </View>
 
         <PressableSuave
@@ -206,14 +241,15 @@ export function SheetTarjeta({
             <Text
               style={[
                 INTER.medium,
-                { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+                styles.opcionTexto,
+                { color: isDark ? "#101010" : "#FFFFFF" },
               ]}
             >
               Guardar diseño
             </Text>
           )}
         </PressableSuave>
-      </View>
+      </ScrollView>
     </SheetEditar>
   );
 }
@@ -221,34 +257,29 @@ export function SheetTarjeta({
 const styles = StyleSheet.create({
   // Contenido del drawer
   cuerpo: { paddingHorizontal: 17, gap: 10, paddingTop: 4 },
-  // Muestra del diseño
-  muestra: {
-    height: 70,
-    borderRadius: 22,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  muestraTexto: { fontFamily: "Inter_600SemiBold", fontSize: 18 },
   // Título de cada grupo
-  etiqueta: { fontSize: 13, marginTop: 4 },
-  // Círculos de color
-  colores: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  color: { width: 40, height: 40, borderRadius: 20, borderWidth: 1 },
-  // Botones de dos en fila
-  fila: { flexDirection: "row", gap: 12 },
-  opcion: {
-    flex: 1,
+  etiqueta: { fontSize: 13, marginTop: 2 },
+  // La vista previa, más separada de los campos
+  separada: { marginTop: 22 },
+  // Campo de texto con el círculo de color dentro, a la izquierda
+  campo: {
     height: 46,
     borderRadius: 30,
-    borderWidth: 2,
-    borderColor: "transparent",
+    paddingLeft: 10,
+    paddingRight: 18,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    gap: 10,
   },
+  input: { flex: 1, minWidth: 0, fontSize: 14.5, paddingVertical: 0 },
+  circulo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  opcionTexto: { fontSize: 14.5 },
   // Botón de guardar
   principal: {
     height: 50,

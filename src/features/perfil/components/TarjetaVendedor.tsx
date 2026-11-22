@@ -1,17 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { memo, useState } from "react";
+import { memo, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import {
-  IconoCorazon,
-  IconoCorazonRelleno,
-  IconoEstrella,
-} from "@/features/home/components/IconosTarjeta";
-import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
-import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
+import { IconoEstrella } from "@/features/home/components/IconosTarjeta";
 import {
   averageRatingLabel,
   formatProductPrice,
@@ -25,34 +19,32 @@ import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
 import { useVendedoresFavoritos } from "@/features/favoritos/vendedoresFavoritos";
-import { FONDOS_TARJETA, type DatosPerfil } from "../Perfiltemas";
+import { COLORES_DESTACADO, type DatosPerfil } from "../Perfiltemas";
+import { IconoEditar, IconoPuntosVertical } from "../Perfiliconos";
 import { reportUser } from "../profileRepository";
+import { CorazonConEfecto } from "./CorazonConEfecto";
 
 /** Ancho de cada foto respecto al ancho de la tarjeta (se ven dos y un pedazo de la tercera) */
-const PROPORCION_FOTO = 0.32;
+const PROPORCION_FOTO = 0.29;
 const SEPARACION_FOTOS = 12;
 const COLOR_FAVORITO = "#F2143C";
+/** Alto de la píldora de la franja de abajo */
+const ALTO_PILDORA_FRANJA = 22;
 
-/** Colores resueltos de la tarjeta: lo que eligió la persona o, si no, lo que pide el tema */
-export function coloresTarjetaVendedor(
-  diseno: DatosPerfil["tarjeta"],
-  isDark: boolean,
-) {
-  const fondo = diseno.fondo ?? (isDark ? "#1B2230" : "#FFFFFF");
-  const conocido = FONDOS_TARJETA.find((f) => f.color === diseno.fondo);
-  const texto =
-    diseno.texto ??
-    conocido?.texto ??
-    (diseno.fondo ? "oscuro" : isDark ? "claro" : "oscuro");
+/** Colores de la tarjeta: siguen el tema (blanca en claro, gris muy oscuro en oscuro) */
+export function coloresTarjetaVendedor(isDark: boolean) {
+  const fondo = isDark ? "#1A1C20" : "#FFFFFF";
+  const texto = isDark ? "claro" : "oscuro";
   const principal = texto === "claro" ? "#FFFFFF" : "#101010";
   return {
     fondo,
     principal,
     suave: texto === "claro" ? "rgba(255,255,255,0.7)" : "rgba(16,16,16,0.55)",
-    // Botones redondos (corazón, puntos): un velo del color contrario al texto
-    boton: texto === "claro" ? "rgba(255,255,255,0.16)" : "rgba(16,16,16,0.08)",
   };
 }
+
+/** Mensaje de la franja cuando la persona no escribió uno (la franja siempre lleva algo) */
+export const NOTA_POR_DEFECTO = "Escríbeme por chat si algo te interesa";
 
 /** Solo el primer nombre: "Emir Demo" → "Emir" */
 export function primerNombre(nombre: string): string {
@@ -60,32 +52,62 @@ export function primerNombre(nombre: string): string {
 }
 
 /**
- * Imagen de fondo de la tarjeta: desenfocada y cubierta por un velo del color de fondo, así
- * suaviza los colores de la foto y el texto se lee siempre (no se ve la foto "a pelo").
+ * Marco con la franja de abajo: la tarjeta va encima, con sus esquinas redondeadas, y debajo
+ * asoma un tono más oscuro del fondo con lo que la persona quiera resaltar (una píldora y un
+ * mensaje corto). Siempre lleva un mensaje: si la persona
+ * no escribió uno, va `NOTA_POR_DEFECTO`.
  */
-export function FondoImagenTarjeta({
-  uri,
-  color,
+export function MarcoFranja({
+  diseno,
+  isDark,
+  children,
 }: {
-  uri: string;
-  color: string;
+  diseno: DatosPerfil["tarjeta"];
+  isDark: boolean;
+  children: ReactNode;
 }) {
+  const c = coloresTarjetaVendedor(isDark);
+  const claro = c.principal === "#FFFFFF";
+  const pildora = diseno.colorDestacado
+    ? COLORES_DESTACADO[diseno.colorDestacado]
+    : { fondo: c.principal, texto: claro ? "#101010" : "#FFFFFF" };
   return (
-    <>
-      <Image
-        source={{ uri }}
-        contentFit="cover"
-        blurRadius={10}
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: color, opacity: 0.6 },
-        ]}
-      />
-    </>
+    // En oscuro la franja es más clara que la tarjeta; en claro, un gris un poco más oscuro.
+    // Color sólido (no un velo encima): con el velo recortado se veía un filo blanco en la orilla
+    <View
+      style={[
+        styles.marco,
+        { backgroundColor: isDark ? "#30343B" : "#E9E9E9" },
+      ]}
+    >
+      {children}
+      <View style={styles.franja}>
+        {diseno.destacado ? (
+          // La píldora con el color elegido o, si no, con los del texto invertidos
+          <View style={[styles.destacado, { backgroundColor: pildora.fondo }]}>
+            <Text
+              numberOfLines={1}
+              style={[styles.destacadoTexto, { color: pildora.texto }]}
+            >
+              {diseno.destacado}
+            </Text>
+          </View>
+        ) : null}
+        <Text
+          numberOfLines={2}
+          style={[
+            styles.notaTexto,
+            {
+              color: diseno.colorNota
+                ? COLORES_DESTACADO[diseno.colorNota].suelto
+                : c.principal,
+            },
+          ]}
+        >
+          {diseno.nota ?? NOTA_POR_DEFECTO}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -102,7 +124,7 @@ function textoHora(ultima: number, ahora: number): string {
  * Publicaciones de una persona (3 o más) en una sola tarjeta: arriba su avatar y nombre con la
  * hora de su última publicación, la calificación y el menú de tres puntos (reportar, o
  * personalizar si es la propia); en medio, las fotos con desplazamiento lateral (tocar una
- * abre la publicación); abajo "Post de este usuario" y el corazón (seguir).
+ * abre la publicación); abajo "Mira lo que ofrece…" y el corazón (seguir).
  */
 export const TarjetaVendedor = memo(function TarjetaVendedor({
   items,
@@ -112,6 +134,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   isDark,
   onOpen,
   onPersonalizar,
+  enPerfil = false,
 }: {
   items: Product[];
   profile: DatosPerfil;
@@ -121,12 +144,15 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   onOpen: (productId: string) => void;
   /** Abre el diseño de la tarjeta (solo en la propia) */
   onPersonalizar: () => void;
+  /**
+   * En el perfil: sin calificación ni tres puntos; en la propia, un lápiz que abre
+   * directamente el diseño de la tarjeta
+   */
+  enPerfil?: boolean;
 }) {
   const { uid } = useSessionUser();
   const { openUserProfile } = useAppNavigation();
   const premium = useIsPremium(ownerId);
-  const { favorites } = useMarketplaceState();
-  const toggleFavorite = useToggleFavorite();
   const { ids: vendedoresFavoritos, alternar } = useVendedoresFavoritos();
   const guardada = vendedoresFavoritos.includes(ownerId);
   const [ancho, setAncho] = useState(0);
@@ -134,7 +160,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   // Un solo "ahora" por dibujo de la tarjeta: la hora no cambia entre renders
   const [ahora] = useState(() => Date.now());
 
-  const c = coloresTarjetaVendedor(profile.tarjeta, isDark);
+  const c = coloresTarjetaVendedor(isDark);
   const ultima = Math.max(0, ...items.map((item) => item.createdAt));
   const interior = Math.max(ancho - 24, 0);
   const lado = Math.round(interior * PROPORCION_FOTO);
@@ -160,263 +186,251 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   };
 
   return (
-    <View
-      onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
-      style={[styles.tarjeta, { backgroundColor: c.fondo }]}
-    >
-      {profile.tarjeta.imagen ? (
-        <FondoImagenTarjeta
-          uri={
-            optimizedImageUrl(profile.tarjeta.imagen, 900) ??
-            profile.tarjeta.imagen
-          }
-          color={c.fondo}
-        />
-      ) : null}
-
-      {/* Avatar, nombre y hora a la izquierda; calificación y menú a la derecha */}
-      <View style={styles.encabezado}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Ver perfil de ${profile.name}`}
-          hitSlop={6}
-          onPress={() => openUserProfile(ownerId)}
-        >
-          <UserAvatar
-            photo={profile.photo}
-            orb={profile.orb}
-            name={profile.name}
-            size={38}
-            premium={premium}
-          />
-        </Pressable>
-        <View style={styles.datos}>
-          <Text
-            numberOfLines={1}
-            style={[styles.nombre, { color: c.principal }]}
-          >
-            {profile.name}
-          </Text>
-          <Text numberOfLines={1} style={[styles.hora, { color: c.suave }]}>
-            {textoHora(ultima, ahora)}
-          </Text>
-        </View>
-        <View style={styles.derecha}>
-          <IconoEstrella size={16} color={c.principal} />
-          <Text style={[styles.calificacion, { color: c.principal }]}>
-            {averageRatingLabel(items)}
-          </Text>
+    <MarcoFranja diseno={profile.tarjeta} isDark={isDark}>
+      <View
+        onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+        style={[styles.tarjeta, { backgroundColor: c.fondo }]}
+      >
+        {/* Avatar, nombre y hora a la izquierda; calificación y menú a la derecha */}
+        <View style={styles.encabezado}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Más opciones"
-            hitSlop={8}
-            onPress={() => setMenu((abierto) => !abierto)}
-            style={styles.puntos}
+            accessibilityLabel={`Ver perfil de ${profile.name}`}
+            hitSlop={6}
+            onPress={() => openUserProfile(ownerId)}
           >
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={24}
-              color={c.principal}
+            <UserAvatar
+              photo={profile.photo}
+              orb={profile.orb}
+              name={profile.name}
+              size={38}
+              premium={premium}
             />
           </Pressable>
-        </View>
-      </View>
-
-      {/* Fotos: se desplazan a los lados y se detienen en cada una */}
-      {lado > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={lado + SEPARACION_FOTOS}
-          decelerationRate="fast"
-          style={styles.fotos}
-          contentContainerStyle={styles.fotosContenido}
-        >
-          {items.map((item) => {
-            const precio = formatProductPrice(item);
-            const favorito = favorites.includes(item.id);
-            return (
-              <View
-                key={item.id}
-                style={[styles.foto, { width: lado, height: lado }]}
-              >
-                {/* Tocar la foto abre la publicación; el corazón va aparte (no se anidan botones) */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver ${item.name}`}
-                  onPress={() => onOpen(item.id)}
-                  style={StyleSheet.absoluteFill}
-                >
-                  {item.imageUri ? (
-                    <Image
-                      source={{
-                        uri:
-                          optimizedImageUrl(item.imageUri, lado * 2) ??
-                          item.imageUri,
-                      }}
-                      contentFit="cover"
-                      transition={150}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  ) : null}
-                </Pressable>
-                {precio ? (
-                  <View pointerEvents="none" style={styles.precio}>
-                    <Text numberOfLines={1} style={styles.precioTexto}>
-                      {precio}
-                    </Text>
-                  </View>
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    favorito ? "Quitar de favoritos" : "Guardar en favoritos"
-                  }
-                  hitSlop={6}
-                  onPress={() => toggleFavorite(item.id)}
-                  style={styles.corazonFoto}
-                >
-                  {favorito ? (
-                    <IconoCorazonRelleno size={24} color={COLOR_FAVORITO} />
-                  ) : (
-                    <IconoCorazon size={24} color="#FFFFFF" />
-                  )}
-                </Pressable>
-              </View>
-            );
-          })}
-        </ScrollView>
-      ) : null}
-
-      <View style={styles.pie}>
-        <Text style={[styles.titulo, { color: c.principal }]}>
-          Post de {primerNombre(profile.name)}
-        </Text>
-        <PressableSuave
-          accessibilityRole="button"
-          accessibilityLabel={
-            isOwn
-              ? "Tu tarjeta"
-              : guardada
-                ? "Quitar esta tarjeta de favoritos"
-                : "Guardar esta tarjeta en favoritos"
-          }
-          accessibilityState={{ selected: guardada }}
-          disabled={isOwn}
-          onPress={() => alternar(ownerId)}
-          style={[styles.botonCorazon, { backgroundColor: c.boton }]}
-        >
-          {guardada ? (
-            <IconoCorazonRelleno size={21} color={COLOR_FAVORITO} />
-          ) : (
-            <IconoCorazon size={21} color={c.principal} />
-          )}
-        </PressableSuave>
-      </View>
-
-      {/* Menú de tres puntos: tocar fuera de él lo cierra */}
-      {menu ? (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar menú"
-            onPress={() => setMenu(false)}
-            style={styles.cierreMenu}
-          />
-          <View
-            style={[
-              styles.menu,
-              { backgroundColor: isDark ? "#262626" : "#FFFFFF" },
-            ]}
-          >
-            <PressableSuave
-              accessibilityRole="button"
-              accessibilityLabel={isOwn ? "Personalizar tarjeta" : "Reportar"}
-              onPress={() => {
-                setMenu(false);
-                if (isOwn) onPersonalizar();
-                else reportar();
-              }}
-              style={styles.opcionMenu}
+          <View style={styles.datos}>
+            <Text
+              numberOfLines={1}
+              style={[styles.nombre, { color: c.principal }]}
             >
-              <Text
-                style={[
-                  styles.opcionTexto,
-                  { color: isDark ? "#F1F5F9" : "#101010" },
-                ]}
-              >
-                {isOwn ? "Personalizar tarjeta" : "Reportar"}
-              </Text>
-              <Ionicons
-                name={isOwn ? "color-palette-outline" : "flag-outline"}
-                size={20}
-                color={isDark ? "#F1F5F9" : "#101010"}
-              />
-            </PressableSuave>
+              {profile.name}
+            </Text>
+            <Text numberOfLines={1} style={[styles.hora, { color: c.suave }]}>
+              {textoHora(ultima, ahora)}
+            </Text>
           </View>
-        </>
-      ) : null}
-    </View>
+          {enPerfil ? (
+            isOwn ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Editar el diseño de la tarjeta"
+                hitSlop={8}
+                onPress={onPersonalizar}
+                style={styles.lapiz}
+              >
+                <IconoEditar size={22} color={c.principal} />
+              </Pressable>
+            ) : null
+          ) : (
+            <View style={styles.derecha}>
+              <IconoEstrella size={16} color={c.principal} />
+              <Text style={[styles.calificacion, { color: c.principal }]}>
+                {averageRatingLabel(items)}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Más opciones"
+                hitSlop={8}
+                onPress={() => setMenu((abierto) => !abierto)}
+                style={styles.puntos}
+              >
+                <IconoPuntosVertical size={22} color={c.principal} />
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        {/* Fotos: se desplazan a los lados y se detienen en cada una */}
+        {lado > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={lado + SEPARACION_FOTOS}
+            decelerationRate="fast"
+            // Que el arrastre se quede en horizontal: si la lista de arriba también se mueve un
+            // poco con el dedo, las fotos tiemblan
+            directionalLockEnabled
+            disableIntervalMomentum
+            style={styles.fotos}
+            contentContainerStyle={styles.fotosContenido}
+          >
+            {items.map((item) => {
+              const precio = formatProductPrice(item);
+              return (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.foto,
+                    {
+                      width: lado,
+                      height: lado,
+                    },
+                  ]}
+                >
+                  {/* Tocar la foto abre la publicación */}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver ${item.name}`}
+                    onPress={() => onOpen(item.id)}
+                    style={StyleSheet.absoluteFill}
+                  >
+                    {item.imageUri ? (
+                      <Image
+                        source={{
+                          uri:
+                            optimizedImageUrl(item.imageUri, lado * 2) ??
+                            item.imageUri,
+                        }}
+                        contentFit="cover"
+                        transition={150}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    ) : null}
+                  </Pressable>
+                  {precio ? (
+                    <View pointerEvents="none" style={styles.precio}>
+                      <Text numberOfLines={1} style={styles.precioTexto}>
+                        {precio}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </ScrollView>
+        ) : null}
+
+        <View style={styles.pie}>
+          <Text
+            numberOfLines={1}
+            style={[styles.titulo, { color: c.principal }]}
+          >
+            Mira lo que ofrece {primerNombre(profile.name)}
+          </Text>
+          {/* En la tarjeta propia no va el corazón */}
+          {isOwn ? null : (
+            <CorazonConEfecto
+              accessibilityLabel={
+                guardada
+                  ? "Quitar esta tarjeta de favoritos"
+                  : "Guardar esta tarjeta en favoritos"
+              }
+              activo={guardada}
+              onCambio={() => alternar(ownerId)}
+              color={COLOR_FAVORITO}
+              colorInactivo={c.principal}
+            />
+          )}
+        </View>
+
+        {/* Menú de tres puntos: tocar fuera de él lo cierra */}
+        {menu ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar menú"
+              onPress={() => setMenu(false)}
+              style={styles.cierreMenu}
+            />
+            <View
+              style={[
+                styles.menu,
+                { backgroundColor: isDark ? "#262626" : "#FFFFFF" },
+              ]}
+            >
+              <PressableSuave
+                accessibilityRole="button"
+                accessibilityLabel={isOwn ? "Personalizar tarjeta" : "Reportar"}
+                onPress={() => {
+                  setMenu(false);
+                  if (isOwn) onPersonalizar();
+                  else reportar();
+                }}
+                style={styles.opcionMenu}
+              >
+                <Text
+                  style={[
+                    styles.opcionTexto,
+                    { color: isDark ? "#F1F5F9" : "#101010" },
+                  ]}
+                >
+                  {isOwn ? "Personalizar tarjeta" : "Reportar"}
+                </Text>
+                <Ionicons
+                  name={isOwn ? "color-palette-outline" : "flag-outline"}
+                  size={20}
+                  color={isDark ? "#F1F5F9" : "#101010"}
+                />
+              </PressableSuave>
+            </View>
+          </>
+        ) : null}
+      </View>
+    </MarcoFranja>
   );
 });
 
 const styles = StyleSheet.create({
   // Tarjeta
+  // Va sobre la franja, sin sombra: se ve pegada a ella
   tarjeta: {
-    borderRadius: 26,
+    borderRadius: 30,
     padding: 12,
+    paddingBottom: 8,
     overflow: "hidden",
-    boxShadow: "0 6px 20px rgba(0, 0, 0, 0.08)",
   },
   // Fila de arriba
   encabezado: { flexDirection: "row", alignItems: "center", gap: 10 },
   // Nombre y hora
   datos: { flex: 1, minWidth: 0, gap: 2 },
   nombre: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  hora: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  hora: { fontFamily: "Inter_400Regular", fontSize: 12 },
   // Calificación y tres puntos, juntos a la derecha
   derecha: { flexDirection: "row", alignItems: "center", gap: 5 },
   calificacion: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   puntos: { marginLeft: 8, padding: 2 },
+  // El lápiz de editar (en el perfil propio), un poco separado de la orilla
+  lapiz: { padding: 2, marginRight: 8 },
   // Fotos con desplazamiento lateral
-  fotos: { marginTop: 10, marginHorizontal: -12 },
+  fotos: { marginTop: 24, marginHorizontal: -12 },
   fotosContenido: { paddingHorizontal: 12, gap: SEPARACION_FOTOS },
   foto: {
-    borderRadius: 20,
+    borderRadius: 23,
     overflow: "hidden",
     backgroundColor: "rgba(120,120,128,0.2)",
   },
   // Etiqueta del precio sobre la foto
   precio: {
     position: "absolute",
-    top: 8,
-    left: 8,
+    top: 7,
+    left: 7,
     maxWidth: "80%",
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     backgroundColor: "rgba(0,0,0,0.38)",
   },
   precioTexto: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
+    fontSize: 11.5,
     color: "#FFFFFF",
   },
-  // Corazón de favorito sobre la foto
-  corazonFoto: {
-    position: "absolute",
-    right: 8,
-    bottom: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.38)",
-  },
-  // Pie: "Post de este usuario" y el corazón
+  // Pie: "Mira lo que ofrece…" y el corazón
+  // Mismo alto con o sin corazón (en la propia no va): así todas las tarjetas miden igual
   pie: {
-    marginTop: 8,
+    marginTop: 14,
+    minHeight: 34,
+    // Un poco más adentro que las fotos
+    paddingHorizontal: 5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -428,12 +442,36 @@ const styles = StyleSheet.create({
     fontSize: 17,
     letterSpacing: -0.3,
   },
-  botonCorazon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  // Marco con la franja: esquinas de abajo más largas que las de la tarjeta
+  marco: {
+    borderRadius: 34,
+    overflow: "hidden",
+    boxShadow: "0 6px 20px rgba(0, 0, 0, 0.08)",
+  },
+  franja: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    // Alto de la píldora + su aire: mide lo mismo con o sin píldora
+    minHeight: ALTO_PILDORA_FRANJA + 16,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+  },
+  destacado: {
+    flexShrink: 0,
+    maxWidth: "50%",
+    height: ALTO_PILDORA_FRANJA,
+    justifyContent: "center",
+    borderRadius: 12,
+    paddingHorizontal: 9,
+  },
+  destacadoTexto: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  notaTexto: {
+    flexShrink: 1,
+    textAlign: "center",
+    fontFamily: "Inter_500Medium",
+    fontSize: 13.5,
   },
   // Menú de tres puntos: velo que lo cierra y la tarjetita de opciones
   cierreMenu: { ...StyleSheet.absoluteFill, zIndex: 5 },

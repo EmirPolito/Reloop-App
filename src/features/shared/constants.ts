@@ -102,5 +102,14 @@ export const CATEGORY_IMAGES: Record<CategoryId, number> = {
   comida: require("@/assets/images/home-iconos-opciones/COMIDAS.png"),
 };
 
+/** Iconos de cristal de las categorías (tarjetas del inicio y píldoras flotantes) */
+export const CATEGORY_IMAGES_CRISTAL: Record<CategoryId, number> = {
+  venta: require("@/assets/images/home-iconos-opciones2/VENTAS.png"),
+  cambio: require("@/assets/images/home-iconos-opciones2/INTERCAMBIOS.png"),
+  donacion: require("@/assets/images/home-iconos-opciones2/DONACIONES.png"),
+  mascota: require("@/assets/images/home-iconos-opciones2/ADOPCIONES.png"),
+  comida: require("@/assets/images/home-iconos-opciones2/COMIDAS.png"),
+};
+
 /** Fondo general de la app (gris tipo Apple en claro); igual en todos los módulos */
 export const APP_BACKGROUND = { light: "#fdfdfdff", dark: "#161616" } as const;
