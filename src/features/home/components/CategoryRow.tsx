@@ -1,20 +1,14 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
   useWindowDimensions,
 } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
 
-import { EASE_OUT } from "@/constants/motion";
 import { CATEGORIES, categoryFor } from "@/features/marketplace/data";
 import type { CategoryId } from "@/features/marketplace/types";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -71,57 +65,65 @@ const TarjetaCategoria = memo(function TarjetaCategoria({
   const { isDark } = useAppTheme();
   const tono = TONOS[category.id];
 
-  // Al tocarla se hunde un poco y al soltarla brinca (resorte con un pequeño rebote)
-  const escala = useSharedValue(1);
-  const estiloEscala = useAnimatedStyle(() => ({
-    transform: [{ scale: escala.get() }],
-  }));
-
+  // Sin brinco ni borde: al tocarla (y mientras está elegida) se oscurece un poco
   return (
-    <Animated.View style={[{ width: ancho }, estiloEscala]}>
+    <View style={{ width: ancho }}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected }}
         accessibilityLabel={category.label}
         onPress={() => onToggle(category.id)}
-        onPressIn={() => {
-          escala.set(withTiming(0.96, { duration: 70, easing: EASE_OUT }));
-        }}
-        onPressOut={() => {
-          escala.set(withSpring(1, { damping: 18, stiffness: 520, mass: 0.5 }));
-        }}
+        // Se oscurece en cuanto el dedo la toca, sin esperar
+        unstable_pressDelay={0}
         style={[
           styles.tarjeta,
-          {
-            backgroundColor: conAlfa(tono, isDark ? 0.16 : 0.12),
-            // La activa se distingue con un borde de su color
-            borderColor: selected ? conAlfa(tono, 0.7) : "transparent",
-          },
+          { backgroundColor: conAlfa(tono, isDark ? 0.16 : 0.12) },
         ]}
       >
-        {/* Círculo de fondo: más intenso arriba y se desvanece hacia abajo */}
-        <LinearGradient
-          colors={[
-            conAlfa(tono, isDark ? 0.5 : 0.45),
-            conAlfa(tono, isDark ? 0.22 : 0.18),
-            conAlfa(tono, 0.04),
-          ]}
-          locations={[0, 0.4, 1]}
-          style={styles.circulo}
-        />
-        <Text
-          numberOfLines={1}
-          style={[styles.etiqueta, { color: isDark ? "#F5F5F5" : "#14141A" }]}
-        >
-          {category.label}
-        </Text>
-        <Image
-          source={CATEGORY_IMAGES_CRISTAL[category.id]}
-          contentFit="contain"
-          style={styles.icono}
-        />
+        {({ pressed }) => (
+          <>
+            {/* Círculo de fondo: más intenso arriba y se desvanece hacia abajo */}
+            <LinearGradient
+              colors={[
+                conAlfa(tono, isDark ? 0.5 : 0.45),
+                conAlfa(tono, isDark ? 0.22 : 0.18),
+                conAlfa(tono, 0.04),
+              ]}
+              locations={[0, 0.4, 1]}
+              style={styles.circulo}
+            />
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.etiqueta,
+                { color: isDark ? "#F5F5F5" : "#14141A" },
+              ]}
+            >
+              {category.label}
+            </Text>
+            <Image
+              source={CATEGORY_IMAGES_CRISTAL[category.id]}
+              contentFit="contain"
+              style={styles.icono}
+            />
+            {/* Velo oscuro suave: al presionar y en la elegida */}
+            {pressed || selected ? (
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(0,0,0,0.22)"
+                      : "rgba(0,0,0,0.07)",
+                  },
+                ]}
+              />
+            ) : null}
+          </>
+        )}
       </Pressable>
-    </Animated.View>
+    </View>
   );
 });
 
@@ -139,6 +141,24 @@ export function CategoryRow({
   const ancho = Math.floor(
     (Math.min(width, 760) - MARGEN_LISTA * 2 - SEPARACION * 3) / 2.3,
   );
+
+  // La elegida se marca en el mismo toque (estado propio) y el filtro, que vuelve a dibujar
+  // todo el inicio, se aplica un cuadro después: así el toque responde al instante.
+  // Si la categoría cambia desde otro lado (las píldoras, limpiar filtros), se sigue a esa
+  const [elegida, setElegida] = useState(activeCategory);
+  const [activaAntes, setActivaAntes] = useState(activeCategory);
+  if (activaAntes !== activeCategory) {
+    setActivaAntes(activeCategory);
+    setElegida(activeCategory);
+  }
+  const alElegir = useCallback(
+    (id: CategoryId) => {
+      setElegida((actual) => (actual === id ? null : id));
+      requestAnimationFrame(() => onToggleCategory(id));
+    },
+    [onToggleCategory],
+  );
+
   return (
     <ScrollView
       horizontal
@@ -151,8 +171,8 @@ export function CategoryRow({
         <TarjetaCategoria
           key={category.id}
           category={category}
-          selected={activeCategory === category.id}
-          onToggle={onToggleCategory}
+          selected={elegida === category.id}
+          onToggle={alElegir}
           ancho={ancho}
         />
       ))}
@@ -166,7 +186,6 @@ const styles = StyleSheet.create({
   tarjeta: {
     height: ALTO_TARJETA,
     borderRadius: 22,
-    borderWidth: 1,
     overflow: "hidden",
     padding: 12,
   },

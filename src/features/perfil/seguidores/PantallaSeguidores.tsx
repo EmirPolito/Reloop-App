@@ -6,7 +6,6 @@ import { conSalida } from "@/components/salidaModulo";
 import { BotonBarra } from "@/components/ui/BotonBarra";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { BulkSearchIcon } from "@/features/chats/components/ChatIcons";
 import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
@@ -16,7 +15,15 @@ import { describeFirestoreError } from "@/lib/firestoreValues";
 import { getFollowers, getFollowing } from "../followRepository";
 import { usePerfilDe } from "../hooks/usePerfilDe";
 import { normalizarNombre } from "../username";
-import { FilaSeguidor } from "./FilaSeguidor";
+import { FilaSeguidor, FilaSeguidorEsqueleto } from "./FilaSeguidor";
+
+/**
+ * Última lista leída de cada persona: al volver a entrar se muestra al instante mientras se
+ * vuelve a leer por detrás (no hay que esperar otra vez)
+ */
+const listasLeidas = new Map<string, string[]>();
+/** Filas de esqueleto mientras se lee la lista por primera vez */
+const FILAS_ESQUELETO = 8;
 
 /**
  * Seguidores y seguidos de una persona en una sola lista (sin repetir a quien está en las
@@ -30,7 +37,9 @@ export function PantallaSeguidores({ userId }: { userId: string }) {
   const { isDark } = useAppTheme();
   const { back, openUserProfile } = useAppNavigation();
   const [busqueda, setBusqueda] = useState("");
-  const [ids, setIds] = useState<string[] | null>(null);
+  const [ids, setIds] = useState<string[] | null>(
+    () => listasLeidas.get(userId) ?? null,
+  );
   const [error, setError] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
 
@@ -39,7 +48,9 @@ export function PantallaSeguidores({ userId }: { userId: string }) {
       Promise.all([getFollowers(userId), getFollowing(userId)]).then(
         ([seguidores, seguidos]) => {
           // Primero sus seguidores y luego a quienes sigue (el más reciente primero) que no lo siguen
-          setIds([...new Set([...seguidores, ...seguidos])]);
+          const lista = [...new Set([...seguidores, ...seguidos])];
+          listasLeidas.set(userId, lista);
+          setIds(lista);
           setError(false);
         },
         (e) => {
@@ -105,7 +116,12 @@ export function PantallaSeguidores({ userId }: { userId: string }) {
       />
 
       {ids === null && !error ? (
-        <LoadingState />
+        // Mientras se lee por primera vez: filas grises del mismo tamaño que las de verdad
+        <View style={styles.esqueleto}>
+          {Array.from({ length: FILAS_ESQUELETO }, (_, i) => (
+            <FilaSeguidorEsqueleto key={i} isDark={isDark} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={visibles}
@@ -167,4 +183,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   vacio: { paddingTop: 60 },
+  // Con los mismos márgenes que la lista
+  esqueleto: { paddingHorizontal: 18, paddingTop: 16 },
 });

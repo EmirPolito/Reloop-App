@@ -41,6 +41,12 @@ export const ALTO_FIJO = ALTO_CABECERA + ALTO_FILA_PILDORAS;
 /** Scroll en el que la neblina termina de aparecer (como en las páginas legales) */
 const TRAMO_NEBLINA = 24;
 const EASE = Easing.out(Easing.cubic);
+/** Lo que hay que moverse en un sentido para que cuente como cambio de dirección */
+const UMBRAL_DIRECCION = 6;
+/** Sin píldoras, lo que la neblina baja de más bajo la cabecera */
+const BAJO_SIN_PILDORAS = 24;
+/** Las píldoras de categorías del header, apagadas por ahora (en `true` vuelven a salir) */
+const PILDORAS_ACTIVAS = false;
 /** Las píldoras bajan desde detrás de la cabecera; al irse, solo se desvanecen */
 const ENTRADA_PILDORAS = FadeInDown.duration(220)
   .easing(EASE)
@@ -54,9 +60,9 @@ const EXTRA_NEBLINA = 16;
  * píldoras (de `OPACIDAD_ARRIBA` a `OPACIDAD_PILDORAS`, apenas baja) y de ahí se desvanece a
  * nada, con una curva que arranca y termina despacio (sin escalones ni final recto)
  */
-const OPACIDAD_ARRIBA = 0.98;
-const OPACIDAD_PILDORAS = 0.92;
-const CAPAS_VELO = 18;
+const OPACIDAD_ARRIBA = 0.76;
+const OPACIDAD_PILDORAS = 0.6;
+const CAPAS_VELO = 32;
 /** `inicioPildoras`: dónde empiezan las píldoras, como fracción del alto del velo */
 function veloPorCapas(rgb: string, inicioPildoras: number) {
   const colores: string[] = [];
@@ -88,7 +94,7 @@ const MaskedView =
   MaskedViewOriginal as unknown as ComponentType<MaskedViewProps>;
 
 /** Intensidad del desenfoque donde es más fuerte (la hora y la cabecera) */
-const INTENSIDAD_DESENFOQUE = 22;
+const INTENSIDAD_DESENFOQUE = 16;
 /** Debajo de las píldoras, lo que baja el desvanecido del desenfoque (nada: termina en ellas) */
 const COLA_DESENFOQUE = 0;
 
@@ -101,6 +107,7 @@ const COLA_DESENFOQUE = 0;
  */
 export const CabeceraInicio = memo(function CabeceraInicio({
   scrollY,
+  arrastre,
   arriba,
   umbralPildoras,
   activeCategory,
@@ -108,6 +115,8 @@ export const CabeceraInicio = memo(function CabeceraInicio({
   onBuscar,
 }: {
   scrollY: SharedValue<number>;
+  /** 1 mientras el dedo o su inercia mueven la lista (los saltos por filtrar no cuentan) */
+  arrastre: SharedValue<number>;
   /** Alto de la barra de estado: todo va debajo de ella */
   arriba: number;
   /** Scroll desde el que salen las píldoras (ya pasaron las categorías cuadradas); 0 sin medir */
@@ -128,12 +137,49 @@ export const CabeceraInicio = memo(function CabeceraInicio({
     [isDark, arriba, altoFijo],
   );
 
-  // Las píldoras salen al pasar las categorías cuadradas de la lista y se van al regresar.
-  // Solo avisa a React cuando cambia de lado del umbral, nunca en cada cuadro del scroll
+  // Las píldoras salen al bajar, ya pasadas las categorías cuadradas de la lista, y se
+  // esconden al hacer scroll hacia arriba (o al regresar hasta las categorías).
+  // Solo avisa a React cuando cambia, nunca en cada cuadro del scroll
   const [conPildoras, setConPildoras] = useState(false);
   const pildoras = useSharedValue(0);
+  // Dónde cambió de dirección el scroll por última vez, y hacia dónde va (1 abajo, -1 arriba)
+  const giro = useSharedValue(0);
+  const direccion = useSharedValue(1);
+  // 1 tras elegir una categoría en las píldoras: se quedan a la vista aunque la lista cambie
+  // de alto (y el scroll brinque) hasta que la persona haga scroll hacia arriba
+  const fijadas = useSharedValue(0);
+  // La dirección cambia solo después de moverse `UMBRAL_DIRECCION` en el otro sentido (un
+  // temblor del dedo no hace que aparezcan y se escondan) y solo si lo mueve la persona: el
+  // salto del scroll al filtrar no cuenta como subir
   useAnimatedReaction(
-    () => umbralPildoras.get() > 0 && scrollY.get() > umbralPildoras.get(),
+    () => scrollY.get(),
+    (y) => {
+      if (arrastre.get() !== 1) {
+        giro.set(y);
+        return;
+      }
+      const desde = giro.get();
+      if (direccion.get() === 1) {
+        if (y > desde) giro.set(y);
+        else if (desde - y > UMBRAL_DIRECCION) {
+          direccion.set(-1);
+          giro.set(y);
+          fijadas.set(0);
+        }
+      } else if (y < desde) giro.set(y);
+      else if (y - desde > UMBRAL_DIRECCION) {
+        direccion.set(1);
+        giro.set(y);
+      }
+    },
+  );
+  useAnimatedReaction(
+    () =>
+      PILDORAS_ACTIVAS &&
+      (fijadas.get() === 1 ||
+        (umbralPildoras.get() > 0 &&
+          scrollY.get() > umbralPildoras.get() &&
+          direccion.get() === 1)),
     (mostrar, antes) => {
       if (mostrar === antes) return;
       pildoras.set(
@@ -143,10 +189,24 @@ export const CabeceraInicio = memo(function CabeceraInicio({
     },
   );
 
-  // Sin píldoras, la neblina sube y termina justo debajo de la cabecera
+  // Elegir una categoría desde las píldoras las deja fijas (no se esconden por el cambio de
+  // la lista); solo un scroll hacia arriba las vuelve a esconder
+  const alElegirCategoria = (category: CategoryId) => {
+    fijadas.set(1);
+    direccion.set(1);
+    onToggleCategory(category);
+  };
+
+  // Sin píldoras, la neblina sube pero no del todo: baja `BAJO_SIN_PILDORAS` más que la
+  // cabecera para que se sienta. Con píldoras termina en el borde de abajo de ellas
   const estiloNeblina = useAnimatedStyle(() => ({
     opacity: Math.min(Math.max(scrollY.get() / TRAMO_NEBLINA, 0), 1),
-    transform: [{ translateY: -(1 - pildoras.get()) * ALTO_FILA_PILDORAS }],
+    transform: [
+      {
+        translateY:
+          -(1 - pildoras.get()) * (ALTO_FILA_PILDORAS - BAJO_SIN_PILDORAS),
+      },
+    ],
   }));
 
   return (
@@ -217,7 +277,7 @@ export const CabeceraInicio = memo(function CabeceraInicio({
                   icono={CATEGORY_IMAGES_CRISTAL[category.id]}
                   seleccionado={activeCategory === category.id}
                   isDark={isDark}
-                  onPress={onToggleCategory}
+                  onPress={alElegirCategoria}
                 />
               ))}
             </FilaPildoras>

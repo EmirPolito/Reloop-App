@@ -136,7 +136,8 @@ export function PantallaNotificaciones() {
     (notificacion: AppNotification) =>
       activo
         ? seleccion.alternar(notificacion.id)
-        : openNotification(notificacion),
+        : // Como en los demás módulos: sale con su animación y luego abre a dónde lleva
+          conSalida(() => openNotification(notificacion)),
     [activo, seleccion, openNotification],
   );
 

@@ -83,6 +83,18 @@ export const FeedIntro = memo(function FeedIntro() {
     [step],
   );
 
+  // El punto sigue al dedo: cambia en cuanto el anuncio pasa de la mitad, sin esperar a que
+  // el carrusel se detenga (solo re-dibuja cuando cambia de anuncio, no en cada cuadro)
+  const alDeslizar = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (width === 0) return;
+      const crudo = Math.round(event.nativeEvent.contentOffset.x / step);
+      // Los clones de las orillas cuentan como el último y el primero
+      setIndex((((crudo - 1) % COUNT) + COUNT) % COUNT);
+    },
+    [width, step],
+  );
+
   const onScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (width === 0) return;
@@ -130,6 +142,8 @@ export const FeedIntro = memo(function FeedIntro() {
             decelerationRate="fast"
             disableIntervalMomentum
             showsHorizontalScrollIndicator={false}
+            onScroll={alDeslizar}
+            scrollEventThrottle={32}
             onMomentumScrollEnd={onScrollEnd}
             contentOffset={{ x: step, y: 0 }}
             className="h-full"

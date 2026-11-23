@@ -3,9 +3,8 @@ import {
   useBloqueoScroll,
 } from "@/components/bloqueoScroll";
 import { PrimaryButton } from "@/components/ui/Buttons";
-import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
 import {
   filterProducts,
   premiumPrimero,
@@ -34,13 +33,14 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ALTO_CABECERA,
   ALTO_FILA_PILDORAS,
   CabeceraInicio,
 } from "./components/BuscadorFlotante";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryRow } from "./components/CategoryRow";
+import { EsqueletoInicio } from "./components/EsqueletoInicio";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
 import { TarjetaPublicacion } from "./components/TarjetaPublicacion";
@@ -50,6 +50,9 @@ import {
   homeRowKey,
   type HomeFeedRow,
 } from "./feedRows";
+
+/** Aire entre la cabecera fija y lo primero de la lista (el banner) */
+const ESPACIO_BAJO_CABECERA = 12;
 
 /** Pantalla de inicio. Las pestañas siguen montadas al navegar, así que conserva el scroll. */
 export const HomeScreen = memo(function HomeScreen() {
@@ -181,7 +184,7 @@ export const HomeScreen = memo(function HomeScreen() {
             />
           );
         case "loading":
-          return <LoadingState />;
+          return <EsqueletoInicio cardWidth={cardWidth} />;
         case "error":
           return (
             <View>
@@ -216,7 +219,7 @@ export const HomeScreen = memo(function HomeScreen() {
         case "seller":
           return (
             // Ancho completo (no una fila de dos): la tarjeta mide sus fotos según su ancho
-            <View style={{ width: "100%", marginBottom: 16 }}>
+            <View style={{ width: "100%", marginBottom: 17 }}>
               <TarjetaVendedorDe
                 ownerId={item.ownerId}
                 products={item.products}
@@ -278,7 +281,7 @@ export const HomeScreen = memo(function HomeScreen() {
             contentContainerStyle={[
               styles.productsContent,
               // Empieza debajo de la cabecera fija
-              { paddingTop: arriba + ALTO_CABECERA },
+              { paddingTop: arriba + ALTO_CABECERA + ESPACIO_BAJO_CABECERA },
             ]}
             onScroll={alHacerScroll}
             scrollEventThrottle={16}
@@ -290,6 +293,7 @@ export const HomeScreen = memo(function HomeScreen() {
           />
           <CabeceraInicio
             scrollY={scrollY}
+            arrastre={arrastre}
             arriba={arriba}
             umbralPildoras={umbralPildoras}
             activeCategory={activeCategory}

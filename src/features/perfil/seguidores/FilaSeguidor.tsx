@@ -32,6 +32,9 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   const nombre = perfil?.name ?? "";
   const arroba = perfil?.username ? conArroba(perfil.username) : null;
 
+  // Mientras llega su perfil, el esqueleto de la fila (no una fila vacía)
+  if (perfil === undefined) return <FilaSeguidorEsqueleto isDark={isDark} />;
+
   const fondoBoton = sigo
     ? isDark
       ? "rgba(255,255,255,0.12)"
@@ -97,7 +100,32 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   );
 });
 
+/** Fila gris del mismo tamaño mientras carga: avatar, nombre, @usuario y el botón */
+export function FilaSeguidorEsqueleto({ isDark }: { isDark: boolean }) {
+  const gris = isDark ? "#273449" : "#ECECEE";
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={styles.fila}
+    >
+      <View style={[styles.avatarEsqueleto, { backgroundColor: gris }]} />
+      <View style={[styles.textos, { gap: 8 }]}>
+        <View style={[styles.barra, { width: "55%", backgroundColor: gris }]} />
+        <View style={[styles.barra, { width: "35%", backgroundColor: gris }]} />
+      </View>
+      <View style={[styles.boton, { backgroundColor: gris }]} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  avatarEsqueleto: {
+    width: LADO_AVATAR,
+    height: LADO_AVATAR,
+    borderRadius: LADO_AVATAR / 2,
+  },
+  barra: { height: 11, borderRadius: 6 },
   fila: {
     flexDirection: "row",
     alignItems: "center",
