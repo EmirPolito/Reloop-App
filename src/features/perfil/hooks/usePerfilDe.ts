@@ -1,6 +1,6 @@
 import { crearSuscripcionCompartida } from "@/lib/sharedSubscription";
-import type { DatosPerfil } from "../Perfiltemas";
-import { subscribeProfile } from "../profileRepository";
+import type { DatosPerfil } from "../temasPerfil";
+import { subscribeProfile } from "../repositorioPerfil";
 
 /**
  * Perfil actual de `uid` (foto, avatar orbe, nombre, @username) compartido por toda la

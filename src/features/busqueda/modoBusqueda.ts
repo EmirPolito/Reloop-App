@@ -1,4 +1,4 @@
-import { normalizarNombre } from "@/features/perfil/username";
+import { normalizarNombre } from "@/features/perfil/nombreUsuario";
 
 /**
  * Qué busca el input del inicio: productos (por defecto) o personas, cuando el texto

@@ -34,7 +34,6 @@ export function createStyles(isDark: boolean) {
     loading: { flex: 1, justifyContent: "center", alignItems: "center" },
     pressed: { opacity: 0.8 },
 
-    homeList: { flex: 1, width: "100%", maxWidth: 760, alignSelf: "center" },
     feedHeader: { width: "100%" },
     topHeader: {
       flexDirection: "row",
@@ -50,7 +49,6 @@ export function createStyles(isDark: boolean) {
       alignItems: "center",
       gap: 8,
     },
-    brandLogo: { width: 92, height: 38 },
     identityRow: { flexDirection: "row", alignItems: "center", gap: 7 },
     greeting: {
       maxWidth: 120,
@@ -142,34 +140,13 @@ export function createStyles(isDark: boolean) {
       elevation: 3,
     },
     bannerImage: { width: "100%", height: "100%" },
-    sectionHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginHorizontal: 0,
-      marginBottom: 12,
-    },
     rowAction: {
       minWidth: 44,
       minHeight: 30,
       alignItems: "flex-end",
       justifyContent: "center",
     },
-    sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: "800" },
     seeAll: { color: "#0785FF", fontSize: 12, fontWeight: "700" },
-    productsContent: {
-      width: "100%",
-      paddingHorizontal: 16,
-      // Espacio para que la barra de navegación no tape la última publicación
-      paddingBottom: 120,
-    },
-    productRow: {
-      width: "100%",
-      flexDirection: "row",
-      alignItems: "stretch",
-      gap: 16,
-      marginBottom: 16,
-    },
     productGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -292,7 +269,11 @@ export function createStyles(isDark: boolean) {
     closeButtonSpacer: { width: 44, height: 44 },
     createTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
     createStepHeading: { flex: 1, alignItems: "center" },
-    createStepSubtitle: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+    createStepSubtitle: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: "600",
+    },
     createStepTitle: {
       color: colors.ink,
       fontSize: 29,
@@ -354,7 +335,11 @@ export function createStyles(isDark: boolean) {
       borderRadius: 18,
       backgroundColor: "#0875E1",
     },
-    createCategoryChipText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+    createCategoryChipText: {
+      color: "#FFFFFF",
+      fontSize: 12,
+      fontWeight: "700",
+    },
     createCategoryChange: { color: "#0875E1", fontSize: 13, fontWeight: "700" },
     createSectionRow: {
       flexDirection: "row",
@@ -412,7 +397,11 @@ export function createStyles(isDark: boolean) {
       borderWidth: 1,
       borderColor: colors.outline,
     },
-    createCameraActionText: { color: colors.ink, fontSize: 13, fontWeight: "700" },
+    createCameraActionText: {
+      color: colors.ink,
+      fontSize: 13,
+      fontWeight: "700",
+    },
     createPhotoHint: {
       color: colors.muted,
       fontSize: 12,

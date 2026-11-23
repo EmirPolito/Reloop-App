@@ -8,28 +8,28 @@ import { PressableScale } from "@/components/PressableScale";
 import { conSalida } from "@/components/salidaModulo";
 import { estiloTarjetaCristal } from "@/components/ui/cristalSuave";
 import { ENTRADA_MODULO } from "@/constants/motion";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { BackArrowIcon } from "@/features/chats/components/IconosConversacion";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { showErrorAlert } from "@/utils/alerts";
 import { FilaAjuste, ListaAjustes } from "../components/FilaAjuste";
-import { coloresTarjeta, fondoPerfil } from "../perfilEstilos";
+import { coloresTarjeta, fondoPerfil } from "../estilos";
 import {
   IconoCaritaLinea,
   IconoFlecha,
   IconoImagenLinea,
-} from "../Perfiliconos";
+} from "../iconosPerfil";
 import {
   MAX_DESCRIPCION,
   MAX_NOMBRE,
   MAX_PILDORAS,
   type DatosPerfil,
   type PildoraPerfilData,
-} from "../Perfiltemas";
-import { useProfile } from "../ProfileProvider";
+} from "../temasPerfil";
+import { useProfile } from "../ProveedorPerfil";
 import { SheetAvatar } from "./SheetAvatar";
 import { SheetEtiquetas } from "./SheetEtiquetas";
 import { SheetFondo } from "./SheetFondo";
@@ -49,12 +49,7 @@ const CIERRE_DRAWER_MS = 450;
 const MONTAJE_DRAWER_MS = 80;
 
 type Sheet =
-  | "fondo"
-  | "avatar"
-  | "etiquetas"
-  | "nombre"
-  | "username"
-  | "descripcion";
+  "fondo" | "avatar" | "etiquetas" | "nombre" | "username" | "descripcion";
 
 /** Cambios en curso que la vista previa muestra antes de guardarlos */
 interface Borrador {
@@ -72,7 +67,7 @@ interface Borrador {
 export function PantallaEditarPerfil() {
   const { isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { back } = useAppNavigation();
+  const { back } = useNavegacion();
   const { profile, saveProfile } = useProfile();
   const { uid } = useSessionUser();
   const premium = useIsPremium(uid);

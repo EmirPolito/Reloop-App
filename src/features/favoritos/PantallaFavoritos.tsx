@@ -1,80 +1,45 @@
-import { Ionicons } from "@expo/vector-icons";
-import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { conSalida } from "@/components/salidaModulo";
-import { BotonBarra } from "@/components/ui/BotonBarra";
-import { Disolvible, useEliminarConEfecto } from "@/components/ui/Disolvible";
+import { useScrollCabecera } from "@/components/ui/CabeceraFlotante";
+import { useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
-import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
-import {
-  CabeceraFlotante,
-  useScrollCabecera,
-} from "@/components/ui/CabeceraFlotante";
-import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
-import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { TarjetaPublicacion } from "@/features/home/components/TarjetaPublicacion";
+import { EsqueletoInicio } from "@/features/home/6-esqueleto";
 import { CATEGORIES } from "@/features/marketplace/data";
 import { filterProducts } from "@/features/marketplace/feedFilters";
 import { useProductsByIds } from "@/features/marketplace/hooks/useProductsByIds";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
-import { useAvisos } from "@/features/avisos/AvisosProvider";
 import {
   useMarketplaceActions,
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
-import type { CategoryId, Product } from "@/features/marketplace/types";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
-import { normalizarNombre } from "@/features/perfil/username";
+import { normalizarNombre } from "@/features/perfil/nombreUsuario";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { Text } from "@/features/shared/Text";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
 import { useSeleccion } from "@/hooks/useSeleccion";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
-import { HeartIcon } from "./components/HeartIcon";
-import { CapaSeleccion } from "./CapaSeleccion";
-import { TarjetaVendedorFavorita } from "./TarjetaVendedorFavorita";
+import { CabeceraFavoritos, type Filtro } from "./1-cabecera";
+import { ListaFavoritos, PREFIJO_VENDEDOR, type Bloque } from "./2-lista";
 import { useVendedoresFavoritos } from "./vendedoresFavoritos";
-
-/** Todas o las de una categoría */
-type Filtro = "todas" | CategoryId;
-
-const OPCIONES: { id: Filtro; texto: string }[] = [
-  { id: "todas", texto: "Todas" },
-  ...CATEGORIES.map((c) => ({ id: c.id, texto: c.label })),
-];
-
-/** Las tarjetas de vendedor guardadas van primero; las publicaciones sueltas, de dos en dos */
-type Bloque =
-  | { type: "seller"; ownerId: string }
-  | { type: "products"; products: Product[] };
-
-/** En la selección, las tarjetas de vendedor llevan este prefijo (para no confundirse con una publicación) */
-const PREFIJO_VENDEDOR = "v:";
 
 /** Al cambiar de filtro la lista aparece con un fundido corto */
 const CAMBIO_FILTRO = FadeIn.duration(200);
-const SEPARACION = 16;
-/** Mismo círculo que los botones de Notificaciones */
-const LADO_BOTON = 48;
-
-/**
- * Favoritos, con el mismo aspecto que Notificaciones: el fondo de la app, el título al
- * centro, un buscador blanco (con "@" busca por quien vende), píldoras por categoría y las
- * publicaciones con la misma tarjeta del inicio.
- */
-/** Esquinas de la tarjeta de una publicación (las de TarjetaPublicacion) */
-const RADIO_PUBLICACION = 22;
 /** Al quitar varios, cuántos hacen el efecto de volar al bote */
 const MAX_ANIMADOS = 3;
 
+/**
+ * Favoritos (ver `README.md`), con el mismo aspecto que Notificaciones: el fondo de la app,
+ * el encabezado flotante con el título, un buscador blanco (con "@" busca por quien vende) y
+ * píldoras por categoría, y debajo las tarjetas de vendedor guardadas y las publicaciones con
+ * la misma tarjeta del inicio.
+ */
 export function PantallaFavoritos() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
@@ -82,7 +47,7 @@ export function PantallaFavoritos() {
   const toggleFavorite = useToggleFavorite();
   const { removeFavorites } = useMarketplaceActions();
   const { mostrar } = useAvisos();
-  const { back, openProduct, openUserProfile } = useAppNavigation();
+  const { back, openProduct, openUserProfile } = useNavegacion();
   const cardWidth = useProductCardWidth();
   const { products, loading } = useProductsByIds(favorites);
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -252,182 +217,78 @@ export function PantallaFavoritos() {
   };
   const hayFiltro = filtro !== "todas" || busqueda.trim() !== "";
   const categoria = CATEGORIES.find((c) => c.id === filtro);
+  const vacio = useMemo(
+    () => ({
+      titulo: hayFiltro
+        ? categoria && !busqueda.trim()
+          ? `Nada de ${categoria.label.toLowerCase()}`
+          : "No encontramos nada"
+        : "Aún no tienes favoritos",
+      mensaje: hayFiltro
+        ? "Prueba con otra búsqueda o categoría."
+        : "Guarda los productos que te interesan y aparecerán aquí.",
+    }),
+    [hayFiltro, categoria, busqueda],
+  );
+  // La lista empieza bajo el encabezado; abajo deja espacio para que el nav no tape la última
+  const contenido = useMemo(
+    () => ({
+      paddingHorizontal: 16,
+      paddingTop: altoCabecera + 12,
+      paddingBottom: insets.bottom + 110,
+    }),
+    [altoCabecera, insets.bottom],
+  );
 
   return (
-    <View style={styles.pantalla}>
+    <View style={estilos.pantalla}>
       {loading && !hayFavoritos ? (
-        <View style={{ paddingTop: altoCabecera }}>
-          <LoadingState />
+        // Las mismas tarjetas de carga del inicio (el `Skeleton` de HeroUI)
+        <View style={[estilos.esqueleto, { paddingTop: altoCabecera + 12 }]}>
+          <EsqueletoInicio cardWidth={cardWidth} />
         </View>
       ) : (
         <Animated.View
           key={filtro}
           entering={CAMBIO_FILTRO}
-          style={styles.lista}
+          style={estilos.lista}
         >
-          <FlatList
-            onScroll={alHacerScroll}
-            scrollEventThrottle={16}
-            data={bloques}
-            extraData={marcados}
-            keyExtractor={(bloque) =>
-              bloque.type === "seller"
-                ? `seller-${bloque.ownerId}`
-                : `products-${bloque.products[0].id}`
-            }
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: altoCabecera + 12,
-              // Espacio para que la barra de navegación no tape la última publicación
-              paddingBottom: insets.bottom + 110,
-            }}
-            renderItem={({ item: bloque }) =>
-              bloque.type === "seller" ? (
-                <TarjetaVendedorFavorita
-                  ownerId={bloque.ownerId}
-                  isDark={isDark}
-                  onOpen={openProduct}
-                  separacion={SEPARACION}
-                  registrar={registrar}
-                  seleccionando={activo}
-                  marcada={marcados.has(PREFIJO_VENDEDOR + bloque.ownerId)}
-                  onAlternar={() =>
-                    seleccion.alternar(PREFIJO_VENDEDOR + bloque.ownerId)
-                  }
-                />
-              ) : (
-                <View style={styles.fila}>
-                  {bloque.products.map((item) => (
-                    <Disolvible
-                      key={item.id}
-                      id={item.id}
-                      registrar={registrar}
-                      sombra={14}
-                      margenInferior={SEPARACION}
-                    >
-                      {/* La capa de selección cubre solo la tarjeta, no el relleno de la sombra */}
-                      <View>
-                        <TarjetaPublicacion
-                          item={item}
-                          cardWidth={cardWidth}
-                          favorite
-                          onOpen={openProduct}
-                          onOpenSeller={openUserProfile}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                        {activo ? (
-                          <CapaSeleccion
-                            radio={RADIO_PUBLICACION}
-                            etiqueta={`Seleccionar ${item.name}`}
-                            marcada={marcados.has(item.id)}
-                            onPress={() => seleccion.alternar(item.id)}
-                          />
-                        ) : null}
-                      </View>
-                    </Disolvible>
-                  ))}
-                </View>
-              )
-            }
-            ListEmptyComponent={
-              <IllustratedEmptyState
-                icon={<HeartIcon size={80} />}
-                title={
-                  hayFiltro
-                    ? categoria && !busqueda.trim()
-                      ? `Nada de ${categoria.label.toLowerCase()}`
-                      : "No encontramos nada"
-                    : "Aún no tienes favoritos"
-                }
-                message={
-                  hayFiltro
-                    ? "Prueba con otra búsqueda o categoría."
-                    : "Guarda los productos que te interesan y aparecerán aquí."
-                }
-                style={styles.vacio}
-              />
-            }
+          <ListaFavoritos
+            bloques={bloques}
+            cardWidth={cardWidth}
+            isDark={isDark}
+            seleccionando={activo}
+            marcados={marcados}
+            registrar={registrar}
+            contenido={contenido}
+            alHacerScroll={alHacerScroll}
+            onAlternar={seleccion.alternar}
+            onOpen={openProduct}
+            onOpenSeller={openUserProfile}
+            onToggleFavorite={toggleFavorite}
+            vacio={vacio}
           />
         </Animated.View>
       )}
 
-      {/* Encabezado flotante, sin tarjeta de fondo: la lista pasa por detrás */}
-      <CabeceraFlotante
-        paddingTop={8}
+      <CabeceraFavoritos
         desplazado={desplazado}
         onAlto={setAltoCabecera}
-      >
-        {/* Volver a la izquierda, el título al centro y la campana a la derecha */}
-        <View style={styles.barra}>
-          {activo ? (
-            <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
-              <Ionicons name="close" size={26} color={texto} />
-            </BotonBarra>
-          ) : (
-            <BotonBarra etiqueta="Volver" onPress={() => conSalida(back)}>
-              <View style={{ transform: [{ translateX: -1.5 }] }}>
-                <BackArrowIcon size={28} color={texto} />
-              </View>
-            </BotonBarra>
-          )}
-          <Text
-            accessibilityRole="header"
-            pointerEvents="none"
-            style={[styles.titulo, { color: texto }]}
-          >
-            {activo
-              ? marcados.size === 0
-                ? "Selecciona favoritos"
-                : `${marcados.size} seleccionado${marcados.size === 1 ? "" : "s"}`
-              : "Favoritos"}
-          </Text>
-          {activo ? (
-            // Destino del efecto: hacia aquí vuelan las tarjetas quitadas
-            <View ref={destinoRef} collapsable={false}>
-              <BotonBarra
-                etiqueta="Quitar favoritos seleccionados"
-                // Con algo marcado: fondo rojo e icono blanco
-                peligro={marcados.size > 0}
-                colorPeligro="#EF4444"
-                // Sin nada elegido se ve blanco (no apagado) y no hace nada
-                onPress={eliminar}
-              >
-                <IconoEliminarLinea
-                  size={26}
-                  color={marcados.size > 0 ? "#FFFFFF" : texto}
-                />
-              </BotonBarra>
-            </View>
-          ) : (
-            // Siempre blanco, haya o no favoritos (sin favoritos, la opción del menú se apaga)
-            <BotonBarra
-              etiqueta="Eliminar favoritos"
-              onPress={() => setMenu(true)}
-            >
-              <IconoEliminarLinea
-                size={26}
-                color={isDark ? "#FFFFFF" : texto}
-              />
-            </BotonBarra>
-          )}
-        </View>
-
-        <BuscadorBlanco
-          value={busqueda}
-          onChangeText={setBusqueda}
-          placeholder="Buscar favoritos o @usuario"
-          accessibilityLabel="Buscar en favoritos"
-          personas={buscaPersonas}
-        />
-
-        <FiltrosPildoras
-          opciones={OPCIONES}
-          activo={filtro}
-          onCambiar={setFiltro}
-        />
-      </CabeceraFlotante>
+        texto={texto}
+        isDark={isDark}
+        seleccionando={activo}
+        marcados={marcados.size}
+        destinoRef={destinoRef}
+        onVolver={() => conSalida(back)}
+        onCancelarSeleccion={seleccion.salir}
+        onEliminarMarcados={eliminar}
+        onAbrirMenu={() => setMenu(true)}
+        busqueda={busqueda}
+        onBuscar={setBusqueda}
+        buscaPersonas={buscaPersonas}
+        filtro={filtro}
+        onFiltrar={setFiltro}
+      />
 
       <MenuOpciones
         visible={menu}
@@ -451,34 +312,8 @@ export function PantallaFavoritos() {
   );
 }
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   pantalla: { flex: 1 },
-  barra: {
-    height: 56,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  botonBarra: {
-    width: LADO_BOTON,
-    height: LADO_BOTON,
-    borderRadius: LADO_BOTON / 2,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  titulo: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
-  },
   lista: { flex: 1 },
-  // Dos publicaciones sueltas lado a lado
-  fila: { flexDirection: "row", gap: SEPARACION },
-  // Un poco más arriba: menos espacio sobre el icono que debajo
-  vacio: { paddingTop: 110, paddingBottom: 140 },
+  esqueleto: { paddingHorizontal: 16 },
 });

@@ -35,8 +35,8 @@ import {
   formatProductPrice,
 } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import { formatNotificationTime } from "@/features/notificaciones/notificationRules";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
+import { formatNotificationTime } from "@/features/notificaciones/reglasNotificaciones";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { Text } from "@/features/shared/Text";
@@ -47,9 +47,9 @@ import {
   IconoFlechaDerecha,
   IconoFlechaIzquierda,
   IconoPuntosVertical,
-} from "../Perfiliconos";
-import { COLORES_DESTACADO, type DatosPerfil } from "../Perfiltemas";
-import { reportUser } from "../profileRepository";
+} from "../iconosPerfil";
+import { COLORES_DESTACADO, type DatosPerfil } from "../temasPerfil";
+import { reportUser } from "../repositorioPerfil";
 
 /** Ancho de cada foto respecto al ancho de la tarjeta */
 const PROPORCION_FOTO = 0.29;
@@ -221,7 +221,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   enPerfil?: boolean;
 }) {
   const { uid } = useSessionUser();
-  const { openUserProfile } = useAppNavigation();
+  const { openUserProfile } = useNavegacion();
   const premium = useIsPremium(ownerId);
 
   const { favorites } = useMarketplaceState();

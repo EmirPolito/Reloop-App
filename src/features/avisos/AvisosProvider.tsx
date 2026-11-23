@@ -10,7 +10,7 @@ import {
 } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { NotificationBanner } from "@/features/notificaciones/components/NotificationBanner";
+import { BannerNotificacion } from "@/features/notificaciones/components/BannerNotificacion";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
 
 type TipoAviso = "exito" | "error" | "eliminada" | "favorito" | "sinFavorito";
@@ -89,7 +89,7 @@ export function AvisoHost() {
 
   const fondo = COLORES[aviso.tipo];
   return (
-    <NotificationBanner
+    <BannerNotificacion
       key={aviso.id}
       contenido={{
         titulo: aviso.titulo,

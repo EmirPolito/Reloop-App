@@ -12,7 +12,7 @@ import { AnimatedSplash } from "@/features/intro/efecto-entrada";
 import {
   STACK_SCREEN_OPTIONS,
   TRANSPARENT_NAVIGATION_THEME,
-} from "@/features/navigation/stackOptions";
+} from "@/features/navigation/opcionesPila";
 import { AppFrame } from "@/features/shared/AppFrame";
 import { AppThemeProvider } from "@/features/shared/AppThemeProvider";
 

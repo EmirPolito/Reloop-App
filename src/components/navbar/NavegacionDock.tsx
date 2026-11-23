@@ -20,21 +20,18 @@ import { scheduleOnRN } from "react-native-worklets";
 
 import { PressableScale } from "@/components/PressableScale";
 import { NavigationIcon } from "@/components/iconos";
-import type { Tab } from "@/features/navigation/routes";
+import type { Tab } from "@/features/navigation/rutas";
 import {
   IconoChatLinea,
   IconoFavoritoLinea,
   IconoInicioLinea,
   IconoPerfil,
   IconoPerfilLinea,
-} from "@/features/perfil/Perfiliconos";
+} from "@/features/perfil/iconosPerfil";
 import type { IconName } from "@/features/shared/constants";
-import {
-  ALTO_CAPSULA,
-  MenuCrear,
-  createStyles,
-  type NavegacionProps,
-} from "./Navegacion";
+import { MenuCrear } from "./3-menu-crear";
+import { ALTO_CAPSULA, crearEstilos } from "./estilos";
+import type { NavegacionProps } from "./Navegacion";
 
 /**
  * Azul de la barra: brillante en dos tonos (en diagonal, más claro arriba a la izquierda), con
@@ -201,7 +198,7 @@ function NavegacionDockBase({
   // no se pega a la rayita del iPhone
   const abajo = Platform.OS === "web" ? 12 : Math.max(insets.bottom - 20, 6);
   const altoBarra = ALTO_FILA + AIRE_ARRIBA + abajo;
-  const estilosMenu = useMemo(() => createStyles(isDark), [isDark]);
+  const estilosMenu = useMemo(() => crearEstilos(isDark), [isDark]);
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);

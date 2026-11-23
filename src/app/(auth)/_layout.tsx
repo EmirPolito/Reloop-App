@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 import { AuthFormProvider } from "@/features/auth/AuthFormProvider";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
+import { STACK_SCREEN_OPTIONS } from "@/features/navigation/opcionesPila";
 
 export const unstable_settings = { initialRouteName: "login" };
 

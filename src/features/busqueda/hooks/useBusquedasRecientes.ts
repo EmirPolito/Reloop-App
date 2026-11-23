@@ -47,9 +47,11 @@ export function useBusquedasRecientes(espacio = "busqueda") {
       setRecientes((lista) => {
         const nueva = cambio(lista);
         if (uid) {
-          AsyncStorage.setItem(clave(espacio, uid), JSON.stringify(nueva)).catch(
-            (error) =>
-              console.warn("No se pudieron guardar las búsquedas.", error),
+          AsyncStorage.setItem(
+            clave(espacio, uid),
+            JSON.stringify(nueva),
+          ).catch((error) =>
+            console.warn("No se pudieron guardar las búsquedas.", error),
           );
         }
         return nueva;
@@ -74,7 +76,8 @@ export function useBusquedasRecientes(espacio = "busqueda") {
   );
 
   const quitar = useCallback(
-    (texto: string) => cambiar((lista) => lista.filter((item) => item !== texto)),
+    (texto: string) =>
+      cambiar((lista) => lista.filter((item) => item !== texto)),
     [cambiar],
   );
 

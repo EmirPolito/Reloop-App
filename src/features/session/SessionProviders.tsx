@@ -2,10 +2,10 @@ import type { PropsWithChildren } from "react";
 
 import type { SessionUser } from "@/features/auth/AuthProvider";
 import { AvisosProvider } from "@/features/avisos/AvisosProvider";
-import { ChatProvider } from "@/features/chats/ChatProvider";
+import { ChatProvider } from "@/features/chats/ProveedorChats";
 import { MarketplaceProvider } from "@/features/marketplace/MarketplaceProvider";
-import { NotificationsProvider } from "@/features/notificaciones/NotificationsProvider";
-import { ProfileProvider } from "@/features/perfil/ProfileProvider";
+import { NotificationsProvider } from "@/features/notificaciones/ProveedorNotificaciones";
+import { ProfileProvider } from "@/features/perfil/ProveedorPerfil";
 import { DraftsProvider } from "@/features/shared/DraftsProvider";
 import { SessionUserProvider } from "./SessionUserProvider";
 

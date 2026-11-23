@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
-import { IconoCheck, IconoMas } from "../Perfiliconos";
+import { IconoCheck, IconoMas } from "../iconosPerfil";
 
 /**
  * Botón Seguir / Siguiendo del perfil público. Ocupa todo su espacio (junto a Mensaje), así

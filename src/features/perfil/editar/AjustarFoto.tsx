@@ -71,40 +71,40 @@ export function AjustarFoto({
 
   const mover = Gesture.Pan()
     .onStart(() => {
-      xInicio.value = x.value;
-      yInicio.value = y.value;
+      xInicio.set(x.get());
+      yInicio.set(y.get());
     })
     .onUpdate((e) => {
-      x.value = limitar(xInicio.value + e.translationX, anchoBase, zoom.value);
-      y.value = limitar(yInicio.value + e.translationY, altoBase, zoom.value);
+      x.set(limitar(xInicio.get() + e.translationX, anchoBase, zoom.get()));
+      y.set(limitar(yInicio.get() + e.translationY, altoBase, zoom.get()));
     });
 
   const pellizcar = Gesture.Pinch()
     .onStart(() => {
-      zoomInicio.value = zoom.value;
+      zoomInicio.set(zoom.get());
     })
     .onUpdate((e) => {
-      zoom.value = Math.min(ZOOM_MAX, Math.max(1, zoomInicio.value * e.scale));
-      x.value = limitar(x.value, anchoBase, zoom.value);
-      y.value = limitar(y.value, altoBase, zoom.value);
+      zoom.set(Math.min(ZOOM_MAX, Math.max(1, zoomInicio.get() * e.scale)));
+      x.set(limitar(x.get(), anchoBase, zoom.get()));
+      y.set(limitar(y.get(), altoBase, zoom.get()));
     });
 
   // Doble toque: vuelve al encuadre inicial
   const reiniciar = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      zoom.value = withTiming(ZOOM_INICIAL, { duration: 220 });
-      x.value = withTiming(0, { duration: 220 });
-      y.value = withTiming(0, { duration: 220 });
+      zoom.set(withTiming(ZOOM_INICIAL, { duration: 220 }));
+      x.set(withTiming(0, { duration: 220 }));
+      y.set(withTiming(0, { duration: 220 }));
     });
 
   const gestos = Gesture.Simultaneous(mover, pellizcar, reiniciar);
 
   const estiloFoto = useAnimatedStyle(() => ({
     transform: [
-      { translateX: x.value },
-      { translateY: y.value },
-      { scale: zoom.value },
+      { translateX: x.get() },
+      { translateY: y.get() },
+      { scale: zoom.get() },
     ],
   }));
 
@@ -120,10 +120,10 @@ export function AjustarFoto({
       const H = original.height;
 
       // Del círculo en pantalla a píxeles de la foto
-      const escala = (base * zoom.value * medidas.width) / W;
+      const escala = (base * zoom.get() * medidas.width) / W;
       const lado = Math.min(LADO_CIRCULO / escala, W, H);
-      const centroX = W / 2 - x.value / escala;
-      const centroY = H / 2 - y.value / escala;
+      const centroX = W / 2 - x.get() / escala;
+      const centroY = H / 2 - y.get() / escala;
       const originX = Math.max(0, Math.min(W - lado, centroX - lado / 2));
       const originY = Math.max(0, Math.min(H - lado, centroY - lado / 2));
 

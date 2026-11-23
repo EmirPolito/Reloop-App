@@ -1,10 +1,10 @@
 import { TabScene } from "@/components/TabScene";
-import { ChatsScreen } from "@/features/chats/ChatsScreen";
+import { PantallaChats } from "@/features/chats/PantallaChats";
 
 export default function ChatsRoute() {
   return (
     <TabScene efecto="modulo">
-      <ChatsScreen />
+      <PantallaChats />
     </TabScene>
   );
 }

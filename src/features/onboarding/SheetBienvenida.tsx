@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-import type { DatosPerfil } from "@/features/perfil/Perfiltemas";
-import { useProfile } from "@/features/perfil/ProfileProvider";
-import { completeOnboarding } from "@/features/perfil/profileRepository";
+import type { DatosPerfil } from "@/features/perfil/temasPerfil";
+import { useProfile } from "@/features/perfil/ProveedorPerfil";
+import { completeOnboarding } from "@/features/perfil/repositorioPerfil";
 import { useIntroTerminada } from "@/features/intro/efecto-entrada";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { showErrorAlert } from "@/utils/alerts";
 import {
@@ -62,7 +62,7 @@ function Contenido({
   onPaso: (paso: number) => void;
 }) {
   const { saveProfile } = useProfile();
-  const { navigate } = useAppNavigation();
+  const { navigate } = useNavegacion();
   const usuario = useSessionUser();
   // Nace cerrado y se abre cuando la animación de entrada ya terminó, con un margen para
   // que el BottomSheet se mida: solo se presenta al pasar de cerrado a abierto, y si eso

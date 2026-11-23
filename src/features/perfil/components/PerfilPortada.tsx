@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
 import { optimizedImageUrl } from "@/lib/imageUrl";
-import { fondoPerfil } from "../perfilEstilos";
+import { fondoPerfil } from "../estilos";
 
 /** Ancho al que se pide la portada a Cloudinary */
 const ANCHO_PORTADA = 900;
@@ -66,7 +66,13 @@ export function PerfilPortada({
 }
 
 const styles = StyleSheet.create({
-  veloSuperior: { position: "absolute", top: 0, left: 0, right: 0, height: 110 },
+  veloSuperior: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 110,
+  },
   desvanecido: {
     position: "absolute",
     left: 0,

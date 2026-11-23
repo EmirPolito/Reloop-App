@@ -10,7 +10,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Pasos } from "@/components/ui/Pasos";
+import { NOMBRES_PASOS, PASOS_ONBOARDING } from "../reglasOnboarding";
 import { LETRA, RADIO_HOJA, coloresOnboarding } from "../temaOnboarding";
+
+/** Nombres del indicador de pasos, en orden */
+const NOMBRES = PASOS_ONBOARDING.map((id) => NOMBRES_PASOS[id]);
 
 /** Lo que tarda una página en deslizarse al cambiar de paso */
 export const DESLIZAMIENTO_ONBOARDING_MS = 300;
@@ -21,7 +26,8 @@ export type DireccionPaso = "adelante" | "atras";
 
 /**
  * Drawer propio de la configuración inicial, con el mismo estilo que el de elegir avatar:
- * card flotante, título al centro y flecha para volver a la izquierda. No se puede cerrar (ni
+ * card flotante, título al centro, flecha para volver a la izquierda y, debajo, el indicador
+ * de en qué paso va y cuántos faltan. No se puede cerrar (ni
  * arrastrando ni tocando fuera) hasta terminar. Es una sola card para todos los pasos: el
  * contenido de cada uno entra deslizándose desde la derecha, como pasar una hoja (y sale hacia
  * la derecha al volver). Su alto sigue al de la página actual, nunca menor que `altoMinimo`.
@@ -76,6 +82,8 @@ export function HojaOnboarding({
         <BottomSheet.Overlay />
         <BottomSheet.Content
           enablePanDownToClose={false}
+          // Sin la píldora de arrastre de arriba: no se puede cerrar arrastrando
+          handleComponent={null}
           enableContentPanningGesture={permitirArrastrarContenido}
           detached
           bottomInset={margenInferior}
@@ -111,6 +119,13 @@ export function HojaOnboarding({
             </BottomSheet.Title>
           </View>
 
+          <Pasos
+            titulos={NOMBRES}
+            actual={paso}
+            isDark={isDark}
+            style={styles.pasos}
+          />
+
           <View style={{ height: alto, marginBottom: 14, overflow: "hidden" }}>
             <Animated.View
               key={paso}
@@ -137,10 +152,11 @@ export function HojaOnboarding({
 }
 
 const styles = StyleSheet.create({
+  // Sin la píldora de arrastre, el mismo espacio arriba que antes ocupaba ella
   header: {
     height: 33,
-    marginTop: -7,
-    marginBottom: 20,
+    marginTop: 17,
+    marginBottom: 16,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -154,6 +170,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  pasos: { paddingHorizontal: 12, marginBottom: 20 },
   // Absoluta: así dos páginas pueden convivir mientras una sale y la otra entra
   pagina: { position: "absolute", top: 0, left: 0, right: 0 },
 });

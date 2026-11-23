@@ -1,3 +1,4 @@
+import { Skeleton } from "heroui-native";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -9,7 +10,7 @@ import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { usePerfilDe } from "../hooks/usePerfilDe";
 import { useSigoA } from "../hooks/useSigoA";
-import { conArroba } from "../username";
+import { conArroba } from "../nombreUsuario";
 
 const LADO_AVATAR = 50;
 
@@ -33,7 +34,7 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   const arroba = perfil?.username ? conArroba(perfil.username) : null;
 
   // Mientras llega su perfil, el esqueleto de la fila (no una fila vacía)
-  if (perfil === undefined) return <FilaSeguidorEsqueleto isDark={isDark} />;
+  if (perfil === undefined) return <FilaSeguidorEsqueleto />;
 
   const fondoBoton = sigo
     ? isDark
@@ -100,32 +101,29 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   );
 });
 
-/** Fila gris del mismo tamaño mientras carga: avatar, nombre, @usuario y el botón */
-export function FilaSeguidorEsqueleto({ isDark }: { isDark: boolean }) {
-  const gris = isDark ? "#273449" : "#ECECEE";
+/** Fila de carga (el `Skeleton` de HeroUI): avatar, nombre, @usuario y el botón */
+export function FilaSeguidorEsqueleto() {
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={styles.fila}
     >
-      <View style={[styles.avatarEsqueleto, { backgroundColor: gris }]} />
+      <Skeleton
+        className="rounded-full"
+        style={{ width: LADO_AVATAR, height: LADO_AVATAR }}
+      />
       <View style={[styles.textos, { gap: 8 }]}>
-        <View style={[styles.barra, { width: "55%", backgroundColor: gris }]} />
-        <View style={[styles.barra, { width: "35%", backgroundColor: gris }]} />
+        <Skeleton className="h-2.5 w-1/2 rounded-md" />
+        <Skeleton className="h-2.5 w-1/3 rounded-md" />
       </View>
-      <View style={[styles.boton, { backgroundColor: gris }]} />
+      <Skeleton className="rounded-full" style={styles.botonEsqueleto} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  avatarEsqueleto: {
-    width: LADO_AVATAR,
-    height: LADO_AVATAR,
-    borderRadius: LADO_AVATAR / 2,
-  },
-  barra: { height: 11, borderRadius: 6 },
+  botonEsqueleto: { width: 104, height: 40 },
   fila: {
     flexDirection: "row",
     alignItems: "center",

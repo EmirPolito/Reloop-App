@@ -1,5 +1,5 @@
-import { memo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { memo, useMemo, useState } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 
 import { TarjetaPublicacion } from "@/features/home/components/TarjetaPublicacion";
 import { AccionesPublicacion } from "@/features/marketplace/components/AccionesPublicacion";
@@ -10,7 +10,7 @@ import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider"
 import { deleteProduct } from "@/features/marketplace/productRepository";
 import type { Product } from "@/features/marketplace/types";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 
 /** Separación entre las tarjetas (a los lados y entre filas) */
@@ -33,9 +33,14 @@ export const ListaPublicaciones = memo(function ListaPublicaciones({
 }) {
   const { favorites } = useMarketplaceState();
   const toggleFavorite = useToggleFavorite();
-  const { openUserProfile } = useAppNavigation();
+  const { openUserProfile } = useNavegacion();
   const { mostrar } = useAvisos();
-  const [ancho, setAncho] = useState(0);
+  // Desde el primer dibujo con el ancho de la pantalla (menos los márgenes del perfil), así las
+  // tarjetas salen junto con lo demás; al medir se corrige si cambia
+  const { width: anchoPantalla } = useWindowDimensions();
+  const [ancho, setAncho] = useState(() => Math.min(anchoPantalla, 760) - 30);
+  // Buscar en un Set es directo (en el arreglo había que recorrerlo por cada tarjeta)
+  const favoritos = useMemo(() => new Set(favorites), [favorites]);
   const [editando, setEditando] = useState<Product | null>(null);
   const [porEliminar, setPorEliminar] = useState<Product | null>(null);
   const [eliminando, setEliminando] = useState(false);
@@ -76,7 +81,7 @@ export const ListaPublicaciones = memo(function ListaPublicaciones({
               item={item}
               cardWidth={cardWidth}
               sinEncabezado
-              favorite={favorites.includes(item.id)}
+              favorite={favoritos.has(item.id)}
               onOpen={onOpen}
               onOpenSeller={openUserProfile}
               onToggleFavorite={toggleFavorite}

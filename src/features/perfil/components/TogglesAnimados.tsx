@@ -12,7 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Circle, G, Path, Svg } from "react-native-svg";
 
-import { IconoNotificacionLinea, IconoLunaLinea } from "../Perfiliconos";
+import { IconoNotificacionLinea, IconoLunaLinea } from "../iconosPerfil";
 
 /** Misma curva con rebote del toggle original (cubic-bezier(0.68, -0.55, 0.265, 1.55)) */
 // Rebote suavizado: se pasa menos del final y se asienta sin brinco
@@ -46,10 +46,12 @@ function useProgreso(value: boolean, duracion: number) {
     (encendido: boolean) => {
       if (destino.current === encendido) return;
       destino.current = encendido;
-      progreso.value = withTiming(encendido ? 1 : 0, {
-        duration: duracion,
-        easing: REBOTE,
-      });
+      progreso.set(
+        withTiming(encendido ? 1 : 0, {
+          duration: duracion,
+          easing: REBOTE,
+        }),
+      );
     },
     [duracion, progreso],
   );
@@ -79,12 +81,12 @@ function ToggleBase({
   children: ReactNode;
 }) {
   const estiloPista = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(progreso.value, [0, 1], pista),
-    borderColor: interpolateColor(progreso.value, [0, 1], borde),
+    backgroundColor: interpolateColor(progreso.get(), [0, 1], pista),
+    borderColor: interpolateColor(progreso.get(), [0, 1], borde),
   }));
   const estiloBolita = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(progreso.value, [0, 1], bolita),
-    transform: [{ translateX: progreso.value * RECORRIDO }],
+    backgroundColor: interpolateColor(progreso.get(), [0, 1], bolita),
+    transform: [{ translateX: progreso.get() * RECORRIDO }],
   }));
 
   return (
@@ -138,21 +140,39 @@ function SolRelleno({ color }: { color: string }) {
  * Toggle de modo claro/oscuro: pista amanecer → noche, la bolita se desliza y el sol
  * gira y se encoge mientras aparece la luna (port del ThemeToggle web, tamaño md).
  */
-export function ToggleTema({ value, onValueChange, accessibilityLabel }: ToggleProps) {
+export function ToggleTema({
+  value,
+  onValueChange,
+  accessibilityLabel,
+}: ToggleProps) {
   const { progreso, ir } = useProgreso(value, 300);
 
   const estiloSol = useAnimatedStyle(() => ({
-    opacity: interpolate(progreso.value, [0, 1], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(progreso.get(), [0, 1], [1, 0], Extrapolation.CLAMP),
     transform: [
-      { rotate: `${interpolate(progreso.value, [0, 1], [0, 90])}deg` },
-      { scale: interpolate(progreso.value, [0, 1], [1, 0.5], Extrapolation.CLAMP) },
+      { rotate: `${interpolate(progreso.get(), [0, 1], [0, 90])}deg` },
+      {
+        scale: interpolate(
+          progreso.get(),
+          [0, 1],
+          [1, 0.5],
+          Extrapolation.CLAMP,
+        ),
+      },
     ],
   }));
   const estiloLuna = useAnimatedStyle(() => ({
-    opacity: interpolate(progreso.value, [0, 1], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(progreso.get(), [0, 1], [0, 1], Extrapolation.CLAMP),
     transform: [
-      { rotate: `${interpolate(progreso.value, [0, 1], [-90, 0])}deg` },
-      { scale: interpolate(progreso.value, [0, 1], [0.5, 1], Extrapolation.CLAMP) },
+      { rotate: `${interpolate(progreso.get(), [0, 1], [-90, 0])}deg` },
+      {
+        scale: interpolate(
+          progreso.get(),
+          [0, 1],
+          [0.5, 1],
+          Extrapolation.CLAMP,
+        ),
+      },
     ],
   }));
 
@@ -192,15 +212,20 @@ export function ToggleNotificaciones({
   // Balanceo de campana: 0 → -22° → 16° → 0 (en los extremos queda recta)
   const balanceo = (p: number) => {
     "worklet";
-    return interpolate(p, [0, 0.35, 0.7, 1], [0, 18, -12, 0], Extrapolation.CLAMP);
+    return interpolate(
+      p,
+      [0, 0.35, 0.7, 1],
+      [0, 18, -12, 0],
+      Extrapolation.CLAMP,
+    );
   };
   const estiloApagada = useAnimatedStyle(() => ({
-    opacity: interpolate(progreso.value, [0, 1], [1, 0], Extrapolation.CLAMP),
-    transform: [{ rotate: `${balanceo(progreso.value)}deg` }],
+    opacity: interpolate(progreso.get(), [0, 1], [1, 0], Extrapolation.CLAMP),
+    transform: [{ rotate: `${balanceo(progreso.get())}deg` }],
   }));
   const estiloEncendida = useAnimatedStyle(() => ({
-    opacity: interpolate(progreso.value, [0, 1], [0, 1], Extrapolation.CLAMP),
-    transform: [{ rotate: `${balanceo(progreso.value)}deg` }],
+    opacity: interpolate(progreso.get(), [0, 1], [0, 1], Extrapolation.CLAMP),
+    transform: [{ rotate: `${balanceo(progreso.get())}deg` }],
   }));
 
   return (

@@ -4,8 +4,11 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Text } from "@/features/shared/Text";
-import { useUserSearch } from "../hooks/useUserSearch";
-import { ResultadoUsuario, ResultadoUsuarioEsqueleto } from "./ResultadoUsuario";
+import { useBuscarPersonas } from "../hooks/useBuscarPersonas";
+import {
+  ResultadoUsuario,
+  ResultadoUsuarioEsqueleto,
+} from "./ResultadoUsuario";
 
 const FILAS_ESQUELETO = 4;
 
@@ -23,7 +26,7 @@ export function ResultadosUsuarios({
   isDark: boolean;
   onOpenUser: (uid: string) => void;
 }) {
-  const busqueda = useUserSearch(termino);
+  const busqueda = useBuscarPersonas(termino);
   const suave = isDark ? "#94A3B8" : "#8a8a8a";
 
   return (
@@ -53,7 +56,11 @@ export function ResultadosUsuarios({
 
       {busqueda.estado === "listo" && busqueda.usuarios.length === 0 ? (
         <EmptyState
-          title={termino ? `Sin resultados para "@${termino}"` : "Aún no hay personas"}
+          title={
+            termino
+              ? `Sin resultados para "@${termino}"`
+              : "Aún no hay personas"
+          }
           message="Prueba con otro usuario o con su nombre."
           icon="search"
         />

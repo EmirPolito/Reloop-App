@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { Chat } from "@/features/marketplace/types";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
-import { subscribeUnreadCount } from "../chatRepository";
+import { subscribeUnreadCount } from "../repositorioChats";
 
 /**
  * Cuántos mensajes sin leer tiene cada chat que está sin leer (hasta 10), en tiempo real.

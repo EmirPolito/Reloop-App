@@ -8,8 +8,8 @@ import Svg, { Path } from "react-native-svg";
 import { PressableScale } from "@/components/PressableScale";
 import { PremiumBadge } from "@/components/ui/PremiumBadge";
 import { ENTRADA_MODULO } from "@/constants/motion";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { BackArrowIcon } from "@/features/chats/components/IconosConversacion";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
@@ -108,7 +108,7 @@ function IconoAnuncio({ size, color }: { size: number; color: string }) {
 export function PantallaPremium() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { back } = useAppNavigation();
+  const { back } = useNavegacion();
   const { uid } = useSessionUser();
   const premiumActivo = useIsPremium(uid);
   const [elegido, setElegido] = useState<PlanId>("premium");

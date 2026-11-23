@@ -1,21 +1,19 @@
 import { StyleSheet, View } from "react-native";
-import { useFollowers } from "./hooks/useFollowers";
-import { IconoEditar } from "./Perfiliconos";
-import { useProfile } from "./ProfileProvider";
+import { useSeguidores } from "./hooks/useSeguidores";
+import { IconoEditar } from "./iconosPerfil";
+import { useProfile } from "./ProveedorPerfil";
 
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 
 import { TarjetaPremium } from "@/features/premium/components/TarjetaPremium";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { AjustesPerfil } from "./components/AjustesPerfil";
-import {
-  BotonHeaderPerfil,
-  PerfilDesplazable,
-} from "./components/PerfilDesplazable";
+import { AjustesPerfil } from "./5-ajustes";
+import { BotonHeaderPerfil } from "./2-barra-superior";
+import { VistaPerfil } from "./VistaPerfil";
 
 /**
  * Perfil propio: portada que colapsa en header, avatar, nombre con la insignia Premium,
@@ -27,13 +25,13 @@ export function PantallaPerfil() {
   const { profile } = useProfile();
   const { uid } = useSessionUser();
   const { products: mine, status: mineStatus } = useUserProducts(uid);
-  const { followersCount } = useFollowers(uid);
+  const { followersCount } = useSeguidores(uid);
   const { openProduct, openEditProfile, openPremium, openFollows } =
-    useAppNavigation();
+    useNavegacion();
   const premium = useIsPremium(uid);
 
   return (
-    <PerfilDesplazable
+    <VistaPerfil
       profile={profile}
       isDark={isDark}
       placeholder="icono"

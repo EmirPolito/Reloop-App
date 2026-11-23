@@ -1,10 +1,10 @@
 import { TabScene } from "@/components/TabScene";
-import { HomeScreen } from "@/features/home/HomeScreen";
+import { PantallaInicio } from "@/features/home/PantallaInicio";
 
 export default function HomeRoute() {
   return (
     <TabScene>
-      <HomeScreen />
+      <PantallaInicio />
     </TabScene>
   );
 }

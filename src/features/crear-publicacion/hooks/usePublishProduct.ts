@@ -5,8 +5,8 @@ import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { useMarketplaceActions } from "@/features/marketplace/MarketplaceProvider";
 import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
 import { createProduct } from "@/features/marketplace/productRepository";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import { useProfile } from "@/features/perfil/ProfileProvider";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
+import { useProfile } from "@/features/perfil/ProveedorPerfil";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { uploadImage } from "@/lib/cloudinary";
@@ -30,7 +30,7 @@ export function usePublishProduct() {
   // La tarjeta grande solo es para quien tiene insignia (Premium)
   const premium = useIsPremium(uid);
   const { mostrar } = useAvisos();
-  const { navigate } = useAppNavigation();
+  const { navigate } = useNavegacion();
   const [publishing, setPublishing] = useState(false);
 
   const publish = useCallback(

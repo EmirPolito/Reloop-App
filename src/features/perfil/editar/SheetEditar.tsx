@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PALETA } from "../drawer/drawerTheme";
+import { PALETA } from "../drawer/temaDrawer";
 import { INTER } from "./editarTema";
 
 /**

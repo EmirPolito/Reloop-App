@@ -10,7 +10,7 @@ import {
 
 import { CATEGORIES, categoryFor } from "@/features/marketplace/data";
 import { categoryPriceMode } from "@/features/marketplace/rules";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { CATEGORY_IMAGES } from "@/features/shared/constants";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -33,7 +33,7 @@ const CATEGORY_DESCRIPTIONS = {
 
 export function PantallaCrearPublicacion() {
   const { styles, isDark } = useAppTheme();
-  const { navigate } = useAppNavigation();
+  const { navigate } = useNavegacion();
   const { isPicking, pickSquareImage, takeSquarePhoto } = useImagePicker();
   const { publish, publishing } = usePublishProduct();
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);

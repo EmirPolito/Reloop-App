@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useBottomSheetAwareHandlers } from "heroui-native";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Keyboard,
   Pressable,
   ScrollView,
@@ -15,20 +14,20 @@ import Animated, {
   LinearTransition,
 } from "react-native-reanimated";
 
-import { PressableSuave } from "@/components/PressableSuave";
 import { Text, TextInput } from "@/features/shared/Text";
 import {
   PERFIL_ICONS,
   renderPerfilIcon,
   type IconPerfilKey,
-} from "../Perfiliconos";
+} from "../iconosPerfil";
 import {
   COLORES_PERFIL,
   MAX_PILDORAS,
   TEMAS,
   type PildoraPerfilData,
-} from "../Perfiltemas";
+} from "../temasPerfil";
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
+import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
 
 /** Largo máximo de una etiqueta */
@@ -264,26 +263,14 @@ function Contenido({
         })}
       </View>
 
-      <PressableSuave
-        accessibilityRole="button"
-        accessibilityLabel="Guardar etiquetas"
-        disabled={guardando}
+      <BotonGuardar
+        texto="Guardar"
+        etiqueta="Guardar etiquetas"
+        isDark={isDark}
+        guardando={guardando}
         onPress={() => void guardar()}
-        style={[styles.boton, { backgroundColor: c.texto }]}
-      >
-        {guardando ? (
-          <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
-        ) : (
-          <Text
-            style={[
-              INTER.medium,
-              { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
-            ]}
-          >
-            Guardar
-          </Text>
-        )}
-      </PressableSuave>
+        style={styles.boton}
+      />
     </View>
   );
 }
@@ -326,11 +313,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 1,
   },
-  boton: {
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: "auto",
-  },
+  // Siempre al fondo del drawer
+  boton: { marginTop: "auto" },
 });

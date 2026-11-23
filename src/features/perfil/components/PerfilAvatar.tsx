@@ -6,8 +6,8 @@ import { AppIcon } from "@/features/shared/AppIcon";
 import { Text } from "@/features/shared/Text";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { getInitials } from "@/utils/text";
-import { LADO_AVATAR, estilosPerfil } from "../perfilEstilos";
-import { type ColorPerfil, TEMAS } from "../Perfiltemas";
+import { LADO_AVATAR, estilosPerfil } from "../estilos";
+import { type ColorPerfil, TEMAS } from "../temasPerfil";
 
 /** Ancho al que se pide la foto de perfil a Cloudinary. */
 const ANCHO_FOTO = 400;

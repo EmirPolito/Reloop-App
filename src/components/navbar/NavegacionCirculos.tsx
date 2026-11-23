@@ -29,21 +29,18 @@ import {
   CON_DESENFOQUE,
   fondoCristalVisto,
 } from "@/features/busqueda/components/PildoraCristal";
-import type { Tab } from "@/features/navigation/routes";
+import type { Tab } from "@/features/navigation/rutas";
 import {
   IconoChatLinea,
   IconoFavoritoLinea,
   IconoInicioLinea,
   IconoPerfil,
   IconoPerfilLinea,
-} from "@/features/perfil/Perfiliconos";
+} from "@/features/perfil/iconosPerfil";
 import type { IconName } from "@/features/shared/constants";
-import {
-  ALTO_CAPSULA,
-  MenuCrear,
-  createStyles,
-  type NavegacionProps,
-} from "./Navegacion";
+import { MenuCrear } from "./3-menu-crear";
+import { ALTO_CAPSULA, crearEstilos } from "./estilos";
+import type { NavegacionProps } from "./Navegacion";
 
 // Sus tipos son de una versión anterior de React (componente de clase): mismo componente, tipado
 const MaskedView =
@@ -209,7 +206,7 @@ function NavegacionCirculosBase({
   const insets = useSafeAreaInsets();
   const abajo = Platform.OS === "web" ? 16 : Math.max(insets.bottom - 6, 10);
   const altoNeblina = abajo + LADO + SOBRE_CIRCULOS;
-  const estilosMenu = useMemo(() => createStyles(isDark), [isDark]);
+  const estilosMenu = useMemo(() => crearEstilos(isDark), [isDark]);
   const velo = useMemo(
     () =>
       veloAlReves(

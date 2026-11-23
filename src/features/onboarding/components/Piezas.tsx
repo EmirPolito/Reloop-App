@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 
-import { renderPerfilIcon } from "@/features/perfil/Perfiliconos";
-import { TEMAS, type PildoraPerfilData } from "@/features/perfil/Perfiltemas";
+import { renderPerfilIcon } from "@/features/perfil/iconosPerfil";
+import { TEMAS, type PildoraPerfilData } from "@/features/perfil/temasPerfil";
 import { Text } from "@/features/shared/Text";
 import { LETRA, coloresOnboarding } from "../temaOnboarding";
 

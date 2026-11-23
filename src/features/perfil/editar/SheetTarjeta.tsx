@@ -1,16 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PressableSuave } from "@/components/PressableSuave";
 import type { Product } from "@/features/marketplace/types";
 import { Text, TextInput } from "@/features/shared/Text";
 import {
@@ -24,8 +17,9 @@ import {
   type ColorDestacado,
   type DatosPerfil,
   type DisenoTarjeta,
-} from "../Perfiltemas";
+} from "../temasPerfil";
 import { INTER, coloresEditar } from "./editarTema";
+import { BotonGuardar } from "./BotonGuardar";
 import { HOST_SESION, SheetEditar } from "./SheetEditar";
 
 /** Orden de los colores al tocar el círculo de un campo (`null` = el del texto de la tarjeta) */
@@ -224,31 +218,14 @@ export function SheetTarjeta({
           />
         </View>
 
-        <PressableSuave
-          accessibilityRole="button"
-          accessibilityLabel="Guardar diseño"
-          disabled={guardando}
+        <BotonGuardar
+          texto="Guardar diseño"
+          isDark={isDark}
+          guardando={guardando}
+          atenuarAlGuardar
           onPress={() => void guardar()}
-          style={[
-            styles.principal,
-            { backgroundColor: c.texto },
-            guardando && { opacity: 0.6 },
-          ]}
-        >
-          {guardando ? (
-            <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
-          ) : (
-            <Text
-              style={[
-                INTER.medium,
-                styles.opcionTexto,
-                { color: isDark ? "#101010" : "#FFFFFF" },
-              ]}
-            >
-              Guardar diseño
-            </Text>
-          )}
-        </PressableSuave>
+          style={styles.principal}
+        />
       </ScrollView>
     </SheetEditar>
   );
@@ -281,11 +258,5 @@ const styles = StyleSheet.create({
   },
   opcionTexto: { fontSize: 14.5 },
   // Botón de guardar
-  principal: {
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
+  principal: { marginTop: 10 },
 });

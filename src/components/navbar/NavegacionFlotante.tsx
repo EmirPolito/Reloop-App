@@ -26,28 +26,25 @@ import { scheduleOnRN } from "react-native-worklets";
 
 import { PressableScale } from "@/components/PressableScale";
 import { NavigationIcon } from "@/components/iconos";
-import type { Tab } from "@/features/navigation/routes";
+import type { Tab } from "@/features/navigation/rutas";
 import {
   IconoChatLinea,
   IconoFavoritoLinea,
   IconoInicioLinea,
   IconoPerfil,
   IconoPerfilLinea,
-} from "@/features/perfil/Perfiliconos";
+} from "@/features/perfil/iconosPerfil";
 import type { IconName } from "@/features/shared/constants";
-import {
-  ALTO_CAPSULA,
-  MenuCrear,
-  createStyles,
-  type NavegacionProps,
-} from "./Navegacion";
+import { MenuCrear } from "./3-menu-crear";
+import { ALTO_CAPSULA, crearEstilos } from "./estilos";
+import type { NavegacionProps } from "./Navegacion";
 
 // Sus tipos son de una versión anterior de React (componente de clase): mismo componente, tipado
 const MaskedView =
   MaskedViewOriginal as unknown as ComponentType<MaskedViewProps>;
 
 /**
- * Tinte del vidrio: el del encabezado de la conversación en chats (`ThreadHeader`), más
+ * Tinte del vidrio: el del encabezado de la conversación en chats (`CabeceraConversacion`), más
  * blanco en claro
  */
 function tinteVidrio(isDark: boolean) {
@@ -218,7 +215,7 @@ function NavegacionAncladaBase({
   const bottomInset =
     Platform.OS === "ios" ? Math.max(insets.bottom - 12, 4) : 4;
   const altoTotal = ALTO_BARRA + CURVA_ALTO + bottomInset;
-  const estilosMenu = useMemo(() => createStyles(isDark), [isDark]);
+  const estilosMenu = useMemo(() => crearEstilos(isDark), [isDark]);
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);

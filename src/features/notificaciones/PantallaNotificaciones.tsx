@@ -1,53 +1,36 @@
-import { Ionicons } from "@expo/vector-icons";
-import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SectionList, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { conSalida } from "@/components/salidaModulo";
-import { BotonBarra } from "@/components/ui/BotonBarra";
+import { useScrollCabecera } from "@/components/ui/CabeceraFlotante";
 import { useEliminarConEfecto } from "@/components/ui/Disolvible";
-import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
-import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { MenuOpciones } from "@/components/ui/MenuOpciones";
-import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
-import {
-  CabeceraFlotante,
-  useScrollCabecera,
-} from "@/components/ui/CabeceraFlotante";
-import { FiltrosPildoras } from "@/components/ui/FiltrosPildoras";
-import { IconoNotificacionRellena } from "@/components/ui/IconoNotificacion";
-import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { ENTRADA_MODULO } from "@/constants/motion";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
 import { CATEGORIES } from "@/features/marketplace/data";
 import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
-import type { CategoryId } from "@/features/marketplace/types";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
-import { normalizarNombre } from "@/features/perfil/username";
+import { normalizarNombre } from "@/features/perfil/nombreUsuario";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { Text } from "@/features/shared/Text";
 import { useSeleccion } from "@/hooks/useSeleccion";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
-import type { AppNotification } from "./types";
-import { NotificationItem } from "./components/NotificationItem";
-import { useOpenNotification } from "./hooks/useOpenNotification";
+import { CabeceraNotificaciones, type Filtro } from "./1-cabecera";
+import { EsqueletoNotificaciones, ListaNotificaciones } from "./2-lista";
+import { useAbrirNotificacion } from "./hooks/useAbrirNotificacion";
+import {
+  useNotificationActions,
+  useNotifications,
+} from "./ProveedorNotificaciones";
 import {
   groupNotifications,
   notificationMessage,
   notificationTitle,
-} from "./notificationRules";
-import {
-  useNotificationActions,
-  useNotifications,
-} from "./NotificationsProvider";
-
-/** Todas, las no leídas o las de publicaciones de una categoría */
-type Filtro = "todas" | "sinLeer" | CategoryId;
+} from "./reglasNotificaciones";
+import type { AppNotification } from "./tipos";
 
 const ENTRADA = FadeInDown.duration(ENTRADA_MODULO.timing.duration)
   .easing(ENTRADA_MODULO.timing.easing)
@@ -58,14 +41,14 @@ const ENTRADA = FadeInDown.duration(ENTRADA_MODULO.timing.duration)
 /** Al cambiar de filtro la lista aparece con un fundido corto */
 const CAMBIO_FILTRO = FadeIn.duration(200);
 
-/** Iconos de los botones redondos del encabezado */
-const ICONO_ATRAS = 28;
-
-/** Todas las notificaciones recibidas, por antigüedad, con buscador y filtros. */
+/**
+ * Todas las notificaciones recibidas, por antigüedad, con buscador y filtros (ver
+ * `README.md`). El encabezado flota arriba y la lista pasa por detrás.
+ */
 export function PantallaNotificaciones() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { back } = useAppNavigation();
+  const { back } = useNavegacion();
   const { notifications, unreadCount, status } = useNotifications();
   const { markAllRead, remove } = useNotificationActions();
   const seleccion = useSeleccion();
@@ -76,7 +59,7 @@ export function PantallaNotificaciones() {
   // Hacia el botón de eliminar vuelan las tarjetas (efecto Stream)
   const { destinoRef, registrar, eliminarConEfecto } = useEliminarConEfecto();
   const { products } = useMarketplaceState();
-  const openNotification = useOpenNotification();
+  const openNotification = useAbrirNotificacion();
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const { desplazado, alHacerScroll, reiniciar } = useScrollCabecera();
   // Cada filtro monta la lista de nuevo, desde arriba
@@ -86,7 +69,10 @@ export function PantallaNotificaciones() {
   const [now] = useState(() => Date.now());
 
   // Categoría de cada publicación, para filtrar las notificaciones que hablan de ellas
-  const categoriaDe = new Map(products.map((p) => [p.id, p.category]));
+  const categoriaDe = useMemo(
+    () => new Map(products.map((p) => [p.id, p.category])),
+    [products],
+  );
   // Con "@" al inicio se buscan personas: sus notificaciones, por su usuario o su nombre
   const modoBusqueda = modoDeBusqueda(busqueda);
   const buscaPersonas = modoBusqueda.modo === "usuarios";
@@ -99,31 +85,39 @@ export function PantallaNotificaciones() {
   );
   const perfiles = usePerfilDe.varias(actores);
 
-  const visibles = notifications.filter((item) => {
-    if (filtro === "sinLeer" && item.read) return false;
-    if (
-      filtro !== "todas" &&
-      filtro !== "sinLeer" &&
-      (!item.productId || categoriaDe.get(item.productId) !== filtro)
-    ) {
-      return false;
-    }
-    if (!termino) return true;
-    if (buscaPersonas) {
-      const usuario = perfiles.get(item.actorId)?.username ?? "";
-      return (
-        usuario.includes(termino) ||
-        normalizarNombre(item.actorName).includes(termino)
-      );
-    }
-    return `${notificationTitle(item)} ${item.actorName} ${notificationMessage(item)}`
-      .toLocaleLowerCase()
-      .includes(termino);
-  });
-  const sections = groupNotifications(visibles, now);
+  // Se recalculan solo cuando cambia algo que las afecta (antes, en cada dibujo: al escribir
+  // en el buscador o marcar una, se volvía a filtrar y agrupar toda la lista)
+  const visibles = useMemo(
+    () =>
+      notifications.filter((item) => {
+        if (filtro === "sinLeer" && item.read) return false;
+        if (
+          filtro !== "todas" &&
+          filtro !== "sinLeer" &&
+          (!item.productId || categoriaDe.get(item.productId) !== filtro)
+        ) {
+          return false;
+        }
+        if (!termino) return true;
+        if (buscaPersonas) {
+          const usuario = perfiles.get(item.actorId)?.username ?? "";
+          return (
+            usuario.includes(termino) ||
+            normalizarNombre(item.actorName).includes(termino)
+          );
+        }
+        return `${notificationTitle(item)} ${item.actorName} ${notificationMessage(item)}`
+          .toLocaleLowerCase()
+          .includes(termino);
+      }),
+    [notifications, filtro, categoriaDe, termino, buscaPersonas, perfiles],
+  );
+  const sections = useMemo(
+    () => groupNotifications(visibles, now),
+    [visibles, now],
+  );
 
   const texto = isDark ? "#F1F5F9" : "#101010";
-  const suave = isDark ? "#94A3B8" : "#8A8A8F";
 
   const marcarTodas = () => {
     markAllRead().catch((error) =>
@@ -140,18 +134,25 @@ export function PantallaNotificaciones() {
           conSalida(() => openNotification(notificacion)),
     [activo, seleccion, openNotification],
   );
+  const iniciarSeleccion = useCallback(
+    (notificacion: AppNotification) => seleccion.iniciar(notificacion.id),
+    [seleccion],
+  );
+
+  const avisarEliminadas = useCallback(
+    (cantidad: number) =>
+      mostrar({
+        tipo: "eliminada",
+        titulo:
+          cantidad === 1
+            ? "Notificación eliminada"
+            : `${cantidad} notificaciones eliminadas`,
+        descripcion: "Se eliminaron correctamente.",
+      }),
+    [mostrar],
+  );
 
   /** Las tarjetas a la vista vuelan al botón; al terminar se eliminan de verdad */
-  const avisarEliminadas = (cantidad: number) =>
-    mostrar({
-      tipo: "eliminada",
-      titulo:
-        cantidad === 1
-          ? "Notificación eliminada"
-          : `${cantidad} notificaciones eliminadas`,
-      descripcion: "Se eliminaron correctamente.",
-    });
-
   const eliminarNotificaciones = (ids: string[]) =>
     eliminarConEfecto(ids, () => remove(ids))
       .then(() => {
@@ -163,14 +164,17 @@ export function PantallaNotificaciones() {
       );
 
   /** Deslizar una tarjeta a la izquierda la elimina (si falla, la tarjeta vuelve) */
-  const eliminarUna = (id: string) =>
-    remove([id]).then(
-      () => avisarEliminadas(1),
-      (error) => {
-        showErrorAlert("No se pudo eliminar la notificación", error);
-        throw error;
-      },
-    );
+  const eliminarUna = useCallback(
+    (id: string) =>
+      remove([id]).then(
+        () => avisarEliminadas(1),
+        (error) => {
+          showErrorAlert("No se pudo eliminar la notificación", error);
+          throw error;
+        },
+      ),
+    [remove, avisarEliminadas],
+  );
 
   const eliminar = () => {
     const ids = [...marcados];
@@ -194,173 +198,103 @@ export function PantallaNotificaciones() {
   };
 
   const categoria = CATEGORIES.find((c) => c.id === filtro);
-  const opciones: { id: Filtro; texto: string }[] = [
-    { id: "todas", texto: "Todas" },
-    {
-      id: "sinLeer",
-      texto: unreadCount > 0 ? `Sin leer · ${unreadCount}` : "Sin leer",
-    },
-    ...CATEGORIES.map((c) => ({ id: c.id, texto: c.label })),
-  ];
+  const opciones = useMemo<{ id: Filtro; texto: string }[]>(
+    () => [
+      { id: "todas", texto: "Todas" },
+      {
+        id: "sinLeer",
+        texto: unreadCount > 0 ? `Sin leer · ${unreadCount}` : "Sin leer",
+      },
+      ...CATEGORIES.map((c) => ({ id: c.id, texto: c.label })),
+    ],
+    [unreadCount],
+  );
+
+  const vacio = useMemo(
+    () => ({
+      titulo:
+        status === "error"
+          ? "No pudimos cargar tus notificaciones"
+          : termino
+            ? "No encontramos nada"
+            : categoria
+              ? `Nada de ${categoria.label.toLowerCase()}`
+              : filtro === "sinLeer"
+                ? "Estás al día"
+                : "Aún no tienes notificaciones",
+      mensaje:
+        status === "error"
+          ? "Revisa tu conexión e inténtalo de nuevo."
+          : termino
+            ? "Prueba con otro nombre o palabra."
+            : categoria
+              ? "Aquí verás lo que pase con tus publicaciones de ese tipo."
+              : filtro === "sinLeer"
+                ? "No te queda ninguna notificación por leer."
+                : "Cuando alguien te siga, te escriba o reaccione a tus publicaciones, lo verás aquí.",
+    }),
+    [status, termino, categoria, filtro],
+  );
+  // La lista empieza bajo el encabezado; abajo deja espacio para que el nav no tape la última
+  const contenido = useMemo(
+    () => ({
+      paddingHorizontal: 15,
+      paddingTop: altoCabecera,
+      paddingBottom: insets.bottom + 110,
+    }),
+    [altoCabecera, insets.bottom],
+  );
 
   return (
-    <View style={styles.pantalla}>
+    <View style={estilos.pantalla}>
       {status === "loading" ? (
         <View style={{ paddingTop: altoCabecera }}>
-          <LoadingState />
+          <EsqueletoNotificaciones isDark={isDark} />
         </View>
       ) : (
-        <Animated.View entering={ENTRADA} style={styles.lista}>
+        <Animated.View entering={ENTRADA} style={estilos.lista}>
           <Animated.View
             key={filtro}
             entering={CAMBIO_FILTRO}
-            style={styles.lista}
+            style={estilos.lista}
           >
-            <SectionList
-              onScroll={alHacerScroll}
-              scrollEventThrottle={16}
-              sections={sections}
-              extraData={marcados}
-              keyExtractor={(item) => item.id}
-              stickySectionHeadersEnabled={false}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{
-                paddingHorizontal: 15,
-                paddingTop: altoCabecera,
-                // Espacio para que la barra de navegación no tape la última tarjeta
-                paddingBottom: insets.bottom + 110,
-              }}
-              renderSectionHeader={({ section }) => (
-                <Text style={[styles.seccion, { color: suave }]}>
-                  {section.title}
-                </Text>
-              )}
-              renderItem={({ item }) => (
-                <SwipeParaEliminar
-                  disabled={activo}
-                  radio={22}
-                  separacion={9}
-                  onDelete={() => eliminarUna(item.id)}
-                >
-                  <NotificationItem
-                    notification={item}
-                    now={now}
-                    onPress={alPulsar}
-                    onLongPress={(n) => seleccion.iniciar(n.id)}
-                    seleccionando={activo}
-                    marcada={marcados.has(item.id)}
-                    registrar={registrar}
-                  />
-                </SwipeParaEliminar>
-              )}
-              ListEmptyComponent={
-                <IllustratedEmptyState
-                  icon={
-                    <IconoNotificacionRellena
-                      size={80}
-                      color={isDark ? "#334155" : "#D9D9DE"}
-                    />
-                  }
-                  title={
-                    status === "error"
-                      ? "No pudimos cargar tus notificaciones"
-                      : termino
-                        ? "No encontramos nada"
-                        : categoria
-                          ? `Nada de ${categoria.label.toLowerCase()}`
-                          : filtro === "sinLeer"
-                            ? "Estás al día"
-                            : "Aún no tienes notificaciones"
-                  }
-                  message={
-                    status === "error"
-                      ? "Revisa tu conexión e inténtalo de nuevo."
-                      : termino
-                        ? "Prueba con otro nombre o palabra."
-                        : categoria
-                          ? "Aquí verás lo que pase con tus publicaciones de ese tipo."
-                          : filtro === "sinLeer"
-                            ? "No te queda ninguna notificación por leer."
-                            : "Cuando alguien te siga, te escriba o reaccione a tus publicaciones, lo verás aquí."
-                  }
-                  style={styles.vacio}
-                />
-              }
+            <ListaNotificaciones
+              secciones={sections}
+              now={now}
+              isDark={isDark}
+              seleccionando={activo}
+              marcados={marcados}
+              registrar={registrar}
+              contenido={contenido}
+              alHacerScroll={alHacerScroll}
+              onPress={alPulsar}
+              onLongPress={iniciarSeleccion}
+              onEliminar={eliminarUna}
+              vacio={vacio}
             />
           </Animated.View>
         </Animated.View>
       )}
 
-      {/* Encabezado flotante, sin tarjeta de fondo: la lista pasa por detrás */}
-      <CabeceraFlotante
+      <CabeceraNotificaciones
         paddingTop={insets.top + 8}
         desplazado={desplazado}
         onAlto={setAltoCabecera}
-      >
-        {/* Volver a la izquierda, el título al centro y marcar como leídas a la derecha */}
-        <View style={styles.barra}>
-          {activo ? (
-            <BotonBarra etiqueta="Cancelar selección" onPress={seleccion.salir}>
-              <Ionicons name="close" size={26} color={texto} />
-            </BotonBarra>
-          ) : (
-            <BotonBarra etiqueta="Volver" onPress={() => conSalida(back)}>
-              <View style={{ transform: [{ translateX: -1.5 }] }}>
-                <BackArrowIcon size={ICONO_ATRAS} color={texto} />
-              </View>
-            </BotonBarra>
-          )}
-
-          <Text
-            accessibilityRole="header"
-            pointerEvents="none"
-            style={[styles.titulo, { color: texto }]}
-          >
-            {activo
-              ? marcados.size === 0
-                ? "Selecciona"
-                : `${marcados.size} seleccionada${marcados.size === 1 ? "" : "s"}`
-              : "Notificaciones"}
-          </Text>
-
-          <View style={styles.acciones}>
-            {activo ? (
-              // Destino del efecto: hacia aquí vuelan las tarjetas eliminadas
-              <View ref={destinoRef} collapsable={false}>
-                <BotonBarra
-                  etiqueta="Eliminar notificaciones seleccionadas"
-                  peligro
-                  colorPeligro="#EF4444"
-                  disabled={marcados.size === 0}
-                  onPress={eliminar}
-                >
-                  <IconoEliminarLinea size={26} color={"#FFFFFF"} />
-                </BotonBarra>
-              </View>
-            ) : (
-              <BotonBarra etiqueta="Más opciones" onPress={() => setMenu(true)}>
-                <Ionicons name="ellipsis-horizontal" size={24} color={texto} />
-              </BotonBarra>
-            )}
-          </View>
-        </View>
-
-        {/* Buscador blanco, como el del inicio */}
-        <BuscadorBlanco
-          value={busqueda}
-          onChangeText={setBusqueda}
-          placeholder="Buscar notificaciones o @usuario"
-          accessibilityLabel="Buscar notificaciones"
-          personas={buscaPersonas}
-        />
-
-        <FiltrosPildoras
-          opciones={opciones}
-          activo={filtro}
-          onCambiar={setFiltro}
-        />
-      </CabeceraFlotante>
+        texto={texto}
+        seleccionando={activo}
+        marcados={marcados.size}
+        destinoRef={destinoRef}
+        onVolver={() => conSalida(back)}
+        onCancelarSeleccion={seleccion.salir}
+        onEliminarMarcados={eliminar}
+        onAbrirMenu={() => setMenu(true)}
+        busqueda={busqueda}
+        onBuscar={setBusqueda}
+        buscaPersonas={buscaPersonas}
+        opciones={opciones}
+        filtro={filtro}
+        onFiltrar={setFiltro}
+      />
 
       <MenuOpciones
         visible={menu}
@@ -390,34 +324,7 @@ export function PantallaNotificaciones() {
   );
 }
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   pantalla: { flex: 1 },
-  barra: {
-    height: 56,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  acciones: { flexDirection: "row", alignItems: "center", gap: 8 },
-  // Centrado en la barra, sin importar el ancho de los botones
-  titulo: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
-  },
   lista: { flex: 1 },
-  seccion: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12.5,
-    marginTop: 14,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  // Un poco más arriba: menos espacio sobre el icono que debajo
-  // A la misma altura que en favoritos (su lista empieza 12 más abajo y su vacío lleva 110)
-  vacio: { paddingTop: 122, paddingBottom: 162 },
 });

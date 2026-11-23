@@ -1,5 +1,5 @@
-import { ModuloBusqueda } from "@/features/busqueda/ModuloBusqueda";
+import { PantallaBusqueda } from "@/features/busqueda/PantallaBusqueda";
 
 export default function BuscarRoute() {
-  return <ModuloBusqueda />;
+  return <PantallaBusqueda />;
 }

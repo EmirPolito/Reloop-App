@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-asset";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
@@ -9,6 +9,7 @@ import { useImagePicker } from "@/hooks/useImagePicker";
 import { showErrorAlert } from "@/utils/alerts";
 import { CarruselFondos } from "./CarruselFondos";
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
+import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
 
 /** Fondos ya hechos para elegir */
@@ -44,7 +45,6 @@ export function SheetFondo({
   /** Guarda el fondo (`null` lo quita); si falla lanza (y ya avisó) */
   onGuardar: (cover: string | null) => Promise<void>;
 }) {
-  const c = coloresEditar(isDark);
   const { pickCoverImage, isPicking } = useImagePicker();
   const [centrado, setCentrado] = useState(0);
   // Con fondo puesto, ese es el primero del carrusel y los de la app van después
@@ -87,7 +87,9 @@ export function SheetFondo({
 
   const usarCentrado = () =>
     guardar(async () => {
-      const asset = await Asset.fromModule(FONDOS[centrado - (tieneFondo ? 1 : 0)]).downloadAsync();
+      const asset = await Asset.fromModule(
+        FONDOS[centrado - (tieneFondo ? 1 : 0)],
+      ).downloadAsync();
       return asset.localUri ?? asset.uri;
     });
 
@@ -132,31 +134,14 @@ export function SheetFondo({
         </View>
 
         {hayCambio ? (
-        <View style={styles.boton}>
-            <PressableSuave
-              accessibilityRole="button"
-              accessibilityLabel="Usar este fondo"
-              disabled={guardando}
+          <View style={styles.boton}>
+            <BotonGuardar
+              texto="Usar este fondo"
+              isDark={isDark}
+              guardando={guardando}
+              atenuarAlGuardar
               onPress={() => void usarCentrado()}
-              style={[
-                styles.principal,
-                { backgroundColor: c.texto },
-                guardando && { opacity: 0.6 },
-              ]}
-            >
-              {guardando ? (
-                <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
-              ) : (
-                <Text
-                  style={[
-                    INTER.medium,
-                    { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
-                  ]}
-                >
-                  Usar este fondo
-                </Text>
-              )}
-            </PressableSuave>
+            />
           </View>
         ) : null}
       </View>
@@ -222,10 +207,4 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   boton: { alignSelf: "stretch", paddingHorizontal: 17, marginTop: -10 },
-  principal: {
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });

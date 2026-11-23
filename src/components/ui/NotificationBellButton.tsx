@@ -1,9 +1,9 @@
 import { StyleSheet, View } from "react-native";
 
 import { BotonBarra } from "@/components/ui/BotonBarra";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
-import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
-import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
+import { unreadBadgeLabel } from "@/features/notificaciones/reglasNotificaciones";
+import { useNotifications } from "@/features/notificaciones/ProveedorNotificaciones";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import {
@@ -17,7 +17,7 @@ import {
  */
 export function NotificationBellButton() {
   const { isDark } = useAppTheme();
-  const { openNotifications } = useAppNavigation();
+  const { openNotifications } = useNavegacion();
   const { unreadCount } = useNotifications();
 
   return (

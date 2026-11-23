@@ -1,28 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
 import type { SessionUser } from "@/features/auth/AuthProvider";
 import {
-  SelectorAvatar,
   TITULOS_AVATAR,
   useFlujoAvatar,
 } from "@/features/perfil/editar/SelectorAvatar";
-import type { DatosPerfil } from "@/features/perfil/Perfiltemas";
+import type { DatosPerfil } from "@/features/perfil/temasPerfil";
 import { SessionUserProvider } from "@/features/session/SessionUserProvider";
 import {
   AppThemeContext,
   useAppTheme,
 } from "@/features/shared/AppThemeProvider";
-import { BotonPaso } from "./components/BotonPaso";
+import { PasoAvatar } from "./1-avatar";
+import { PasoFondo } from "./2-fondo";
+import { ETIQUETAS_EJEMPLO, PasoEtiquetas } from "./3-etiquetas";
+import { PasoUsuario } from "./4-usuario";
 import {
   HojaOnboarding,
   type DireccionPaso,
 } from "./components/HojaOnboarding";
-import { PASOS_ONBOARDING, TITULOS_ONBOARDING } from "./onboardingRules";
-import { ETIQUETAS_EJEMPLO, PasoEtiquetas } from "./pasos/PasoEtiquetas";
-import { PasoFondo } from "./pasos/PasoFondo";
-import { PasoUsuario } from "./pasos/PasoUsuario";
-import { SUBIR_CARRUSEL } from "./temaOnboarding";
+import { PASOS_ONBOARDING, TITULOS_ONBOARDING } from "./reglasOnboarding";
 
 /** Lo que tarda en bajar el drawer al terminar (igual que en Editar perfil) */
 export const CIERRE_ONBOARDING_MS = 450;
@@ -43,7 +41,7 @@ const PASO_ETIQUETAS = PASOS_ONBOARDING.indexOf("etiquetas");
 const PASO_USUARIO = PASOS_ONBOARDING.indexOf("usuario");
 
 /**
- * Configuración inicial en una sola card que no se puede cerrar hasta terminar; cada paso
+ * Configuración inicial (ver `README.md`) en una sola card que no se puede cerrar hasta terminar; cada paso
  * entra deslizándose desde la derecha, como pasar una hoja:
  * 1. Avatar: el mismo selector de Editar perfil (orbes, Tomar / Elegir).
  * 2. Fondo: un carrusel de imágenes cuadradas, como el de avatares.
@@ -135,35 +133,14 @@ export function DrawerOnboarding({
     >
       {conProveedores(
         enAvatar ? (
-          <View
-            onLayout={(e) => {
-              if (flujo.paso === "inicio") {
-                setAltoMedido(e.nativeEvent.layout.height);
-              }
-            }}
-          >
-            <SelectorAvatar
-              flujo={flujo}
-              photo={profile.photo}
-              name={profile.name}
-              isDark={isDark}
-              claveCarrusel="onboarding"
-              mostrarConfirmar={false}
-              subirCarrusel={SUBIR_CARRUSEL}
-            />
-            {flujo.paso === "inicio" ? (
-              <View style={styles.botonAvatar}>
-                <BotonPaso
-                  texto={flujo.hayCambio ? "Usar este avatar" : "Continuar"}
-                  isDark={isDark}
-                  cargando={flujo.guardando}
-                  onPress={() =>
-                    flujo.hayCambio ? void flujo.usarAvatar() : siguiente()
-                  }
-                />
-              </View>
-            ) : null}
-          </View>
+          <PasoAvatar
+            flujo={flujo}
+            photo={profile.photo}
+            name={profile.name}
+            isDark={isDark}
+            onContinuar={siguiente}
+            onMedir={setAltoMedido}
+          />
         ) : (
           <View style={{ minHeight: altoAvatar }}>
             {paso === PASO_FONDO ? (
@@ -197,7 +174,3 @@ export function DrawerOnboarding({
     </HojaOnboarding>
   );
 }
-
-const styles = StyleSheet.create({
-  botonAvatar: { paddingHorizontal: 17, marginTop: 18 },
-});

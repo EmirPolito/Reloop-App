@@ -9,13 +9,13 @@ import {
   View,
 } from "react-native";
 
-import { PressableSuave } from "@/components/PressableSuave";
 import { Text, TextInput } from "@/features/shared/Text";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
-import { useUsernameAvailability } from "../hooks/useUsernameAvailability";
-import { MAX_USERNAME, normalizarUsername } from "../username";
-import { UsernameError, claimUsername } from "../usernameRepository";
+import { useUsernameDisponible } from "../hooks/useUsernameDisponible";
+import { MAX_USERNAME, normalizarUsername } from "../nombreUsuario";
+import { UsernameError, claimUsername } from "../repositorioUsername";
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
+import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
 
 const VERDE = "#4CD694";
@@ -82,12 +82,16 @@ function CampoSheet({
       <View style={styles.centro}>
         <View
           style={
-            multiline ? [styles.cuadro, { backgroundColor: colorCampo }] : undefined
+            multiline
+              ? [styles.cuadro, { backgroundColor: colorCampo }]
+              : undefined
           }
         >
           <View style={styles.fila}>
             {prefijo ? (
-              <Text style={[INTER.semibold, styles.prefijo, { color: c.suave }]}>
+              <Text
+                style={[INTER.semibold, styles.prefijo, { color: c.suave }]}
+              >
                 {prefijo}
               </Text>
             ) : null}
@@ -132,30 +136,13 @@ function CampoSheet({
         ) : null}
       </View>
 
-      <PressableSuave
-        accessibilityRole="button"
-        accessibilityLabel={textoBoton}
-        accessibilityState={{ disabled: inactivo, busy: guardando }}
+      <BotonGuardar
+        texto={textoBoton}
+        isDark={isDark}
+        guardando={guardando}
         disabled={inactivo}
         onPress={onGuardar}
-        style={[
-          styles.boton,
-          { backgroundColor: c.texto },
-        ]}
-      >
-        {guardando ? (
-          <ActivityIndicator color={isDark ? "#101010" : "#FFFFFF"} />
-        ) : (
-          <Text
-            style={[
-              INTER.medium,
-              { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
-            ]}
-          >
-            {textoBoton}
-          </Text>
-        )}
-      </PressableSuave>
+      />
     </Pressable>
   );
 }
@@ -251,7 +238,9 @@ export function SheetNombre(props: PropsSheetTexto & { maxLength: number }) {
   );
 }
 
-export function SheetDescripcion(props: PropsSheetTexto & { maxLength: number }) {
+export function SheetDescripcion(
+  props: PropsSheetTexto & { maxLength: number },
+) {
   return (
     <SheetEditar
       visible={props.visible}
@@ -292,7 +281,7 @@ function ContenidoUsername({
   const teclado = useBottomSheetAwareHandlers();
   const [texto, setTexto] = useTextoDeSheet(visible, username ?? "");
   const [guardando, setGuardando] = useState(false);
-  const disponibilidad = useUsernameAvailability(texto, username, uid);
+  const disponibilidad = useUsernameDisponible(texto, username, uid);
   const nuevo = normalizarUsername(texto);
   const listo = disponibilidad.estado === "disponible";
 
@@ -413,7 +402,13 @@ export function SheetUsername({
 
 const styles = StyleSheet.create({
   // Mismo alto que los demás drawers (avatar y fondo)
-  paso: { paddingHorizontal: 17, paddingTop: 4, gap: 26, minHeight: ALTO_CONTENIDO_SHEET, justifyContent: "space-between" },
+  paso: {
+    paddingHorizontal: 17,
+    paddingTop: 4,
+    gap: 26,
+    minHeight: ALTO_CONTENIDO_SHEET,
+    justifyContent: "space-between",
+  },
   centro: { gap: 14, flex: 1, justifyContent: "center" },
   fila: { flexDirection: "row", alignItems: "center", gap: 8 },
   prefijo: { fontSize: 26, lineHeight: 34 },
@@ -447,10 +442,4 @@ const styles = StyleSheet.create({
   },
   circulo: { borderRadius: LADO_ESTADO / 2 },
   aviso: { fontSize: 12.5, textAlign: "center" },
-  boton: {
-    height: 50,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });

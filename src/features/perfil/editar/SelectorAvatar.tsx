@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
 import { useImagePicker } from "@/hooks/useImagePicker";
-import type { DatosPerfil } from "../Perfiltemas";
+import type { DatosPerfil } from "../temasPerfil";
 import { AjustarFoto } from "./AjustarFoto";
 import { CamaraCircular, type FotoTomada } from "./CamaraCircular";
 import { CarruselAvatares, indiceDeAvatar } from "./CarruselAvatares";
@@ -173,7 +173,9 @@ export function SelectorAvatar({
       exiting={FadeOut.duration(120)}
     >
       {flujo.paso === "inicio" ? (
-        <View style={[styles.inicio, altoMinimo ? { minHeight: altoMinimo } : null]}>
+        <View
+          style={[styles.inicio, altoMinimo ? { minHeight: altoMinimo } : null]}
+        >
           <View
             style={{
               alignSelf: "stretch",
@@ -191,7 +193,12 @@ export function SelectorAvatar({
             />
           </View>
 
-          <View style={[styles.opciones, bajarOpciones ? { marginTop: -1 + bajarOpciones } : null]}>
+          <View
+            style={[
+              styles.opciones,
+              bajarOpciones ? { marginTop: -1 + bajarOpciones } : null,
+            ]}
+          >
             <Opcion
               icono="camera-outline"
               texto="Tomar"

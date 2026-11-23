@@ -1,10 +1,10 @@
 import { TabScene } from "@/components/TabScene";
-import { BuscarChatsScreen } from "@/features/chats/BuscarChatsScreen";
+import { PantallaBuscarChats } from "@/features/chats/PantallaBuscarChats";
 
 export default function BuscarChatsRoute() {
   return (
     <TabScene efecto="modulo">
-      <BuscarChatsScreen />
+      <PantallaBuscarChats />
     </TabScene>
   );
 }

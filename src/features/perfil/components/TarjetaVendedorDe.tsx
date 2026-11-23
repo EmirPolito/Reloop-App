@@ -1,8 +1,8 @@
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import type { Product } from "@/features/marketplace/types";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { usePerfilDe } from "../hooks/usePerfilDe";
-import { defaultProfile } from "../profileMappers";
+import { defaultProfile } from "../mapeoPerfil";
 import { TarjetaVendedor } from "./TarjetaVendedor";
 
 /**
@@ -22,7 +22,7 @@ export function TarjetaVendedorDe({
   onOpen: (productId: string) => void;
 }) {
   const { uid } = useSessionUser();
-  const { navigate } = useAppNavigation();
+  const { navigate } = useNavegacion();
   const perfil = usePerfilDe(ownerId);
   return (
     <TarjetaVendedor

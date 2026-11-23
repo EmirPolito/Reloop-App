@@ -5,20 +5,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PremiumBadge } from "@/components/ui/PremiumBadge";
 import { Text } from "@/features/shared/Text";
 import { PerfilAvatar } from "../components/PerfilAvatar";
-import {
-  ALTO_PORTADA,
-  BORDE_AVATAR,
-  CapaPortada,
-  SOLAPE_AVATAR,
-} from "../components/PerfilDesplazable";
-import { LADO_AVATAR, coloresTarjeta, fondoPerfil } from "../perfilEstilos";
+import { ALTO_PORTADA, CapaPortada } from "../1-portada";
+import { BORDE_AVATAR, SOLAPE_AVATAR } from "../3-informacion";
+import { LADO_AVATAR, coloresTarjeta, fondoPerfil } from "../estilos";
 import {
   DESCRIPCION_POR_DEFECTO,
   gradienteCieloPerfil,
   type DatosPerfil,
-} from "../Perfiltemas";
-import { PildoraPerfil } from "../Pildoraperfil";
-import { conArroba } from "../username";
+} from "../temasPerfil";
+import { PildoraPerfil } from "../PildoraPerfil";
+import { conArroba } from "../nombreUsuario";
 
 /**
  * Vista previa del perfil en tiempo real: la misma cabecera del perfil (portada, avatar,

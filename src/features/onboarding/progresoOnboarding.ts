@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { pasoDesdeIndice } from "./onboardingRules";
+import { pasoDesdeIndice } from "./reglasOnboarding";
 
 /**
  * Paso del onboarding en el que va cada cuenta, en este dispositivo: si cierra la app a la

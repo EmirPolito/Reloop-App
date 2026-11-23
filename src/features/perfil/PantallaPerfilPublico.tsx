@@ -3,21 +3,23 @@ import { View } from "react-native";
 import { conSalida } from "@/components/salidaModulo";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { useOpenChat } from "@/features/chats/hooks/useOpenChat";
+import { useAbrirChat } from "@/features/chats/hooks/useAbrirChat";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
+import { BotonHeaderPerfil } from "./2-barra-superior";
+import { VistaPerfil } from "./VistaPerfil";
+import { useSeguidores } from "./hooks/useSeguidores";
+import { usePerfilPublico } from "./hooks/usePerfilPublico";
 import {
-  BotonHeaderPerfil,
-  PerfilDesplazable,
-} from "./components/PerfilDesplazable";
-import { useFollowers } from "./hooks/useFollowers";
-import { usePublicProfile } from "./hooks/usePublicProfile";
-import { IconoCheck, IconoMensajeLinea, IconoSeguirUsuario } from "./Perfiliconos";
-import { defaultProfile } from "./profileMappers";
+  IconoCheck,
+  IconoMensajeLinea,
+  IconoSeguirUsuario,
+} from "./iconosPerfil";
+import { defaultProfile } from "./mapeoPerfil";
 
 /**
  * Perfil de otra persona (o el propio, visto como lo ven las demás), con la misma
@@ -27,13 +29,12 @@ import { defaultProfile } from "./profileMappers";
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
   const { styles: baseStyles, isDark } = useAppTheme();
   const { uid } = useSessionUser();
-  const { profile: storedProfile, status } = usePublicProfile(userId);
+  const { profile: storedProfile, status } = usePerfilPublico(userId);
   const { products: userProducts, status: productsStatus } =
     useUserProducts(userId);
-  const { back, openProduct, openFollows } = useAppNavigation();
-  const openChat = useOpenChat();
-  const { followersCount, isFollowing, pending, toggleFollow } =
-    useFollowers(userId);
+  const { back, openProduct, openFollows } = useNavegacion();
+  const openChat = useAbrirChat();
+  const { followersCount, isFollowing, toggleFollow } = useSeguidores(userId);
   const premium = useIsPremium(userId);
   const isOwn = userId === uid;
 
@@ -52,7 +53,7 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <PerfilDesplazable
+      <VistaPerfil
         profile={profile}
         isDark={isDark}
         placeholder="iniciales"

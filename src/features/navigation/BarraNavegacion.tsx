@@ -9,11 +9,11 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Navegacion } from "@/components/navbar/Navegacion";
-import { useChats } from "@/features/chats/ChatProvider";
-import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
+import { useChats } from "@/features/chats/ProveedorChats";
+import { useNotifications } from "@/features/notificaciones/ProveedorNotificaciones";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { estadoBarraParaRuta, type Tab } from "./routes";
-import { useAppNavigation } from "./useAppNavigation";
+import { estadoBarraParaRuta, type Tab } from "./rutas";
+import { useNavegacion } from "./useNavegacion";
 
 /** Aparece o se oculta al entrar a una pantalla sin barra (conversación, publicación...) */
 const TRANSICION = { duration: 110, easing: Easing.out(Easing.cubic) };
@@ -33,8 +33,11 @@ export function BarraNavegacion() {
   const { isDark } = useAppTheme();
   const { chats } = useChats();
   const { unreadCount } = useNotifications();
-  const { navigate, openNotifications } = useAppNavigation();
-  const hayChatsSinLeer = useMemo(() => chats.some((chat) => chat.unread), [chats]);
+  const { navigate, openNotifications } = useNavegacion();
+  const hayChatsSinLeer = useMemo(
+    () => chats.some((chat) => chat.unread),
+    [chats],
+  );
   const { visible, activeTab, notificaciones } =
     estadoBarraParaRuta(usePathname());
 

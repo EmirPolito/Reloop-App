@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { DatosPerfil } from "../Perfiltemas";
+import type { DatosPerfil } from "../temasPerfil";
 import {
   SelectorAvatar,
   TITULOS_AVATAR,

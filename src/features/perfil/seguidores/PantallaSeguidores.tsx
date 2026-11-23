@@ -6,15 +6,15 @@ import { conSalida } from "@/components/salidaModulo";
 import { BotonBarra } from "@/components/ui/BotonBarra";
 import { BuscadorBlanco } from "@/components/ui/BuscadorBlanco";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { BulkSearchIcon } from "@/features/chats/components/ChatIcons";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { BulkSearchIcon } from "@/features/chats/components/IconosChats";
+import { BackArrowIcon } from "@/features/chats/components/IconosConversacion";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { describeFirestoreError } from "@/lib/firestoreValues";
-import { getFollowers, getFollowing } from "../followRepository";
+import { getFollowers, getFollowing } from "../repositorioSeguidores";
 import { usePerfilDe } from "../hooks/usePerfilDe";
-import { normalizarNombre } from "../username";
+import { normalizarNombre } from "../nombreUsuario";
 import { FilaSeguidor, FilaSeguidorEsqueleto } from "./FilaSeguidor";
 
 /**
@@ -35,7 +35,7 @@ const FILAS_ESQUELETO = 8;
 export function PantallaSeguidores({ userId }: { userId: string }) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { back, openUserProfile } = useAppNavigation();
+  const { back, openUserProfile } = useNavegacion();
   const [busqueda, setBusqueda] = useState("");
   const [ids, setIds] = useState<string[] | null>(
     () => listasLeidas.get(userId) ?? null,
@@ -119,7 +119,7 @@ export function PantallaSeguidores({ userId }: { userId: string }) {
         // Mientras se lee por primera vez: filas grises del mismo tamaño que las de verdad
         <View style={styles.esqueleto}>
           {Array.from({ length: FILAS_ESQUELETO }, (_, i) => (
-            <FilaSeguidorEsqueleto key={i} isDark={isDark} />
+            <FilaSeguidorEsqueleto key={i} />
           ))}
         </View>
       ) : (

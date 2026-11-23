@@ -9,7 +9,7 @@ import Animated, {
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { Text } from "@/features/shared/Text";
-import { IconoAnuncios, IconoPublicaciones } from "../Perfiliconos";
+import { IconoAnuncios, IconoPublicaciones } from "../iconosPerfil";
 
 export type Pestana = "publicaciones" | "anuncios";
 

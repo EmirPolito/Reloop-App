@@ -3,8 +3,8 @@ import { PortalHost } from "heroui-native/portal";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { AvisoHost } from "@/features/avisos/AvisosProvider";
-import { STACK_SCREEN_OPTIONS } from "@/features/navigation/stackOptions";
-import { NotificationBannerHost } from "@/features/notificaciones/components/NotificationBannerHost";
+import { STACK_SCREEN_OPTIONS } from "@/features/navigation/opcionesPila";
+import { ContenedorBanners } from "@/features/notificaciones/components/ContenedorBanners";
 import { BarraNavegacion } from "@/features/navigation/BarraNavegacion";
 import { SheetBienvenida } from "@/features/onboarding/SheetBienvenida";
 import { HOST_SESION } from "@/features/perfil/editar/SheetEditar";
@@ -50,7 +50,7 @@ export default function AppLayout() {
           separado al ir y volver de notificaciones o de un perfil */}
       <BarraNavegacion />
       {/* Después de la pila: el banner flota encima de cualquier pantalla */}
-      <NotificationBannerHost />
+      <ContenedorBanners />
       {/* Avisos de la app (republicada, eliminada...), con el mismo diseño */}
       <AvisoHost />
       {/* Configuración inicial de las cuentas nuevas (no se puede cerrar hasta terminar) */}

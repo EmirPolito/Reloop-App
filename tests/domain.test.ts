@@ -7,14 +7,14 @@ import { describe, it } from "node:test";
 import type { DocumentData, DocumentSnapshot } from "firebase/firestore";
 import { Timestamp } from "firebase/firestore";
 
-import { chatIdFor, introMessageFor, mapChat, mapMessage } from "@/features/chats/chatMappers";
-import { filterChats } from "@/features/chats/chatSelectors";
+import { chatIdFor, introMessageFor, mapChat, mapMessage } from "@/features/chats/mapeoChats";
+import { filterChats } from "@/features/chats/filtrosChats";
 import { buildNewProduct, validateDraft, EMPTY_DRAFT } from "@/features/crear-publicacion/draftRules";
-import { buildHomeFeedRows, homeRowKey } from "@/features/home/feedRows";
+import { buildHomeFeedRows, homeRowKey } from "@/features/home/filasInicio";
 import { filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
-import { estadoBarraParaRuta } from "@/features/navigation/routes";
-import { pasoDesdeIndice, PASOS_ONBOARDING, puedeFinalizar } from "@/features/onboarding/onboardingRules";
+import { estadoBarraParaRuta } from "@/features/navigation/rutas";
+import { pasoDesdeIndice, PASOS_ONBOARDING, puedeFinalizar } from "@/features/onboarding/reglasOnboarding";
 import { isMembershipActive, mapMembership } from "@/features/premium/membershipRules";
 import {
   normalizarNombre,
@@ -22,7 +22,7 @@ import {
   PATRON_USERNAME,
   sugerirUsername,
   validarUsername,
-} from "@/features/perfil/username";
+} from "@/features/perfil/nombreUsuario";
 import { mapComment, mapProduct } from "@/features/marketplace/productMappers";
 import {
   allowsProductRating,
@@ -37,14 +37,14 @@ import {
   isCurrentProfileDocument,
   mapProfile,
   toProfileDocument,
-} from "@/features/perfil/profileMappers";
+} from "@/features/perfil/mapeoPerfil";
 import {
   ESTILO_BOTON_ACCION,
   gradienteHeader,
   TEMAS,
-} from "@/features/perfil/Perfiltemas";
+} from "@/features/perfil/temasPerfil";
 import { isOrb, ORBES } from "@/constants/orbes";
-import { mapNotification, toNotificationDocument } from "@/features/notificaciones/notificationMappers";
+import { mapNotification, toNotificationDocument } from "@/features/notificaciones/mapeoNotificaciones";
 import {
   formatNotificationTime,
   groupNotifications,
@@ -52,8 +52,8 @@ import {
   notificationMessage,
   notificationTarget,
   unreadBadgeLabel,
-} from "@/features/notificaciones/notificationRules";
-import type { AppNotification } from "@/features/notificaciones/types";
+} from "@/features/notificaciones/reglasNotificaciones";
+import type { AppNotification } from "@/features/notificaciones/tipos";
 import { isRemoteImage, optimizedImageUrl } from "@/lib/imageUrl";
 import { parsePrice } from "@/utils/price";
 import { getInitials } from "@/utils/text";
@@ -145,8 +145,8 @@ describe("barra de navegación por ruta", () => {
 });
 
 describe("onboarding", () => {
-  it("son tres pasos: avatar, etiquetas y perfil", () => {
-    assert.deepEqual([...PASOS_ONBOARDING], ["avatar", "etiquetas", "perfil"]);
+  it("son cuatro pasos: avatar, fondo, etiquetas y usuario", () => {
+    assert.deepEqual([...PASOS_ONBOARDING], ["avatar", "fondo", "etiquetas", "usuario"]);
   });
   it("retoma el paso guardado y vuelve al primero si el valor no sirve", () => {
     assert.equal(pasoDesdeIndice("2"), 2);

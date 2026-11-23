@@ -11,7 +11,7 @@ import Svg, { Path } from "react-native-svg";
 
 import { PressableScale } from "@/components/PressableScale";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
-import { IconoEditar } from "@/features/perfil/Perfiliconos";
+import { IconoEditar } from "@/features/perfil/iconosPerfil";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { republishProduct } from "../productRepository";

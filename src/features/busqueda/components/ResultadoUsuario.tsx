@@ -1,11 +1,12 @@
+import { Skeleton } from "heroui-native";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { conArroba } from "@/features/perfil/username";
+import { conArroba } from "@/features/perfil/nombreUsuario";
 import { Text } from "@/features/shared/Text";
-import type { UsuarioEncontrado } from "../userSearchRepository";
+import type { UsuarioEncontrado } from "../repositorioPersonas";
 
 const LADO_AVATAR = 46;
 
@@ -24,7 +25,9 @@ export const ResultadoUsuario = memo(function ResultadoUsuario({
     <PressableSuave
       accessibilityRole="button"
       accessibilityLabel={
-        arroba ? `${usuario.name}, ${arroba}. Ver perfil` : `${usuario.name}. Ver perfil`
+        arroba
+          ? `${usuario.name}, ${arroba}. Ver perfil`
+          : `${usuario.name}. Ver perfil`
       }
       onPress={() => onOpen(usuario.uid)}
       style={[styles.fila, { backgroundColor: isDark ? "#1E293B" : "#FFFFFF" }]}
@@ -55,24 +58,19 @@ export const ResultadoUsuario = memo(function ResultadoUsuario({
   );
 });
 
-/** Fila gris mientras cargan los resultados (mismo alto que una real) */
+/** Fila de carga (el `Skeleton` de HeroUI, con su brillo): mismo alto que una real */
 export function ResultadoUsuarioEsqueleto({ isDark }: { isDark: boolean }) {
-  const gris = isDark ? "#273449" : "#ECECEE";
   return (
     <View
       style={[styles.fila, { backgroundColor: isDark ? "#1E293B" : "#FFFFFF" }]}
     >
-      <View
-        style={{
-          width: LADO_AVATAR,
-          height: LADO_AVATAR,
-          borderRadius: LADO_AVATAR / 2,
-          backgroundColor: gris,
-        }}
+      <Skeleton
+        className="rounded-full"
+        style={{ width: LADO_AVATAR, height: LADO_AVATAR }}
       />
       <View style={[styles.textos, { gap: 8 }]}>
-        <View style={[styles.barra, { width: "55%", backgroundColor: gris }]} />
-        <View style={[styles.barra, { width: "35%", backgroundColor: gris }]} />
+        <Skeleton className="h-2.5 w-1/2 rounded-md" />
+        <Skeleton className="h-2.5 w-1/3 rounded-md" />
       </View>
     </View>
   );
@@ -91,5 +89,4 @@ const styles = StyleSheet.create({
   textos: { flex: 1, minWidth: 0, gap: 2 },
   nombre: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
   usuario: { fontFamily: "Inter_400Regular", fontSize: 13.5 },
-  barra: { height: 11, borderRadius: 6 },
 });

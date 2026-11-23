@@ -22,7 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { IconoEliminarLinea } from "@/features/perfil/Perfiliconos";
+import { IconoEliminarLinea } from "@/features/perfil/iconosPerfil";
 import { Text } from "@/features/shared/Text";
 
 /** Curva calmada, sin rebote (la de dissolve-ui) */

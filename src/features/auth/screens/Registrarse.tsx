@@ -7,8 +7,8 @@ import {
   POLITICA_PRIVACIDAD,
   TERMINOS_CONDICIONES,
 } from "@/features/legal/textosLegales";
-import { IconoCheck } from "@/features/perfil/Perfiliconos";
-import { MAX_NOMBRE } from "@/features/perfil/Perfiltemas";
+import { IconoCheck } from "@/features/perfil/iconosPerfil";
+import { MAX_NOMBRE } from "@/features/perfil/temasPerfil";
 import { Text } from "@/features/shared/Text";
 import { useAuth } from "../AuthProvider";
 import { campoDeError, mensajeDeError } from "../authService";

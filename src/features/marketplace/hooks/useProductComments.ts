@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useNotify } from "@/features/notificaciones/hooks/useNotify";
-import { useProfile } from "@/features/perfil/ProfileProvider";
+import { useNotificar } from "@/features/notificaciones/hooks/useNotificar";
+import { useProfile } from "@/features/perfil/ProveedorPerfil";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { addComment, subscribeComments } from "../productRepository";
@@ -27,7 +27,7 @@ export function useProductComments(
   const { uid } = useSessionUser();
   const { profile } = useProfile();
   const [thread, setThread] = useState<Thread | null>(null);
-  const notify = useNotify();
+  const notify = useNotificar();
   const ownerId = product?.ownerId;
   const productName = product?.name;
 

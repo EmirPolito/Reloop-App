@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useNotify } from "@/features/notificaciones/hooks/useNotify";
+import { useNotificar } from "@/features/notificaciones/hooks/useNotificar";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { showErrorAlert } from "@/utils/alerts";
-import { follow, subscribeIsFollowing, unfollow } from "../followRepository";
+import {
+  follow,
+  subscribeIsFollowing,
+  unfollow,
+} from "../repositorioSeguidores";
 
 /**
  * Si la sesión actual sigue a `userId` (leyendo un solo doc, para listas largas) y `alternar`
@@ -14,7 +18,7 @@ export function useSigoA(userId: string) {
   const { uid } = useSessionUser();
   const [sigo, setSigo] = useState<boolean | null>(null);
   const [pendiente, setPendiente] = useState(false);
-  const notify = useNotify();
+  const notify = useNotificar();
 
   useEffect(
     () =>

@@ -19,8 +19,8 @@ import { conSalida } from "@/components/salidaModulo";
 import { BotonBarra } from "@/components/ui/BotonBarra";
 import { ENTRADA_MODULO } from "@/constants/motion";
 import { COLA_NEBLINA, Neblina } from "@/features/busqueda/components/Neblina";
-import { BackArrowIcon } from "@/features/chats/components/ThreadIcons";
-import { useAppNavigation } from "@/features/navigation/useAppNavigation";
+import { BackArrowIcon } from "@/features/chats/components/IconosConversacion";
+import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import type { DocumentoLegal } from "./textosLegales";
@@ -63,7 +63,7 @@ export function PantallaLegal({
 }) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { back } = useAppNavigation();
+  const { back } = useNavegacion();
   const texto = isDark ? "#F1F5F9" : "#101010";
   const suave = isDark ? "#94A3B8" : "#6B6B6B";
   // Alto del encabezado flotante: el texto empieza debajo de él

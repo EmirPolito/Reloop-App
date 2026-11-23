@@ -53,7 +53,8 @@ export function ConfirmarCerrarSesion({
             ¿Cerrar sesión?
           </Text>
           <Text style={[estilos.mensaje, { color: suave }]}>
-            Tendrás que iniciar sesión de nuevo para volver a entrar a tu cuenta.
+            Tendrás que iniciar sesión de nuevo para volver a entrar a tu
+            cuenta.
           </Text>
           <View style={estilos.botones}>
             <PressableScale
@@ -67,7 +68,9 @@ export function ConfirmarCerrarSesion({
                 { backgroundColor: isDark ? "#ffffff14" : "#F1F1F3" },
               ]}
             >
-              <Text style={[estilos.textoBoton, { color: texto }]}>Cancelar</Text>
+              <Text style={[estilos.textoBoton, { color: texto }]}>
+                Cancelar
+              </Text>
             </PressableScale>
             <PressableScale
               accessibilityRole="button"

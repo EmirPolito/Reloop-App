@@ -89,11 +89,7 @@ export function CarruselFondos({
               etiqueta={`Fondo ${indice + 1}`}
               onPress={centrar}
             >
-              <Image
-                source={imagen}
-                contentFit="cover"
-                style={styles.imagen}
-              />
+              <Image source={imagen} contentFit="cover" style={styles.imagen} />
             </Hueco>
           ))}
         </AnimatedScrollView>
