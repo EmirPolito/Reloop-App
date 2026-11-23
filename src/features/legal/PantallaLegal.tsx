@@ -65,7 +65,8 @@ export function PantallaLegal({
   const { isDark } = useAppTheme();
   const { back } = useNavegacion();
   const texto = isDark ? "#F1F5F9" : "#101010";
-  const suave = isDark ? "#94A3B8" : "#6B6B6B";
+  // En oscuro, claro pero no tanto (el gris azulado de antes casi no se leía)
+  const suave = isDark ? "#C4C7CC" : "#6B6B6B";
   // Alto del encabezado flotante: el texto empieza debajo de él
   const [altoCabecera, setAltoCabecera] = useState(0);
 

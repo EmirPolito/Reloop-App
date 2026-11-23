@@ -2,6 +2,7 @@ import { Skeleton } from "heroui-native";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 
+import { coloresTarjetaVendedor } from "@/features/perfil/components/TarjetaVendedor";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
 /** Filas de tarjetas mientras cargan las publicaciones */
@@ -18,7 +19,10 @@ function TarjetaEsqueleto({ cardWidth }: { cardWidth: number }) {
         styles.tarjeta,
         {
           width: cardWidth,
-          backgroundColor: isDark ? "#1B2230" : "#FAFAFA",
+          // El mismo fondo que la tarjeta de verdad (en oscuro, el de la tarjeta grande)
+          backgroundColor: isDark
+            ? coloresTarjetaVendedor(true).fondo
+            : "#FAFAFA",
           borderColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
         },
       ]}

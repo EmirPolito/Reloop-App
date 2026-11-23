@@ -29,6 +29,7 @@ import {
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
 import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
+import { PALETA } from "../drawer/temaDrawer";
 
 /** Largo máximo de una etiqueta */
 const MAX_TEXTO_ETIQUETA = 18;
@@ -101,7 +102,7 @@ function Contenido({
   const [guardando, setGuardando] = useState(false);
   const llenas = etiquetas.length >= MAX_PILDORAS;
   const limpio = texto.trim();
-  const colorCampo = isDark ? "#17233A" : "#F2F2F2";
+  const colorCampo = PALETA[isDark ? "oscuro" : "claro"].campo;
 
   // Al abrir, el borrador parte de las etiquetas guardadas
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
@@ -213,7 +214,11 @@ function Contenido({
               onPress={() => setIcono(elegido ? undefined : clave)}
               style={({ pressed }) => [
                 styles.icono,
-                elegido && { backgroundColor: isDark ? "#334155" : "#E2E2E7" },
+                elegido && {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.14)"
+                    : "#E2E2E7",
+                },
                 (pressed || llenas) && { opacity: 0.5 },
               ]}
             >

@@ -4,7 +4,7 @@ import MaskedViewOriginal, {
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, type ComponentType } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Neblina } from "./Neblina";
@@ -26,20 +26,21 @@ const CAPAS_VELO = 18;
  * `inicio` (fracción del alto) y de ahí se desvanece a nada, con una curva que arranca y
  * termina despacio (sin escalones ni final recto)
  */
-function veloPorCapas(rgb: string, inicio: number) {
+function veloPorCapas(rgb: string, inicio: number, factor: number) {
   const colores: string[] = [];
   const posiciones: number[] = [];
   const curva = (t: number) => t * t * (3 - 2 * t);
   for (let i = 0; i < CAPAS_VELO; i++) {
     const t = i / CAPAS_VELO;
     const opacidad =
-      OPACIDAD_ARRIBA - (OPACIDAD_ARRIBA - OPACIDAD_INICIO) * curva(t);
+      (OPACIDAD_ARRIBA - (OPACIDAD_ARRIBA - OPACIDAD_INICIO) * curva(t)) *
+      factor;
     colores.push(`rgba(${rgb},${opacidad.toFixed(3)})`);
     posiciones.push(inicio * t);
   }
   for (let i = 0; i <= CAPAS_VELO; i++) {
     const t = i / CAPAS_VELO;
-    const opacidad = OPACIDAD_INICIO * (1 - curva(t));
+    const opacidad = OPACIDAD_INICIO * (1 - curva(t)) * factor;
     colores.push(`rgba(${rgb},${opacidad.toFixed(3)})`);
     posiciones.push(inicio + (1 - inicio) * t);
   }
@@ -47,6 +48,21 @@ function veloPorCapas(rgb: string, inicio: number) {
     colores: colores as unknown as readonly [string, string, ...string[]],
     posiciones: posiciones as unknown as readonly [number, number, ...number[]],
   };
+}
+
+/**
+ * Máscara CSS del desenfoque en web: completa hasta `inicio` y de ahí se desvanece con la
+ * misma curva del velo (por capas), para que no quede una orilla al final
+ */
+function mascaraSuave(inicio: number) {
+  const curva = (t: number) => t * t * (3 - 2 * t);
+  const paradas = ["#000 0%", `#000 ${inicio * 100}%`];
+  for (let i = 1; i <= CAPAS_VELO; i++) {
+    const t = i / CAPAS_VELO;
+    const alfa = (1 - curva(t)).toFixed(3);
+    paradas.push(`rgba(0,0,0,${alfa}) ${(inicio + (1 - inicio) * t) * 100}%`);
+  }
+  return `linear-gradient(to bottom, ${paradas.join(", ")})`;
 }
 
 /**
@@ -60,10 +76,13 @@ export function NeblinaDesenfocada({
   alto,
   inicioVelo,
   inicioDesenfoque,
+  opacidadVelo = 1,
 }: {
   alto: number;
   inicioVelo: number;
   inicioDesenfoque: number;
+  /** Qué tan blanco es el velo (1 = casi sólido arriba); menos deja ver más lo de atrás */
+  opacidadVelo?: number;
 }) {
   const { isDark } = useAppTheme();
   const proporcion = (px: number) => Math.min(Math.max(px / alto, 0.01), 0.99);
@@ -72,8 +91,9 @@ export function NeblinaDesenfocada({
       veloPorCapas(
         isDark ? "22,22,22" : "252,252,252",
         Math.min(Math.max(inicioVelo / alto, 0.01), 0.99),
+        opacidadVelo,
       ),
-    [isDark, inicioVelo, alto],
+    [isDark, inicioVelo, alto, opacidadVelo],
   );
 
   if (!CON_DESENFOQUE) {
@@ -87,22 +107,36 @@ export function NeblinaDesenfocada({
 
   return (
     <View pointerEvents="none" style={[styles.capa, { height: alto }]}>
-      <MaskedView
-        style={StyleSheet.absoluteFill}
-        maskElement={
-          <LinearGradient
-            colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
-            locations={[0, proporcion(inicioDesenfoque), 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        }
-      >
+      {Platform.OS === "web" ? (
+        // En web `MaskedView` no recorta (dibuja la máscara negra encima): máscara CSS
         <BlurView
           intensity={INTENSIDAD_DESENFOQUE}
           tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              maskImage: mascaraSuave(proporcion(inicioDesenfoque)),
+            } as object,
+          ]}
         />
-      </MaskedView>
+      ) : (
+        <MaskedView
+          style={StyleSheet.absoluteFill}
+          maskElement={
+            <LinearGradient
+              colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
+              locations={[0, proporcion(inicioDesenfoque), 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          }
+        >
+          <BlurView
+            intensity={INTENSIDAD_DESENFOQUE}
+            tint={isDark ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
+        </MaskedView>
+      )}
       <LinearGradient
         colors={velo.colores}
         locations={velo.posiciones}

@@ -91,7 +91,7 @@ export function PildoraCristal({
           <BlurView
             intensity={30}
             tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, styles.desenfoqueAtras]}
           />
         ) : null}
         {children}
@@ -112,5 +112,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: "hidden",
     borderWidth: 1,
+    // En web lo que no tiene posición (los íconos SVG) se pinta debajo del desenfoque, que
+    // es absoluto, y se veía borroso: la píldora agrupa las capas y el desenfoque va al fondo
+    ...(Platform.OS === "web" ? { zIndex: 0 } : null),
   },
+  desenfoqueAtras: Platform.OS === "web" ? { zIndex: -1 } : {},
 });

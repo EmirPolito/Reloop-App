@@ -190,7 +190,13 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           hitSlop={10}
           style={styles.desarrollado}
         >
-          <Text style={[styles.desarrolladoTexto, { color: textoFila }]}>
+          <Text
+            style={[
+              styles.desarrolladoTexto,
+              // En oscuro, casi blanco y neutro (el de las filas tiraba a gris azulado)
+              { color: isDark ? "#EDEEF0" : textoFila },
+            ]}
+          >
             Acerca de
           </Text>
           <Image

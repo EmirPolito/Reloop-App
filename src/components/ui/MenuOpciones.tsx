@@ -5,6 +5,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 
 import { PressableScale } from "@/components/PressableScale";
 import { EASE_OUT } from "@/constants/motion";
+import { coloresTarjetaVendedor } from "@/features/perfil/components/TarjetaVendedor";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 
@@ -52,7 +53,12 @@ export function MenuOpciones({
           entering={FadeInUp.duration(150).easing(EASE_OUT)}
           style={[
             styles.tarjeta,
-            { backgroundColor: isDark ? "#1E293B" : "#FFFFFF" },
+            // En oscuro, el mismo fondo neutro de las tarjetas (el de antes se veía azul)
+            {
+              backgroundColor: isDark
+                ? coloresTarjetaVendedor(true).fondo
+                : "#FFFFFF",
+            },
           ]}
         >
           {opciones.map((opcion, indice) => (
@@ -61,7 +67,12 @@ export function MenuOpciones({
                 <View
                   style={[
                     styles.linea,
-                    { backgroundColor: isDark ? "#334155" : "#f5f5f5ff" },
+                    // En oscuro apenas se nota
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.06)"
+                        : "#f5f5f5ff",
+                    },
                   ]}
                 />
               ) : null}

@@ -24,15 +24,17 @@ export const PALETA = {
     sobreActivo: "#FFFFFF",
     cerrarFondo: "#F2F2F2",
   },
+  // Neutros, sin el azul de antes: campos y tarjetas como las del perfil, y los botones un
+  // poco más claros
   oscuro: {
-    campo: "#0E1727",
-    tarjeta: "#17233A",
+    campo: "rgba(255,255,255,0.05)",
+    tarjeta: "rgba(255,255,255,0.05)",
     texto: "#F8FAFC",
     suave: "#8996AB",
     cursor: "#F8FAFC",
     activo: "#0785FF",
     sobreActivo: "#FFFFFF",
-    cerrarFondo: "#17233A",
+    cerrarFondo: "rgba(255,255,255,0.1)",
   },
 } as const;
 

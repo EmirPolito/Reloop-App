@@ -11,7 +11,7 @@ import {
   useState,
   type ComponentType,
 } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
   FadeInDown,
@@ -100,12 +100,24 @@ function veloPorCapas(rgb: string, inicioPildoras: number) {
   };
 }
 
+/** El mismo degradado de la máscara, como `mask-image` de CSS (solo web) */
+function mascaraWeb(opaca: number, fin: number) {
+  return {
+    maskImage: `linear-gradient(to bottom, #000 0%, #000 ${opaca * 100}%, transparent ${fin * 100}%)`,
+  } as object;
+}
+
 // Sus tipos son de una versión anterior de React (componente de clase): mismo componente, tipado
 const MaskedView =
   MaskedViewOriginal as unknown as ComponentType<MaskedViewProps>;
 
-/** Intensidad de cada capa de desenfoque (arriba se suman todas: la hora y el logo) */
-const INTENSIDAD_CAPA = 6;
+/** En web `MaskedView` no recorta (dibuja la máscara negra encima): ahí va una máscara CSS */
+const EN_WEB = Platform.OS === "web";
+/**
+ * Intensidad de cada capa de desenfoque (arriba se suman todas: la hora y el logo). En web la
+ * misma intensidad desenfoca mucho menos, así que lleva más
+ */
+const INTENSIDAD_CAPA = EN_WEB ? 18 : 6;
 /**
  * Capas de desenfoque apiladas, de la más larga a la más corta (fracciones del alto):
  * cada una es completa hasta `opaca` y se desvanece hasta `fin`. Arriba se juntan todas
@@ -136,7 +148,12 @@ const BarraLogo = memo(function BarraLogo({
       <View className="flex-1 min-w-0 flex-row items-center gap-2">
         <Image
           accessibilityLabel="Logo ReLoop"
-          source={require("@/assets/images/logos-reloop/logoo.png")}
+          // En oscuro, el logo blanco
+          source={
+            isDark
+              ? require("@/assets/images/logos-reloop/reloop-logo.png")
+              : require("@/assets/images/logos-reloop/logoo.png")
+          }
           contentFit="contain"
           style={estilos.logo}
         />
@@ -282,28 +299,41 @@ export const CabeceraInicio = memo(function CabeceraInicio({
           <>
             {/* Desenfoque por capas: cada una con su máscara en degradado, más cortas
                 conforme se apilan, así es más fuerte arriba y se desvanece hacia abajo */}
-            {CAPAS_DESENFOQUE.map(({ opaca, fin }) => (
-              <MaskedView
-                key={fin}
-                style={[
-                  styles.capaDesenfoque,
-                  { height: altoFijo + COLA_DESENFOQUE },
-                ]}
-                maskElement={
-                  <LinearGradient
-                    colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
-                    locations={[0, opaca, fin]}
-                    style={StyleSheet.absoluteFill}
-                  />
-                }
-              >
+            {CAPAS_DESENFOQUE.map(({ opaca, fin }) =>
+              EN_WEB ? (
                 <BlurView
+                  key={fin}
                   intensity={INTENSIDAD_CAPA}
                   tint={isDark ? "dark" : "light"}
-                  style={StyleSheet.absoluteFill}
+                  style={[
+                    styles.capaDesenfoque,
+                    { height: altoFijo + COLA_DESENFOQUE },
+                    mascaraWeb(opaca, fin),
+                  ]}
                 />
-              </MaskedView>
-            ))}
+              ) : (
+                <MaskedView
+                  key={fin}
+                  style={[
+                    styles.capaDesenfoque,
+                    { height: altoFijo + COLA_DESENFOQUE },
+                  ]}
+                  maskElement={
+                    <LinearGradient
+                      colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
+                      locations={[0, opaca, fin]}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  }
+                >
+                  <BlurView
+                    intensity={INTENSIDAD_CAPA}
+                    tint={isDark ? "dark" : "light"}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </MaskedView>
+              ),
+            )}
             {/* Velo blanco por capas: más fuerte en la hora y se desvanece muy gradual hasta
                 nada debajo de las píldoras, sin que se note ninguna línea */}
             <LinearGradient

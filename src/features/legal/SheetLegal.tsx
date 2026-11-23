@@ -20,11 +20,12 @@ const COLORES = {
     divisor: "#FFFFFF",
   },
   oscuro: {
-    card: "#0B1220",
+    // Neutros, como los drawers de Editar perfil (antes azulados); el texto, claro pero no tanto
+    card: "#222222",
     texto: "#F1F5F9",
-    suave: "#94A3B8",
-    boton: "#17233A",
-    divisor: "#1E293B",
+    suave: "#C4C7CC",
+    boton: "rgba(255,255,255,0.1)",
+    divisor: "rgba(255,255,255,0.06)",
   },
 } as const;
 

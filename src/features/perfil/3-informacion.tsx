@@ -104,6 +104,8 @@ export function InformacionPerfil({
 }) {
   const fondo = fondoPerfil(isDark);
   const { suave } = coloresTarjeta(isDark);
+  // Lo de debajo de los números: en oscuro, claro pero no tanto
+  const suaveStats = isDark ? "#C4C7CC" : suave;
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
   const colorLinea = isDark ? "#ffffff24" : "#E4E4E7";
   const ladoMarco = LADO_AVATAR + BORDE_AVATAR * 2;
@@ -195,7 +197,10 @@ export function InformacionPerfil({
           ) : null}
         </View>
         {profile.username ? (
-          <Text style={[estilos.usuario, { color: suave }]}>
+          <Text
+            // En oscuro, el mismo claro que en Editar perfil
+            style={[estilos.usuario, { color: isDark ? "#C4C7CC" : suave }]}
+          >
             {conArroba(profile.username)}
           </Text>
         ) : null}
@@ -210,7 +215,7 @@ export function InformacionPerfil({
             valor={formatearNumero(stats.publicaciones)}
             etiqueta={stats.publicaciones === 1 ? "Subido" : "Subidos"}
             colorTexto={colorTexto}
-            suave={suave}
+            suave={suaveStats}
           />
           <View style={[estilos.linea, { backgroundColor: colorLinea }]} />
           <PressableScale
@@ -225,7 +230,7 @@ export function InformacionPerfil({
               valor={formatearNumero(stats.seguidores)}
               etiqueta={stats.seguidores === 1 ? "Seguidor" : "Seguidores"}
               colorTexto={colorTexto}
-              suave={suave}
+              suave={suaveStats}
             />
           </PressableScale>
           <View style={[estilos.linea, { backgroundColor: colorLinea }]} />
@@ -233,7 +238,7 @@ export function InformacionPerfil({
             valor={stats.reputacion}
             etiqueta="Valoración"
             colorTexto={colorTexto}
-            suave={suave}
+            suave={suaveStats}
           />
         </View>
 

@@ -16,7 +16,7 @@ import { Text } from "@/features/shared/Text";
 import { formatChatTime } from "@/utils/time";
 
 const COLOR_AZUL = "#1C77FF";
-const LADO_AVATAR = 52;
+export const LADO_AVATAR = 52;
 const GAP = 12;
 const PADDING = 12;
 /** Círculo del contador: lo bastante grande para que quepa "+9" */

@@ -1,12 +1,13 @@
 import { usePathname } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { StyleSheet } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Platform, StyleSheet } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 import { Navegacion } from "@/components/navbar/Navegacion";
 import { useChats } from "@/features/chats/ProveedorChats";
@@ -42,8 +43,17 @@ export function BarraNavegacion() {
     estadoBarraParaRuta(usePathname());
 
   const opacidad = useSharedValue(visible ? 1 : 0);
+  // En web `pointerEvents="none"` no apaga a los hijos con "box-none" (la barra seguía
+  // recibiendo toques invisible: tocar el campo del chat abría Favoritos). Ahí, al terminar
+  // de desvanecerse, se quita del todo
+  const [quitada, setQuitada] = useState(!visible);
   useEffect(() => {
-    opacidad.set(withTiming(visible ? 1 : 0, TRANSICION));
+    if (visible) setQuitada(false);
+    opacidad.set(
+      withTiming(visible ? 1 : 0, TRANSICION, (terminada) => {
+        if (terminada && !visible) scheduleOnRN(setQuitada, true);
+      }),
+    );
   }, [visible, opacidad]);
   const estilo = useAnimatedStyle(() => ({ opacity: opacidad.get() }));
 
@@ -73,7 +83,11 @@ export function BarraNavegacion() {
     // Cubre la pantalla sin quitarle toques al contenido: solo la barra los recibe
     <Animated.View
       pointerEvents={visible ? "box-none" : "none"}
-      style={[StyleSheet.absoluteFill, estilo]}
+      style={[
+        StyleSheet.absoluteFill,
+        estilo,
+        Platform.OS === "web" && quitada && styles.quitada,
+      ]}
     >
       <Navegacion
         activeTab={activeTab}
@@ -88,3 +102,7 @@ export function BarraNavegacion() {
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  quitada: { display: "none" },
+});

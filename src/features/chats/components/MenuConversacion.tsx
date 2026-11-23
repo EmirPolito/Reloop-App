@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
 import { EASE_OUT } from "@/constants/motion";
+import { coloresTarjetaVendedor } from "@/features/perfil/components/TarjetaVendedor";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { showAlert } from "@/utils/alerts";
@@ -81,7 +82,10 @@ export function MenuConversacion({
         <Animated.View
           entering={FadeInUp.duration(150).easing(EASE_OUT)}
           style={{
-            backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+            // En oscuro, el mismo fondo neutro de las tarjetas (el de antes se veía azul)
+            backgroundColor: isDark
+              ? coloresTarjetaVendedor(true).fondo
+              : "#FFFFFF",
             borderRadius: 20,
             paddingVertical: 5,
             width: 170,
@@ -104,7 +108,8 @@ export function MenuConversacion({
           <View
             style={{
               height: 1,
-              backgroundColor: isDark ? "#334155" : "#f5f5f5ff",
+              // En oscuro apenas se nota
+              backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#f5f5f5ff",
               marginHorizontal: 0,
             }}
           />

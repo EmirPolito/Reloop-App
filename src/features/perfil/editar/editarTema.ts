@@ -21,12 +21,13 @@ export const LADO_CIRCULO = 230;
 export function coloresEditar(isDark: boolean) {
   return {
     texto: isDark ? "#F1F5F9" : "#101010",
-    suave: isDark ? "#94A3B8" : "#8a8a8a",
+    // En oscuro, claro pero no tanto (el gris azulado casi no se leía)
+    suave: isDark ? "#C4C7CC" : "#8a8a8a",
     icono: isDark ? "#CBD5E1" : "#5d5d5d",
     tarjeta: isDark ? "#1E293B" : "#FFFFFF",
-    divisor: isDark ? "#334155" : "#EFEFF2",
+    divisor: isDark ? "rgba(255,255,255,0.12)" : "#EFEFF2",
     boton: isDark ? "#ffffff1a" : "#ffffffb7",
     bordeBoton: isDark ? "#ffffff33" : "#ffffffff",
-    avatarFondo: isDark ? "#273449" : "#E7E7E9",
+    avatarFondo: isDark ? "#26272B" : "#E7E7E9",
   };
 }

@@ -17,6 +17,7 @@ import { UsernameError, claimUsername } from "../repositorioUsername";
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
 import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
+import { PALETA } from "../drawer/temaDrawer";
 
 const VERDE = "#4CD694";
 const ROJO = "#FF7A7A";
@@ -70,7 +71,7 @@ function CampoSheet({
 }) {
   const c = coloresEditar(isDark);
   const inactivo = !listo || guardando;
-  const colorCampo = isDark ? "#17233A" : "#F2F2F2";
+  const colorCampo = PALETA[isDark ? "oscuro" : "claro"].campo;
 
   return (
     // Tocar fuera del campo baja el teclado

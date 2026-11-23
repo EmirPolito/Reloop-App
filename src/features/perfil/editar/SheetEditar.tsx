@@ -176,7 +176,11 @@ export const HOST_SESION = "sesion";
 
 const RADIO_CARD = 35;
 /** Fondo de la card: [claro, oscuro] */
-const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
+/**
+ * En oscuro, el mismo tono con el que se ven las tarjetas de opciones del perfil (blanco al
+ * 5 % sobre el fondo #161616), pero sólido
+ */
+const FONDO_CARD = ["#ffffff", "#222222"] as const;
 
 const styles = StyleSheet.create({
   // El mismo tono que el fondo de HeroUI (negro al 20 %)

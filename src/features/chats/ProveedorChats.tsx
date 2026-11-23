@@ -13,6 +13,7 @@ import { uploadImages } from "@/lib/cloudinary";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { useLatestRef } from "@/hooks/useLatestRef";
 import { useRequiredContext } from "@/hooks/useRequiredContext";
+import { PrecargaAvatares } from "./components/PrecargaAvatares";
 import {
   deleteChatsForMe,
   markChatRead,
@@ -90,6 +91,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
   return (
     <ChatsContext.Provider value={state}>
       <ChatActionsContext.Provider value={actions}>
+        <PrecargaAvatares chats={state.chats} />
         {children}
       </ChatActionsContext.Provider>
     </ChatsContext.Provider>

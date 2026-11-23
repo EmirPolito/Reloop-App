@@ -11,6 +11,7 @@ import { CarruselFondos } from "./CarruselFondos";
 import { ALTO_CONTENIDO_SHEET, INTER, coloresEditar } from "./editarTema";
 import { BotonGuardar } from "./BotonGuardar";
 import { SheetEditar } from "./SheetEditar";
+import { PALETA } from "../drawer/temaDrawer";
 
 /** Fondos ya hechos para elegir */
 const FONDOS = [
@@ -177,7 +178,7 @@ function Opcion({
       disabled={disabled}
       style={[
         styles.opcion,
-        { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
+        { backgroundColor: PALETA[isDark ? "oscuro" : "claro"].campo },
       ]}
     >
       <Ionicons name={icono} size={20} color={c.texto} />

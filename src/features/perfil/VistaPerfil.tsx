@@ -154,7 +154,9 @@ export function VistaPerfil({
   const [scrollNativo] = useState(() => new AnimatedNativo.Value(0));
   useEffect(() => {
     const vista = scrollRef.current;
-    if (!vista) return;
+    // En web no hay módulo nativo de Animated (lanza error) ni scroll de más hacia abajo
+    // que estire la portada: se queda a su escala normal
+    if (!vista || Platform.OS === "web") return;
     const enlace = AnimatedNativo.attachNativeEvent(
       vista,
       "onScroll",

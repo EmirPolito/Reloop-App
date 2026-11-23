@@ -71,7 +71,7 @@ function PildoraOpcionBase<T extends string>({
               color: seleccionado
                 ? colorElegida(isDark).texto
                 : isDark
-                  ? "#F1F5F9"
+                  ? "#C4C7CC"
                   : "#181818ff",
             },
           ]}

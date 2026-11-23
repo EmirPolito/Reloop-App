@@ -169,7 +169,7 @@ function Opcion({
   onLayout: (e: LayoutChangeEvent) => void;
 }) {
   const elegida = colorElegida(isDark);
-  const color = isDark ? "#94A3B8" : "#6B6B72";
+  const color = isDark ? "#C4C7CC" : "#6B6B72";
 
   const progreso = useDerivedValue(
     () => withTiming(activa ? 1 : 0, RECORRIDO),

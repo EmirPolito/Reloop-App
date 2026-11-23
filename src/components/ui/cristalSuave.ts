@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 import { coloresCristal } from "@/features/busqueda/components/PildoraCristal";
 
 /**
@@ -16,6 +18,17 @@ export const sombraCristalSuave = {
   shadowOffset: { width: 0, height: 4 },
 } as const;
 
+/**
+ * Fuera de iOS la misma sombra se ve mucho más marcada en los contornos de las tarjetas:
+ * ahí va más ligera y corta
+ */
+const sombraTarjetaLigera = {
+  shadowColor: "#000000",
+  shadowOpacity: 0.035,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 2 },
+} as const;
+
 /** Esquinas de las tarjetas de cristal (la de los chats) */
 export const RADIO_TARJETA_CRISTAL = 26;
 
@@ -25,10 +38,13 @@ export const RADIO_TARJETA_CRISTAL = 26;
  */
 export function estiloTarjetaCristal(isDark: boolean) {
   return {
-    backgroundColor: fondoCristalSuave(isDark),
+    // En oscuro, un poco más oscura que el cristal de los botones
+    backgroundColor: isDark
+      ? "rgba(255,255,255,0.05)"
+      : fondoCristalSuave(isDark),
     borderColor: coloresCristal(isDark).borde,
     borderWidth: 1,
     borderRadius: RADIO_TARJETA_CRISTAL,
-    ...sombraCristalSuave,
+    ...(Platform.OS === "ios" ? sombraCristalSuave : sombraTarjetaLigera),
   } as const;
 }

@@ -21,6 +21,7 @@ import {
 import { INTER, coloresEditar } from "./editarTema";
 import { BotonGuardar } from "./BotonGuardar";
 import { HOST_SESION, SheetEditar } from "./SheetEditar";
+import { PALETA } from "../drawer/temaDrawer";
 
 /** Orden de los colores al tocar el círculo de un campo (`null` = el del texto de la tarjeta) */
 const CICLO_COLORES: (ColorDestacado | null)[] = [
@@ -97,7 +98,7 @@ export function SheetTarjeta({
   }
 
   const vista = normalizar(borrador);
-  const fondoCampo = isDark ? "#17233A" : "#F2F2F2";
+  const fondoCampo = PALETA[isDark ? "oscuro" : "claro"].campo;
 
   const guardar = async () => {
     if (guardando) return;

@@ -100,7 +100,10 @@ export const VistaPreviaPerfil = memo(function VistaPreviaPerfil({
           {premium ? <PremiumBadge size={24} style={styles.insignia} /> : null}
         </View>
         {profile.username ? (
-          <Text style={[styles.usuario, { color: suave }]}>
+          <Text
+            // En oscuro, claro pero no tanto (como los demás textos suaves)
+            style={[styles.usuario, { color: isDark ? "#C4C7CC" : suave }]}
+          >
             {conArroba(profile.username)}
           </Text>
         ) : null}

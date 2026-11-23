@@ -15,6 +15,7 @@ import {
   formatProductPrice,
 } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
+import { coloresTarjetaVendedor } from "@/features/perfil/components/TarjetaVendedor";
 import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -114,8 +115,11 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
         {
           width: cardWidth,
           ...(alto ? { height: alto } : {}),
-          // Gris muy claro (neutral-50) con borde blanco; en oscuro, el borde apenas se ve
-          backgroundColor: isDark ? "#1B2230" : "#FAFAFA",
+          // Gris muy claro (neutral-50) con borde blanco; en oscuro, el mismo fondo neutro de
+          // la tarjeta grande (el de antes se veía azul) y el borde apenas se ve
+          backgroundColor: isDark
+            ? coloresTarjetaVendedor(true).fondo
+            : "#FAFAFA",
           borderColor: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
         },
       ]}
@@ -161,7 +165,11 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
               </Text>
               <Text
                 numberOfLines={1}
-                style={[compacta ? estilos.tiempoCompacto : estilos.tiempo]}
+                style={[
+                  compacta ? estilos.tiempoCompacto : estilos.tiempo,
+                  // En oscuro, un gris un poco más claro: el de serie casi no se leía
+                  isDark && { color: "#8A8D93" },
+                ]}
               >
                 {formatPublicationTime(item.createdAt)}
               </Text>

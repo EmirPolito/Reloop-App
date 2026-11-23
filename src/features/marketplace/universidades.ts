@@ -15,15 +15,18 @@ export interface Universidad {
  * tiene publicaciones, y las demás se ven vacías hasta que existan comunidades ahí.
  */
 export const UNIVERSIDADES: Universidad[] = [
-  { id: UNIVERSIDAD_PROPIA, sigla: "UTSV", nombre: "Tu universidad" },
   {
-    id: "unam",
-    sigla: "UNAM",
-    nombre: "Universidad Nacional Autónoma de México",
+    id: UNIVERSIDAD_PROPIA,
+    sigla: "UTSV",
+    nombre: "Universidad Tecnológica del Sureste de Veracruz",
   },
-  { id: "ipn", sigla: "IPN", nombre: "Instituto Politécnico Nacional" },
-  { id: "uam", sigla: "UAM", nombre: "Universidad Autónoma Metropolitana" },
-  { id: "tec", sigla: "TEC", nombre: "Tecnológico de Monterrey" },
+  { id: "ugm", sigla: "UGM", nombre: "Universidad del Golfo de México" },
+  { id: "uv", sigla: "UV", nombre: "Universidad Veracruzana" },
+  {
+    id: "itesco",
+    sigla: "ITESCO",
+    nombre: "Instituto Tecnológico Superior de Coatzacoalcos",
+  },
 ];
 
 export function universidadPorId(id: string): Universidad {

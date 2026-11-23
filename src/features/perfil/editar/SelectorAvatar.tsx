@@ -11,6 +11,7 @@ import { AjustarFoto } from "./AjustarFoto";
 import { CamaraCircular, type FotoTomada } from "./CamaraCircular";
 import { CarruselAvatares, indiceDeAvatar } from "./CarruselAvatares";
 import { DURACION_EDITAR, INTER, coloresEditar } from "./editarTema";
+import { PALETA } from "../drawer/temaDrawer";
 
 export type PasoAvatar = "inicio" | "camara" | "ajustar";
 
@@ -302,7 +303,7 @@ function Opcion({
       disabled={disabled}
       style={[
         styles.opcion,
-        { backgroundColor: isDark ? "#17233A" : "#F2F2F2" },
+        { backgroundColor: PALETA[isDark ? "oscuro" : "claro"].campo },
       ]}
     >
       <Ionicons name={icono} size={20} color={c.texto} />

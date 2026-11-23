@@ -124,7 +124,9 @@ function Formulario({
     setGuardando(true);
     try {
       // Una foto nueva (de la galería) se sube; la que ya estaba subida se deja como está
-      const imageUrl = borrador.photo ? await uploadImage(borrador.photo) : null;
+      const imageUrl = borrador.photo
+        ? await uploadImage(borrador.photo)
+        : null;
       const nombre = borrador.name.trim();
       await updateProduct(producto.id, {
         name: nombre,
@@ -153,9 +155,9 @@ function Formulario({
   };
 
   const colorTexto = isDark ? "#F1F5F9" : "#101010";
-  const colorSuave = isDark ? "#94A3B8" : "#8A8A8F";
+  const colorSuave = isDark ? "#C4C7CC" : "#8A8A8F";
   const campo = {
-    backgroundColor: isDark ? "#1E293B" : "#F1F1F3",
+    backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#F1F1F3",
     color: colorTexto,
   };
 
@@ -168,7 +170,7 @@ function Formulario({
         onPress={() => void elegirFoto()}
         style={[
           estilos.foto,
-          { backgroundColor: isDark ? "#1E293B" : "#F1F1F3" },
+          { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#F1F1F3" },
         ]}
       >
         {borrador.photo ? (
@@ -227,7 +229,7 @@ function Formulario({
                       ? "#F1F5F9"
                       : "#101010"
                     : isDark
-                      ? "#1E293B"
+                      ? "rgba(255,255,255,0.05)"
                       : "#F1F1F3",
                 },
               ]}

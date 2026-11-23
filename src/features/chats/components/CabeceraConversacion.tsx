@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/PressableScale";
 import { BotonBarra } from "@/components/ui/BotonBarra";
+import { NeblinaDesenfocada } from "@/features/busqueda/components/NeblinaDesenfocada";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import {
   THREAD_HEADER_CONTENT_HEIGHT,
@@ -12,6 +13,9 @@ import {
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { BackArrowIcon, CategoryIcon } from "./IconosConversacion";
+
+/** Fuera de iOS, lo que la neblina baja por debajo del encabezado al desvanecerse */
+const COLA_NEBLINA = 56;
 
 /**
  * Encabezado flotante del chat: volver, contacto (abre su perfil) y menú. Los botones son los
@@ -37,16 +41,10 @@ export function CabeceraConversacion({
   // Blanco sólido en claro: el cristal translúcido tomaba el gris de la capa del encabezado
   const fondoBoton = isDark ? undefined : "#FFFFFF";
   const isIOS = Platform.OS === "ios";
+  const altoCabecera = insets.top + THREAD_HEADER_CONTENT_HEIGHT;
 
-  // iOS: el blur hace el vidrio, el tinte es suave.
-  // Android: sin blur real, el tinte es más fuerte para que se lea bien.
-  const tint = isIOS
-    ? isDark
-      ? "#16161666"
-      : "#ffffff40"
-    : isDark
-      ? "#161616cc"
-      : "#f6f6f6ae";
+  // iOS: el blur hace el vidrio, el tinte es suave
+  const tint = isDark ? "#16161666" : "#ffffff40";
 
   return (
     <View
@@ -61,21 +59,36 @@ export function CabeceraConversacion({
           zIndex: THREAD_HEADER_Z,
           elevation: THREAD_HEADER_Z,
           shadowColor: "transparent",
-          height: insets.top + THREAD_HEADER_CONTENT_HEIGHT,
+          height: altoCabecera,
           paddingTop: insets.top,
           paddingHorizontal: 15,
           paddingBottom: 10,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          overflow: "hidden",
-          backgroundColor: tint,
           borderWidth: 0,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: isDark ? "#ffffff22" : "#f6f6f644",
         },
+        // Fuera de iOS la banda gris con orilla recta se veía sucia: ahí va la neblina por
+        // capas del tono de la pantalla, que baja un poco de más y se desvanece
+        isIOS
+          ? {
+              overflow: "hidden",
+              backgroundColor: tint,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: isDark ? "#ffffff22" : "#f6f6f644",
+            }
+          : { overflow: "visible", backgroundColor: "transparent" },
       ]}
     >
+      {!isIOS && (
+        <NeblinaDesenfocada
+          alto={altoCabecera + COLA_NEBLINA}
+          inicioVelo={altoCabecera - 24}
+          inicioDesenfoque={altoCabecera - 24}
+          // Sin que se vea tan nublado: el velo deja ver más lo de atrás
+          opacidadVelo={0.55}
+        />
+      )}
       {isIOS && (
         <BlurView
           intensity={isDark ? 40 : 70}

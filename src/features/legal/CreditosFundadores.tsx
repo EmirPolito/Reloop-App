@@ -7,7 +7,7 @@ import { Text } from "@/features/shared/Text";
 /** Quienes fundaron ReLoop */
 const FUNDADORES = [
   "Emir Polito Guevara",
-  "Irving Esteban Molina Mendez",
+  "Irving Esteban Molina Méndez",
   "Cristian Daniel Barraza Hernández",
 ];
 
@@ -15,7 +15,8 @@ const FUNDADORES = [
 export function CreditosFundadores() {
   const { isDark } = useAppTheme();
   const texto = isDark ? "#F1F5F9" : "#101010";
-  const suave = isDark ? "#94A3B8" : "#6B6B6B";
+  // En oscuro, claro pero no tanto (el gris azulado de antes casi no se leía)
+  const suave = isDark ? "#C4C7CC" : "#6B6B6B";
 
   return (
     <View style={styles.contenedor}>
