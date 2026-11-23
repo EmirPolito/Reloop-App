@@ -20,6 +20,7 @@ export function BotonBarra({
   disabled = false,
   peligro = false,
   fondo,
+  opaco = false,
   colorPeligro = "#FF8A1F",
   children,
 }: {
@@ -33,6 +34,8 @@ export function BotonBarra({
    * chat, que lo teñía de gris)
    */
   fondo?: string;
+  /** Cristal casi opaco, más blanco (ver `fondoCristalVisto`): no se agrisa sobre el desenfoque */
+  opaco?: boolean;
   /** Color del fondo cuando es `peligro` (naranja si no se indica) */
   colorPeligro?: string;
   children: ReactNode;
@@ -50,6 +53,7 @@ export function BotonBarra({
       <PildoraCristal
         contentStyle={styles.boton}
         relleno={peligro ? colorPeligro : fondo}
+        opaco={opaco}
       >
         {children}
       </PildoraCristal>

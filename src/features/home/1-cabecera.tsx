@@ -104,8 +104,19 @@ function veloPorCapas(rgb: string, inicioPildoras: number) {
 const MaskedView =
   MaskedViewOriginal as unknown as ComponentType<MaskedViewProps>;
 
-/** Intensidad del desenfoque donde es más fuerte (la hora y la cabecera) */
-const INTENSIDAD_DESENFOQUE = 16;
+/** Intensidad de cada capa de desenfoque (arriba se suman todas: la hora y el logo) */
+const INTENSIDAD_CAPA = 6;
+/**
+ * Capas de desenfoque apiladas, de la más larga a la más corta (fracciones del alto):
+ * cada una es completa hasta `opaca` y se desvanece hasta `fin`. Arriba se juntan todas
+ * (más borroso) y hacia abajo van quedando menos, así el desenfoque baja por capas
+ */
+const CAPAS_DESENFOQUE = [
+  { opaca: 0.7, fin: 1 },
+  { opaca: 0.52, fin: 0.82 },
+  { opaca: 0.34, fin: 0.64 },
+  { opaca: 0.16, fin: 0.46 },
+] as const;
 /** Debajo de las píldoras, lo que baja el desvanecido del desenfoque (nada: termina en ellas) */
 const COLA_DESENFOQUE = 0;
 
@@ -131,7 +142,12 @@ const BarraLogo = memo(function BarraLogo({
         />
       </View>
       <View className="flex-row items-center gap-2">
-        <BotonBarra etiqueta={ETIQUETA_BUSQUEDA} onPress={onBuscar}>
+        {/* Más blanco: sobre el desenfoque de la cabecera el cristal se veía gris */}
+        <BotonBarra
+          etiqueta={ETIQUETA_BUSQUEDA}
+          onPress={onBuscar}
+          opaco={!isDark}
+        >
           <IconoBusqueda
             size={23}
             color={isDark ? "#FFFFFF" : "#23242C"}
@@ -264,32 +280,30 @@ export const CabeceraInicio = memo(function CabeceraInicio({
       >
         {CON_DESENFOQUE ? (
           <>
-            {/* Un solo desenfoque con una máscara en degradado: completo hasta media fila de
-                píldoras y de ahí se desvanece suave hasta el final de ellas, sin escalones ni orillas */}
-            <MaskedView
-              style={[
-                styles.capaDesenfoque,
-                { height: altoFijo + COLA_DESENFOQUE },
-              ]}
-              maskElement={
-                <LinearGradient
-                  colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
-                  locations={[
-                    0,
-                    (altoFijo - ALTO_FILA_PILDORAS / 2) /
-                      (altoFijo + COLA_DESENFOQUE),
-                    1,
-                  ]}
+            {/* Desenfoque por capas: cada una con su máscara en degradado, más cortas
+                conforme se apilan, así es más fuerte arriba y se desvanece hacia abajo */}
+            {CAPAS_DESENFOQUE.map(({ opaca, fin }) => (
+              <MaskedView
+                key={fin}
+                style={[
+                  styles.capaDesenfoque,
+                  { height: altoFijo + COLA_DESENFOQUE },
+                ]}
+                maskElement={
+                  <LinearGradient
+                    colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
+                    locations={[0, opaca, fin]}
+                    style={StyleSheet.absoluteFill}
+                  />
+                }
+              >
+                <BlurView
+                  intensity={INTENSIDAD_CAPA}
+                  tint={isDark ? "dark" : "light"}
                   style={StyleSheet.absoluteFill}
                 />
-              }
-            >
-              <BlurView
-                intensity={INTENSIDAD_DESENFOQUE}
-                tint={isDark ? "dark" : "light"}
-                style={StyleSheet.absoluteFill}
-              />
-            </MaskedView>
+              </MaskedView>
+            ))}
             {/* Velo blanco por capas: más fuerte en la hora y se desvanece muy gradual hasta
                 nada debajo de las píldoras, sin que se note ninguna línea */}
             <LinearGradient

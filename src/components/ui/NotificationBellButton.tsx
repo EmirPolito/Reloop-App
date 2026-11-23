@@ -29,6 +29,8 @@ export function NotificationBellButton() {
             : "Notificaciones"
         }
         onPress={openNotifications}
+        // Más blanco: sobre el desenfoque de la cabecera el cristal se veía gris
+        opaco={!isDark}
       >
         {/* De contorno; rellena cuando hay notificaciones sin leer */}
         {unreadCount > 0 ? (

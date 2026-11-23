@@ -1,9 +1,11 @@
 import { Skeleton } from "heroui-native";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { StyleSheet, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { PressableScale } from "@/components/PressableScale";
 import { PressableSuave } from "@/components/PressableSuave";
+import { TRANSICION_MODULO } from "@/constants/motion";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -13,6 +15,10 @@ import { useSigoA } from "../hooks/useSigoA";
 import { conArroba } from "../nombreUsuario";
 
 const LADO_AVATAR = 50;
+/** Al cambiar el esqueleto por la fila de verdad, entra con un fundido (no de golpe) */
+const ENTRADA_FILA = FadeIn.duration(TRANSICION_MODULO.entrada.duration).easing(
+  TRANSICION_MODULO.entrada.easing,
+);
 
 /**
  * Una persona en la lista de seguidores y seguidos: avatar (con insignia si tiene Premium),
@@ -32,6 +38,9 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   const { sigo, pendiente, alternar } = useSigoA(uid);
   const nombre = perfil?.name ?? "";
   const arroba = perfil?.username ? conArroba(perfil.username) : null;
+  // Solo se anima si antes se vio el esqueleto: con el perfil ya leído (al volver o al
+  // hacer scroll) la fila sale directo
+  const venia = useRef(perfil === undefined).current;
 
   // Mientras llega su perfil, el esqueleto de la fila (no una fila vacía)
   if (perfil === undefined) return <FilaSeguidorEsqueleto />;
@@ -52,52 +61,57 @@ export const FilaSeguidor = memo(function FilaSeguidor({
       : "#FFFFFF";
 
   return (
-    <PressableSuave
-      accessibilityRole="button"
-      accessibilityLabel={`Ver perfil de ${nombre}`}
-      onPress={() => onAbrir(uid)}
-      style={styles.fila}
-    >
-      <AvatarVendedor
-        ownerId={uid}
-        fallbackName={nombre}
-        size={LADO_AVATAR}
-        ajusteInsignia={{ escala: 0.42, right: -2, bottom: -4 }}
-      />
-      <View style={styles.textos}>
-        <Text
-          numberOfLines={1}
-          style={[styles.nombre, { color: isDark ? "#F1F5F9" : "#101010" }]}
-        >
-          {nombre}
-        </Text>
-        {arroba ? (
+    <Animated.View entering={venia ? ENTRADA_FILA : undefined}>
+      <PressableSuave
+        accessibilityRole="button"
+        accessibilityLabel={`Ver perfil de ${nombre}`}
+        onPress={() => onAbrir(uid)}
+        style={styles.fila}
+      >
+        <AvatarVendedor
+          ownerId={uid}
+          fallbackName={nombre}
+          size={LADO_AVATAR}
+          ajusteInsignia={{ escala: 0.42, right: -2, bottom: -4 }}
+        />
+        <View style={styles.textos}>
           <Text
             numberOfLines={1}
-            style={[styles.usuario, { color: isDark ? "#94A3B8" : "#8A8A8F" }]}
+            style={[styles.nombre, { color: isDark ? "#F1F5F9" : "#101010" }]}
           >
-            {arroba}
+            {nombre}
           </Text>
+          {arroba ? (
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.usuario,
+                { color: isDark ? "#94A3B8" : "#8A8A8F" },
+              ]}
+            >
+              {arroba}
+            </Text>
+          ) : null}
+        </View>
+        {uid !== yo && sigo !== null ? (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={
+              sigo ? `Dejar de seguir a ${nombre}` : `Seguir a ${nombre}`
+            }
+            accessibilityState={{ selected: sigo, busy: pendiente }}
+            hitSlop={6}
+            onPress={() => void alternar()}
+            scaleTo={0.94}
+            style={[styles.boton, { backgroundColor: fondoBoton }]}
+          >
+            <Text style={[styles.botonTexto, { color: textoBoton }]}>
+              {sigo ? "Siguiendo" : "Seguir"}
+            </Text>
+          </PressableScale>
         ) : null}
-      </View>
-      {uid !== yo && sigo !== null ? (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={
-            sigo ? `Dejar de seguir a ${nombre}` : `Seguir a ${nombre}`
-          }
-          accessibilityState={{ selected: sigo, busy: pendiente }}
-          hitSlop={6}
-          onPress={() => void alternar()}
-          scaleTo={0.94}
-          style={[styles.boton, { backgroundColor: fondoBoton }]}
-        >
-          <Text style={[styles.botonTexto, { color: textoBoton }]}>
-            {sigo ? "Siguiendo" : "Seguir"}
-          </Text>
-        </PressableScale>
-      ) : null}
-    </PressableSuave>
+      </PressableSuave>
+    </Animated.View>
   );
 });
 
