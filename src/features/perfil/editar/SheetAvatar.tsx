@@ -36,9 +36,15 @@ export function SheetAvatar({
 
   // Cada vez que se abre empieza desde el principio (ajuste de estado durante el render)
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
+  // Cuenta las aperturas: el carrusel se reinicia al abrir, nunca al cerrar (rehacerlo al
+  // cerrar montaba todas sus imágenes justo mientras la card bajaba y trababa la salida)
+  const [aperturas, setAperturas] = useState(0);
   if (visible !== abiertoAntes) {
     setAbiertoAntes(visible);
-    if (visible) flujo.reiniciar();
+    if (visible) {
+      flujo.reiniciar();
+      setAperturas((n) => n + 1);
+    }
   }
 
   return (
@@ -56,7 +62,7 @@ export function SheetAvatar({
         name={name}
         isDark={isDark}
         // Al reabrir el drawer el carrusel vuelve al avatar guardado
-        claveCarrusel={visible ? "abierto" : "cerrado"}
+        claveCarrusel={String(aperturas)}
         // Mismo tamaño que el drawer del fondo, con o sin el botón negro
         altoMinimo={ALTO_CONTENIDO_SHEET}
         bajarOpciones={11}

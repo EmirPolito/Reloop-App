@@ -104,7 +104,12 @@ export function PantallaEditarPerfil() {
   };
   /** Cierra y, si no se guardó, la vista previa vuelve a lo que había */
   const cerrarCampo = (campo: keyof Borrador, guardado: boolean) => {
-    if (!guardado) setBorrador((b) => ({ ...b, [campo]: undefined }));
+    // Sin nada que deshacer no se cambia: así la vista previa no se vuelve a dibujar al cerrar
+    if (!guardado) {
+      setBorrador((b) =>
+        b[campo] === undefined ? b : { ...b, [campo]: undefined },
+      );
+    }
     cerrarSheet();
   };
 

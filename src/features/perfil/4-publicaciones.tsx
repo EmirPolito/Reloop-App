@@ -4,17 +4,17 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData";
+import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
 import type { Product } from "@/features/marketplace/types";
-import { IconoAnuncios, IconoPublicaciones } from "./iconosPerfil";
-import { SheetTarjeta } from "./editar/SheetTarjeta";
-import { useProfile } from "./ProveedorPerfil";
-import type { DatosPerfil, DisenoTarjeta } from "./temasPerfil";
+import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
 import { showErrorAlert } from "@/utils/alerts";
 import { FilaPestanas, type Pestana } from "./components/FilaPestanas";
 import { ListaPublicaciones } from "./components/ListaPublicaciones";
 import { TarjetaVendedor } from "./components/TarjetaVendedor";
-import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
-import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
+import { SheetTarjeta } from "./editar/SheetTarjeta";
+import { IconoAnuncios, IconoPublicaciones } from "./iconosPerfil";
+import { useProfile } from "./ProveedorPerfil";
+import type { DatosPerfil, DisenoTarjeta } from "./temasPerfil";
 
 /** Todavía no existe el tipo de publicación "anuncio": mientras tanto la pestaña queda vacía */
 export const SIN_ANUNCIOS: Product[] = [];

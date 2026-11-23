@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ComponentRef } from "react";
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { PressableScale } from "@/components/PressableScale";
@@ -60,19 +60,35 @@ export function BuscadorBlanco({
         color={isDark ? "#E3DEED" : "#4A4D57"}
         grosorExtra={GROSOR_LUPA}
       />
-      <TextInput
-        ref={entrada}
-        accessibilityLabel={accessibilityLabel}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={isDark ? "#B3AEC0" : "#828690"}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-        onSubmitEditing={onSubmitEditing}
-        style={[styles.entrada, { color: texto }]}
-      />
+      <View style={styles.cajaEntrada}>
+        {/* Placeholder propio, centrado como el del módulo de búsqueda: el nativo de iOS
+            quedaba más abajo que el centro con la letra Inter */}
+        {value ? null : (
+          <View pointerEvents="none" style={styles.capaPlaceholder}>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.placeholder,
+                { color: isDark ? "#B3AEC0" : "#828690" },
+              ]}
+            >
+              {placeholder}
+            </Text>
+          </View>
+        )}
+        <TextInput
+          ref={entrada}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={placeholder}
+          value={value}
+          onChangeText={onChangeText}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          onSubmitEditing={onSubmitEditing}
+          style={[styles.entrada, { color: texto }]}
+        />
+      </View>
       {personas ? (
         <Animated.View
           entering={FadeIn.duration(180)}
@@ -107,6 +123,9 @@ export function BuscadorBlanco({
 
 const styles = StyleSheet.create({
   buscador: { marginHorizontal: 15, marginTop: 18 },
+  // Todo el alto de la píldora: con el alto de una sola línea, en iPhone el texto se cortaba
+  // por abajo. iOS lo centra solo dentro de ese alto
+  cajaEntrada: { flex: 1, minWidth: 0, alignSelf: "stretch" },
   entrada: {
     flex: 1,
     minWidth: 0,
@@ -114,6 +133,15 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 15,
   },
+  capaPlaceholder: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: "center",
+  },
+  placeholder: { fontFamily: "Inter_500Medium", fontSize: 15 },
   limpiar: {
     width: 20,
     height: 20,

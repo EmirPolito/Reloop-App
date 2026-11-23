@@ -55,9 +55,15 @@ export function SheetFondo({
   );
   // Al abrir, el carrusel vuelve al fondo puesto (ajuste de estado durante el render)
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
+  // Cuenta las aperturas: el carrusel se reinicia al abrir, nunca al cerrar (rehacerlo al
+  // cerrar montaba todas sus imágenes justo mientras la card bajaba y trababa la salida)
+  const [aperturas, setAperturas] = useState(0);
   if (visible !== abiertoAntes) {
     setAbiertoAntes(visible);
-    if (visible) setCentrado(0);
+    if (visible) {
+      setCentrado(0);
+      setAperturas((n) => n + 1);
+    }
   }
   /** El botón negro aparece al elegir otro; sin fondo puesto, siempre está */
   const hayCambio = !tieneFondo || centrado !== 0;
@@ -109,7 +115,7 @@ export function SheetFondo({
     >
       <View style={styles.inicio}>
         <CarruselFondos
-          key={visible ? "abierto" : "cerrado"}
+          key={aperturas}
           imagenes={imagenes}
           onCambio={setCentrado}
         />

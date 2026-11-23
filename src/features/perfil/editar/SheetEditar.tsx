@@ -1,7 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { BottomSheet } from "heroui-native";
+import { BottomSheet, useBottomSheetAnimation } from "heroui-native";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PALETA } from "../drawer/temaDrawer";
@@ -55,7 +59,10 @@ export function SheetEditar({
       {/* En iOS, sin la ventana nativa de HeroUI (FullWindowOverlay): esa ventana tapa a la
           galería y la foto elegida no regresaba. Como vista normal, la galería se abre encima. */}
       <BottomSheet.Portal disableFullWindowOverlay hostName={hostName}>
-        <BottomSheet.Overlay />
+        <FondoOscuro
+          visible={visible}
+          onPress={bloqueado ? undefined : onClose}
+        />
         <BottomSheet.Content
           enablePanDownToClose={!bloqueado}
           enableContentPanningGesture={permitirArrastrarContenido}
@@ -128,6 +135,42 @@ export function SheetEditar({
   );
 }
 
+/**
+ * El fondo oscuro detrás de la card. Reemplaza al `BottomSheet.Overlay` de HeroUI: ese se
+ * quita de golpe en cuanto el drawer se cierra con la X o al guardar, y el salto (más el
+ * desmontaje en el primer cuadro del cierre) hacía que la salida se sintiera trabada. Este
+ * sigue montado y se desvanece al mismo ritmo que baja la card, en el hilo de UI.
+ */
+function FondoOscuro({
+  visible,
+  onPress,
+}: {
+  visible: boolean;
+  /** Sin esto, tocar fuera no cierra (configuración inicial) */
+  onPress?: () => void;
+}) {
+  // 0 cerrado, 1 abierto y 2 cerrándose: sigue la posición de la card cuadro a cuadro
+  const { progress } = useBottomSheetAnimation();
+  const estilo = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.get(), [0, 1, 2], [0, 1, 0]),
+  }));
+  return (
+    <Animated.View
+      // Cerrándose ya no ataja toques: se puede tocar la pantalla mientras se desvanece
+      pointerEvents={visible ? "auto" : "none"}
+      style={[StyleSheet.absoluteFill, styles.fondo, estilo]}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Cerrar"
+        disabled={!onPress}
+        onPress={onPress}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
+  );
+}
+
 /** Capa de drawers dentro de los providers de la sesión (su `PortalHost` va en el layout de la app) */
 export const HOST_SESION = "sesion";
 
@@ -136,6 +179,8 @@ const RADIO_CARD = 35;
 const FONDO_CARD = ["#ffffff", "#0B1220"] as const;
 
 const styles = StyleSheet.create({
+  // El mismo tono que el fondo de HeroUI (negro al 20 %)
+  fondo: { backgroundColor: "rgba(0, 0, 0, 0.2)" },
   // Mismo alto que los botones y subido 7 px: el título queda a la altura de la X
   header: {
     height: 33,

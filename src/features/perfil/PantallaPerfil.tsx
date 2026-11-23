@@ -11,8 +11,8 @@ import { TarjetaPremium } from "@/features/premium/components/TarjetaPremium";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { AjustesPerfil } from "./5-ajustes";
 import { BotonHeaderPerfil } from "./2-barra-superior";
+import { AjustesPerfil } from "./5-ajustes";
 import { VistaPerfil } from "./VistaPerfil";
 
 /**
@@ -72,5 +72,5 @@ export function PantallaPerfil() {
 const styles = StyleSheet.create({
   // Mismo margen lateral que las tarjetas de General y Legal, y la separación entre tarjetas
   // Más separado de las publicaciones
-  premium: { paddingHorizontal: 15, marginTop: 104 },
+  premium: { paddingHorizontal: 15, marginTop: 108 },
 });
