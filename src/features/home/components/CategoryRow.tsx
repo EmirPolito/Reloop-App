@@ -1,7 +1,12 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -25,11 +30,17 @@ const TONOS: Record<CategoryId, string> = {
   comida: "#3FC46E",
 };
 
-/** Orden de las tarjetas: 2 rectángulos arriba y 3 cuadros abajo */
-const FILAS: CategoryId[][] = [
-  ["donacion", "cambio"],
-  ["venta", "mascota", "comida"],
+/** Orden de las tarjetas: todas cuadradas, una al lado de otra */
+const ORDEN: CategoryId[] = [
+  "donacion",
+  "cambio",
+  "venta",
+  "mascota",
+  "comida",
 ];
+/** Separación entre tarjetas y margen de la lista del inicio a cada lado */
+const SEPARACION = 14;
+const MARGEN_LISTA = 16;
 
 /** El tono con transparencia (`alfa` de 0 a 1), en hex de 8 dígitos */
 function conAlfa(tono: string, alfa: number) {
@@ -41,18 +52,21 @@ function conAlfa(tono: string, alfa: number) {
   );
 }
 
-const ALTO_TARJETA = 104;
-const CIRCULO = 120;
-const ICONO = 62;
+const ALTO_TARJETA = 118;
+const CIRCULO = 132;
+const ICONO = 68;
 
 const TarjetaCategoria = memo(function TarjetaCategoria({
   category,
   selected,
   onToggle,
+  ancho,
 }: {
   category: (typeof CATEGORIES)[number];
   selected: boolean;
   onToggle: (category: CategoryId) => void;
+  /** Ancho de la tarjeta (las cinco miden lo mismo) */
+  ancho: number;
 }) {
   const { isDark } = useAppTheme();
   const tono = TONOS[category.id];
@@ -64,7 +78,7 @@ const TarjetaCategoria = memo(function TarjetaCategoria({
   }));
 
   return (
-    <Animated.View style={[styles.celda, estiloEscala]}>
+    <Animated.View style={[{ width: ancho }, estiloEscala]}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected }}
@@ -97,7 +111,6 @@ const TarjetaCategoria = memo(function TarjetaCategoria({
         />
         <Text
           numberOfLines={1}
-          adjustsFontSizeToFit
           style={[styles.etiqueta, { color: isDark ? "#F5F5F5" : "#14141A" }]}
         >
           {category.label}
@@ -112,7 +125,7 @@ const TarjetaCategoria = memo(function TarjetaCategoria({
   );
 });
 
-/** Categorías del inicio en tarjetas (2 arriba y 3 abajo); tocar una la activa y volver a tocarla la desactiva. */
+/** Categorías del inicio en tarjetas cuadradas, una al lado de otra (se desliza para ver todas); tocar una la activa y volver a tocarla la desactiva. */
 export function CategoryRow({
   activeCategory,
   onToggleCategory,
@@ -120,30 +133,36 @@ export function CategoryRow({
   activeCategory: CategoryId | null;
   onToggleCategory: (category: CategoryId) => void;
 }) {
+  // Lo bastante anchas para que el nombre más largo ("Intercambios") quepa sin achicarse: todos
+  // los nombres con el mismo tamaño. Caben dos y un pedazo de la tercera, lo que invita a deslizar
+  const { width } = useWindowDimensions();
+  const ancho = Math.floor(
+    (Math.min(width, 760) - MARGEN_LISTA * 2 - SEPARACION * 3) / 2.3,
+  );
   return (
-    <View style={styles.contenedor}>
-      {FILAS.map((fila, i) => (
-        <View key={i} style={styles.fila}>
-          {fila
-            .map((id) => categoryFor(id))
-            .map((category) => (
-              <TarjetaCategoria
-                key={category.id}
-                category={category}
-                selected={activeCategory === category.id}
-                onToggle={onToggleCategory}
-              />
-            ))}
-        </View>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      // Llegan hasta las orillas de la pantalla, con el margen de la lista al inicio y al final
+      style={styles.contenedor}
+      contentContainerStyle={styles.fila}
+    >
+      {ORDEN.map((id) => categoryFor(id)).map((category) => (
+        <TarjetaCategoria
+          key={category.id}
+          category={category}
+          selected={activeCategory === category.id}
+          onToggle={onToggleCategory}
+          ancho={ancho}
+        />
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedor: { marginTop: 6, gap: 10 },
-  fila: { flexDirection: "row", gap: 10 },
-  celda: { flex: 1, minWidth: 0 },
+  contenedor: { marginTop: 16, marginHorizontal: -MARGEN_LISTA },
+  fila: { gap: SEPARACION, paddingHorizontal: MARGEN_LISTA },
   tarjeta: {
     height: ALTO_TARJETA,
     borderRadius: 22,

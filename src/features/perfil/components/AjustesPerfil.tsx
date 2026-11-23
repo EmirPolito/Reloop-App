@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useCallback, useState } from "react";
@@ -6,6 +7,11 @@ import { StyleSheet, View } from "react-native";
 import { PressableScale } from "@/components/PressableScale";
 import { estiloTarjetaCristal } from "@/components/ui/cristalSuave";
 import { useAuth } from "@/features/auth/AuthProvider";
+import {
+  useMarketplaceActions,
+  useMarketplaceState,
+} from "@/features/marketplace/MarketplaceProvider";
+import { universidadPorId } from "@/features/marketplace/universidades";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
@@ -23,6 +29,7 @@ import {
 } from "../Perfiliconos";
 import { ConfirmarCerrarSesion } from "./ConfirmarCerrarSesion";
 import { FilaAjuste, ListaAjustes } from "./FilaAjuste";
+import { SheetUniversidad } from "./SheetUniversidad";
 import { ToggleNotificaciones, ToggleTema } from "./TogglesAnimados";
 
 /**
@@ -37,6 +44,10 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const [confirmando, setConfirmando] = useState(false);
+  // Universidad de la que se ven las publicaciones en el inicio (se cambia en su drawer)
+  const { universidad } = useMarketplaceState();
+  const { setUniversidad } = useMarketplaceActions();
+  const [eligiendoUniversidad, setEligiendoUniversidad] = useState(false);
   const [cerrando, setCerrando] = useState(false);
 
   const handleSignOut = useCallback(() => {
@@ -139,6 +150,23 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
           />
           <FilaAjuste
             bg={rowBg}
+            icon={
+              <Ionicons name="school-outline" size={23} color={colorIcono} />
+            }
+            label="Universidad"
+            textColor={textoFila}
+            onPress={() => setEligiendoUniversidad(true)}
+            right={
+              <View style={styles.derechaUniversidad}>
+                <Text style={[styles.siglaUniversidad, { color: mutedColor }]}>
+                  {universidadPorId(universidad).sigla}
+                </Text>
+                <IconoFlecha size={22} color={flecha} />
+              </View>
+            }
+          />
+          <FilaAjuste
+            bg={rowBg}
             icon={<IconoCerrarSesionLinea size={25} color="#f20000ff" />}
             label="Cerrar sesión"
             textColor="#ff2424ff"
@@ -183,6 +211,14 @@ export function AjustesPerfil({ isDark }: { isDark: boolean }) {
         </Text>
       </View>
 
+      <SheetUniversidad
+        visible={eligiendoUniversidad}
+        universidad={universidad}
+        isDark={isDark}
+        onElegir={setUniversidad}
+        onClose={() => setEligiendoUniversidad(false)}
+      />
+
       <ConfirmarCerrarSesion
         visible={confirmando}
         cerrando={cerrando}
@@ -210,6 +246,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   pie: { alignItems: "center", marginTop: 30, gap: 8 },
+  // A la derecha de "Universidad": sus siglas y la flecha
+  derechaUniversidad: { flexDirection: "row", alignItems: "center", gap: 4 },
+  siglaUniversidad: { fontFamily: "Inter_400Regular", fontSize: 14 },
   // La versión y el lema con el mismo estilo
   nota: { fontFamily: "Inter_400Regular", fontSize: 13.1 },
   // El logo pegado al "por" (la imagen trae un poco de aire a la izquierda)

@@ -8,6 +8,8 @@ import { PildoraCristal } from "./PildoraCristal";
 
 /** Alto de las píldoras de debajo de los buscadores */
 export const ALTO_PILDORA_OPCION = 38;
+/** Las píldoras con icono (las categorías flotantes del inicio): un poco más bajas */
+export const ALTO_PILDORA_ICONO = 34;
 
 /**
  * Sombra de las píldoras: más corta que la del buscador. Van en una fila con scroll, que recorta
@@ -113,8 +115,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   // El icono pegado a la izquierda: menos relleno de ese lado
-  conIcono: { paddingLeft: 10, paddingRight: 18, gap: 6 },
-  icono: { width: 26, height: 26 },
+  conIcono: {
+    minHeight: ALTO_PILDORA_ICONO,
+    height: ALTO_PILDORA_ICONO,
+    paddingLeft: 8,
+    paddingRight: 14,
+    gap: 5,
+  },
+  icono: { width: 23, height: 23 },
   texto: { fontSize: 13.5, fontWeight: "500" },
   fila: { width: "100%", maxWidth: 760, alignSelf: "center", marginBottom: -4 },
   // Margen arriba y abajo para que no se corte la sombra de las píldoras

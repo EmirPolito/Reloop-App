@@ -1,6 +1,10 @@
 import { PressableScale } from "@/components/PressableScale";
 import { PressableSuave } from "@/components/PressableSuave";
 import { NavigationIcon } from "@/components/iconos";
+import {
+  coloresCristal,
+  fondoCristalVisto,
+} from "@/features/busqueda/components/PildoraCristal";
 import type { Tab } from "@/features/navigation/routes";
 import {
   IconoAnuncios,
@@ -12,13 +16,9 @@ import {
   IconoPublicaciones,
 } from "@/features/perfil/Perfiliconos";
 import { Text } from "@/features/shared/Text";
-import { useLatestRef } from "@/hooks/useLatestRef";
 import type { IconName } from "@/features/shared/constants";
+import { useLatestRef } from "@/hooks/useLatestRef";
 import { BlurView } from "expo-blur";
-import {
-  coloresCristal,
-  fondoCristalVisto,
-} from "@/features/busqueda/components/PildoraCristal";
 import {
   memo,
   useCallback,
@@ -39,11 +39,10 @@ import {
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
+  cancelAnimation,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
-  withSequence,
-  withSpring,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -51,12 +50,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
 export interface NavegacionProps {
-  /** `null` en pantallas fuera de las pestañas: ningún icono queda marcado */
   activeTab: Tab | null;
   onNavigate: (tab: Tab) => void;
   isDark?: boolean;
   hasUnreadChats?: boolean;
-  /** Props opcionales por compatibilidad si algún layout aún las pasa */
   onOpenNotifications?: () => void;
   notificacionesActivas?: boolean;
   unreadNotifications?: number;
@@ -75,12 +72,11 @@ const NAV_TABS: NavTabItem[] = [
   { id: "profile", label: "Perfil", icon: "person" },
 ];
 
-/** 4 pestañas en la cápsula; el botón de crear va aparte, en su propio círculo */
 const TOTAL_BOTONES = NAV_TABS.length;
 const MAX_INDEX = TOTAL_BOTONES - 1;
 const SEPARACION_CREAR = 10;
 
-const ALTO_CAPSULA = 60;
+export const ALTO_CAPSULA = 60;
 const MARGEN_CAPSULA = 5;
 const TAMANO_ICONO = 23;
 const TAMANO_ICONO_CREAR = 34;
@@ -95,29 +91,21 @@ const ICONOS_LINEA: Partial<
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Animaciones Liquid Glass (curva fluida estilo Apple en hilo de UI)        */
+/*  Curvas sedosas estilo iOS (desaceleración larga, cero rebote)             */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Arranca rápido y frena con suavidad, casi sin rebote. Es un resorte rígido (asienta en
- * ~0.2 s): el anterior era igual de amortiguado pero tan blando que tardaba más de medio
- * segundo en llegar y se sentía lento.
- */
-const SPRING_PILDORA = { damping: 30, stiffness: 340, mass: 0.8 };
-const APARECER = { duration: 120, easing: Easing.out(Easing.cubic) };
+const CURVA_SEDOSA = Easing.bezier(0.16, 1, 0.3, 1);
+const TIMING_PILDORA = { duration: 310, easing: CURVA_SEDOSA };
+const APARECER = { duration: 160, easing: CURVA_SEDOSA };
 
-const MENU_ABRIR = { duration: 180, easing: Easing.bezier(0.22, 1, 0.36, 1) };
-const MENU_CERRAR = { duration: 110, easing: Easing.out(Easing.cubic) };
+const MENU_ABRIR = { duration: 210, easing: Easing.bezier(0.16, 1, 0.3, 1) };
+const MENU_CERRAR = { duration: 140, easing: Easing.out(Easing.cubic) };
 
 const COLOR_ICONO_ANUNCIO = "#ec8e29ff";
 const COLOR_ICONO_PUBLICACION = "#ff3762";
 
 type Estilos = ReturnType<typeof createStyles>;
 
-/**
- * Superficie de cristal, igual a la de los buscadores (`PildoraCristal`): el tinte va debajo
- * y el desenfoque encima, sin reflejo ni brillos (se veía metálico y más transparente).
- */
 const LiquidGlassSurface = memo(function LiquidGlassSurface({
   isDark,
   styles,
@@ -142,12 +130,6 @@ const LiquidGlassSurface = memo(function LiquidGlassSurface({
   );
 });
 
-/**
- * Pestaña de la cápsula: solo el icono (el nombre del módulo queda para el lector de pantalla).
- * El toque no lo atiende ella sino el gesto de la cápsula (ver `gestoCapsula`); aquí solo se
- * encoge un poco mientras se presiona.
- */
-/** Acción del lector de pantalla para activar una pestaña */
 const ACCION_ACTIVAR = [{ name: "activate" as const }];
 
 const TabButton = memo(function TabButton({
@@ -170,30 +152,24 @@ const TabButton = memo(function TabButton({
   showBadge: boolean;
   isDark: boolean;
   onPress: (tab: Tab) => void;
-  /** Índice de la pestaña bajo el dedo (-1 si ninguna) */
   presionado: SharedValue<number>;
   styles: Estilos;
 }) {
-  // Un solo cálculo por cuadro; los dos estilos solo lo leen
   const activo = useDerivedValue(
     () =>
       Math.max(0, 1 - Math.abs(posicion.get() - indice)) *
       indicadorVisible.get(),
   );
+
   const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
   const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - activo.get() }));
+
+  // Micro-escala suave solo en los iconos al presionar
   const escalaStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scale: withTiming(presionado.get() === indice ? 0.92 : 1, {
-          duration: 90,
-        }),
-      },
-    ],
+    transform: [{ scale: presionado.get() === indice ? 0.93 : 1 }],
   }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  // Sobre la pastilla gris: oscuro en claro y claro en oscuro
   const colorActivo = isDark ? "#F1F5F9" : "#101010";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
@@ -234,12 +210,10 @@ const TabButton = memo(function TabButton({
         </Animated.View>
         {showBadge ? <View style={styles.punto} /> : null}
       </View>
-
     </Animated.View>
   );
 });
 
-/** Botón de crear: círculo de cristal separado de la cápsula de pestañas */
 const CreateSlotButton = memo(function CreateSlotButton({
   selected,
   onPress,
@@ -260,7 +234,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
   const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = "#101010";
+  const colorActivo = isDark ? "#F1F5F9" : "#101010";
 
   return (
     <View style={[styles.sombra, styles.crearSombra]}>
@@ -271,7 +245,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
           accessibilityState={{ selected }}
           accessibilityLabel="Publicar producto"
           onPress={onPress}
-          scaleTo={0.92}
+          scaleTo={0.93}
           style={styles.hueco}
         >
           <View style={styles.iconoCrear}>
@@ -296,8 +270,7 @@ const CreateSlotButton = memo(function CreateSlotButton({
   );
 });
 
-/** Menú flotante Liquid Glass sin desenfocar el resto de la pantalla */
-function MenuCrear({
+export function MenuCrear({
   visible,
   menu,
   isDark,
@@ -317,8 +290,8 @@ function MenuCrear({
   const opcionesStyle = useAnimatedStyle(() => ({
     opacity: menu.value,
     transform: [
-      { translateY: (1 - menu.value) * 12 },
-      { scale: 0.9 + 0.1 * menu.value },
+      { translateY: (1 - menu.value) * 10 },
+      { scale: 0.94 + 0.06 * menu.value },
     ],
   }));
 
@@ -381,15 +354,14 @@ function NavegacionBase({
 }: NavegacionProps) {
   const styles = useMemo(() => createStyles(isDark), [isDark]);
   const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === "web" ? 16 : Math.max(insets.bottom - 8, 8);
+  const bottomInset =
+    Platform.OS === "web" ? 16 : Math.max(insets.bottom - 12, 8);
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const menu = useSharedValue(0);
 
-  // Al llegar la pestaña de verdad, se descarta la que se esperaba (se ajusta durante el
-  // render: con un efecto la barra se dibujaba una vez de más en cada cambio)
   const [tabPrevia, setTabPrevia] = useState(activeTab);
   if (tabPrevia !== activeTab) {
     setTabPrevia(activeTab);
@@ -398,96 +370,66 @@ function NavegacionBase({
 
   const tabEfectivo = pendingTab ?? activeTab;
   const indiceTab = NAV_TABS.findIndex((tab) => tab.id === tabEfectivo);
-  // Con el menú de crear abierto (o en crear) la píldora se oculta: Crear tiene su propio fondo
   const crearActivo = menuAbierto || tabEfectivo === "create";
   const huecoActivo = crearActivo ? -1 : indiceTab;
 
   const huecoAnterior = useRef(huecoActivo);
-  const ultimoIndiceArrastrado = useRef<number | null>(null);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const posicion = useSharedValue(Math.max(huecoActivo, 0));
+  const destino = useSharedValue(Math.max(huecoActivo, 0));
   const indicadorVisible = useSharedValue(huecoActivo >= 0 ? 1 : 0);
-  const estirar = useSharedValue(0);
   const arrastrando = useSharedValue(0);
   const inicioArrastre = useSharedValue(0);
   const anchoHueco = useSharedValue(0);
-  // El ancho de la píldora va como estilo normal (cambia solo al medir): animarlo obligaba a
-  // recalcular el layout en cada cuadro del deslizamiento
   const [anchoPildora, setAnchoPildora] = useState(0);
 
-  /** Desliza la píldora a un hueco con el estiramiento de siempre (todo en el hilo de UI) */
-  const moverPildora = useCallback(
-    (hueco: number, conEstiramiento: boolean) => {
-      posicion.set(withSpring(hueco, SPRING_PILDORA));
-      if (conEstiramiento) {
-        estirar.set(
-          withSequence(
-            withTiming(0.11, {
-              duration: 150,
-              easing: Easing.out(Easing.cubic),
-            }),
-            withSpring(0, { damping: 24, stiffness: 170 }),
-          ),
-        );
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
+
+  /**
+   * Mueve la píldora de forma continua y sedosa hacia el objetivo.
+   */
+  const moverSuave = useCallback(
+    (objetivo: number, desdeVisible: boolean) => {
+      cancelAnimation(posicion);
+      destino.set(objetivo);
+
+      if (!desdeVisible) {
+        posicion.set(objetivo);
+      } else {
+        posicion.set(withTiming(objetivo, TIMING_PILDORA));
       }
       indicadorVisible.set(withTiming(1, APARECER));
     },
-    [posicion, estirar, indicadorVisible],
-  );
-
-  /**
-   * Al tocar una pestaña la píldora arranca en ese mismo instante y la navegación (que es lo
-   * pesado: monta la pantalla) se manda un cuadro después. Así el toque se siente inmediato y
-   * la animación ya corre en el hilo de UI cuando el hilo de JS se ocupa de la pantalla nueva.
-   */
-  const irAPestana = useCallback(
-    (hueco: number, tabId: Tab) => {
-      if (huecoAnterior.current !== hueco) {
-        // El efecto de abajo ya no repite esta animación
-        ultimoIndiceArrastrado.current = hueco;
-        moverPildora(hueco, huecoAnterior.current >= 0);
-      }
-      requestAnimationFrame(() => onNavigate(tabId));
-    },
-    [moverPildora, onNavigate],
+    [posicion, destino, indicadorVisible],
   );
 
   useEffect(() => {
     if (huecoActivo >= 0) {
-      if (ultimoIndiceArrastrado.current === huecoActivo) {
-        ultimoIndiceArrastrado.current = null;
-      } else {
-        posicion.set(withSpring(huecoActivo, SPRING_PILDORA));
-
-        if (
-          huecoAnterior.current >= 0 &&
-          huecoAnterior.current !== huecoActivo
-        ) {
-          estirar.set(
-            withSequence(
-              withTiming(0.11, {
-                duration: 150,
-                easing: Easing.out(Easing.cubic),
-              }),
-              withSpring(0, { damping: 24, stiffness: 170 }),
-            ),
-          );
-        }
+      if (huecoAnterior.current !== huecoActivo) {
+        moverSuave(huecoActivo, huecoAnterior.current >= 0);
       }
+    } else {
+      indicadorVisible.set(withTiming(0, APARECER));
     }
     huecoAnterior.current = huecoActivo;
-    indicadorVisible.set(withTiming(huecoActivo >= 0 ? 1 : 0, APARECER));
-  }, [huecoActivo, posicion, indicadorVisible, estirar]);
+  }, [huecoActivo, moverSuave, indicadorVisible]);
 
   const abrirMenu = useCallback(() => {
     setPendingTab(null);
     setMenuAbierto(true);
     setMenuVisible(true);
+    cancelAnimation(menu);
     menu.set(withTiming(1, MENU_ABRIR));
   }, [menu]);
 
   const cerrarMenu = useCallback(() => {
     setMenuAbierto(false);
+    cancelAnimation(menu);
     menu.set(
       withTiming(0, MENU_CERRAR, (finished) => {
         if (finished) {
@@ -518,27 +460,37 @@ function NavegacionBase({
     [anchoHueco],
   );
 
+  /**
+   * Desacopla ligeramente el cambio de pantalla (45ms) para que la animación
+   * nativa arranque completamente libre de tirones antes de montar la nueva ruta.
+   */
+  const navegarDesacoplado = useCallback(
+    (tabId: Tab) => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+      navTimerRef.current = setTimeout(() => {
+        onNavigate(tabId);
+      }, 45);
+    },
+    [onNavigate],
+  );
+
   const handleCrearPublicacion = useCallback(() => {
     setPendingTab("create");
     cerrarMenu();
-    requestAnimationFrame(() => onNavigate("create"));
-  }, [cerrarMenu, onNavigate]);
+    navegarDesacoplado("create");
+  }, [cerrarMenu, navegarDesacoplado]);
 
   const handleTabPressActual = useCallback(
     (tabId: Tab) => {
+      if (menuAbierto) cerrarMenu();
       if (tabId !== activeTab) {
         setPendingTab(tabId);
-        if (menuAbierto) cerrarMenu();
-        irAPestana(
-          NAV_TABS.findIndex((tab) => tab.id === tabId),
-          tabId,
-        );
+        navegarDesacoplado(tabId);
       } else {
         setPendingTab(null);
-        if (menuAbierto) cerrarMenu();
       }
     },
-    [activeTab, cerrarMenu, irAPestana, menuAbierto],
+    [activeTab, cerrarMenu, menuAbierto, navegarDesacoplado],
   );
 
   const handleCreatePressActual = useCallback(() => {
@@ -549,8 +501,6 @@ function NavegacionBase({
     }
   }, [abrirMenu, cerrarMenu, menuAbierto]);
 
-  // Referencias estables: las pestañas (memo) no se vuelven a dibujar cada vez que cambia
-  // el estado de la barra, solo cuando cambia lo suyo
   const tabPressRef = useLatestRef(handleTabPressActual);
   const handleTabPress = useCallback(
     (tabId: Tab) => tabPressRef.current(tabId),
@@ -564,44 +514,37 @@ function NavegacionBase({
 
   const handleDropNavigate = useCallback(
     (targetIndex: number) => {
-      ultimoIndiceArrastrado.current = targetIndex;
-
       const targetTab = NAV_TABS[targetIndex];
       if (!targetTab) return;
 
+      if (menuAbierto) cerrarMenu();
       if (targetTab.id !== activeTab) {
         setPendingTab(targetTab.id);
-        if (menuAbierto) cerrarMenu();
-        onNavigate(targetTab.id);
+        navegarDesacoplado(targetTab.id);
       } else {
         setPendingTab(null);
-        if (menuAbierto) cerrarMenu();
       }
     },
-    [activeTab, cerrarMenu, menuAbierto, onNavigate],
+    [activeTab, cerrarMenu, menuAbierto, navegarDesacoplado],
   );
 
-  // El gesto llama siempre a la última versión del manejador sin volver a crearse: si se
-  // creara de nuevo con cada cambio de estado, un arrastre en curso podía cortarse
   const handleDropRef = useLatestRef(handleDropNavigate);
   const soltarEnHueco = useCallback(
     (hueco: number) => handleDropRef.current(hueco),
     [handleDropRef],
   );
 
-  /** Gesto horizontal para jalar la píldora Liquid Glass por las 4 pestañas y soltarla */
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        // A partir de lo que el toque ya no acepta (14): un toque con el dedo un poco movido
-        // sigue siendo toque y no se convierte en un arrastre que no navega
-        .activeOffsetX([-14, 14])
+        .activeOffsetX([-12, 12])
         .onStart((e) => {
           const ancho = anchoHueco.get();
           if (ancho <= 0) return;
 
+          cancelAnimation(posicion);
           arrastrando.set(
-            withSpring(1, { damping: 22, stiffness: 220, mass: 0.7 }),
+            withTiming(1, { duration: 130, easing: CURVA_SEDOSA }),
           );
 
           if (indicadorVisible.get() < 0.5) {
@@ -610,6 +553,7 @@ function NavegacionBase({
               MAX_INDEX,
             );
             posicion.set(indiceToque);
+            destino.set(indiceToque);
             indicadorVisible.set(withTiming(1, APARECER));
           }
 
@@ -620,54 +564,43 @@ function NavegacionBase({
           if (ancho <= 0) return;
 
           const crudo = inicioArrastre.get() + e.translationX / ancho;
-
           let conResistencia = crudo;
           if (crudo < 0) {
-            conResistencia = crudo * 0.25;
+            conResistencia = crudo * 0.22;
           } else if (crudo > MAX_INDEX) {
-            conResistencia = MAX_INDEX + (crudo - MAX_INDEX) * 0.25;
+            conResistencia = MAX_INDEX + (crudo - MAX_INDEX) * 0.22;
           }
 
           posicion.set(conResistencia);
-
-          // Directo, sin crear una animación nueva en cada cuadro del arrastre
-          estirar.set(Math.min(Math.abs(e.velocityX) / 2200, 0.18));
+          destino.set(conResistencia);
         })
         .onEnd((e) => {
           const ancho = anchoHueco.get();
           if (ancho <= 0) return;
 
-          const impulso = Math.max(Math.min(e.velocityX * 0.00009, 0.3), -0.3);
+          const impulso = Math.max(Math.min(e.velocityX * 0.0001, 0.35), -0.35);
           const objetivo = Math.min(
             Math.max(Math.round(posicion.get() + impulso), 0),
             MAX_INDEX,
           );
-          const velocidadRelativa = Math.max(
-            Math.min(e.velocityX / ancho, 5),
-            -5,
-          );
 
-          posicion.set(
-            withSpring(objetivo, {
-              ...SPRING_PILDORA,
-              velocity: velocidadRelativa,
-            }),
-          );
+          destino.set(objetivo);
+          posicion.set(withTiming(objetivo, TIMING_PILDORA));
           arrastrando.set(
-            withSpring(0, { damping: 24, stiffness: 190, mass: 0.8 }),
+            withTiming(0, { duration: 160, easing: CURVA_SEDOSA }),
           );
-          estirar.set(withSpring(0, { damping: 24, stiffness: 180 }));
 
           scheduleOnRN(soltarEnHueco, objetivo);
         })
         .onFinalize(() => {
-          arrastrando.set(withSpring(0, { damping: 24, stiffness: 190 }));
-          estirar.set(withSpring(0, { damping: 24, stiffness: 180 }));
+          arrastrando.set(
+            withTiming(0, { duration: 160, easing: CURVA_SEDOSA }),
+          );
         }),
     [
       anchoHueco,
       arrastrando,
-      estirar,
+      destino,
       soltarEnHueco,
       indicadorVisible,
       inicioArrastre,
@@ -675,12 +608,6 @@ function NavegacionBase({
     ],
   );
 
-  /**
-   * El toque de las pestañas lo atiende un gesto nativo de la cápsula, no un Pressable dentro
-   * de ella: el Pressable competía con el arrastre de la píldora y a veces se perdía el toque
-   * (había que tocar varias veces). Con el toque y el arrastre en el mismo sistema, el primero
-   * que se reconoce gana y el otro se cancela, así un solo toque siempre navega.
-   */
   const presionado = useSharedValue(-1);
   const tocarHueco = useCallback(
     (hueco: number) => {
@@ -689,6 +616,7 @@ function NavegacionBase({
     },
     [handleTabPress],
   );
+
   const gestoCapsula = useMemo(() => {
     const huecoEn = (x: number) => {
       "worklet";
@@ -700,12 +628,10 @@ function NavegacionBase({
       );
     };
     const toque = Gesture.Tap()
-      .maxDistance(14)
+      .maxDistance(12)
       .onBegin((e) => {
         presionado.set(huecoEn(e.x));
       })
-      // La regla cree que se lee una ref al dibujar: `tocarHueco` solo corre al tocar
-      // eslint-disable-next-line react-hooks/refs
       .onEnd((e, exito) => {
         const hueco = huecoEn(e.x);
         if (exito && hueco >= 0) scheduleOnRN(tocarHueco, hueco);
@@ -716,17 +642,23 @@ function NavegacionBase({
     return Gesture.Race(panGesture, toque);
   }, [panGesture, anchoHueco, presionado, tocarHueco]);
 
+  /**
+   * Deformación líquida automática y orgánica:
+   * Se estira suavemente según la distancia instantánea al destino y vuelve
+   * a 1.0 de forma continua sin pasos intermedios ni saltos.
+   */
   const indicadorStyle = useAnimatedStyle(() => {
     const ancho = anchoHueco.get();
     const lift = arrastrando.get();
-    const stretch = estirar.get();
+    const distancia = Math.min(Math.abs(destino.get() - posicion.get()), 1.5);
+    const estirarFluido = distancia * 0.09;
 
     return {
       opacity: ancho > 0 ? indicadorVisible.get() : 0,
       transform: [
         { translateX: posicion.get() * ancho },
-        { scaleX: 1 + 0.06 * lift + stretch },
-        { scaleY: 1 + 0.04 * lift - stretch * 0.35 },
+        { scaleX: 1 + 0.04 * lift + estirarFluido },
+        { scaleY: 1 + 0.03 * lift - estirarFluido * 0.35 },
       ],
     };
   });
@@ -786,7 +718,6 @@ function NavegacionBase({
                   styles={styles}
                 />
               ))}
-
             </View>
           </View>
         </GestureDetector>
@@ -802,15 +733,9 @@ function NavegacionBase({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Estilos Liquid Glass                                                      */
-/* -------------------------------------------------------------------------- */
-
-/** La sombra suave de los buscadores de cristal (`sombraCristal`), sin brillos internos */
 const SOMBRA_CRISTAL = "0 4px 14px rgba(0, 0, 0, 0.08)";
 
-function createStyles(isDark: boolean) {
-  // Borde: el del cristal de los buscadores
+export function createStyles(isDark: boolean) {
   const vidrio = coloresCristal(isDark);
   const colors = isDark
     ? {
@@ -846,8 +771,8 @@ function createStyles(isDark: boolean) {
 
     navigationRow: {
       position: "absolute",
-      left: 14,
-      right: 14,
+      left: 18,
+      right: 18,
       flexDirection: "row",
       alignItems: "center",
     },
@@ -895,7 +820,6 @@ function createStyles(isDark: boolean) {
       top: MARGEN_CAPSULA,
       bottom: MARGEN_CAPSULA,
       borderRadius: (ALTO_CAPSULA - MARGEN_CAPSULA * 2) / 2,
-      // Plana (sin sombra ni borde): un gris claro transparente
       backgroundColor: colors.indicador,
     },
 

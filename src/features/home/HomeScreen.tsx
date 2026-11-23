@@ -3,6 +3,7 @@ import {
   useBloqueoScroll,
 } from "@/components/bloqueoScroll";
 import { PrimaryButton } from "@/components/ui/Buttons";
+import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import {
@@ -34,14 +35,12 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import {
-  BuscadorEnLista,
-  BuscadorFlotante,
-  MARGEN_FIJO,
+  ALTO_CABECERA,
+  ALTO_FILA_PILDORAS,
+  CabeceraInicio,
 } from "./components/BuscadorFlotante";
-import { ALTO_PILDORA } from "@/features/busqueda/components/PildoraCristal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryRow } from "./components/CategoryRow";
-import { HomeHeader } from "./components/HomeHeader";
 import { FeedIntro } from "./components/SectionAnuncio";
 import { SectionTitle } from "./components/SectionTitle";
 import { TarjetaPublicacion } from "./components/TarjetaPublicacion";
@@ -100,31 +99,40 @@ export const HomeScreen = memo(function HomeScreen() {
   );
   const { query, category: activeCategory } = filters;
 
-  // Posiciones para el buscador flotante y sus píldoras de categorías (hilo de UI)
+  // Posiciones para las píldoras de categorías que flotan arriba (hilo de UI)
   const scrollY = useSharedValue(0);
-  const buscadorY = useSharedValue(-1);
-  const altoCabecera = useSharedValue(0);
-  const altoBanner = useSharedValue(0);
-  const altoCategorias = useSharedValue(0);
   // Mientras se arrastran las fotos de una tarjeta grande, la lista no se mueve
   const { bloqueo, propsBloqueo } = useBloqueoScroll();
-  const alHacerScroll = useAnimatedScrollHandler((event) => {
-    // Los carruseles horizontales de las tarjetas también mandan sus eventos aquí (con y = 0):
-    // sin este filtro el buscador flotante y las píldoras parpadeaban al arrastrar las fotos.
-    // La lista solo se mueve en vertical: un contenido más ancho que la vista es de un carrusel.
-    if (event.contentSize.width > event.layoutMeasurement.width + 1) return;
-    scrollY.set(event.contentOffset.y);
+  // 1 mientras el dedo o la inercia mueven la lista
+  const arrastre = useSharedValue(0);
+  const alHacerScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      // Un contenido más ancho que la vista es un carrusel de una tarjeta, no la lista
+      if (event.contentSize.width > event.layoutMeasurement.width + 1) return;
+      scrollY.set(event.contentOffset.y);
+    },
+    onBeginDrag: () => {
+      arrastre.set(1);
+    },
+    onEndDrag: (event) => {
+      // En iOS, soltar sin velocidad no genera inercia (ni aviso de que terminó)
+      if (Math.abs(event.velocity?.y ?? 0) < 0.05) arrastre.set(0);
+    },
+    onMomentumBegin: () => {
+      arrastre.set(1);
+    },
+    onMomentumEnd: () => {
+      arrastre.set(0);
+    },
   });
-  const alMedirBuscador = useCallback(
-    (event: LayoutChangeEvent) =>
-      buscadorY.set(arriba + event.nativeEvent.layout.y),
-    [buscadorY, arriba],
+  // Mientras la lista o un carrusel se mueven, las animaciones decorativas se detienen
+  const pausa = useDerivedValue<number>(() =>
+    arrastre.get() === 1 || bloqueo.get() === 1 ? 1 : 0,
   );
-  const alMedirCabecera = useCallback(
-    (event: LayoutChangeEvent) =>
-      altoCabecera.set(event.nativeEvent.layout.height),
-    [altoCabecera],
-  );
+
+  // Alto del banner y de las categorías cuadradas: al pasar estas salen las píldoras
+  const altoBanner = useSharedValue(0);
+  const altoCategorias = useSharedValue(0);
   const alMedirBanner = useCallback(
     (event: LayoutChangeEvent) =>
       altoBanner.set(event.nativeEvent.layout.height),
@@ -135,33 +143,11 @@ export const HomeScreen = memo(function HomeScreen() {
       altoCategorias.set(event.nativeEvent.layout.height),
     [altoCategorias],
   );
-  // Las píldoras aparecen cuando la fila de categorías ya quedó oculta tras el buscador fijo
+  // Las categorías cuadradas terminan de pasar por debajo de donde salen las píldoras
   const umbralPildoras = useDerivedValue(() =>
     altoCategorias.get() > 0
-      ? arriba +
-        altoCabecera.get() +
-        altoBanner.get() +
-        altoCategorias.get() -
-        (arriba + MARGEN_FIJO + ALTO_PILDORA)
+      ? altoBanner.get() + altoCategorias.get() - ALTO_FILA_PILDORAS
       : 0,
-  );
-  const cabecera = useMemo(
-    () => (
-      <View onLayout={alMedirCabecera}>
-        <HomeHeader
-          onLayoutBuscador={alMedirBuscador}
-          buscador={
-            <BuscadorEnLista
-              scrollY={scrollY}
-              reposoY={buscadorY}
-              arriba={arriba}
-              onPress={openSearch}
-            />
-          }
-        />
-      </View>
-    ),
-    [alMedirCabecera, alMedirBuscador, scrollY, buscadorY, arriba, openSearch],
   );
 
   const renderItem = useCallback(
@@ -281,36 +267,37 @@ export const HomeScreen = memo(function HomeScreen() {
 
   return (
     <BloqueoScrollContext.Provider value={bloqueo}>
-      <View style={{ flex: 1 }}>
-        <Animated.FlatList
-          animatedProps={propsBloqueo}
-          style={styles.homeList}
-          data={rows}
-          keyExtractor={homeRowKey}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            styles.productsContent,
-            { paddingTop: arriba },
-          ]}
-          ListHeaderComponent={cabecera}
-          onScroll={alHacerScroll}
-          scrollEventThrottle={16}
-          renderItem={renderItem}
-          initialNumToRender={6}
-          maxToRenderPerBatch={4}
-          windowSize={7}
-          removeClippedSubviews
-        />
-        <BuscadorFlotante
-          scrollY={scrollY}
-          reposoY={buscadorY}
-          arriba={arriba}
-          umbralPildoras={umbralPildoras}
-          activeCategory={activeCategory}
-          onToggleCategory={toggleCategory}
-          onPress={openSearch}
-        />
-      </View>
+      <PausaBrilloContext.Provider value={pausa}>
+        <View style={{ flex: 1 }}>
+          <Animated.FlatList
+            animatedProps={propsBloqueo}
+            style={styles.homeList}
+            data={rows}
+            keyExtractor={homeRowKey}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[
+              styles.productsContent,
+              // Empieza debajo de la cabecera fija
+              { paddingTop: arriba + ALTO_CABECERA },
+            ]}
+            onScroll={alHacerScroll}
+            scrollEventThrottle={16}
+            renderItem={renderItem}
+            initialNumToRender={6}
+            maxToRenderPerBatch={4}
+            windowSize={7}
+            removeClippedSubviews
+          />
+          <CabeceraInicio
+            scrollY={scrollY}
+            arriba={arriba}
+            umbralPildoras={umbralPildoras}
+            activeCategory={activeCategory}
+            onToggleCategory={toggleCategory}
+            onBuscar={openSearch}
+          />
+        </View>
+      </PausaBrilloContext.Provider>
     </BloqueoScrollContext.Provider>
   );
 });

@@ -7,6 +7,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 
+import { useEnPausa } from "@/components/bloqueoScroll";
 import { FRASE_BUSQUEDA_FIJA, FRASES_BUSQUEDA } from "../frasesBusqueda";
 
 /** Duración de cada cambio y pausa con la frase quieta */
@@ -29,7 +30,10 @@ export function PlaceholderRotativo({
 }) {
   const reduceMotion = useReducedMotion();
   const [indice, setIndice] = useState(0);
-  const rota = activo && !reduceMotion;
+  // Mientras la pantalla se desplaza no cambia de frase: cada cambio anima la entrada y la
+  // salida, y eso durante un scroll lo hace temblar
+  const enPausa = useEnPausa();
+  const rota = activo && !reduceMotion && !enPausa;
 
   useEffect(() => {
     if (!rota) return;
@@ -58,10 +62,12 @@ export function PlaceholderRotativo({
           key={indice}
           numberOfLines={1}
           // Entra desde abajo y sale hacia arriba
-          entering={FadeInDown.duration(TRANSICION_MS).easing(EASE).withInitialValues({
-            opacity: 0,
-            transform: [{ translateY: 10 }],
-          })}
+          entering={FadeInDown.duration(TRANSICION_MS)
+            .easing(EASE)
+            .withInitialValues({
+              opacity: 0,
+              transform: [{ translateY: 10 }],
+            })}
           exiting={FadeOutUp.duration(TRANSICION_MS).easing(EASE)}
           style={[style, styles.frase]}
         >

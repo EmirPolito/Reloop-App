@@ -1,7 +1,6 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { PildoraCristal } from "@/features/busqueda/components/PildoraCristal";
-
+import { BotonBarra } from "@/components/ui/BotonBarra";
 import { useAppNavigation } from "@/features/navigation/useAppNavigation";
 import { unreadBadgeLabel } from "@/features/notificaciones/notificationRules";
 import { useNotifications } from "@/features/notificaciones/NotificationsProvider";
@@ -13,33 +12,23 @@ import {
 } from "./IconoNotificacion";
 
 /**
- * Botón circular de cristal (el estilo del buscador) con la campana del encabezado del
- * inicio: abre las notificaciones y muestra cuántas hay sin leer.
+ * Botón de la campana del encabezado del inicio, con el mismo estilo de los botones de los
+ * demás módulos (`BotonBarra`): abre las notificaciones y muestra cuántas hay sin leer.
  */
-export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
+export function NotificationBellButton() {
   const { isDark } = useAppTheme();
   const { openNotifications } = useAppNavigation();
   const { unreadCount } = useNotifications();
 
   return (
-    <Pressable
-      onPress={openNotifications}
-      style={({ pressed }) => [
-        { width: lado, height: lado },
-        pressed && { transform: [{ scale: 0.98 }] },
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={
-        unreadCount > 0
-          ? `Notificaciones, ${unreadCount} sin leer`
-          : "Notificaciones"
-      }
-    >
-      <PildoraCristal
-        contentStyle={[
-          styles.boton,
-          { width: lado, height: lado, minHeight: lado },
-        ]}
+    <View>
+      <BotonBarra
+        etiqueta={
+          unreadCount > 0
+            ? `Notificaciones, ${unreadCount} sin leer`
+            : "Notificaciones"
+        }
+        onPress={openNotifications}
       >
         {/* De contorno; rellena cuando hay notificaciones sin leer */}
         {unreadCount > 0 ? (
@@ -50,7 +39,7 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
         ) : (
           <IconoNotificacion size={24} color={isDark ? "#FFFFFF" : "#23242C"} />
         )}
-      </PildoraCristal>
+      </BotonBarra>
       {/* Fuera del cristal, que recorta lo que sale de él */}
       {unreadCount > 0 ? (
         <View style={styles.contador}>
@@ -59,16 +48,11 @@ export function NotificationBellButton({ lado = 45 }: { lado?: number }) {
           </Text>
         </View>
       ) : null}
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  boton: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    justifyContent: "center",
-  },
   contador: {
     position: "absolute",
     top: -3,

@@ -1,4 +1,9 @@
-import { memo, useState } from "react";
+import MaskedViewOriginal, {
+  type MaskedViewProps,
+} from "@react-native-masked-view/masked-view";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import { memo, useMemo, useState, type ComponentType } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -12,156 +17,121 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { PressableSuave } from "@/components/PressableSuave";
 import { COLA_NEBLINA, Neblina } from "@/features/busqueda/components/Neblina";
-import { PlaceholderRotativo } from "@/features/busqueda/components/PlaceholderRotativo";
+import { CON_DESENFOQUE } from "@/features/busqueda/components/PildoraCristal";
 import {
-  ALTO_PILDORA,
-  GROSOR_LUPA,
-  PildoraCristal,
-} from "@/features/busqueda/components/PildoraCristal";
-import {
-  ALTO_PILDORA_OPCION,
+  ALTO_PILDORA_ICONO,
   FilaPildoras,
   PildoraOpcion,
 } from "@/features/busqueda/components/PildoraOpcion";
-import { ETIQUETA_BUSQUEDA } from "@/features/busqueda/frasesBusqueda";
 import { CATEGORIES } from "@/features/marketplace/data";
 import type { CategoryId } from "@/features/marketplace/types";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { CATEGORY_IMAGES_CRISTAL } from "@/features/shared/constants";
-import { IconoBusqueda } from "./IconosTarjeta";
+import { HomeHeader } from "./HomeHeader";
 
-/** Separación con el borde de arriba cuando el buscador ya quedó fijo */
+/** Separación con el borde de arriba de lo que queda fijo (la usa la búsqueda) */
 export const MARGEN_FIJO = 8;
-/** Del buscador al borde de abajo de las píldoras (8 de separación + su alto) */
-const HASTA_PILDORAS = 8 + ALTO_PILDORA_OPCION;
-/** Sin píldoras la neblina sube: se desvanece justo debajo del buscador */
-const SUBIDA_SIN_PILDORAS = HASTA_PILDORAS - 8;
-/** Tramo de scroll en el que aparece la neblina, justo antes de que el buscador quede fijo */
+/** Alto de la cabecera (logo y botones de 45 con 5 de aire arriba) */
+export const ALTO_CABECERA = 50;
+/** Lo que la fila de píldoras ocupa: su alto más el aire de arriba y abajo de `FilaPildoras` */
+export const ALTO_FILA_PILDORAS = 8 + ALTO_PILDORA_ICONO + 8;
+/** Todo lo fijo de arriba (sin la barra de estado): la cabecera y, debajo, las píldoras */
+export const ALTO_FIJO = ALTO_CABECERA + ALTO_FILA_PILDORAS;
+/** Scroll en el que la neblina termina de aparecer (como en las páginas legales) */
 const TRAMO_NEBLINA = 24;
-/** Lo que la neblina baja de más, además de su cola normal (igual que en las páginas legales) */
-const EXTRA_NEBLINA = 16;
-/** Del borde de arriba de la pantalla al final de la neblina, sin contar `fijo` */
-const ALTO_NEBLINA =
-  ALTO_PILDORA + HASTA_PILDORAS + COLA_NEBLINA + EXTRA_NEBLINA;
-
 const EASE = Easing.out(Easing.cubic);
-/** Las píldoras bajan desde detrás del buscador; al irse, solo se desvanecen */
+/** Las píldoras bajan desde detrás de la cabecera; al irse, solo se desvanecen */
 const ENTRADA_PILDORAS = FadeInDown.duration(220)
   .easing(EASE)
   .withInitialValues({ opacity: 0, transform: [{ translateY: -8 }] });
-const SALIDA = FadeOut.duration(160).easing(EASE);
+const SALIDA_PILDORAS = FadeOut.duration(160).easing(EASE);
 
-/** Si el buscador de la lista ya llegó arriba y debe verse el fijo (hilo de UI) */
-function estaFijo(scroll: number, reposo: number, fijo: number) {
-  "worklet";
-  return reposo >= 0 && scroll >= reposo - fijo;
+/** Lo que la neblina baja de más, además de su cola normal */
+const EXTRA_NEBLINA = 16;
+/**
+ * Velo del color de fondo en muchas capas: muy blanco desde arriba hasta el inicio de las
+ * píldoras (de `OPACIDAD_ARRIBA` a `OPACIDAD_PILDORAS`, apenas baja) y de ahí se desvanece a
+ * nada, con una curva que arranca y termina despacio (sin escalones ni final recto)
+ */
+const OPACIDAD_ARRIBA = 0.98;
+const OPACIDAD_PILDORAS = 0.92;
+const CAPAS_VELO = 18;
+/** `inicioPildoras`: dónde empiezan las píldoras, como fracción del alto del velo */
+function veloPorCapas(rgb: string, inicioPildoras: number) {
+  const colores: string[] = [];
+  const posiciones: number[] = [];
+  const curva = (t: number) => t * t * (3 - 2 * t);
+  // Tramo de arriba: casi igual de blanco hasta las píldoras
+  for (let i = 0; i < CAPAS_VELO; i++) {
+    const t = i / CAPAS_VELO;
+    const opacidad =
+      OPACIDAD_ARRIBA - (OPACIDAD_ARRIBA - OPACIDAD_PILDORAS) * curva(t);
+    colores.push(`rgba(${rgb},${opacidad.toFixed(3)})`);
+    posiciones.push(inicioPildoras * t);
+  }
+  // Desde las píldoras: se desvanece hasta nada
+  for (let i = 0; i <= CAPAS_VELO; i++) {
+    const t = i / CAPAS_VELO;
+    const opacidad = OPACIDAD_PILDORAS * (1 - curva(t));
+    colores.push(`rgba(${rgb},${opacidad.toFixed(3)})`);
+    posiciones.push(inicioPildoras + (1 - inicioPildoras) * t);
+  }
+  return {
+    colores: colores as unknown as readonly [string, string, ...string[]],
+    posiciones: posiciones as unknown as readonly [number, number, ...number[]],
+  };
 }
 
-/** La píldora de cristal del inicio: lupa y frases que rotan; tocarla abre la búsqueda */
-const PildoraBuscador = memo(function PildoraBuscador({
-  onPress,
-}: {
-  onPress: () => void;
-}) {
-  const { isDark } = useAppTheme();
-  return (
-    <PressableSuave
-      accessibilityRole="button"
-      accessibilityLabel={ETIQUETA_BUSQUEDA}
-      accessibilityHint="Abre la búsqueda"
-      onPress={onPress}
-    >
-      <PildoraCristal>
-        <IconoBusqueda
-          size={22}
-          color={isDark ? "#E3DEED" : "#4A4D57"}
-          grosorExtra={GROSOR_LUPA}
-        />
-        <View style={styles.texto}>
-          <PlaceholderRotativo
-            activo
-            style={{
-              fontFamily: "Inter_500Medium",
-              fontSize: 15,
-              color: isDark ? "#B3AEC0" : "#828690",
-            }}
-          />
-        </View>
-      </PildoraCristal>
-    </PressableSuave>
-  );
-});
+// Sus tipos son de una versión anterior de React (componente de clase): mismo componente, tipado
+const MaskedView =
+  MaskedViewOriginal as unknown as ComponentType<MaskedViewProps>;
+
+/** Intensidad del desenfoque donde es más fuerte (la hora y la cabecera) */
+const INTENSIDAD_DESENFOQUE = 22;
+/** Debajo de las píldoras, lo que baja el desvanecido del desenfoque (nada: termina en ellas) */
+const COLA_DESENFOQUE = 0;
 
 /**
- * El buscador dentro de la lista (en la cabecera del inicio): se mueve con el contenido de
- * forma nativa, sin depender de los eventos de scroll, así nunca va desfasado ni brinca.
- * Cuando llega arriba se oculta y en su lugar se ve el fijo (`BuscadorFlotante`).
+ * Lo de arriba del inicio: la cabecera (logo, búsqueda y campana), fija siempre, y debajo las
+ * categorías en píldoras, que salen al pasar las categorías cuadradas de la lista. El contenido pasa por debajo; al empezar el scroll aparece un
+ * desenfoque progresivo (una máscara en degradado, sin capas) que cubre desde la hora hasta un poco debajo de las píldoras: lo que
+ * pasa por detrás se ve borroso y con su color, con un velo claro suave para que se lea la
+ * cabecera. En Android (sin desenfoque en la app) es la neblina de color. En reposo no hay nada.
  */
-export const BuscadorEnLista = memo(function BuscadorEnLista({
+export const CabeceraInicio = memo(function CabeceraInicio({
   scrollY,
-  reposoY,
-  arriba,
-  onPress,
-}: {
-  scrollY: SharedValue<number>;
-  reposoY: SharedValue<number>;
-  arriba: number;
-  onPress: () => void;
-}) {
-  const fijo = arriba + MARGEN_FIJO;
-  const estilo = useAnimatedStyle(() => ({
-    opacity: estaFijo(scrollY.get(), reposoY.get(), fijo) ? 0 : 1,
-  }));
-  return (
-    <Animated.View style={estilo}>
-      <PildoraBuscador onPress={onPress} />
-    </Animated.View>
-  );
-});
-
-/**
- * Buscador fijo del inicio: aparece arriba justo cuando el de la lista llega a esa altura (en
- * ese punto los dos coinciden, así que el cambio no se nota). Ya fijo, una neblina cubre desde
- * el borde de arriba de la pantalla (la hora incluida) y difumina lo que pasa por detrás.
- * Cuando la fila de categorías del inicio ya pasó (`scrollY` > `umbralPildoras`), aparecen
- * debajo las categorías en píldoras.
- */
-export const BuscadorFlotante = memo(function BuscadorFlotante({
-  scrollY,
-  reposoY,
   arriba,
   umbralPildoras,
   activeCategory,
   onToggleCategory,
-  onPress,
+  onBuscar,
 }: {
   scrollY: SharedValue<number>;
-  /** Posición del buscador de la lista; negativa mientras no se ha medido */
-  reposoY: SharedValue<number>;
-  /** Alto de la barra de estado: el buscador queda fijo debajo de ella */
+  /** Alto de la barra de estado: todo va debajo de ella */
   arriba: number;
-  /** Scroll desde el que se muestran las píldoras; 0 o menos mientras no se ha medido */
+  /** Scroll desde el que salen las píldoras (ya pasaron las categorías cuadradas); 0 sin medir */
   umbralPildoras: SharedValue<number>;
   activeCategory: CategoryId | null;
   onToggleCategory: (category: CategoryId) => void;
-  onPress: () => void;
+  onBuscar: () => void;
 }) {
   const { isDark } = useAppTheme();
-  const [fijado, setFijado] = useState(false);
-  const [conPildoras, setConPildoras] = useState(false);
-  // 1 con las píldoras a la vista: la neblina baja para cubrirlas
-  const pildoras = useSharedValue(0);
-  const fijo = arriba + MARGEN_FIJO;
-
-  // Solo avisan a React cuando cambia de lado del umbral, no en cada frame del scroll
-  useAnimatedReaction(
-    () => estaFijo(scrollY.get(), reposoY.get(), fijo),
-    (actual, antes) => {
-      if (actual !== antes) scheduleOnRN(setFijado, actual);
-    },
+  const altoFijo = arriba + ALTO_FIJO;
+  const altoNeblina = altoFijo + COLA_NEBLINA + EXTRA_NEBLINA;
+  const velo = useMemo(
+    () =>
+      veloPorCapas(
+        isDark ? "22,22,22" : "252,252,252",
+        (arriba + ALTO_CABECERA) / (altoFijo + COLA_DESENFOQUE),
+      ),
+    [isDark, arriba, altoFijo],
   );
+
+  // Las píldoras salen al pasar las categorías cuadradas de la lista y se van al regresar.
+  // Solo avisa a React cuando cambia de lado del umbral, nunca en cada cuadro del scroll
+  const [conPildoras, setConPildoras] = useState(false);
+  const pildoras = useSharedValue(0);
   useAnimatedReaction(
     () => umbralPildoras.get() > 0 && scrollY.get() > umbralPildoras.get(),
     (mostrar, antes) => {
@@ -173,48 +143,71 @@ export const BuscadorFlotante = memo(function BuscadorFlotante({
     },
   );
 
-  // Aparece justo antes de que el buscador quede fijo. Sin píldoras sube para terminar justo
-  // bajo el buscador (si no, tapaba el contenido donde aún no hay nada)
-  const estiloNeblina = useAnimatedStyle(() => {
-    const reposo = reposoY.get();
-    const avance =
-      (scrollY.get() - (reposo - fijo - TRAMO_NEBLINA)) / TRAMO_NEBLINA;
-    return {
-      opacity: reposo < 0 ? 0 : Math.min(Math.max(avance, 0), 1),
-      transform: [{ translateY: -(1 - pildoras.get()) * SUBIDA_SIN_PILDORAS }],
-    };
-  });
-
-  const estiloBuscador = useAnimatedStyle(() => ({
-    opacity: estaFijo(scrollY.get(), reposoY.get(), fijo) ? 1 : 0,
+  // Sin píldoras, la neblina sube y termina justo debajo de la cabecera
+  const estiloNeblina = useAnimatedStyle(() => ({
+    opacity: Math.min(Math.max(scrollY.get() / TRAMO_NEBLINA, 0), 1),
+    transform: [{ translateY: -(1 - pildoras.get()) * ALTO_FILA_PILDORAS }],
   }));
 
   return (
     <>
       <Animated.View
         pointerEvents="none"
-        style={[
-          styles.neblina,
-          // Por capas desde el buscador, a lo largo de las píldoras y apenas debajo de ellas
-          { height: fijo + ALTO_NEBLINA },
-          estiloNeblina,
-        ]}
+        style={[styles.neblina, { height: altoNeblina }, estiloNeblina]}
       >
-        <Neblina
-          style={StyleSheet.absoluteFill}
-          corte={(fijo + ALTO_PILDORA) / (fijo + ALTO_NEBLINA)}
-        />
+        {CON_DESENFOQUE ? (
+          <>
+            {/* Un solo desenfoque con una máscara en degradado: completo hasta media fila de
+                píldoras y de ahí se desvanece suave hasta el final de ellas, sin escalones ni orillas */}
+            <MaskedView
+              style={[
+                styles.capaDesenfoque,
+                { height: altoFijo + COLA_DESENFOQUE },
+              ]}
+              maskElement={
+                <LinearGradient
+                  colors={["#000000", "#000000", "rgba(0,0,0,0)"]}
+                  locations={[
+                    0,
+                    (altoFijo - ALTO_FILA_PILDORAS / 2) /
+                      (altoFijo + COLA_DESENFOQUE),
+                    1,
+                  ]}
+                  style={StyleSheet.absoluteFill}
+                />
+              }
+            >
+              <BlurView
+                intensity={INTENSIDAD_DESENFOQUE}
+                tint={isDark ? "dark" : "light"}
+                style={StyleSheet.absoluteFill}
+              />
+            </MaskedView>
+            {/* Velo blanco por capas: más fuerte en la hora y se desvanece muy gradual hasta
+                nada debajo de las píldoras, sin que se note ninguna línea */}
+            <LinearGradient
+              colors={velo.colores}
+              locations={velo.posiciones}
+              style={[
+                styles.capaDesenfoque,
+                { height: altoFijo + COLA_DESENFOQUE },
+              ]}
+            />
+          </>
+        ) : (
+          // Tapa casi por completo hasta las píldoras y de ahí se desvanece
+          <Neblina
+            style={StyleSheet.absoluteFill}
+            corte={(altoFijo - ALTO_FILA_PILDORAS / 2) / altoNeblina}
+          />
+        )}
       </Animated.View>
-      {/* Sin fijar no recibe toques: así no tapa el logo ni la campana */}
-      <View
-        pointerEvents={fijado ? "box-none" : "none"}
-        style={[styles.capa, { top: fijo }]}
-      >
-        <Animated.View style={[styles.centro, estiloBuscador]}>
-          <PildoraBuscador onPress={onPress} />
-        </Animated.View>
+      <View pointerEvents="box-none" style={[styles.capa, { top: arriba }]}>
+        <View style={styles.cabecera}>
+          <HomeHeader onBuscar={onBuscar} />
+        </View>
         {conPildoras ? (
-          <Animated.View entering={ENTRADA_PILDORAS} exiting={SALIDA}>
+          <Animated.View entering={ENTRADA_PILDORAS} exiting={SALIDA_PILDORAS}>
             <FilaPildoras>
               {CATEGORIES.map((category) => (
                 <PildoraOpcion
@@ -237,14 +230,14 @@ export const BuscadorFlotante = memo(function BuscadorFlotante({
 
 const styles = StyleSheet.create({
   capa: { position: "absolute", left: 0, right: 0 },
-  // Del borde de arriba de la pantalla hasta un poco más abajo de las píldoras
-  neblina: { position: "absolute", top: 0, left: 0, right: 0 },
-  // Mismo ancho que la lista del inicio (máximo 760, con 16 de margen a cada lado)
-  centro: {
+  // La cabecera con el mismo ancho y márgenes que la lista del inicio
+  cabecera: {
     width: "100%",
     maxWidth: 760,
     alignSelf: "center",
     paddingHorizontal: 16,
   },
-  texto: { flex: 1, minWidth: 0, alignSelf: "stretch" },
+  // Del borde de arriba de la pantalla hasta un poco más abajo de las píldoras
+  neblina: { position: "absolute", top: 0, left: 0, right: 0 },
+  capaDesenfoque: { position: "absolute", top: 0, left: 0, right: 0 },
 });

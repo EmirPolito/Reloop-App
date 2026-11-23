@@ -6,8 +6,13 @@ import {
   useBloqueoScroll,
 } from "@/components/bloqueoScroll";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState, type ReactNode } from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Animated as AnimatedNativo,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -134,8 +139,8 @@ export function PerfilDesplazable({
   const altoHeader = insets.top + ALTO_HEADER;
 
   const scrollY = useSharedValue(0);
-  // 1 mientras el dedo o la inercia mueven el scroll: las insignias detienen su brillo
-  const desplazando = useSharedValue(0);
+  // 1 mientras el dedo o la inercia mueven el scroll
+  const arrastre = useSharedValue(0);
   // Dónde termina el nombre grande: ahí empieza a entrar el título pequeño
   const finNombre = useSharedValue(Number.MAX_SAFE_INTEGER);
   const [fallaPortada, setFallaPortada] = useState<string | null>(null);
@@ -150,16 +155,25 @@ export function PerfilDesplazable({
       scrollY.set(e.contentOffset.y);
     },
     onBeginDrag: () => {
-      desplazando.set(1);
+      arrastre.set(1);
     },
     onEndDrag: (e) => {
       // En iOS, soltar sin velocidad no genera inercia (ni aviso de que terminó)
-      if (esIOS && Math.abs(e.velocity?.y ?? 0) < 0.05) desplazando.set(0);
+      if (esIOS && Math.abs(e.velocity?.y ?? 0) < 0.05) arrastre.set(0);
+    },
+    onMomentumBegin: () => {
+      arrastre.set(1);
     },
     onMomentumEnd: () => {
-      desplazando.set(0);
+      arrastre.set(0);
     },
   });
+  // Las insignias detienen su brillo mientras algo se mueve: el scroll, el carrusel de la
+  // tarjeta grande o el rebote al estirar arriba (al soltar sin inercia el rebote sigue, y si
+  // el brillo arrancaba ahí la portada temblaba)
+  const desplazando = useDerivedValue<number>(() =>
+    arrastre.get() === 1 || bloqueo.get() === 1 || scrollY.get() < 0 ? 1 : 0,
+  );
 
   // Cada animación depende de un valor derivado que ya está recortado a su rango: fuera de
   // él el valor no cambia y no hay nada que actualizar. Si dependieran del scroll en crudo,
@@ -167,7 +181,6 @@ export function PerfilDesplazable({
   const colapso = useDerivedValue(() =>
     Math.min(Math.max(scrollY.get(), 0), RECORRIDO),
   );
-  const estirado = useDerivedValue(() => Math.max(-scrollY.get(), 0));
   // El header fijo (la portada ya colapsada) entra por opacidad al terminar el recorrido
   const headerFijoVisible = useDerivedValue(() =>
     scrollY.get() >= RECORRIDO ? 1 : 0,
@@ -194,12 +207,34 @@ export function PerfilDesplazable({
       Extrapolation.CLAMP,
     ),
   );
-  // Portada: vive dentro del scroll y se mueve con él de forma nativa (nunca se compensa su
-  // posición, que llegaría un cuadro tarde y la haría temblar respecto al avatar). Al estirar
-  // hacia abajo (iOS) solo crece hacia arriba desde su base, cubriendo el hueco de encima.
-  const estiloEstiramiento = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + estirado.get() / altoPortada }],
-  }));
+  // Portada: vive dentro del scroll y se mueve con él de forma nativa. Al estirar hacia abajo
+  // (iOS) crece hacia arriba desde su base. Ese estiramiento va con el driver nativo de
+  // Animated, conectado al evento de scroll del lado nativo: se aplica en el mismo cuadro que
+  // el scroll. Con Reanimated (sin la opción nativa, que Expo Go no permite) llegaba un cuadro
+  // tarde y la orilla de arriba temblaba persiguiendo al dedo.
+  const scrollRef = useRef<Animated.ScrollView>(null);
+  const [scrollNativo] = useState(() => new AnimatedNativo.Value(0));
+  useEffect(() => {
+    const vista = scrollRef.current;
+    if (!vista) return;
+    const enlace = AnimatedNativo.attachNativeEvent(
+      vista,
+      "onScroll",
+      [{ nativeEvent: { contentOffset: { y: scrollNativo } } }],
+      undefined,
+    );
+    return () => enlace.detach();
+  }, [scrollNativo]);
+  const escalaPortada = useMemo(
+    () =>
+      scrollNativo.interpolate({
+        inputRange: [-altoPortada, 0],
+        outputRange: [2, 1],
+        extrapolateLeft: "extend",
+        extrapolateRight: "clamp",
+      }),
+    [scrollNativo, altoPortada],
+  );
 
   // Header fijo: la portada ya colapsada, encima del contenido
   const estiloHeaderFijo = useAnimatedStyle(() => ({
@@ -239,6 +274,7 @@ export function PerfilDesplazable({
       <PausaBrilloContext.Provider value={desplazando}>
         <View style={{ flex: 1, backgroundColor: fondo }}>
           <Animated.ScrollView
+            ref={scrollRef}
             animatedProps={propsBloqueo}
             style={styles.scroll}
             onScroll={onScroll}
@@ -279,12 +315,11 @@ export function PerfilDesplazable({
             </View>
 
             {/* Portada: dentro del scroll y detrás del avatar (que se dibuja después) */}
-            <Animated.View
+            <AnimatedNativo.View
               pointerEvents="none"
               style={[
                 styles.portada,
-                { height: altoPortada },
-                estiloEstiramiento,
+                { height: altoPortada, transform: [{ scale: escalaPortada }] },
               ]}
             >
               <CapaPortada
@@ -293,7 +328,7 @@ export function PerfilDesplazable({
                 insetTop={insets.top}
                 onError={() => setFallaPortada(profile.cover)}
               />
-            </Animated.View>
+            </AnimatedNativo.View>
 
             {/* Avatar (sobresale de la portada) y, a su derecha, números de estadísticas */}
             <View

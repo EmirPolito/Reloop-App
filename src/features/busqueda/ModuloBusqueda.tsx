@@ -51,7 +51,8 @@ import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { APP_BACKGROUND } from "@/features/shared/constants";
 import { Text, TextInput } from "@/features/shared/Text";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
-import { COLA_NEBLINA, Neblina } from "./components/Neblina";
+import { NeblinaDesenfocada } from "./components/NeblinaDesenfocada";
+import { PlaceholderRotativo } from "./components/PlaceholderRotativo";
 import {
   ALTO_PILDORA,
   GROSOR_LUPA,
@@ -318,11 +319,11 @@ export function ModuloBusqueda() {
   useEffect(() => {
     desplazado.set(0);
   }, [vista, desplazado]);
-  // La neblina va por capas desde el buscador hasta un poco debajo de las píldoras (fila de
-  // 8 + 40 + 8 bajo el buscador); sin píldoras, un poco debajo del buscador
-  const altoNeblina = altoCabecera + (buscaUsuarios ? 16 : COLA_NEBLINA - 8);
+  // La misma neblina del inicio: muy blanca hasta las píldoras (fila de 8 + 40 + 8 bajo el
+  // buscador), se desvanece a lo largo de ellas y termina en su borde de abajo; sin píldoras
+  // (buscando personas), se desvanece justo debajo del buscador
+  const altoNeblina = altoCabecera + (buscaUsuarios ? 16 : 0);
   const finBuscador = altoCabecera - (buscaUsuarios ? 0 : 56);
-  const corteNeblina = altoCabecera > 0 ? finBuscador / altoNeblina : undefined;
   const estiloNeblina = useAnimatedStyle(() => ({
     opacity: Math.min(Math.max(desplazado.get() / TRAMO_NEBLINA, 0), 1),
   }));
@@ -456,7 +457,17 @@ export function ModuloBusqueda() {
             estiloNeblina,
           ]}
         >
-          <Neblina style={StyleSheet.absoluteFill} corte={corteNeblina} />
+          {altoCabecera > 0 ? (
+            <NeblinaDesenfocada
+              alto={altoNeblina}
+              inicioVelo={buscaUsuarios ? finBuscador - 14 : finBuscador}
+              inicioDesenfoque={
+                buscaUsuarios
+                  ? finBuscador - 6
+                  : (finBuscador + altoNeblina) / 2
+              }
+            />
+          ) : null}
         </Animated.View>
         <View
           style={[
@@ -480,20 +491,30 @@ export function ModuloBusqueda() {
               color={isDark ? "#E3DEED" : "#4A4D57"}
               grosorExtra={GROSOR_LUPA}
             />
-            <TextInput
-              ref={entradaRef}
-              accessibilityLabel={ETIQUETA_BUSQUEDA}
-              accessibilityHint={PISTA_BUSQUEDA}
-              value={texto}
-              onChangeText={setTexto}
-              onSubmitEditing={() => agregar(texto)}
-              placeholder="Buscar"
-              placeholderTextColor={isDark ? "#B3AEC0" : "#828690"}
-              autoCapitalize="none"
-              autoCorrect={!buscaUsuarios}
-              returnKeyType="search"
-              style={[styles.entrada, { color: colores.texto }]}
-            />
+            {/* Mientras está vacío, las mismas frases animadas que tenía el buscador del inicio
+                (el placeholder nativo no se puede animar) */}
+            <View style={styles.cajaEntrada}>
+              <PlaceholderRotativo
+                activo={!texto}
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 15,
+                  color: isDark ? "#B3AEC0" : "#828690",
+                }}
+              />
+              <TextInput
+                ref={entradaRef}
+                accessibilityLabel={ETIQUETA_BUSQUEDA}
+                accessibilityHint={PISTA_BUSQUEDA}
+                value={texto}
+                onChangeText={setTexto}
+                onSubmitEditing={() => agregar(texto)}
+                autoCapitalize="none"
+                autoCorrect={!buscaUsuarios}
+                returnKeyType="search"
+                style={[styles.entrada, { color: colores.texto }]}
+              />
+            </View>
             {texto ? (
               <PressableScale
                 accessibilityRole="button"
@@ -711,6 +732,8 @@ const styles = StyleSheet.create({
   },
   pildora: { flex: 1 },
   // Sin padding vertical: la píldora mide lo mismo que la del inicio (con él crecía a 52)
+  // El input y, encima de él, las frases que rotan
+  cajaEntrada: { flex: 1, minWidth: 0, alignSelf: "stretch" },
   entrada: {
     flex: 1,
     minWidth: 0,

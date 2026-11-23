@@ -1,9 +1,13 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from "react";
 import {
   useAnimatedProps,
+  useAnimatedReaction,
   useSharedValue,
   type SharedValue,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
+
+import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
 
 /**
  * Mientras un carrusel horizontal se arrastra (1), la lista vertical que lo contiene no se
@@ -26,4 +30,21 @@ export function useBloqueoScroll() {
 /** Para el carrusel: el valor de la lista que lo contiene (o null si no hay) */
 export function useBloqueoDeLista() {
   return useContext(BloqueoScrollContext);
+}
+
+/**
+ * `true` mientras la pantalla se desplaza (ver `PausaBrilloContext`): para detener lo que
+ * rota con un intervalo (frases, banners). Solo cambia al empezar y al terminar, nunca por
+ * cuadro. Sin pantalla que lo dé, nunca pausa.
+ */
+export function useEnPausa(): boolean {
+  const pausa = useContext(PausaBrilloContext);
+  const [enPausa, setEnPausa] = useState(false);
+  useAnimatedReaction(
+    () => (pausa ? pausa.get() : 0),
+    (actual, anterior) => {
+      if (actual !== anterior) scheduleOnRN(setEnPausa, actual === 1);
+    },
+  );
+  return enPausa;
 }

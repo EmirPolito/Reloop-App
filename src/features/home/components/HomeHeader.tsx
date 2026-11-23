@@ -1,31 +1,28 @@
 import { Image } from "expo-image";
-import { memo, type ReactNode } from "react";
-import { View, type LayoutChangeEvent } from "react-native";
+import { memo } from "react";
+import { View } from "react-native";
 
-import { ALTO_PILDORA } from "@/features/busqueda/components/PildoraCristal";
+import { BotonBarra } from "@/components/ui/BotonBarra";
 import { NotificationBellButton } from "@/components/ui/NotificationBellButton";
-
+import { ETIQUETA_BUSQUEDA } from "@/features/busqueda/frasesBusqueda";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
-import { SelectorUniversidad } from "./SelectorUniversidad";
+import { IconoBusqueda } from "./IconosTarjeta";
 
 /**
- * Cabecera del inicio: logo, comunidad y el buscador (`buscador`), que se mueve con la lista
- * hasta quedar fijo arriba. Su posición se informa con `onLayoutBuscador`.
+ * Cabecera del inicio: el logo y, a la derecha, la búsqueda (lleva al módulo de búsqueda) a la
+ * izquierda de la campana, con los mismos botones de los demás módulos (`BotonBarra`).
  */
 export const HomeHeader = memo(function HomeHeader({
-  buscador,
-  onLayoutBuscador,
+  onBuscar,
 }: {
-  /** El buscador, que va en la cabecera y se mueve con la lista */
-  buscador: ReactNode;
-  onLayoutBuscador: (event: LayoutChangeEvent) => void;
+  onBuscar: () => void;
 }) {
   // styles solo se usa para el logo
-  const { styles } = useAppTheme();
+  const { styles, isDark } = useAppTheme();
 
   return (
     <View className="w-full">
-      <View className="flex-row items-center justify-between gap-3 pt-[5px]">
+      <View className="flex-row items-center justify-between gap-3">
         {/* Logo — lado izquierdo */}
         <View className="flex-1 min-w-0 flex-row items-center gap-2">
           <Image
@@ -36,20 +33,17 @@ export const HomeHeader = memo(function HomeHeader({
           />
         </View>
 
-        {/* Lado derecho: el círculo de la universidad (abre su menú) a la izquierda de la campana */}
+        {/* Lado derecho: la búsqueda a la izquierda de la campana */}
         <View className="flex-row items-center gap-2">
-          <SelectorUniversidad />
+          <BotonBarra etiqueta={ETIQUETA_BUSQUEDA} onPress={onBuscar}>
+            <IconoBusqueda
+              size={23}
+              color={isDark ? "#FFFFFF" : "#23242C"}
+              grosorExtra={0.5}
+            />
+          </BotonBarra>
           <NotificationBellButton />
         </View>
-      </View>
-
-      {/* El buscador: mismo alto y márgenes que tenía la píldora */}
-      <View
-        className="mt-5 mb-1"
-        style={{ height: ALTO_PILDORA }}
-        onLayout={onLayoutBuscador}
-      >
-        {buscador}
       </View>
     </View>
   );

@@ -11,7 +11,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  type SharedValue,
+  type DerivedValue,
 } from "react-native-reanimated";
 import Svg, {
   ClipPath,
@@ -43,10 +43,12 @@ const FIN = 26;
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 /**
- * Una pantalla con scroll pone aquí `1` mientras se desplaza: el brillo se detiene (cada
- * cuadro del barrido actualiza el SVG) y vuelve a empezar cuando termina el movimiento.
+ * Una pantalla con scroll pone aquí `1` mientras algo se desplaza (la lista, un carrusel o el
+ * rebote de arriba): las animaciones decorativas se detienen. Cada cuadro de una animación que
+ * no es transform u opacity (el barrido del SVG, las frases que entran y salen) se confirma en
+ * el árbol de vistas, y esos commits durante un scroll nativo lo hacen temblar en iOS.
  */
-export const PausaBrilloContext = createContext<SharedValue<number> | null>(
+export const PausaBrilloContext = createContext<DerivedValue<number> | null>(
   null,
 );
 

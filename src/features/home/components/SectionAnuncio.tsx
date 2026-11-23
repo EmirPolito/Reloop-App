@@ -1,3 +1,4 @@
+import { useEnPausa } from "@/components/bloqueoScroll";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -28,9 +29,18 @@ const GAP = 13; // separación entre anuncios (ajústala a gusto)
 const IMAGE_STYLE = { width: "100%", height: "100%" } as const;
 
 const BANNERS = [
-  { id: "banner-1", source: require("@/assets/images/home-banners/anuncio2.png") },
-  { id: "banner-2", source: require("@/assets/images/home-banners/1er-banner.png") },
-  { id: "banner-3", source: require("@/assets/images/home-banners/anuncio2.png") },
+  {
+    id: "banner-1",
+    source: require("@/assets/images/home-banners/anuncio2.png"),
+  },
+  {
+    id: "banner-2",
+    source: require("@/assets/images/home-banners/1er-banner.png"),
+  },
+  {
+    id: "banner-3",
+    source: require("@/assets/images/home-banners/anuncio2.png"),
+  },
 ];
 
 const COUNT = BANNERS.length;
@@ -87,8 +97,10 @@ export const FeedIntro = memo(function FeedIntro() {
     rawRef.current = 1;
   }, [width, step]);
 
+  // Mientras la pantalla se desplaza no avanza solo (su animación pelearía con el scroll)
+  const enPausa = useEnPausa();
   useEffect(() => {
-    if (width === 0) return;
+    if (width === 0 || enPausa) return;
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setInterval(() => {
       const next = rawRef.current + 1;
@@ -100,14 +112,10 @@ export const FeedIntro = memo(function FeedIntro() {
       clearInterval(timer);
       if (settleTimer) clearTimeout(settleTimer);
     };
-  }, [width, step, settle]);
+  }, [width, step, settle, enPausa]);
 
   return (
-    <View
-      className="w-full mb-3"
-      style={{ marginTop: 20 }}
-      onLayout={onLayout}
-    >
+    <View className="w-full mb-3" style={{ marginTop: 20 }} onLayout={onLayout}>
       <View
         accessibilityLabel="Carrusel de anuncios de ReLoop"
         className="w-full"
