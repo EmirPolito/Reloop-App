@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { NavigationIcon } from "@/components/iconos";
 import { conSalida } from "@/components/salidaModulo";
 import { useEliminarConEfecto } from "@/components/ui/Disolvible";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
@@ -18,7 +19,7 @@ import { BarraChats } from "./1-barra";
 import { CarruselSeguidos } from "./2-seguidos";
 import { PildorasSegmentadas } from "./3-filtros";
 import { EsqueletoChats, ListaChats } from "./4-lista";
-import { BulkMessageIcon, BulkSearchIcon } from "./components/IconosChats";
+import { BulkSearchIcon } from "./components/IconosChats";
 import { useAbrirChat } from "./hooks/useAbrirChat";
 import { useMensajesSinLeer } from "./hooks/useMensajesSinLeer";
 import { useChatActions, useChats } from "./ProveedorChats";
@@ -81,12 +82,12 @@ export function PantallaChats() {
   );
   const opciones = useMemo<{ id: Filtro; texto: string }[]>(
     () => [
-      { id: "todos", texto: "Todos" },
+      { id: "todos", texto: "Todo" },
       {
         id: "sinLeer",
         texto: sinLeer > 0 ? `Sin leer · ${sinLeer}` : "Sin leer",
       },
-      { id: "publicaciones", texto: "Publicaciones" },
+      { id: "publicaciones", texto: "Posts" },
     ],
     [sinLeer],
   );
@@ -202,7 +203,14 @@ export function PantallaChats() {
       ) : visibleChats.length === 0 ? (
         chats.length === 0 ? (
           <IllustratedEmptyState
-            icon={<BulkMessageIcon size={80} />}
+            icon={
+              <NavigationIcon
+                name="chat"
+                selected
+                size={80}
+                color={isDark ? "#c3c3c3" : "#0000001f"}
+              />
+            }
             title={
               status === "error"
                 ? "No pudimos cargar tus chats"
@@ -211,7 +219,7 @@ export function PantallaChats() {
             message={
               status === "error"
                 ? "Revisa tu conexión e inténtalo de nuevo."
-                : "Escribe a alguien desde un producto y tu chat aparecerá aquí."
+                : "Escribe a alguien y su chat aparecerá aquí."
             }
             style={estilos.vacio}
           />

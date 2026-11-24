@@ -1,5 +1,11 @@
 import { Image } from "expo-image";
-import { useRef, useState, type ComponentRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+  type ReactNode,
+} from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, {
@@ -49,6 +55,7 @@ export function CarruselAvatares({
   name,
   isDark,
   inicial,
+  reinicio,
   onCambio,
 }: {
   photo: string | null;
@@ -56,6 +63,8 @@ export function CarruselAvatares({
   isDark: boolean;
   /** Avatar guardado (ver indiceDeAvatar): va primero en la fila y centrado al abrir */
   inicial: number;
+  /** Al cambiar, la fila vuelve al principio sin animar (al reabrir el drawer) */
+  reinicio?: number;
   onCambio: (indice: number) => void;
 }) {
   const c = coloresEditar(isDark);
@@ -85,6 +94,12 @@ export function CarruselAvatares({
       }
     },
   );
+
+  // Volver al principio sin montar la fila otra vez: rehacerla al abrir cargaba todos los
+  // avatares justo mientras la card subía y trababa la entrada
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  }, [reinicio]);
 
   const centrar = (indice: number) =>
     scrollRef.current?.scrollTo({ x: indice * PASO, animated: !reduceMotion });

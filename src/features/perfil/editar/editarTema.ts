@@ -11,7 +11,7 @@ export const INTER = {
 export const DURACION_EDITAR = 200;
 export const EASE_EDITAR = Easing.out(Easing.cubic);
 
-/** Alto del contenido de los drawers de Editar perfil: el del fondo sin el botón negro (con él crece) */
+/** Alto mínimo del contenido de los drawers de Editar perfil (el del fondo y el avatar llevan siempre el botón negro y miden más) */
 export const ALTO_CONTENIDO_SHEET = 223;
 
 /** Lado del círculo de la cámara y del recorte de la foto */

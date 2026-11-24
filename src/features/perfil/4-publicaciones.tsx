@@ -7,6 +7,7 @@ import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData
 import { MIN_PARA_TARJETA } from "@/features/marketplace/sellerGroups";
 import type { Product } from "@/features/marketplace/types";
 import { useDuenosPremium } from "@/features/premium/hooks/useMembership";
+import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { showErrorAlert } from "@/utils/alerts";
 import { FilaPestanas, type Pestana } from "./components/FilaPestanas";
 import { ListaPublicaciones } from "./components/ListaPublicaciones";
@@ -75,6 +76,8 @@ export function PublicacionesPerfil({
 }) {
   const [activa, setActiva] = useState<Pestana>("publicaciones");
   const { profile: propio, saveProfile } = useProfile();
+  // La hoja solo se abre en el perfil propio: el dueño es quien tiene la sesión (aunque aún no publique nada)
+  const { uid } = useSessionUser();
   const [disenando, setDisenando] = useState(false);
   const guardarDiseno = async (tarjeta: DisenoTarjeta) => {
     try {
@@ -166,7 +169,7 @@ export function PublicacionesPerfil({
           diseno={propio.tarjeta}
           items={publicaciones}
           perfil={perfil}
-          ownerId={publicaciones[0]?.ownerId ?? ""}
+          ownerId={uid}
           isDark={isDark}
           onClose={() => setDisenando(false)}
           onGuardar={guardarDiseno}

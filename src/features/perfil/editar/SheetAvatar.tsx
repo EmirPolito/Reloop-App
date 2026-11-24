@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { DatosPerfil } from "../temasPerfil";
+import { indiceDeAvatar } from "./CarruselAvatares";
 import {
   SelectorAvatar,
   TITULOS_AVATAR,
@@ -32,17 +33,25 @@ export function SheetAvatar({
   /** Recibe la foto ya recortada o el orbe elegido; si lanza error, el drawer se queda abierto */
   onGuardar: (cambios: Pick<DatosPerfil, "photo" | "orb">) => Promise<void>;
 }) {
-  const flujo = useFlujoAvatar({ photo, orb, onGuardar, onListo: onClose });
+  // La foto, el orbe y el nombre se toman al abrir: al guardar cambian justo cuando la card
+  // baja, y el carrusel se volvía a dibujar (y cargaba la foto nueva) en plena salida
+  const [datos, setDatos] = useState({ photo, orb, name });
+  const flujo = useFlujoAvatar({
+    photo: datos.photo,
+    orb: datos.orb,
+    onGuardar,
+    onListo: onClose,
+  });
 
   // Cada vez que se abre empieza desde el principio (ajuste de estado durante el render)
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
-  // Cuenta las aperturas: el carrusel se reinicia al abrir, nunca al cerrar (rehacerlo al
-  // cerrar montaba todas sus imágenes justo mientras la card bajaba y trababa la salida)
+  // Cuenta las aperturas: el carrusel vuelve al inicio al abrir, nunca al cerrar
   const [aperturas, setAperturas] = useState(0);
   if (visible !== abiertoAntes) {
     setAbiertoAntes(visible);
     if (visible) {
-      flujo.reiniciar();
+      setDatos({ photo, orb, name });
+      flujo.reiniciar(indiceDeAvatar(photo, orb));
       setAperturas((n) => n + 1);
     }
   }
@@ -58,11 +67,12 @@ export function SheetAvatar({
     >
       <SelectorAvatar
         flujo={flujo}
-        photo={photo}
-        name={name}
+        photo={datos.photo}
+        name={datos.name}
         isDark={isDark}
-        // Al reabrir el drawer el carrusel vuelve al avatar guardado
-        claveCarrusel={String(aperturas)}
+        // Se monta de nuevo solo si cambió lo guardado; al reabrir solo vuelve al inicio
+        claveCarrusel={`${flujo.guardado}-${datos.photo ?? ""}`}
+        reinicioCarrusel={aperturas}
         // Mismo tamaño que el drawer del fondo, con o sin el botón negro
         altoMinimo={ALTO_CONTENIDO_SHEET}
         bajarOpciones={11}

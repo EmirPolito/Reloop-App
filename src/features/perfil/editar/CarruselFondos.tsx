@@ -1,5 +1,11 @@
 import { Image } from "expo-image";
-import { useRef, useState, type ComponentRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+  type ReactNode,
+} from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, {
@@ -32,10 +38,13 @@ const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
  */
 export function CarruselFondos({
   imagenes,
+  reinicio,
   onCambio,
 }: {
   /** Imágenes de la app (resultado de `require`) o una con `uri` (el fondo actual) */
   imagenes: readonly (number | { uri: string })[];
+  /** Al cambiar, la fila vuelve al principio sin animar (al reabrir el drawer) */
+  reinicio?: number;
   /** Índice de la imagen que queda al centro */
   onCambio: (indice: number) => void;
 }) {
@@ -57,6 +66,12 @@ export function CarruselFondos({
       }
     },
   );
+
+  // Volver al principio sin montar la fila otra vez: rehacerla al abrir cargaba todas las
+  // imágenes justo mientras la card subía y trababa la entrada
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  }, [reinicio]);
 
   const centrar = (indice: number) =>
     scrollRef.current?.scrollTo({ x: indice * PASO, animated: !reduceMotion });

@@ -51,11 +51,11 @@ export function useFlujoAvatar({
   const [centrado, setCentrado] = useState(guardado);
   const [guardando, setGuardando] = useState(false);
 
-  /** Vuelve al principio (al abrir el drawer) */
-  const reiniciar = () => {
+  /** Vuelve al principio (al abrir el drawer), centrado en `inicial` (de serie, el guardado) */
+  const reiniciar = (inicial = guardado) => {
     setPaso("inicio");
     setFoto(null);
-    setCentrado(guardado);
+    setCentrado(inicial);
   };
 
   // La galería se abre encima del drawer (ver disableFullWindowOverlay en SheetEditar)
@@ -144,6 +144,7 @@ export function SelectorAvatar({
   name,
   isDark,
   claveCarrusel,
+  reinicioCarrusel,
   mostrarConfirmar = true,
   subirCarrusel = 0,
   altoMinimo,
@@ -155,6 +156,8 @@ export function SelectorAvatar({
   isDark: boolean;
   /** Al cambiar, el carrusel vuelve a montarse en el avatar guardado */
   claveCarrusel: string;
+  /** Al cambiar, el carrusel vuelve al principio sin montarse otra vez */
+  reinicioCarrusel?: number;
   /** Botón "Usar este avatar" (el onboarding guarda con su propio Continuar) */
   mostrarConfirmar?: boolean;
   /** Píxeles que sube el carrusel sin mover lo demás (Editar perfil lo deja en su lugar) */
@@ -166,6 +169,11 @@ export function SelectorAvatar({
 }) {
   const c = coloresEditar(isDark);
   const { guardarFoto, hayCambio } = flujo;
+  const textoConfirmar = !hayCambio
+    ? "Avatar seleccionado"
+    : altoMinimo
+      ? "Seleccionar"
+      : "Usar este avatar";
 
   return (
     <Animated.View
@@ -189,6 +197,7 @@ export function SelectorAvatar({
               isDark={isDark}
               // Al reabrir el drawer el carrusel vuelve al avatar guardado
               key={claveCarrusel}
+              reinicio={reinicioCarrusel}
               inicial={flujo.guardado}
               onCambio={flujo.setCentrado}
             />
@@ -215,7 +224,9 @@ export function SelectorAvatar({
             />
           </View>
 
-          {mostrarConfirmar && hayCambio ? (
+          {/* En Editar perfil (`altoMinimo`) el botón siempre está: dice "Avatar seleccionado"
+              hasta que se elige otro, y entonces "Seleccionar". Así el drawer no cambia de alto */}
+          {mostrarConfirmar && (hayCambio || altoMinimo) ? (
             <Animated.View
               entering={FadeIn.duration(DURACION_EDITAR)}
               exiting={FadeOut.duration(120)}
@@ -223,12 +234,12 @@ export function SelectorAvatar({
             >
               <PressableSuave
                 accessibilityRole="button"
-                accessibilityLabel="Usar este avatar"
+                accessibilityLabel={textoConfirmar}
                 accessibilityState={{
-                  disabled: flujo.guardando,
+                  disabled: flujo.guardando || !hayCambio,
                   busy: flujo.guardando,
                 }}
-                disabled={flujo.guardando}
+                disabled={flujo.guardando || !hayCambio}
                 onPress={() => void flujo.usarAvatar()}
                 style={[
                   styles.confirmarBoton,
@@ -239,10 +250,13 @@ export function SelectorAvatar({
                 <Text
                   style={[
                     INTER.medium,
-                    { fontSize: 14.5, color: isDark ? "#101010" : "#FFFFFF" },
+                    {
+                      fontSize: 14.5,
+                      color: isDark ? "#101010" : "#FFFFFF",
+                    },
                   ]}
                 >
-                  {flujo.guardando ? "Guardando…" : "Usar este avatar"}
+                  {flujo.guardando ? "Guardando…" : textoConfirmar}
                 </Text>
               </PressableSuave>
             </Animated.View>

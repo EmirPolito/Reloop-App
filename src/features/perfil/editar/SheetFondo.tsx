@@ -29,7 +29,7 @@ const FONDOS = [
 
 /**
  * Drawer del fondo de perfil: carrusel de imágenes (la del centro es la elegida), Elegir
- * (galería) y Quitar (si ya hay fondo), y el botón "Usar este fondo".
+ * (galería) y Quitar (si ya hay fondo), y el botón "Seleccionar".
  */
 export function SheetFondo({
   visible,
@@ -48,25 +48,28 @@ export function SheetFondo({
 }) {
   const { pickCoverImage, isPicking } = useImagePicker();
   const [centrado, setCentrado] = useState(0);
-  // Con fondo puesto, ese es el primero del carrusel y los de la app van después
-  const tieneFondo = cover !== null;
-  const imagenes = useMemo(
-    () => (cover ? [{ uri: cover }, ...FONDOS] : [...FONDOS]),
-    [cover],
-  );
   // Al abrir, el carrusel vuelve al fondo puesto (ajuste de estado durante el render)
   const [abiertoAntes, setAbiertoAntes] = useState(visible);
-  // Cuenta las aperturas: el carrusel se reinicia al abrir, nunca al cerrar (rehacerlo al
-  // cerrar montaba todas sus imágenes justo mientras la card bajaba y trababa la salida)
+  // Cuenta las aperturas: el carrusel vuelve al inicio al abrir, nunca al cerrar
   const [aperturas, setAperturas] = useState(0);
+  // El fondo puesto se toma al abrir: al guardar cambia justo cuando la card baja, y el
+  // carrusel recorría todas sus imágenes un lugar en plena salida (se trababa)
+  const [coverAbierto, setCoverAbierto] = useState(cover);
   if (visible !== abiertoAntes) {
     setAbiertoAntes(visible);
     if (visible) {
       setCentrado(0);
       setAperturas((n) => n + 1);
+      setCoverAbierto(cover);
     }
   }
-  /** El botón negro aparece al elegir otro; sin fondo puesto, siempre está */
+  // Con fondo puesto, ese es el primero del carrusel y los de la app van después
+  const tieneFondo = coverAbierto !== null;
+  const imagenes = useMemo(
+    () => (coverAbierto ? [{ uri: coverAbierto }, ...FONDOS] : [...FONDOS]),
+    [coverAbierto],
+  );
+  /** Se eligió otro fondo (el botón pasa a "Seleccionar"); sin fondo puesto, siempre */
   const hayCambio = !tieneFondo || centrado !== 0;
   const [guardando, setGuardando] = useState(false);
 
@@ -116,7 +119,9 @@ export function SheetFondo({
     >
       <View style={styles.inicio}>
         <CarruselFondos
-          key={aperturas}
+          // Se monta de nuevo solo si cambió el fondo puesto; al reabrir solo vuelve al inicio
+          key={coverAbierto ?? "sin-fondo"}
+          reinicio={aperturas}
           imagenes={imagenes}
           onCambio={setCentrado}
         />
@@ -140,17 +145,18 @@ export function SheetFondo({
           ) : null}
         </View>
 
-        {hayCambio ? (
-          <View style={styles.boton}>
-            <BotonGuardar
-              texto="Usar este fondo"
-              isDark={isDark}
-              guardando={guardando}
-              atenuarAlGuardar
-              onPress={() => void usarCentrado()}
-            />
-          </View>
-        ) : null}
+        {/* El botón siempre está (así el drawer no cambia de alto): "Fondo seleccionado"
+            hasta que se elige otro, y entonces "Seleccionar" */}
+        <View style={styles.boton}>
+          <BotonGuardar
+            texto={hayCambio ? "Seleccionar" : "Fondo seleccionado"}
+            isDark={isDark}
+            guardando={guardando}
+            disabled={guardando || !hayCambio}
+            atenuarAlGuardar
+            onPress={() => void usarCentrado()}
+          />
+        </View>
       </View>
     </SheetEditar>
   );
