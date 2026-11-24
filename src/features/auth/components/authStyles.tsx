@@ -131,15 +131,17 @@ export function PantallaCristal({
 
   useEffect(() => {
     if (sinMovimiento) {
-      entradaCard.value = 1;
+      entradaCard.set(1);
       return;
     }
-    entradaCard.value = withDelay(
-      110,
-      withTiming(1, {
-        duration: 600,
-        easing: CURVA_SUAVE,
-      }),
+    entradaCard.set(
+      withDelay(
+        110,
+        withTiming(1, {
+          duration: 600,
+          easing: CURVA_SUAVE,
+        }),
+      ),
     );
   }, [sinMovimiento, entradaCard]);
 
@@ -436,15 +438,17 @@ function AbanicoTarjetas({
 
   useEffect(() => {
     if (sinMovimiento) {
-      progreso.value = 1;
+      progreso.set(1);
       return;
     }
-    progreso.value = withDelay(
-      60,
-      withTiming(1, {
-        duration: 850,
-        easing: CURVA_SUAVE,
-      }),
+    progreso.set(
+      withDelay(
+        60,
+        withTiming(1, {
+          duration: 850,
+          easing: CURVA_SUAVE,
+        }),
+      ),
     );
   }, [sinMovimiento, progreso]);
 
@@ -560,10 +564,12 @@ export function CampoCristal({
   const visibilidadTexto = useSharedValue(hayError ? 0 : 1);
 
   useEffect(() => {
-    visibilidadTexto.value = withTiming(hayError ? 0 : 1, {
-      duration: hayError ? 140 : 280,
-      easing: CURVA_SUAVE,
-    });
+    visibilidadTexto.set(
+      withTiming(hayError ? 0 : 1, {
+        duration: hayError ? 140 : 280,
+        easing: CURVA_SUAVE,
+      }),
+    );
   }, [hayError, visibilidadTexto]);
 
   const estiloTexto = useAnimatedStyle(() => ({

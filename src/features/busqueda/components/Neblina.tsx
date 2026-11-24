@@ -1,18 +1,29 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import type { StyleProp, ViewStyle } from "react-native";
+import { Platform, type StyleProp, type ViewStyle } from "react-native";
 
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 
-/** Un poco más blanca que el fondo de la app (#FAFAFA) en claro; el fondo en oscuro */
-const RGB_CLARO = "252,252,252";
+const ES_ANDROID = Platform.OS === "android";
+
+/**
+ * Un poco más blanca que el fondo de la app (#FAFAFA) en claro; el fondo en oscuro. En
+ * Android, el mismo fondo: ahí no hay desenfoque y el tono más blanco se veía como una
+ * tarjeta detrás de la hora
+ */
+const RGB_CLARO = ES_ANDROID ? "250,250,250" : "252,252,252";
 const RGB_OSCURO = "22,22,22";
 
 /** Lo que baja la neblina por debajo de las píldoras: apenas un poco, ya casi transparente */
 export const COLA_NEBLINA = 20;
 
-/** Qué tanto tapa a la altura del buscador (arriba, en la hora, tapa por completo) */
-const OPACIDAD_BUSCADOR = 1.7;
+/**
+ * Qué tanto tapa a la altura del buscador (arriba, en la hora, tapa por completo). En
+ * Android, sin desenfoque, el bloque sólido se veía blanco y nublado: ahí tapa como el velo
+ * de iOS (más arriba, menos a la altura del buscador) y deja ver un poco lo de detrás
+ */
+const OPACIDAD_ARRIBA = ES_ANDROID ? 0.78 : 1;
+const OPACIDAD_BUSCADOR = ES_ANDROID ? 0.62 : 1.7;
 // const OPACIDAD_BUSCADOR = 0.95;
 
 /** Capas del desvanecido: muchas, para que no se vea ningún escalón ni el final recto */
@@ -38,7 +49,10 @@ export function Neblina({
 
   const { colors, locations } = useMemo(() => {
     const inicio = Math.min(Math.max(corte, 0.05), 0.95);
-    const colores = [`rgba(${rgb},1)`, `rgba(${rgb},${OPACIDAD_BUSCADOR})`];
+    const colores = [
+      `rgba(${rgb},${OPACIDAD_ARRIBA})`,
+      `rgba(${rgb},${OPACIDAD_BUSCADOR})`,
+    ];
     const posiciones = [0, inicio];
     for (let i = 1; i <= CAPAS; i++) {
       const t = i / CAPAS;

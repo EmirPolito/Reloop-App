@@ -7,7 +7,6 @@ import { conSalida } from "@/components/salidaModulo";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { useAbrirChat } from "@/features/chats/hooks/useAbrirChat";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { AppIcon } from "@/features/shared/AppIcon";
@@ -20,13 +19,17 @@ import { showErrorAlert } from "@/utils/alerts";
 import { AvatarVendedor } from "./components/AvatarVendedor";
 import { CommentsSection } from "./components/CommentsSection";
 import { DetailStat } from "./components/DetailStat";
+import { EsqueletoDetalle } from "./components/EsqueletoDetalle";
 import { RatingBlock } from "./components/RatingBlock";
 import { categoryFor } from "./data";
 import { useProduct } from "./hooks/useProductsByIds";
 import { useProductComments } from "./hooks/useProductComments";
 import { useReportProduct } from "./hooks/useReportProduct";
 import { useToggleFavorite } from "./hooks/useToggleFavorite";
-import { useMarketplaceActions, useMarketplaceState } from "./MarketplaceProvider";
+import {
+  useMarketplaceActions,
+  useMarketplaceState,
+} from "./MarketplaceProvider";
 import { allowsProductRating, formatProductPrice } from "./rules";
 
 /** Ancho al que se pide la foto grande a Cloudinary. */
@@ -46,18 +49,16 @@ export function DetailScreen({ productId }: { productId: string }) {
   const [commentDraft, setCommentDraft] = useDraft(`comment:${productId}`);
 
   if (!product) {
+    // Mientras se lee: la forma del detalle (no una ruedita bajo un encabezado)
+    if (loading) return <EsqueletoDetalle onBack={() => conSalida(back)} />;
     return (
       <View style={styles.fill}>
         <BackHeader title="Publicación" onBack={() => conSalida(back)} />
-        {loading ? (
-          <LoadingState />
-        ) : (
-          <EmptyState
-            title="No encontramos este producto"
-            message="Vuelve al inicio y revisa otras publicaciones."
-            icon="search"
-          />
-        )}
+        <EmptyState
+          title="No encontramos este producto"
+          message="Vuelve al inicio y revisa otras publicaciones."
+          icon="search"
+        />
       </View>
     );
   }

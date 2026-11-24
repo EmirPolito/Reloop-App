@@ -13,7 +13,7 @@ import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { getFollowers, getFollowing } from "../repositorioSeguidores";
-import { usePerfilDe } from "../hooks/usePerfilDe";
+import { usePerfilesDe } from "../hooks/usePerfilDe";
 import { normalizarNombre } from "../nombreUsuario";
 import { FilaSeguidor, FilaSeguidorEsqueleto } from "./FilaSeguidor";
 
@@ -73,7 +73,7 @@ export function PantallaSeguidores({ userId }: { userId: string }) {
     void cargar().finally(() => setRefrescando(false));
   };
 
-  const perfiles = usePerfilDe.varias(ids ?? []);
+  const perfiles = usePerfilesDe(ids ?? []);
   const termino = normalizarNombre(busqueda.trim().replace(/^@/, ""));
   const visibles = useMemo(
     () =>

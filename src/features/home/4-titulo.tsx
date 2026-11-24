@@ -44,8 +44,10 @@ export const TituloSeccion = memo(function TituloSeccion({
             style={[
               estilos.tituloSeccion,
               {
-                fontFamily: "Inter_500Medium",
-                fontWeight: "500",
+                fontFamily: "Inter_400Regular",
+                fontWeight: "400",
+                fontSize: 15.5,
+                marginRight: 4,
                 opacity: 0.55,
               },
             ]}

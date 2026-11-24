@@ -180,7 +180,7 @@ export function PublicacionesPerfil({
 }
 
 /** Mientras cargan: tarjetas de carga (el `Skeleton` de HeroUI) de dos en dos */
-function EsqueletoPublicaciones() {
+export function EsqueletoPublicaciones() {
   return (
     <View
       accessibilityLabel="Cargando publicaciones"

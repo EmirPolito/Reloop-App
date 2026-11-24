@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   BloqueoScrollContext,
+  esScrollAnidado,
   useBloqueoScroll,
 } from "@/components/bloqueoScroll";
 import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
@@ -121,23 +122,28 @@ export const PantallaInicio = memo(function PantallaInicio() {
   const { bloqueo, propsBloqueo } = useBloqueoScroll();
   // 1 mientras el dedo o la inercia mueven la lista
   const arrastre = useSharedValue(0);
+  // Los eventos de las filas horizontales (categorías, carruseles) también llegan aquí: se
+  // ignoran en todos, o arrastrar una fila pausaba y redibujaba lo de la lista a medio gesto
   const alHacerScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
-      // Un contenido más ancho que la vista es un carrusel de una tarjeta, no la lista
-      if (event.contentSize.width > event.layoutMeasurement.width + 1) return;
+      if (esScrollAnidado(event)) return;
       scrollY.set(event.contentOffset.y);
     },
-    onBeginDrag: () => {
+    onBeginDrag: (event) => {
+      if (esScrollAnidado(event)) return;
       arrastre.set(1);
     },
     onEndDrag: (event) => {
+      if (esScrollAnidado(event)) return;
       // En iOS, soltar sin velocidad no genera inercia (ni aviso de que terminó)
       if (Math.abs(event.velocity?.y ?? 0) < 0.05) arrastre.set(0);
     },
-    onMomentumBegin: () => {
+    onMomentumBegin: (event) => {
+      if (esScrollAnidado(event)) return;
       arrastre.set(1);
     },
-    onMomentumEnd: () => {
+    onMomentumEnd: (event) => {
+      if (esScrollAnidado(event)) return;
       arrastre.set(0);
     },
   });

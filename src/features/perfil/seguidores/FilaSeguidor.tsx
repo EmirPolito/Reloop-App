@@ -1,5 +1,5 @@
 import { Skeleton } from "heroui-native";
-import { memo, useRef } from "react";
+import { memo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -40,7 +40,7 @@ export const FilaSeguidor = memo(function FilaSeguidor({
   const arroba = perfil?.username ? conArroba(perfil.username) : null;
   // Solo se anima si antes se vio el esqueleto: con el perfil ya leído (al volver o al
   // hacer scroll) la fila sale directo
-  const venia = useRef(perfil === undefined).current;
+  const [venia] = useState(perfil === undefined);
 
   // Mientras llega su perfil, el esqueleto de la fila (no una fila vacía)
   if (perfil === undefined) return <FilaSeguidorEsqueleto />;

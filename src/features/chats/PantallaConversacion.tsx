@@ -196,9 +196,10 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
     } catch (error) {
       if (!uploading) setMessageDraft(text);
       showErrorAlert("No se pudo enviar el mensaje", error);
-    } finally {
-      setSending(false);
     }
+    // Sin `finally` (el error ya se atrapa arriba): con él, React Compiler no optimizaba la
+    // pantalla de la conversación
+    setSending(false);
   }
 
   // Handler estable para el botón de enviar (siempre llama a la última versión)

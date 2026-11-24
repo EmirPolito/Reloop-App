@@ -225,6 +225,8 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
   const premium = useIsPremium(ownerId);
 
   const { favorites } = useMarketplaceState();
+  // Un Set: cada foto pregunta si es favorita sin recorrer toda la lista
+  const favoritos = new Set(favorites);
   const toggleFavorite = useToggleFavorite();
 
   // El ancho se calcula desde el primer dibujo con el de la pantalla (menos los márgenes de la
@@ -415,7 +417,7 @@ export const TarjetaVendedor = memo(function TarjetaVendedor({
                     {/* En las propias no va el corazón */}
                     {isOwn ? null : (
                       <CorazonFoto
-                        favorito={favorites.includes(item.id)}
+                        favorito={favoritos.has(item.id)}
                         nombre={item.name}
                         onPress={() => toggleFavorite(item.id)}
                       />

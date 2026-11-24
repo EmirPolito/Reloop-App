@@ -19,7 +19,7 @@ import {
   useMarketplaceState,
 } from "@/features/marketplace/MarketplaceProvider";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
-import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
+import { usePerfilesDe } from "@/features/perfil/hooks/usePerfilDe";
 import { normalizarNombre } from "@/features/perfil/nombreUsuario";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useProductCardWidth } from "@/hooks/useProductCardWidth";
@@ -82,7 +82,7 @@ export function PantallaFavoritos() {
     ],
     [favoriteProducts, vendedoresGuardados],
   );
-  const perfiles = usePerfilDe.varias(vendedores);
+  const perfiles = usePerfilesDe(vendedores);
 
   const visibles = useMemo(() => {
     const category = filtro === "todas" ? null : filtro;
@@ -242,7 +242,9 @@ export function PantallaFavoritos() {
 
   return (
     <View style={estilos.pantalla}>
-      {loading && !hayFavoritos ? (
+      {/* Hasta medir la cabecera no se dibuja nada debajo: con el alto en 0 la carga (o la lista)
+          salía desde arriba, detrás del buscador (en Android, casi un segundo) */}
+      {altoCabecera === 0 ? null : loading && !hayFavoritos ? (
         // Las mismas tarjetas de carga del inicio (el `Skeleton` de HeroUI)
         <View style={[estilos.esqueleto, { paddingTop: altoCabecera + 12 }]}>
           <EsqueletoInicio cardWidth={cardWidth} />

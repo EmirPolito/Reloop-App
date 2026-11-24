@@ -1,8 +1,5 @@
 import { View } from "react-native";
 
-import { conSalida } from "@/components/salidaModulo";
-import { BackHeader } from "@/components/ui/BackHeader";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { useAbrirChat } from "@/features/chats/hooks/useAbrirChat";
 import { useUserProducts } from "@/features/marketplace/hooks/useUserProducts";
 import { averageRatingLabel } from "@/features/marketplace/rules";
@@ -12,6 +9,7 @@ import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { BotonHeaderPerfil } from "./2-barra-superior";
 import { VistaPerfil } from "./VistaPerfil";
+import { EsqueletoPerfil } from "./components/EsqueletoPerfil";
 import { useSeguidores } from "./hooks/useSeguidores";
 import { usePerfilPublico } from "./hooks/usePerfilPublico";
 import {
@@ -27,12 +25,12 @@ import { defaultProfile } from "./mapeoPerfil";
  * del sistema ya llevan atrás). La insignia Premium va junto al nombre.
  */
 export function PantallaPerfilPublico({ userId }: { userId: string }) {
-  const { styles: baseStyles, isDark } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { uid } = useSessionUser();
   const { profile: storedProfile, status } = usePerfilPublico(userId);
   const { products: userProducts, status: productsStatus } =
     useUserProducts(userId);
-  const { back, openProduct, openFollows } = useNavegacion();
+  const { openProduct, openFollows } = useNavegacion();
   const openChat = useAbrirChat();
   const { followersCount, isFollowing, toggleFollow } = useSeguidores(userId);
   const premium = useIsPremium(userId);
@@ -42,14 +40,8 @@ export function PantallaPerfilPublico({ userId }: { userId: string }) {
   const profile =
     storedProfile ?? defaultProfile(userProducts[0]?.seller ?? "Usuario");
 
-  if (status === "loading") {
-    return (
-      <View style={baseStyles.fill}>
-        <BackHeader title="Perfil" onBack={() => conSalida(back)} />
-        <LoadingState />
-      </View>
-    );
-  }
+  // Mientras se lee: la forma del perfil (sin botón de volver, como el perfil ya cargado)
+  if (status === "loading") return <EsqueletoPerfil isDark={isDark} />;
 
   return (
     <View style={{ flex: 1 }}>

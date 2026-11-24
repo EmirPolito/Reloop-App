@@ -29,8 +29,13 @@ export class ImageUploadError extends Error {
  */
 async function appendFile(form: FormData, uri: string): Promise<void> {
   if (Platform.OS === "web") {
-    const name = decodeURIComponent(uri.split("?")[0].split("/").pop() || "foto.jpg");
-    const blob = await (await fetch(uri)).blob();
+    const name = decodeURIComponent(
+      uri.split("?")[0].split("/").pop() || "foto.jpg",
+    );
+    const archivo = await fetch(uri);
+    if (!archivo.ok)
+      throw new Error(`No se pudo leer la foto (${archivo.status}).`);
+    const blob = await archivo.blob();
     form.append("file", blob, name);
     return;
   }
@@ -68,7 +73,10 @@ async function sendOnce(uri: string): Promise<string> {
   } catch (error) {
     if (error instanceof ImageUploadError) throw error;
     if (controller.signal.aborted) {
-      throw new ImageUploadError("La subida de la imagen tardó demasiado.", true);
+      throw new ImageUploadError(
+        "La subida de la imagen tardó demasiado.",
+        true,
+      );
     }
     console.warn("Falló la subida a Cloudinary.", error);
     // El motivo técnico ayuda a saber si es la red, el permiso de la foto u otra cosa
@@ -101,9 +109,13 @@ export async function uploadImage(uri: string): Promise<string> {
       return await sendOnce(source);
     } catch (error) {
       const retry =
-        error instanceof ImageUploadError && error.retriable && attempt < MAX_ATTEMPTS;
+        error instanceof ImageUploadError &&
+        error.retriable &&
+        attempt < MAX_ATTEMPTS;
       if (!retry) throw error;
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+      await new Promise((resolve) =>
+        setTimeout(resolve, RETRY_DELAY_MS * attempt),
+      );
     }
   }
 }

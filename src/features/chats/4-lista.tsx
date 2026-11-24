@@ -157,6 +157,9 @@ export function ListaChats({
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
         renderItem={renderFila}
+        // En Android viene activado: con filas recortadas en redondo, deslizables y con animación
+        // de entrada, dejaba sin dibujar parte de la fila (los avatares no salían)
+        removeClippedSubviews={false}
       />
     </TarjetaChats>
   );

@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { Easing } from "react-native-reanimated";
 
 /** Curva de salida usada en las animaciones de la interfaz (igual que HeroUI Native). */
@@ -23,3 +24,13 @@ export const TRANSICION_MODULO = {
   entrada: { duration: 220, easing: CURVA_MODULO },
   salida: { duration: 130, easing: CURVA_MODULO },
 } as const;
+
+/**
+ * Salida del módulo antes de navegar fuera de él (volver, barra de navegación). En Android la
+ * navegación arranca más tarde (el salto al hilo de JS es más lento): ahí es más corta, para
+ * que volver se sienta inmediato. En iOS, la de siempre.
+ */
+export const SALIDA_AL_NAVEGAR =
+  Platform.OS === "android"
+    ? { duration: 80, easing: CURVA_MODULO }
+    : TRANSICION_MODULO.salida;

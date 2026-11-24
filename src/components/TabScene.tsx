@@ -8,7 +8,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { ENTRADA_MODULO, TRANSICION_MODULO } from "@/constants/motion";
+import {
+  ENTRADA_MODULO,
+  SALIDA_AL_NAVEGAR,
+  TRANSICION_MODULO,
+} from "@/constants/motion";
 import { registrarSalida } from "./salidaModulo";
 
 const IS_WEB = Platform.OS === "web";
@@ -46,7 +50,7 @@ export function TabScene({
       const quitarSalida = modulo
         ? registrarSalida((despues) => {
             progress.set(
-              withTiming(0, TRANSICION_MODULO.salida, (terminado) => {
+              withTiming(0, SALIDA_AL_NAVEGAR, (terminado) => {
                 if (terminado) scheduleOnRN(despues);
               }),
             );

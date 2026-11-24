@@ -2,7 +2,9 @@ import { createContext, useContext, useState } from "react";
 import {
   useAnimatedProps,
   useAnimatedReaction,
+  useAnimatedScrollHandler,
   useSharedValue,
+  type ScrollEvent,
   type SharedValue,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -27,9 +29,37 @@ export function useBloqueoScroll() {
   return { bloqueo, propsBloqueo };
 }
 
-/** Para el carrusel: el valor de la lista que lo contiene (o null si no hay) */
-export function useBloqueoDeLista() {
-  return useContext(BloqueoScrollContext);
+/**
+ * El manejador de scroll de una lista vertical también recibe los eventos de las filas
+ * horizontales que tiene dentro (categorías, carruseles). Esos se reconocen porque su
+ * contenido es más ancho que la vista o porque se movieron de lado; la lista vertical nunca.
+ * Hay que ignorarlos en todos sus eventos (también al empezar y terminar de arrastrar), o la
+ * lista cree que se mueve ella.
+ */
+export function esScrollAnidado(evento: ScrollEvent) {
+  "worklet";
+  return (
+    evento.contentSize.width > evento.layoutMeasurement.width + 1 ||
+    evento.contentOffset.x !== 0
+  );
+}
+
+/**
+ * Para una fila horizontal dentro de una lista (las categorías): mientras el dedo la arrastra,
+ * la lista que la contiene no se mueve. Sin esto, cualquier movimiento diagonal movía las dos
+ * a la vez y la fila temblaba. Al soltar se libera siempre (la inercia ya no mueve la lista),
+ * así nunca se queda bloqueada. Sin lista que la contenga, no hace nada.
+ */
+export function useBloquearListaAlArrastrar() {
+  const bloqueo = useContext(BloqueoScrollContext);
+  return useAnimatedScrollHandler({
+    onBeginDrag: () => {
+      bloqueo?.set(1);
+    },
+    onEndDrag: () => {
+      bloqueo?.set(0);
+    },
+  });
 }
 
 /**

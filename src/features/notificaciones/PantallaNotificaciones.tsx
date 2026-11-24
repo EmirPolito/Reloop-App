@@ -13,7 +13,7 @@ import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { CATEGORIES } from "@/features/marketplace/data";
 import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
-import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
+import { usePerfilesDe } from "@/features/perfil/hooks/usePerfilDe";
 import { normalizarNombre } from "@/features/perfil/nombreUsuario";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useSeleccion } from "@/hooks/useSeleccion";
@@ -83,7 +83,7 @@ export function PantallaNotificaciones() {
     () => [...new Set(notifications.map((item) => item.actorId))],
     [notifications],
   );
-  const perfiles = usePerfilDe.varias(actores);
+  const perfiles = usePerfilesDe(actores);
 
   // Se recalculan solo cuando cambia algo que las afecta (antes, en cada dibujo: al escribir
   // en el buscador o marcar una, se volvía a filtrar y agrupar toda la lista)
@@ -247,7 +247,9 @@ export function PantallaNotificaciones() {
 
   return (
     <View style={estilos.pantalla}>
-      {status === "loading" ? (
+      {/* Hasta medir la cabecera no se dibuja nada debajo: con el alto en 0 la carga (o la lista)
+          salía desde arriba, detrás del buscador (en Android, casi un segundo) */}
+      {altoCabecera === 0 ? null : status === "loading" ? (
         <View style={{ paddingTop: altoCabecera }}>
           <EsqueletoNotificaciones isDark={isDark} />
         </View>

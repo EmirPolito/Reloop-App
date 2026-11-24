@@ -287,24 +287,24 @@ describe("filas del inicio", () => {
     const rows = buildHomeFeedRows(lista, "ready", sinInsignia);
     assert.deepEqual(rows.slice(3).map((r) => r.type), ["products", "products", "products"]);
   });
-  it("cargando: banner, categorías, título y espera", () => {
-    assert.deepEqual(buildHomeFeedRows([], "loading", sinInsignia).map((r) => r.type), ["banner", "categories", "sectionTitle", "loading"]);
+  it("cargando: banner, título, categorías y espera", () => {
+    assert.deepEqual(buildHomeFeedRows([], "loading", sinInsignia).map((r) => r.type), ["banner", "sectionTitle", "categories", "loading"]);
   });
   it("sin publicaciones: vacío; con error: error", () => {
-    assert.deepEqual(buildHomeFeedRows([], "ready", sinInsignia).map((r) => r.type), ["banner", "categories", "sectionTitle", "empty"]);
-    assert.deepEqual(buildHomeFeedRows([], "error", sinInsignia).map((r) => r.type), ["banner", "categories", "sectionTitle", "error"]);
+    assert.deepEqual(buildHomeFeedRows([], "ready", sinInsignia).map((r) => r.type), ["banner", "sectionTitle", "categories", "empty"]);
+    assert.deepEqual(buildHomeFeedRows([], "error", sinInsignia).map((r) => r.type), ["banner", "sectionTitle", "categories", "error"]);
   });
   it("con publicaciones: de dos en dos, aunque haya habido un error después", () => {
     const rows = buildHomeFeedRows(two, "error", sinInsignia);
-    assert.deepEqual(rows.map((r) => r.type), ["banner", "categories", "sectionTitle", "products", "products"]);
+    assert.deepEqual(rows.map((r) => r.type), ["banner", "sectionTitle", "categories", "products", "products"]);
     assert.deepEqual(homeRowKey(rows[3], 3), "products-a");
-    assert.equal(homeRowKey(rows[1], 1), "categories");
+    assert.equal(homeRowKey(rows[2], 2), "categories");
   });
 });
 
 describe("búsqueda de chats", () => {
   const chat = (over: Partial<Chat>): Chat => ({
-    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, readAt: 0, otherReadAt: 0, updatedAt: 0, ...over,
+    id: "c", otherId: "o", name: "Beto", lastMessage: null, unread: false, readAt: 0, otherReadAt: 0, updatedAt: 0, deletedAt: 0, hidden: false, ...over,
   });
   const chats = [
     chat({ id: "1", name: "Beto", productId: "p1" }),

@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, type ComponentRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
   type LayoutChangeEvent,
@@ -15,6 +14,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { useBloquearListaAlArrastrar } from "@/components/bloqueoScroll";
 import {
   fondoCristalSuave,
   sombraCristalSuave,
@@ -62,8 +62,11 @@ export function FiltrosPildoras<T extends string>({
   enMarco?: boolean;
 }) {
   const { isDark } = useAppTheme();
-  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
-  const [anchoVista, setAnchoVista] = useState(0);
+  const scroll = useRef<Animated.ScrollView>(null);
+  // Dentro de una lista (el inicio), esta no se mueve mientras se arrastran las píldoras
+  const alArrastrar = useBloquearListaAlArrastrar();
+  // Solo se usa al tocar (para centrar la elegida): una ref, no estado que redibuje
+  const anchoVista = useRef(0);
   const posiciones = useRef<Record<string, { x: number; ancho: number }>>({});
   // En el marco: dónde está y cuánto mide la píldora que se desliza (-1: aún sin medir)
   const marcaX = useSharedValue(-1);
@@ -98,24 +101,25 @@ export function FiltrosPildoras<T extends string>({
   const elegir = (id: T) => {
     onCambiar(id);
     const pos = posiciones.current[id];
-    if (pos && anchoVista > 0) {
+    if (pos && anchoVista.current > 0) {
       scroll.current?.scrollTo({
-        x: Math.max(0, pos.x + pos.ancho / 2 - anchoVista / 2),
+        x: Math.max(0, pos.x + pos.ancho / 2 - anchoVista.current / 2),
         animated: true,
       });
     }
   };
 
   const fila = (
-    <ScrollView
+    <Animated.ScrollView
       ref={scroll}
       horizontal
+      onScroll={alArrastrar}
       accessibilityRole="tablist"
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      onLayout={(e: LayoutChangeEvent) =>
-        setAnchoVista(e.nativeEvent.layout.width)
-      }
+      onLayout={(e: LayoutChangeEvent) => {
+        anchoVista.current = e.nativeEvent.layout.width;
+      }}
       style={enMarco ? styles.filaEnMarco : styles.fila}
       contentContainerStyle={[
         styles.contenido,
@@ -149,7 +153,7 @@ export function FiltrosPildoras<T extends string>({
           onPress={() => elegir(opcion.id)}
         />
       ))}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 
   if (!enMarco) return fila;
@@ -238,7 +242,12 @@ const styles = StyleSheet.create({
   // Mismo espacio arriba y abajo que antes (la neblina de la cabecera cuenta con él)
   fila: { marginTop: 20, marginBottom: 16, flexGrow: 0 },
   // Centradas si caben; si no, scroll desde la izquierda
-  contenido: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 15, gap: 8 },
+  contenido: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    gap: 8,
+  },
   // Marco de chats: mismo ancho, cristal y sombra que la tarjeta, pero bajito y redondo
   marcoSombra: {
     marginHorizontal: 12,

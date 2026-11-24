@@ -2,7 +2,7 @@ import type { FeedStatus } from "@/features/marketplace/hooks/useMarketplaceData
 import { agruparPorVendedor } from "@/features/marketplace/sellerGroups";
 import type { Product } from "@/features/marketplace/types";
 
-/** Filas del inicio: banner, categorías fijas, título de sección y los productos de dos en dos. */
+/** Filas del inicio: banner, título de sección, categorías y los productos de dos en dos. */
 export type HomeFeedRow =
   | { type: "banner" }
   | { type: "categories" }
@@ -25,11 +25,12 @@ export function buildHomeFeedRows(
 ): HomeFeedRow[] {
   const rows: HomeFeedRow[] = [
     { type: "banner" },
-    { type: "categories" },
+    // Las píldoras de categorías van debajo del título
     {
       type: "sectionTitle",
       count: status === "loading" ? null : products.length,
     },
+    { type: "categories" },
   ];
   if (status === "loading") {
     rows.push({ type: "loading" });

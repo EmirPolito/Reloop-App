@@ -47,8 +47,10 @@ export function BarraNavegacion() {
   // recibiendo toques invisible: tocar el campo del chat abría Favoritos). Ahí, al terminar
   // de desvanecerse, se quita del todo
   const [quitada, setQuitada] = useState(!visible);
+  // Al volver a mostrarse deja de estar quitada en el mismo render (no en un efecto, que
+  // costaba un render de más)
+  if (visible && quitada) setQuitada(false);
   useEffect(() => {
-    if (visible) setQuitada(false);
     opacidad.set(
       withTiming(visible ? 1 : 0, TRANSICION, (terminada) => {
         if (terminada && !visible) scheduleOnRN(setQuitada, true);

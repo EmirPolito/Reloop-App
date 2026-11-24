@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   BloqueoScrollContext,
+  esScrollAnidado,
   useBloqueoScroll,
 } from "@/components/bloqueoScroll";
 import { PausaBrilloContext } from "@/components/ui/PremiumBadge";
@@ -89,23 +90,28 @@ export function VistaPerfil({
 
   // Mientras se arrastran las fotos de la tarjeta grande, el perfil no se mueve
   const { bloqueo, propsBloqueo } = useBloqueoScroll();
+  // Los eventos de las filas horizontales (el carrusel de la tarjeta grande) también llegan
+  // aquí: se ignoran en todos, no solo en el scroll
   const onScroll = useAnimatedScrollHandler({
     onScroll: (e) => {
-      // Un contenido más ancho que la vista es el carrusel de la tarjeta grande, no el perfil
-      if (e.contentSize.width > e.layoutMeasurement.width + 1) return;
+      if (esScrollAnidado(e)) return;
       scrollY.set(e.contentOffset.y);
     },
-    onBeginDrag: () => {
+    onBeginDrag: (e) => {
+      if (esScrollAnidado(e)) return;
       arrastre.set(1);
     },
     onEndDrag: (e) => {
+      if (esScrollAnidado(e)) return;
       // En iOS, soltar sin velocidad no genera inercia (ni aviso de que terminó)
       if (esIOS && Math.abs(e.velocity?.y ?? 0) < 0.05) arrastre.set(0);
     },
-    onMomentumBegin: () => {
+    onMomentumBegin: (e) => {
+      if (esScrollAnidado(e)) return;
       arrastre.set(1);
     },
-    onMomentumEnd: () => {
+    onMomentumEnd: (e) => {
+      if (esScrollAnidado(e)) return;
       arrastre.set(0);
     },
   });

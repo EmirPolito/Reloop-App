@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { useEffect, useMemo } from "react";
 
 import type { Chat } from "@/features/marketplace/types";
-import { usePerfilDe } from "@/features/perfil/hooks/usePerfilDe";
+import { usePerfilesDe } from "@/features/perfil/hooks/usePerfilDe";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { LADO_AVATAR } from "./FilaChat";
 
@@ -16,7 +16,7 @@ export function PrecargaAvatares({ chats }: { chats: Chat[] }) {
     () => [...new Set(chats.map((chat) => chat.otherId))],
     [chats],
   );
-  const perfiles = usePerfilDe.varias(contactos);
+  const perfiles = usePerfilesDe(contactos);
 
   useEffect(() => {
     const fotos = contactos.flatMap((uid) => {

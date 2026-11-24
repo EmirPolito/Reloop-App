@@ -60,7 +60,6 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-video",
       "expo-font",
       "expo-image",
       "expo-status-bar",

@@ -25,13 +25,16 @@ const useMembresiaDe = crearSuscripcionCompartida<{
   ),
 );
 
+/** Varias membresías a la vez: hook propio (`.varias` dentro de un hook impedía optimizarlo) */
+const useMembresiasDe = useMembresiaDe.varias;
+
 /**
  * Quiénes de `uids` tienen Premium vigente, con las mismas suscripciones compartidas que
  * `useIsPremium`. Sirve para ordenar listas (los de Premium primero). Se reevalúa cuando la
  * lista o una membresía cambian.
  */
 export function useDuenosPremium(uids: readonly string[]): ReadonlySet<string> {
-  const membresias = useMembresiaDe.varias(uids);
+  const membresias = useMembresiasDe(uids);
   return useMemo(() => {
     const premium = new Set<string>();
     membresias.forEach((leida, uid) => {

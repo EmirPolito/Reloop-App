@@ -11,3 +11,10 @@ export const usePerfilDe = crearSuscripcionCompartida<DatosPerfil | null>(
   "un perfil",
   (uid, alDato, alError) => subscribeProfile(uid, alDato, alError),
 );
+
+/**
+ * Los perfiles de varias personas a la vez (todas las de una lista), con las mismas
+ * suscripciones compartidas. Hook propio: llamar `usePerfilDe.varias(...)` dentro de un
+ * componente hacía que React Compiler dejara de optimizarlo.
+ */
+export const usePerfilesDe = usePerfilDe.varias;

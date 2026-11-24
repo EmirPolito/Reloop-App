@@ -26,8 +26,9 @@ function crearEstilos(isDark: boolean) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginTop: 38,
-      marginBottom: 12,
+      // Justo después del banner: separado de él, pero sin tanto aire
+      marginTop: 15,
+      marginBottom: 13,
     },
     tituloSeccion: {
       color: isDark ? "#F5F4FA" : "#23242C",
