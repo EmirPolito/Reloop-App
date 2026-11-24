@@ -9,7 +9,9 @@ import Animated, {
 import { PressableScale } from "@/components/PressableScale";
 import { NavigationIcon } from "@/components/iconos";
 import { APARECER, TAMANO_ICONO_CREAR, type Estilos } from "./estilos";
-import { SuperficieCristal } from "./SuperficieCristal";
+
+/** Mismo fondo que el botón de enviar mensaje del chat */
+const COLOR_BOTON_ENVIAR = "#3897f0ff";
 
 /** El botón redondo de crear, a la derecha de la cápsula: abre y cierra el menú de crear */
 export const BotonCrear = memo(function BotonCrear({
@@ -31,13 +33,15 @@ export const BotonCrear = memo(function BotonCrear({
   const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - activo.get() }));
   const activeStyle = useAnimatedStyle(() => ({ opacity: activo.get() }));
 
-  const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = isDark ? "#F1F5F9" : "#101010";
+  // Sobre el fondo oscuro del botón de enviar el ícono va claro en ambos temas
+  const colorInactivo = "#ffffffff";
+  const colorActivo = "#FFFFFF";
 
   return (
     <View style={[styles.sombra, styles.crearSombra]}>
-      <View style={styles.crearCirculo}>
-        <SuperficieCristal isDark={isDark} styles={styles} />
+      <View
+        style={[styles.crearCirculo, { backgroundColor: COLOR_BOTON_ENVIAR }]}
+      >
         <PressableScale
           accessibilityRole="button"
           accessibilityState={{ selected }}

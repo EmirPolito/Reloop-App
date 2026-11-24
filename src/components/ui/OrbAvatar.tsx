@@ -46,9 +46,9 @@ export function OrbAvatar({
           {/* Núcleo: color profundo abajo a la derecha que se funde pronto en pastel */}
           <RadialGradient
             id={base}
-            cx="60"
-            cy="68"
-            r="62"
+            cx="54"
+            cy="58"
+            r="70"
             gradientUnits="userSpaceOnUse"
           >
             <Stop offset="0" stopColor={colores.profundo} />
@@ -64,8 +64,8 @@ export function OrbAvatar({
             r="46"
             gradientUnits="userSpaceOnUse"
           >
-            <Stop offset="0" stopColor="#fff" stopOpacity="0.6" />
-            <Stop offset="0.5" stopColor="#fff" stopOpacity="0.2" />
+            <Stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+            <Stop offset="0.5" stopColor="#fff" stopOpacity="0.08" />
             <Stop offset="1" stopColor="#fff" stopOpacity="0" />
           </RadialGradient>
           {/* Aro luminoso en el borde */}
@@ -77,7 +77,7 @@ export function OrbAvatar({
             gradientUnits="userSpaceOnUse"
           >
             <Stop offset="0.72" stopColor="#fff" stopOpacity="0" />
-            <Stop offset="1" stopColor="#fff" stopOpacity="0.38" />
+            <Stop offset="1" stopColor="#fff" stopOpacity="0.14" />
           </RadialGradient>
         </Defs>
         <Circle cx="50" cy="50" r="50" fill={`url(#${base})`} />
