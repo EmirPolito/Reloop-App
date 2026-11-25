@@ -154,7 +154,7 @@ export function PantallaBusqueda() {
     },
     [agregar, textoRef, openUserProfile],
   );
-  // Al elegir una reciente o sugerencia ya no hace falta el teclado: se ven los resultados
+  // Al elegir una reciente ya no hace falta el teclado: se ven los resultados
   const elegirTexto = useCallback(
     (elegido: string) => {
       Keyboard.dismiss();
@@ -271,7 +271,6 @@ export function PantallaBusqueda() {
         conResultados={conResultados}
         categoria={categoria}
         onAlternarCategoria={alternarCategoria}
-        onElegirSugerencia={elegirTexto}
         onVolver={volver}
         altoCabecera={altoCabecera}
         onMedir={alMedirCabecera}

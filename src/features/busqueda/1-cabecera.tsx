@@ -19,19 +19,15 @@ import { GROSOR_LUPA, PildoraCristal } from "./components/PildoraCristal";
 import { FilaPildoras, PildoraOpcion } from "./components/PildoraOpcion";
 import { PlaceholderRotativo } from "./components/PlaceholderRotativo";
 import { estilos, type ColoresBusqueda } from "./estilos";
-import {
-  ETIQUETA_BUSQUEDA,
-  PISTA_BUSQUEDA,
-  SUGERENCIAS_BUSQUEDA,
-} from "./frasesBusqueda";
+import { ETIQUETA_BUSQUEDA, PISTA_BUSQUEDA } from "./frasesBusqueda";
 
 /** Scroll en el que la neblina termina de aparecer */
 const TRAMO_NEBLINA = 24;
 
 /**
  * Cabecera flotante del módulo: volver, la píldora del buscador (con las frases animadas
- * mientras está vacía) y debajo píldoras: sugerencias sin texto, categorías con resultados
- * (sin píldoras al buscar personas). Detrás, la neblina borrosa del inicio, que aparece cuando
+ * mientras está vacía) y, con resultados, píldoras de categorías debajo (sin píldoras sin
+ * texto ni al buscar personas). Detrás, la neblina borrosa del inicio, que aparece cuando
  * hay contenido pasando por detrás.
  */
 export const CabeceraBusqueda = memo(function CabeceraBusqueda({
@@ -44,7 +40,6 @@ export const CabeceraBusqueda = memo(function CabeceraBusqueda({
   conResultados,
   categoria,
   onAlternarCategoria,
-  onElegirSugerencia,
   onVolver,
   altoCabecera,
   onMedir,
@@ -59,7 +54,6 @@ export const CabeceraBusqueda = memo(function CabeceraBusqueda({
   conResultados: boolean;
   categoria: CategoryId | null;
   onAlternarCategoria: (id: CategoryId) => void;
-  onElegirSugerencia: (texto: string) => void;
   onVolver: () => void;
   altoCabecera: number;
   onMedir: (event: LayoutChangeEvent) => void;
@@ -71,8 +65,9 @@ export const CabeceraBusqueda = memo(function CabeceraBusqueda({
 
   // Muy blanca hasta las píldoras (fila de 8 + 40 + 8 bajo el buscador), se desvanece a lo
   // largo de ellas y termina en su borde de abajo; sin píldoras, justo debajo del buscador
-  const altoNeblina = altoCabecera + (buscaUsuarios ? 16 : 0);
-  const finBuscador = altoCabecera - (buscaUsuarios ? 0 : 56);
+  const sinPildoras = buscaUsuarios || !conResultados;
+  const altoNeblina = altoCabecera + (sinPildoras ? 16 : 0);
+  const finBuscador = altoCabecera - (sinPildoras ? 0 : 56);
   const estiloNeblina = useAnimatedStyle(() => ({
     opacity: Math.min(Math.max(desplazado.get() / TRAMO_NEBLINA, 0), 1),
   }));
@@ -90,9 +85,9 @@ export const CabeceraBusqueda = memo(function CabeceraBusqueda({
         {altoCabecera > 0 ? (
           <NeblinaDesenfocada
             alto={altoNeblina}
-            inicioVelo={buscaUsuarios ? finBuscador - 14 : finBuscador}
+            inicioVelo={sinPildoras ? finBuscador - 14 : finBuscador}
             inicioDesenfoque={
-              buscaUsuarios ? finBuscador - 6 : (finBuscador + altoNeblina) / 2
+              sinPildoras ? finBuscador - 6 : (finBuscador + altoNeblina) / 2
             }
           />
         ) : null}
@@ -161,30 +156,19 @@ export const CabeceraBusqueda = memo(function CabeceraBusqueda({
         </PildoraCristal>
       </View>
 
-      {buscaUsuarios ? null : (
+      {sinPildoras ? null : (
         <FilaPildoras>
-          {conResultados
-            ? CATEGORIES.map((category) => (
-                <PildoraOpcion
-                  key={category.id}
-                  valor={category.id}
-                  etiqueta={category.label}
-                  seleccionado={categoria === category.id}
-                  isDark={isDark}
-                  onPress={onAlternarCategoria}
-                  sutil
-                />
-              ))
-            : SUGERENCIAS_BUSQUEDA.map((sugerencia) => (
-                <PildoraOpcion
-                  key={sugerencia}
-                  valor={sugerencia}
-                  etiqueta={sugerencia}
-                  seleccionado={false}
-                  isDark={isDark}
-                  onPress={onElegirSugerencia}
-                />
-              ))}
+          {CATEGORIES.map((category) => (
+            <PildoraOpcion
+              key={category.id}
+              valor={category.id}
+              etiqueta={category.label}
+              seleccionado={categoria === category.id}
+              isDark={isDark}
+              onPress={onAlternarCategoria}
+              sutil
+            />
+          ))}
         </FilaPildoras>
       )}
     </View>

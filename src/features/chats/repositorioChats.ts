@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 
 import type { Chat, ChatMessage, Product } from "@/features/marketplace/types";
+import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { db } from "@/lib/firebase";
 import { commitInChunks } from "@/lib/firestoreBatch";
 import { chatIdFor, introMessageFor, mapChat, mapMessage } from "./mapeoChats";
@@ -180,7 +181,7 @@ export async function openChat(input: {
 export async function sendMessage(
   chatId: string,
   senderId: string,
-  content: { text: string; images: string[] },
+  content: { text: string; images: string[]; tarjeta?: TarjetaCompartida },
 ): Promise<void> {
   const chatRef = doc(db, CHATS, chatId);
   const now = serverTimestamp();
@@ -189,6 +190,7 @@ export async function sendMessage(
     from: senderId,
     text: content.text,
     images: content.images,
+    ...(content.tarjeta ? { tarjeta: content.tarjeta } : {}),
     creadoEn: now,
   });
   batch.update(chatRef, {

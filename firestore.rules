@@ -48,6 +48,20 @@ service cloud.firestore {
         && d.actualizadoEn == request.time;
     }
 
+    // ─── Tarjetas ────────────────────────────────────────────────────────────
+    // Colores del selector de tarjetas (igual que `COLORES_TARJETA` en la app)
+    function validCardColor(c) {
+      return c in ['rojo', 'amarillo', 'azul', 'negro', 'morado'];
+    }
+
+    // Institución, clave (la CLABE: 18 dígitos sin espacios) y beneficiario, como los deja el formulario
+    function validCardData(d) {
+      return d.institucion is string && d.institucion.size() > 0 && d.institucion.size() <= 30
+        && d.clave is string && d.clave.matches('^[0-9]{18}$')
+        && d.beneficiario is string && d.beneficiario.size() > 0 && d.beneficiario.size() <= 26
+        && validCardColor(d.color);
+    }
+
     // ─── Usernames ───────────────────────────────────────────────────────────
     // Formato del @username (igual que `PATRON_USERNAME` en la app) y nombres que nadie puede tomar.
     function validUsernameFormat(name) {
@@ -161,6 +175,20 @@ service cloud.firestore {
           || (signedIn()
             && resource.data.actorId == request.auth.uid
             && validNotification(uid, notifId, request.resource.data));
+      }
+
+      // Tarjetas para recibir transferencias: privadas. Solo institución, clave, beneficiario y
+      // color (nada de CVV ni vencimiento). Al editarlas, la fecha de creación no cambia.
+      match /tarjetas/{cardId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['institucion', 'clave', 'beneficiario', 'color', 'creadoEn'])
+          && validCardData(request.resource.data)
+          && request.resource.data.creadoEn == request.time;
+        allow update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['institucion', 'clave', 'beneficiario', 'color', 'creadoEn'])
+          && validCardData(request.resource.data)
+          && request.resource.data.creadoEn == resource.data.creadoEn;
       }
 
       // Calificaciones propias (la nota que esta persona dio a cada producto)
@@ -384,13 +412,18 @@ service cloud.firestore {
         // getAfter: el primer mensaje se crea en la misma operación que el chat
         allow create: if signedIn()
           && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(chatId)).data.participants
-          && request.resource.data.keys().hasOnly(['from', 'text', 'images', 'creadoEn'])
+          && request.resource.data.keys().hasOnly(['from', 'text', 'images', 'tarjeta', 'creadoEn'])
           && request.resource.data.from == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 2000
           && request.resource.data.images is list
           && request.resource.data.images.size() <= 10
           && (request.resource.data.text.size() > 0 || request.resource.data.images.size() > 0)
+          // Una tarjeta para transferir: institución, clave, beneficiario y color, nada más
+          && (!('tarjeta' in request.resource.data)
+                || (request.resource.data.tarjeta is map
+                    && request.resource.data.tarjeta.keys().hasOnly(['institucion', 'clave', 'beneficiario', 'color'])
+                    && validCardData(request.resource.data.tarjeta)))
           && request.resource.data.creadoEn == request.time;
       }
     }

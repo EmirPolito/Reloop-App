@@ -9,12 +9,12 @@ Los archivos numerados siguen el orden de la pantalla: la cabecera arriba y, deb
 | Archivo                  | Qué tiene                                                                                                                                |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `PantallaBusqueda.tsx`   | El archivo que junta todo: el texto, la categoría, la entrada y salida del módulo, y cuál vista se muestra. **Empieza por aquí.**        |
-| `1-cabecera.tsx`         | Lo fijo de arriba: volver, el buscador con frases animadas, las píldoras (sugerencias o categorías) y la neblina borrosa.                |
+| `1-cabecera.tsx`         | Lo fijo de arriba: volver, el buscador con frases animadas, las píldoras de categorías (con resultados) y la neblina borrosa.         |
 | `2-sin-texto.tsx`        | Sin texto: las búsquedas recientes (se quitan con efecto de polvo y las de abajo suben suave) y las ideas de qué buscar.                 |
 | `3-resultados.tsx`       | Con texto o categoría: las publicaciones que coinciden, de dos en dos.                                                                   |
 | `4-personas.tsx`         | Con "@" al inicio: las personas que coinciden.                                                                                           |
 | `estilos.ts`             | Los estilos del módulo y sus colores según el tema (`useColoresBusqueda`).                                                               |
-| `frasesBusqueda.ts`      | Los textos: frases que rotan, sugerencias e ideas.                                                                                       |
+| `frasesBusqueda.ts`      | Los textos: frases que rotan e ideas.                                                                                                    |
 | `modoBusqueda.ts`        | Si el texto busca publicaciones o personas ("@"). Lógica pura, con pruebas en `tests/domain.test.ts`.                                    |
 | `repositorioPersonas.ts` | La consulta a Firestore para buscar personas por nombre o @usuario.                                                                      |
 | `hooks/`                 | `useBusquedasRecientes`, que guarda las recientes en el teléfono, y `useBuscarPersonas`, la búsqueda de personas con su estado de carga. |
@@ -40,6 +40,6 @@ Piezas de `components/`:
 
 ## Cambios comunes
 
-- **Frases, sugerencias o ideas:** `frasesBusqueda.ts`.
+- **Frases o ideas:** `frasesBusqueda.ts`.
 - **Duración del polvo o del acomodo de recientes:** `DURACION_POLVO` y `DURACION_ACOMODO` en `2-sin-texto.tsx`.
 - **Neblina de la cabecera:** `TRAMO_NEBLINA` y los cálculos de `altoNeblina` en `1-cabecera.tsx`. El efecto en sí está en `components/NeblinaDesenfocada.tsx`.

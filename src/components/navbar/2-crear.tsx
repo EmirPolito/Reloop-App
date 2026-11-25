@@ -11,7 +11,7 @@ import { NavigationIcon } from "@/components/iconos";
 import { APARECER, TAMANO_ICONO_CREAR, type Estilos } from "./estilos";
 
 /** Mismo fondo que el botón de enviar mensaje del chat */
-const COLOR_BOTON_ENVIAR = "#3897f0ff";
+const COLOR_BOTON_ENVIAR = "#11a8ffff";
 
 /** El botón redondo de crear, a la derecha de la cápsula: abre y cierra el menú de crear */
 export const BotonCrear = memo(function BotonCrear({

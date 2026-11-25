@@ -1,3 +1,5 @@
+import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
+
 export type CategoryId = "venta" | "cambio" | "donacion" | "mascota" | "comida";
 
 export type Product = {
@@ -38,6 +40,8 @@ export type ChatMessage = {
   text: string;
   time: number;
   images?: string[];
+  /** Tarjeta para recibir una transferencia (institución, clave y beneficiario) */
+  tarjeta?: TarjetaCompartida;
 };
 
 /** Resumen del último mensaje, para la lista de chats. */

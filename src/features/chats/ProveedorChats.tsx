@@ -9,6 +9,7 @@ import {
 import type { Chat } from "@/features/marketplace/types";
 import { useNotificar } from "@/features/notificaciones/hooks/useNotificar";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
+import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { uploadImages } from "@/lib/cloudinary";
 import { describeFirestoreError } from "@/lib/firestoreValues";
 import { useLatestRef } from "@/hooks/useLatestRef";
@@ -35,10 +36,15 @@ interface ChatActions {
     chatId: string,
     content: { text: string; images: string[] },
   ) => Promise<void>;
+  /** Manda una tarjeta para recibir una transferencia (institución, clave y beneficiario). */
+  sendCard: (chatId: string, tarjeta: TarjetaCompartida) => Promise<void>;
   markRead: (chatId: string) => Promise<void>;
   /** Elimina chats solo para esta persona. */
   deleteChats: (chatIds: string[]) => Promise<void>;
 }
+
+/** Texto de los mensajes con tarjeta: es lo que se ve en la lista de chats y en la notificación */
+const TEXTO_TARJETA = "💳 Tarjeta para transferir";
 
 const LOADING: ChatsState = { chats: [], status: "loading" };
 
@@ -81,6 +87,16 @@ export function ChatProvider({ children }: PropsWithChildren) {
             text: text || "📷 Foto",
           });
         }
+      },
+      sendCard: async (chatId, { institucion, clave, beneficiario, color }) => {
+        const text = TEXTO_TARJETA;
+        await saveMessage(chatId, uid, {
+          text,
+          images: [],
+          tarjeta: { institucion, clave, beneficiario, color },
+        });
+        const chat = chatsRef.current.find((item) => item.id === chatId);
+        if (chat) notify(chat.otherId, { type: "mensaje", chatId, text });
       },
       markRead: (chatId) => markChatRead(chatId, uid),
       deleteChats: (chatIds) => deleteChatsForMe(uid, chatIds),

@@ -347,6 +347,27 @@ await expectDenied("A escribe en los favoritos de B", () => setDoc(doc(A.db, "us
 await expectDenied("B guarda un favorito con otro id", () => setDoc(doc(B.db, "usuarios", B.uid, "favoritos", "p-dona"), { productId: "otro", creadoEn: serverTimestamp() }));
 await expectOk("B quita el favorito", () => deleteDoc(doc(B.db, "usuarios", B.uid, "favoritos", "p-venta")));
 
+// ── TARJETAS ────────────────────────────────────────────────────────────────
+const tarjeta = { institucion: "BBVA", clave: "012180001234567891", beneficiario: "BETO RUIZ", color: "rojo" };
+const tarjetasDe = (u, uid = u.uid) => collection(u.db, "usuarios", uid, "tarjetas");
+let tarjetaB;
+await expectOk("B guarda una tarjeta", async () => { tarjetaB = await addDoc(tarjetasDe(B), { ...tarjeta, creadoEn: serverTimestamp() }); });
+await expectOk("B lee sus tarjetas", async () => { if ((await getDocs(query(tarjetasDe(B), orderBy("creadoEn", "asc")))).size !== 1) throw new Error("cantidad"); });
+await expectDenied("A lee las tarjetas de B", () => getDocs(tarjetasDe(A, B.uid)));
+await expectDenied("A guarda una tarjeta en la colección de B", () => addDoc(tarjetasDe(A, B.uid), { ...tarjeta, creadoEn: serverTimestamp() }));
+await expectDenied("B guarda una tarjeta con CVV", () => addDoc(tarjetasDe(B), { ...tarjeta, cvv: "123", creadoEn: serverTimestamp() }));
+await expectDenied("B guarda una clave con letras", () => addDoc(tarjetasDe(B), { ...tarjeta, clave: "0121800012345678ab", creadoEn: serverTimestamp() }));
+await expectDenied("B guarda una clave de 16 dígitos", () => addDoc(tarjetasDe(B), { ...tarjeta, clave: "4111111111112455", creadoEn: serverTimestamp() }));
+await expectDenied("B guarda una tarjeta con vencimiento", () => addDoc(tarjetasDe(B), { ...tarjeta, vence: "08/29", creadoEn: serverTimestamp() }));
+await expectDenied("B guarda un color que no existe", () => addDoc(tarjetasDe(B), { ...tarjeta, color: "dorado", creadoEn: serverTimestamp() }));
+await expectDenied("B guarda la tarjeta en gris (sin diseño)", () => addDoc(tarjetasDe(B), { ...tarjeta, color: "gris", creadoEn: serverTimestamp() }));
+await expectOk("B edita su tarjeta", () => updateDoc(tarjetaB, { institucion: "NU", clave: "638180000123456789", beneficiario: "BETO R", color: "amarillo" }));
+await expectDenied("B le agrega el CVV al editar", () => updateDoc(tarjetaB, { cvv: "123" }));
+await expectDenied("B cambia la fecha de creación", () => updateDoc(tarjetaB, { creadoEn: serverTimestamp() }));
+await expectDenied("A edita la tarjeta de B", () => updateDoc(doc(A.db, "usuarios", B.uid, "tarjetas", tarjetaB.id), { beneficiario: "A" }));
+await expectDenied("A borra la tarjeta de B", () => deleteDoc(doc(A.db, "usuarios", B.uid, "tarjetas", tarjetaB.id)));
+await expectOk("B borra su tarjeta", () => deleteDoc(tarjetaB));
+
 // ── REPORTES ────────────────────────────────────────────────────────────────
 await expectOk("B reporta", () => setDoc(doc(B.db, "reportes", `${B.uid}_p-venta`), { productId: "p-venta", reporterId: B.uid, creadoEn: serverTimestamp() }));
 await expectOk("B lee sus reportes (consulta)", async () => { if ((await getDocs(query(collection(B.db, "reportes"), where("reporterId", "==", B.uid)))).size !== 1) throw new Error("cantidad"); });
@@ -419,6 +440,12 @@ await expectDenied("A falsea el último mensaje como de B", () => updateDoc(doc(
 await expectDenied("A escribe un mensaje como si fuera B", async () => { await addDoc(collection(A.db, "chats", chatAB, "mensajes"), { from: B.uid, text: "falso", images: [], creadoEn: serverTimestamp() }); });
 await expectDenied("A edita un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await updateDoc(s.docs[0].ref, { text: "editado" }); });
 await expectDenied("A borra un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await deleteDoc(s.docs[0].ref); });
+const mandarTarjeta = (u, datos) => addDoc(collection(u.db, "chats", chatAB, "mensajes"), { from: u.uid, text: "💳 Tarjeta para transferir", images: [], tarjeta: datos, creadoEn: serverTimestamp() });
+const tarjetaA = { institucion: "BANORTE", clave: "072180001234567891", beneficiario: "ANA PÉREZ", color: "negro" };
+await expectOk("A manda una tarjeta (institución, clave y beneficiario)", () => mandarTarjeta(A, tarjetaA));
+await expectDenied("A manda una tarjeta con vencimiento", () => mandarTarjeta(A, { ...tarjetaA, vence: "08/29" }));
+await expectDenied("A manda una tarjeta con CVV", () => mandarTarjeta(A, { ...tarjetaA, cvv: "123" }));
+await expectDenied("A manda una tarjeta sin clave válida", () => mandarTarjeta(A, { ...tarjetaA, clave: "1234" }));
 await expectDenied("A borra el chat", () => deleteDoc(doc(A.db, "chats", chatAB)));
 await expectDenied("A envía un mensaje vacío", () => sendMessage(A, chatAB, "", []));
 await expectDenied("A envía un mensaje de 2001 caracteres", () => sendMessage(A, chatAB, "x".repeat(2001)));

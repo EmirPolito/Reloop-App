@@ -1,9 +1,5 @@
 /** Frases que rotan en el input vacío del inicio (se cambian solo aquí) */
-export const FRASES_BUSQUEDA = [
-  "Buscar productos",
-  "Buscar @usuario",
-  "Buscar lo que necesites",
-] as const;
+export const FRASES_BUSQUEDA = ["Busca productos", "Busca @usuario"] as const;
 
 /** Texto fijo cuando el sistema pide reducir el movimiento */
 export const FRASE_BUSQUEDA_FIJA = "Buscar productos o @usuario";
@@ -12,16 +8,6 @@ export const FRASE_BUSQUEDA_FIJA = "Buscar productos o @usuario";
 export const ETIQUETA_BUSQUEDA = "Buscar productos o usuarios con @";
 export const PISTA_BUSQUEDA =
   "Escribe @ al inicio para buscar personas por su usuario";
-
-/** Ideas de qué buscar, en píldoras debajo del buscador del módulo de búsqueda */
-export const SUGERENCIAS_BUSQUEDA = [
-  "Libros",
-  "Calculadora",
-  "Laptop",
-  "Uniformes",
-  "Postres",
-  "Audífonos",
-] as const;
 
 /** Ideas con descripción, en la lista del módulo de búsqueda vacío; `busqueda` es lo que se escribe */
 export const IDEAS_BUSQUEDA = [

@@ -1,6 +1,7 @@
 import type { DocumentData, DocumentSnapshot } from "firebase/firestore";
 
 import type { Chat, ChatMessage, Product } from "@/features/marketplace/types";
+import { leerTarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { toMillis } from "@/lib/firestoreValues";
 
 /** Un chat por pareja de personas: el id sale de sus uid ordenados. */
@@ -71,11 +72,13 @@ export function mapMessage(
   const images = Array.isArray(data.images)
     ? data.images.filter((item): item is string => typeof item === "string")
     : [];
+  const tarjeta = leerTarjetaCompartida(data.tarjeta);
   return {
     id: snapshot.id,
     from: data.from === uid ? "me" : "them",
     text: typeof data.text === "string" ? data.text : "",
     time: toMillis(data.creadoEn),
     ...(images.length > 0 ? { images } : {}),
+    ...(tarjeta ? { tarjeta } : {}),
   };
 }

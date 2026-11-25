@@ -91,7 +91,7 @@ export const BotonPestana = memo(function BotonPestana({
   }));
 
   const colorInactivo = isDark ? "#A1A1AA" : "#52525B";
-  const colorActivo = isDark ? "#F1F5F9" : "#3897f0ff";
+  const colorActivo = isDark ? "#11a8ffff" : "#11a8ffff";
   const IconoLinea = ICONOS_LINEA[tab.id];
 
   return (

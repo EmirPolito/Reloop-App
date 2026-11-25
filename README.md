@@ -65,6 +65,7 @@ src/
 │  ├─ navigation/        acciones de navegación, barra de pestañas y opciones de la pila
 │  ├─ perfil/            perfil propio y público, repositorio y editor (drawer/)
 │  ├─ session/           uid de la sesión y proveedores que dependen de ella
+│  ├─ tarjetas/          billetera de tarjetas para mandar en el chat a cuál transferir
 │  └─ shared/            tema, estilos, iconos y borradores de texto
 ├─ hooks/                hooks genéricos (galería, contexto, ancho de tarjetas)
 ├─ lib/                  Firebase, Cloudinary y utilidades de Firestore e imágenes

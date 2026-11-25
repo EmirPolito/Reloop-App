@@ -32,6 +32,7 @@ export default function AppLayout() {
         {/* Sin la animación de la pila: entra y sale con la de los módulos (TabScene) */}
         <Stack.Screen name="notificaciones" options={{ animation: "none" }} />
         <Stack.Screen name="buscar-chats" options={{ animation: "none" }} />
+        <Stack.Screen name="tarjetas" options={{ animation: "none" }} />
         <Stack.Screen name="legal/[documento]" />
         <Stack.Screen name="premium" />
         {/* Encima del inicio, que se sigue viendo detrás: la transición la anima el módulo.

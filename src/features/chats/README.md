@@ -32,10 +32,9 @@ Los archivos numerados siguen el orden de la pantalla, de arriba hacia abajo.
 
 Las piezas de `components/`:
 
-- **`BurbujaMensaje`:** cada mensaje, con su texto y sus fotos.
+- **`BurbujaMensaje`:** cada mensaje, con su texto y sus fotos. Un mensaje con tarjeta se dibuja con `TarjetaChat` (sin burbuja).
 - **`CajaMensaje` y `BotonEnviar`:** la caja para escribir y el botón de enviar.
-- **`CabeceraConversacion`:** la cabecera con el avatar y el nombre.
-- **`MenuConversacion`:** el menú de la conversación.
+- **`CabeceraConversacion`:** la cabecera con volver, el avatar y el nombre, y la billetera de tarjetas (de `src/features/tarjetas`) a la derecha.
 - **`ProductoConversacion`:** la tarjeta de la publicación de la que parte el chat.
 - **`VisorImagenes`:** el visor de fotos a pantalla completa.
 - **`FilaChat`:** un chat en la lista.
@@ -45,7 +44,7 @@ Las piezas de `components/`:
 
 | Archivo                  | Qué tiene                                                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ProveedorChats.tsx`     | Los chats en vivo y sus acciones: enviar, marcar como leído y eliminar (`useChats`, `useChatActions`).                                                        |
+| `ProveedorChats.tsx`     | Los chats en vivo y sus acciones: enviar, mandar una tarjeta, marcar como leído y eliminar (`useChats`, `useChatActions`).                                    |
 | `repositorioChats.ts`    | Las lecturas y escrituras en Firestore.                                                                                                                       |
 | `mapeoChats.ts`          | Convierte los documentos de Firestore en chats y mensajes. Tiene pruebas en `tests/domain.test.ts`.                                                           |
 | `filtrosChats.ts`        | Filtra chats por texto.                                                                                                                                       |

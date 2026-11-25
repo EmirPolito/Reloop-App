@@ -33,6 +33,8 @@ export function useNavegacion() {
       openPremium: () => router.push("/premium"),
       /** Buscador de chats, en su propia pantalla */
       openChatSearch: () => router.push("/buscar-chats"),
+      /** Las tarjetas para recibir transferencias: verlas y crear una nueva */
+      openCards: () => router.push("/tarjetas"),
       openThread: (chatId: string) =>
         router.push({ pathname: "/chat/[id]", params: { id: chatId } }),
       /** Vuelve a la pantalla anterior; si no hay (enlace directo), al inicio. */

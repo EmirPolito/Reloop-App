@@ -12,28 +12,32 @@ import {
 } from "@/features/chats/medidasConversacion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
-import { BackArrowIcon, CategoryIcon } from "./IconosConversacion";
+import {
+  ANCHO_BOTON_BILLETERA,
+  BotonBilletera,
+} from "@/features/tarjetas/components/BotonBilletera";
+import { BackArrowIcon } from "./IconosConversacion";
 
 /** Fuera de iOS, lo que la neblina baja por debajo del encabezado al desvanecerse */
 const COLA_NEBLINA = 56;
 
 /**
- * Encabezado flotante del chat: volver, contacto (abre su perfil) y menú. Los botones son los
- * redondos de cristal de los demás módulos (Chats, Favoritos...), del mismo tamaño.
+ * Encabezado flotante del chat: volver, contacto (abre su perfil) y la billetera para mandar
+ * una tarjeta. Volver es el botón redondo de cristal de los demás módulos (Chats, Favoritos...).
  */
 export function CabeceraConversacion({
   contactId,
   contactName,
   onBack,
   onOpenProfile,
-  onOpenMenu,
+  onOpenWallet,
 }: {
   /** uid del contacto: de ahí sale su avatar de ahora y si tiene insignia */
   contactId: string;
   contactName: string;
   onBack: () => void;
   onOpenProfile: () => void;
-  onOpenMenu: () => void;
+  onOpenWallet: () => void;
 }) {
   const { isDark, styles } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -98,15 +102,18 @@ export function CabeceraConversacion({
         />
       )}
 
-      <BotonBarra
-        etiqueta="Volver a los chats"
-        onPress={onBack}
-        fondo={fondoBoton}
-      >
-        <View style={{ transform: [{ translateX: -1.5 }] }}>
-          <BackArrowIcon size={28} color={iconColor} />
-        </View>
-      </BotonBarra>
+      {/* Del ancho de la billetera, para que el contacto quede centrado */}
+      <View style={{ width: ANCHO_BOTON_BILLETERA }}>
+        <BotonBarra
+          etiqueta="Volver a los chats"
+          onPress={onBack}
+          fondo={fondoBoton}
+        >
+          <View style={{ transform: [{ translateX: -1.5 }] }}>
+            <BackArrowIcon size={28} color={iconColor} />
+          </View>
+        </BotonBarra>
+      </View>
 
       {/* Centro: avatar (abre el perfil) + nombre del contacto debajo */}
       <View style={{ alignItems: "center", flex: 1, marginHorizontal: 10 }}>
@@ -139,16 +146,8 @@ export function CabeceraConversacion({
         </Text>
       </View>
 
-      {/* Botón derecho de menú */}
-      <BotonBarra
-        etiqueta="Más opciones"
-        onPress={onOpenMenu}
-        fondo={fondoBoton}
-      >
-        <View style={{ transform: [{ translateY: -0.5 }] }}>
-          <CategoryIcon size={22} color={iconColor} />
-        </View>
-      </BotonBarra>
+      {/* La billetera: abre las tarjetas para mandar una */}
+      <BotonBilletera onPress={onOpenWallet} />
     </View>
   );
 }

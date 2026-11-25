@@ -28,6 +28,9 @@ import { useProduct } from "@/features/marketplace/hooks/useProductsByIds";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useDraft } from "@/features/shared/DraftsProvider";
+import { SelectorTarjetas } from "@/features/tarjetas/components/SelectorTarjetas";
+import type { Tarjeta } from "@/features/tarjetas/formatoTarjeta";
+import { useTarjetas } from "@/features/tarjetas/repositorioTarjetas";
 import { useImagePicker } from "@/hooks/useImagePicker";
 import { useLatestRef } from "@/hooks/useLatestRef";
 import { showErrorAlert } from "@/utils/alerts";
@@ -36,7 +39,6 @@ import { VisorImagenes } from "./components/VisorImagenes";
 import { BurbujaMensaje } from "./components/BurbujaMensaje";
 import { HUECO_SOBRE_TECLADO, CajaMensaje } from "./components/CajaMensaje";
 import { CabeceraConversacion } from "./components/CabeceraConversacion";
-import { MenuConversacion } from "./components/MenuConversacion";
 import { ProductoConversacion } from "./components/ProductoConversacion";
 import { useMensajesConversacion } from "./hooks/useMensajesConversacion";
 import {
@@ -81,7 +83,8 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
   const headerHeight = useThreadHeaderHeight();
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
-  const { sendMessage, markRead } = useChatActions();
+  const { sendMessage, sendCard, markRead } = useChatActions();
+  const tarjetas = useTarjetas();
   const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { messages, status: messagesStatus } = useMensajesConversacion(
     chatId,
@@ -109,13 +112,13 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
       cancelAnimationFrame(segundo);
     };
   }, [enPosicion, messagesStatus]);
-  const { back, openProduct, openUserProfile } = useNavegacion();
+  const { back, openProduct, openUserProfile, openCards } = useNavegacion();
   const { pickImages } = useImagePicker();
   const [messageDraft, setMessageDraft] = useDraft(`message:${chatId}`);
   // Sale con la animación de módulo y luego regresa
   const volver = useCallback(() => conSalida(back), [back]);
 
-  const [showMenu, setShowMenu] = useState(false);
+  const [showCards, setShowCards] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>(NO_IMAGES);
   const [sending, setSending] = useState(false);
   const [viewer, setViewer] = useState({ images: NO_IMAGES, initialIndex: 0 });
@@ -218,6 +221,13 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
     [],
   );
 
+  function enviarTarjeta(tarjeta: Tarjeta) {
+    setShowCards(false);
+    sendCard(chatId, tarjeta).catch((error) =>
+      showErrorAlert("No se pudo mandar la tarjeta", error),
+    );
+  }
+
   async function handlePickImages() {
     const uris = await pickImages();
     if (uris.length > 0) setSelectedImages((current) => [...current, ...uris]);
@@ -317,10 +327,19 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
         contactName={activeChat.name}
         onBack={volver}
         onOpenProfile={() => openUserProfile(activeChat.otherId)}
-        onOpenMenu={() => setShowMenu(true)}
+        onOpenWallet={() => setShowCards(true)}
       />
 
-      <MenuConversacion visible={showMenu} onClose={() => setShowMenu(false)} />
+      <SelectorTarjetas
+        visible={showCards}
+        tarjetas={tarjetas}
+        onElegir={enviarTarjeta}
+        onNueva={() => {
+          setShowCards(false);
+          openCards();
+        }}
+        onClose={() => setShowCards(false)}
+      />
 
       <VisorImagenes
         images={viewer.images}

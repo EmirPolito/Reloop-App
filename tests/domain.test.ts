@@ -9,6 +9,15 @@ import { Timestamp } from "firebase/firestore";
 
 import { chatIdFor, introMessageFor, mapChat, mapMessage } from "@/features/chats/mapeoChats";
 import { filterChats } from "@/features/chats/filtrosChats";
+import {
+  claveEnTarjeta,
+  faltanteTarjeta,
+  formatearBeneficiario,
+  formatearClave,
+  formatearInstitucion,
+  nombrePropio,
+  textoParaCopiar,
+} from "@/features/tarjetas/formatoTarjeta";
 import { buildNewProduct, validateDraft, EMPTY_DRAFT } from "@/features/crear-publicacion/draftRules";
 import { buildHomeFeedRows, homeRowKey } from "@/features/home/filasInicio";
 import { filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
@@ -398,6 +407,41 @@ describe("mapeo de chats", () => {
     const withImages = mapMessage(snap("m2", { from: "b", text: "", images: ["https://x/1.png", 5, "https://x/2.png"], creadoEn: ts(4) }), "a");
     assert.equal(withImages.from, "them");
     assert.deepEqual(withImages.images, ["https://x/1.png", "https://x/2.png"]);
+  });
+  it("lee la tarjeta de un mensaje (color desconocido → negro) e ignora una incompleta", () => {
+    const conTarjeta = mapMessage(snap("m3", { from: "a", text: "💳", images: [], tarjeta: { institucion: "BBVA", clave: "012180001234567891", beneficiario: "ANA", color: "dorado" }, creadoEn: ts(5) }), "a");
+    assert.deepEqual(conTarjeta.tarjeta, { institucion: "BBVA", clave: "012180001234567891", beneficiario: "ANA", color: "negro" });
+    assert.equal(mapMessage(snap("m4", { from: "a", text: "x", images: [], tarjeta: { beneficiario: "ANA" }, creadoEn: ts(6) }), "a").tarjeta, undefined);
+  });
+});
+
+describe("formato de tarjetas", () => {
+  it("clave: solo dígitos, espacios cada 4 y máximo 18", () => {
+    assert.equal(formatearClave("0121-8000 1234 5678 9199"), "0121 8000 1234 5678 91");
+    assert.equal(formatearClave("01218"), "0121 8");
+  });
+  it("beneficiario e institución en mayúsculas, sin dobles espacios", () => {
+    assert.equal(formatearBeneficiario(" ana  pérez 3"), "ANA PÉREZ ");
+    assert.equal(formatearBeneficiario("x".repeat(40)).length, 26);
+    assert.equal(formatearInstitucion("banco  azteca 2!"), "BANCO AZTECA 2");
+  });
+  it("clave enmascarada salvo los últimos 4", () => {
+    assert.equal(claveEnTarjeta("012180001234560806", false), "•••• •••• •••• 0806");
+    assert.equal(claveEnTarjeta("012180001234560806", true), "0121 8000 1234 5608 06");
+  });
+  it("nombre propio para la funda", () => {
+    assert.equal(nombrePropio("SAURABH CHAUHAN"), "Saurabh Chauhan");
+  });
+  it("qué falta para guardar y qué se copia", () => {
+    const datos = { institucion: "BBVA", clave: "0121 8000 1234 5678 91", beneficiario: "ANA" };
+    assert.equal(faltanteTarjeta(datos), null);
+    assert.match(faltanteTarjeta({ ...datos, institucion: " " }) ?? "", /institución/);
+    assert.match(faltanteTarjeta({ ...datos, clave: "0121" }) ?? "", /18 dígitos/);
+    assert.match(faltanteTarjeta({ ...datos, beneficiario: "" }) ?? "", /beneficiario/);
+    assert.equal(
+      textoParaCopiar({ institucion: "BBVA", clave: "012180001234567891", beneficiario: "ANA", color: "rojo" }),
+      "Beneficiario: ANA\nInstitución: BBVA\nCLABE: 012180001234567891",
+    );
   });
 });
 
