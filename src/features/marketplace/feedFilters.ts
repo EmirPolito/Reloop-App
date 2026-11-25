@@ -29,7 +29,9 @@ export function filtersReducer(
       };
 
     case "categoryCleared":
-      return filters.category === null ? filters : { ...filters, category: null };
+      return filters.category === null
+        ? filters
+        : { ...filters, category: null };
 
     case "filtersCleared":
       return filters.query === "" && filters.category === null

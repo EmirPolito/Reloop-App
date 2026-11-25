@@ -9,6 +9,7 @@ import {
 import type { Chat } from "@/features/marketplace/types";
 import { useNotificar } from "@/features/notificaciones/hooks/useNotificar";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
+import { textoPedido, type Pedido } from "@/features/pedidos/formatoPedido";
 import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { uploadImages } from "@/lib/cloudinary";
 import { describeFirestoreError } from "@/lib/firestoreValues";
@@ -38,6 +39,13 @@ interface ChatActions {
   ) => Promise<void>;
   /** Manda una tarjeta para recibir una transferencia (institución, clave y beneficiario). */
   sendCard: (chatId: string, tarjeta: TarjetaCompartida) => Promise<void>;
+  /** Manda el pedido de una publicación de venta o comida. */
+  sendOrder: (chatId: string, otherId: string, pedido: Pedido) => Promise<void>;
+  /** El vendedor le pide a la otra persona una calificación de su publicación. */
+  requestReview: (
+    chatId: string,
+    producto: { id: string; name: string },
+  ) => Promise<void>;
   markRead: (chatId: string) => Promise<void>;
   /** Elimina chats solo para esta persona. */
   deleteChats: (chatIds: string[]) => Promise<void>;
@@ -45,6 +53,7 @@ interface ChatActions {
 
 /** Texto de los mensajes con tarjeta: es lo que se ve en la lista de chats y en la notificación */
 const TEXTO_TARJETA = "💳 Tarjeta para transferir";
+const TEXTO_CALIFICACION = "⭐ ¿Me ayudas con una calificación?";
 
 const LOADING: ChatsState = { chats: [], status: "loading" };
 
@@ -97,6 +106,39 @@ export function ChatProvider({ children }: PropsWithChildren) {
         });
         const chat = chatsRef.current.find((item) => item.id === chatId);
         if (chat) notify(chat.otherId, { type: "mensaje", chatId, text });
+      },
+      // El chat puede ser recién creado (aún no está en la lista): se pasa la otra persona
+      sendOrder: async (chatId, otherId, pedido) => {
+        const text = textoPedido(pedido);
+        await saveMessage(chatId, uid, { text, images: [], pedido });
+        notify(otherId, { type: "mensaje", chatId, text });
+      },
+      requestReview: async (chatId, producto) => {
+        const chat = chatsRef.current.find((item) => item.id === chatId);
+        if (!chat) throw new Error("No se encontró la conversación.");
+        const text = TEXTO_CALIFICACION;
+        const antes = chat.lastMessage;
+        await saveMessage(chatId, uid, {
+          text,
+          images: [],
+          // Quien la pide no ve la solicitud: en su lista sigue el mensaje de antes
+          ...(antes
+            ? {
+                previo: {
+                  text: antes.text,
+                  from: antes.from === "me" ? uid : chat.otherId,
+                  hasImages: antes.hasImages,
+                  time: antes.time,
+                },
+              }
+            : {}),
+          calificacion: {
+            productoId: producto.id,
+            producto: producto.name,
+            compradorId: chat.otherId,
+          },
+        });
+        notify(chat.otherId, { type: "mensaje", chatId, text });
       },
       markRead: (chatId) => markChatRead(chatId, uid),
       deleteChats: (chatIds) => deleteChatsForMe(uid, chatIds),

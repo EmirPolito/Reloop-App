@@ -19,8 +19,14 @@ import { useImagePicker } from "@/hooks/useImagePicker";
 import {
   EMPTY_DRAFT,
   FORM_CATEGORY_LABELS,
+  MAX_FOTOS,
+  MAX_OPCIONES,
+  usesOptions,
+  type DraftOption,
   type ProductDraft,
 } from "./draftRules";
+import { FotosPublicacion } from "./FotosPublicacion";
+import { ProductosPublicacion } from "./ProductosPublicacion";
 import { usePublishProduct } from "./hooks/usePublishProduct";
 
 const CATEGORY_DESCRIPTIONS = {
@@ -46,14 +52,39 @@ export function PantallaCrearPublicacion() {
     setDraft((current) => ({ ...current, ...patch }));
   }
 
+  const fotosLlenas = draft.photos.length >= MAX_FOTOS;
+  const conProductos = usesOptions(draft.category);
+
   async function handlePickPhoto() {
     const uri = await pickSquareImage();
-    if (uri) updateDraft({ photo: uri });
+    if (uri)
+      setDraft((current) => ({
+        ...current,
+        photos: [...current.photos, uri].slice(0, MAX_FOTOS),
+      }));
   }
 
   async function handleTakePhoto() {
     const uri = await takeSquarePhoto();
-    if (uri) updateDraft({ photo: uri });
+    if (uri)
+      setDraft((current) => ({
+        ...current,
+        photos: [...current.photos, uri].slice(0, MAX_FOTOS),
+      }));
+  }
+
+  function cambiarOpcion(key: string, cambio: Partial<DraftOption>) {
+    setDraft((current) => ({
+      ...current,
+      options: current.options.map((o) =>
+        o.key === key ? { ...o, ...cambio } : o,
+      ),
+    }));
+  }
+
+  async function elegirFotoOpcion(key: string) {
+    const uri = await pickSquareImage();
+    if (uri) cambiarOpcion(key, { photo: uri });
   }
 
   async function handlePublish() {
@@ -168,51 +199,25 @@ export function PantallaCrearPublicacion() {
             <View style={styles.createSectionRow}>
               <Text style={styles.createSectionLabel}>Fotos</Text>
               <Text style={styles.createPhotoCount}>
-                {draft.photo ? "1" : "0"}/1
+                {draft.photos.length}/{MAX_FOTOS}
               </Text>
             </View>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                draft.photo ? "Cambiar foto del producto" : "Elegir foto"
+            <FotosPublicacion
+              fotos={draft.photos}
+              ocupado={isPicking}
+              onAgregar={() => void handlePickPhoto()}
+              onQuitar={(indice) =>
+                updateDraft({
+                  photos: draft.photos.filter((_, i) => i !== indice),
+                })
               }
-              disabled={isPicking}
-              onPress={handlePickPhoto}
-              style={[
-                styles.createPhotoFrame,
-                draft.photo && styles.createPhotoFrameFilled,
-              ]}
-            >
-              {draft.photo ? (
-                <>
-                  <Image
-                    source={{ uri: draft.photo }}
-                    contentFit="cover"
-                    style={styles.createPhotoFrameImage}
-                  />
-                  <View style={styles.createPhotoEdit}>
-                    <AppIcon name="photo" size={17} color="#FFFFFF" />
-                  </View>
-                </>
-              ) : (
-                <>
-                  <AppIcon
-                    name="photo"
-                    size={30}
-                    color={isDark ? "#A9A5B7" : "#667085"}
-                  />
-                  <Text style={styles.createPhotoPlaceholder}>
-                    {isPicking ? "Abriendo galería..." : "Elegir de la galería"}
-                  </Text>
-                </>
-              )}
-            </Pressable>
+            />
 
             {Platform.OS !== "web" && (
               <Pressable
                 accessibilityRole="button"
-                disabled={isPicking}
+                disabled={isPicking || fotosLlenas}
                 onPress={handleTakePhoto}
                 style={({ pressed }) => [
                   styles.createCameraAction,
@@ -232,7 +237,8 @@ export function PantallaCrearPublicacion() {
             )}
 
             <Text style={styles.createPhotoHint}>
-              La foto ayuda a mostrar el estado de lo que publicas.
+              Hasta {MAX_FOTOS} fotos: la principal es la grande y las demás
+              salen abajo de ella.
             </Text>
 
             <Text style={styles.createFieldLabel}>Nombre del producto</Text>
@@ -257,8 +263,50 @@ export function PantallaCrearPublicacion() {
               style={[styles.input, styles.descriptionInput]}
             />
 
+            {conProductos ? (
+              <>
+                <View style={styles.createSectionRow}>
+                  <Text style={styles.createSectionLabel}>Productos</Text>
+                  <Text style={styles.createPhotoCount}>
+                    {draft.options.length}/{MAX_OPCIONES}
+                  </Text>
+                </View>
+                <Text style={styles.createPhotoHint}>
+                  Si vendes varios (p. ej., sabores), agrega cada uno con su
+                  foto y precio. Sin productos, se pide la publicación tal cual.
+                </Text>
+                <ProductosPublicacion
+                  opciones={draft.options}
+                  ocupado={isPicking}
+                  onCambiar={cambiarOpcion}
+                  onElegirFoto={(key) => void elegirFotoOpcion(key)}
+                  onQuitar={(key) =>
+                    updateDraft({
+                      options: draft.options.filter((o) => o.key !== key),
+                    })
+                  }
+                  onAgregar={() =>
+                    updateDraft({
+                      options: [
+                        ...draft.options,
+                        {
+                          key: `o${Date.now().toString(36)}`,
+                          name: "",
+                          description: "",
+                          priceText: "",
+                          photo: null,
+                        },
+                      ],
+                    })
+                  }
+                />
+              </>
+            ) : null}
+
             <View style={styles.createBottomRow}>
-              {categoryPriceMode(draft.category) !== "none" ? (
+              {/* Con productos, cada uno lleva su precio */}
+              {categoryPriceMode(draft.category) !== "none" &&
+              !(conProductos && draft.options.length > 0) ? (
                 <View style={styles.createPriceColumn}>
                   <Text style={styles.createFieldLabel}>Precio</Text>
                   <TextInput

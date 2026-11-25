@@ -25,16 +25,20 @@ export function categoryPriceMode(category: CategoryId): CategoryRule["price"] {
   return CATEGORY_RULES[category].price;
 }
 
-/** Promedio de las calificaciones de los productos calificables, o "—" si no hay ninguna. */
+/**
+ * Valoración de una persona: el promedio de todas las reseñas de sus publicaciones de venta
+ * y comida (cada reseña pesa igual, sin importar de qué publicación sea). "0" si no hay.
+ */
 export function averageRatingLabel(products: Product[]): string {
-  const rated = products.filter(
-    (product) =>
-      allowsProductRating(product.category) && product.rating !== undefined,
-  );
-  // Sin valoraciones todavía: 0 (no una raya)
-  if (rated.length === 0) return "0";
-  const total = rated.reduce((sum, product) => sum + (product.rating ?? 0), 0);
-  return (total / rated.length).toFixed(1);
+  let estrellas = 0;
+  let resenas = 0;
+  for (const product of products) {
+    if (!allowsProductRating(product.category) || product.rating === undefined)
+      continue;
+    estrellas += product.rating * product.reviewCount;
+    resenas += product.reviewCount;
+  }
+  return resenas === 0 ? "0" : (estrellas / resenas).toFixed(1);
 }
 
 /** "Donación", "$120" o `null` cuando el producto no tiene precio. */

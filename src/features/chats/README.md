@@ -24,18 +24,17 @@ Los archivos numerados siguen el orden de la pantalla, de arriba hacia abajo.
 
 ### Conversación y búsqueda
 
-| Archivo                    | Qué tiene                                                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PantallaConversacion.tsx` | Una conversación: los mensajes, la tarjeta de la publicación, la cabecera, el visor de fotos y la caja para escribir. Sube con el teclado. |
-| `PantallaBuscarChats.tsx`  | Buscar personas para escribirles, con las búsquedas recientes.                                                                             |
-| `components/`              | Las piezas de la conversación y la fila de la lista.                                                                                       |
+| Archivo                    | Qué tiene                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PantallaConversacion.tsx` | Una conversación: los mensajes, la cabecera, el visor de fotos y la caja para escribir. Sube con el teclado. |
+| `PantallaBuscarChats.tsx`  | Buscar personas para escribirles, con las búsquedas recientes.                                               |
+| `components/`              | Las piezas de la conversación y la fila de la lista.                                                         |
 
 Las piezas de `components/`:
 
-- **`BurbujaMensaje`:** cada mensaje, con su texto y sus fotos. Un mensaje con tarjeta se dibuja con `TarjetaChat` (sin burbuja).
-- **`CajaMensaje` y `BotonEnviar`:** la caja para escribir y el botón de enviar.
+- **`BurbujaMensaje`:** cada mensaje, con su texto y sus fotos. Los mensajes con tarjeta, pedido o solicitud de calificación se dibujan sin burbuja, con `TarjetaChat`, `PedidoChat` (de `pedidos`) y `SolicitudChat` (de `resenas`).
+- **`CajaMensaje` y `BotonEnviar`:** la caja para escribir y el botón de enviar. Lo que va en `encima` (el botón de pedir calificación) queda anclado arriba del input y sube con él.
 - **`CabeceraConversacion`:** la cabecera con volver, el avatar y el nombre, y la billetera de tarjetas (de `src/features/tarjetas`) a la derecha.
-- **`ProductoConversacion`:** la tarjeta de la publicación de la que parte el chat.
 - **`VisorImagenes`:** el visor de fotos a pantalla completa.
 - **`FilaChat`:** un chat en la lista.
 - **`IconosChats` e `IconosConversacion`:** los iconos.

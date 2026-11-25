@@ -201,7 +201,9 @@ Hazlo con dos cuentas, por ejemplo en dos dispositivos o un dispositivo y el nav
 | `usuarios/{uid}/calificaciones/{productId}` | La nota que esa persona dio | Solo su dueña | Solo su dueña |
 | `usuarios/{uid}/notificaciones/{id}` | Avisos recibidos: te siguen, guardan o comentan tu publicación, te escriben. El id es fijo por persona y motivo (`seguidor_{uid}`, `mensaje_{uid}`, `favorito_{uid}_{productId}`, `comentario_{uid}_{productId}`). | Solo su dueña | La crea o renueva quien la provoca, a su propio nombre. Su dueña solo la marca como leída o la borra. |
 | `productos/{id}` | Publicación y su promedio (`ratingTotal`, `ratingCount`) | Cualquier persona con sesión | Crea su dueña. Solo su dueña cambia el nombre de vendedor. Las demás personas solo cambian el promedio al calificar. |
-| `productos/{id}/comentarios/{id}` | Comentarios | Cualquier persona con sesión | Cualquier persona, como autora. No se editan ni se borran. |
+| `productos/{id}/comentarios/{id}` | Comentarios de antes (la app ya no los muestra ni los escribe) | Cualquier persona con sesión | Cualquier persona, como autora. No se editan ni se borran. |
+| `productos/{id}/solicitudes/{compradorId}` | El vendedor le pidió una calificación a quien le compró | El vendedor y esa persona | Solo el dueño de la publicación (no a sí mismo) |
+| `productos/{id}/resenas/{autorId}` | Reseñas de venta y comida: estrellas (1 a 5), texto y nombre. Una por persona. | Cualquier persona con sesión | Solo quien tiene solicitud, en el mismo lote que suma sus estrellas a `resenasTotal`/`resenasCount` de la publicación. No se editan ni se borran. |
 | `reportes/{uid}_{productId}` | Reportes de publicaciones | Solo quien reportó | Quien reporta |
 | `chats/{uidA}_{uidB}` | Una conversación por pareja, con nombres, último mensaje y marcas de lectura | Las dos personas | Las dos personas |
 | `chats/{id}/mensajes/{id}` | Mensajes con texto y direcciones de fotos, o una tarjeta para transferir (institución, clave, beneficiario y color, nada más) | Las dos personas | Quien envía. No se editan ni se borran. |
@@ -209,7 +211,7 @@ Hazlo con dos cuentas, por ejemplo en dos dispositivos o un dispositivo y el nav
 Notas:
 
 - No hay índices compuestos que crear: todas las consultas son de un solo campo y el orden se hace en la app.
-- El promedio de calificaciones se actualiza en una transacción junto con la nota de cada persona, y las reglas comprueban que ambos cambios cuadren. Nadie puede inflar un promedio.
+- Las estrellas de una publicación salen solo de reseñas reales (`resenasTotal` / `resenasCount`, que empiezan en cero). Cada reseña suma sus estrellas en el mismo lote que la crea, y las reglas comprueban que cuadren y que el vendedor la haya pedido. Nadie puede inflar un promedio. Los campos de antes (`ratingTotal`, `ratingCount` y `usuarios/{uid}/calificaciones`) ya no se usan.
 - Los reportes solo se guardan. Se revisan desde la consola de Firebase, en la colección `reportes`.
 
 ## Límites conocidos

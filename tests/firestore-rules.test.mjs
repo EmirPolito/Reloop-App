@@ -6,7 +6,7 @@ import { initializeApp, setLogLevel } from "firebase/app";
 import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, sendEmailVerification } from "firebase/auth";
 import {
   addDoc, arrayUnion, collection, connectFirestoreEmulator, deleteDoc, deleteField, doc, getDoc,
-  getDocs, getFirestore, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch,
+  getDocs, getFirestore, increment, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch,
 } from "firebase/firestore";
 
 setLogLevel("silent"); // los rechazos esperados no deben llenar la consola
@@ -86,20 +86,18 @@ const claimUsername = (u, name) => runTransaction(u.db, async (t) => {
 
 const newProduct = (u, over = {}) => ({
   ownerId: u.uid, seller: u.label, name: "Calculadora", description: "Buena", category: "venta", price: 280,
-  imageUrl: null, distance: "0.0 km", ratingTotal: 5, ratingCount: 1, creadoEn: serverTimestamp(), ...over,
+  imageUrl: null, distance: "0.0 km", resenasTotal: 0, resenasCount: 0, creadoEn: serverTimestamp(), ...over,
 });
 const createProduct = (u, id, over) => setDoc(doc(u.db, "productos", id), newProduct(u, over));
-const rate = (u, productId, rating) => runTransaction(u.db, async (t) => {
-  const productRef = doc(u.db, "productos", productId);
-  const ratingRef = doc(u.db, "usuarios", u.uid, "calificaciones", productId);
-  const [p, prev] = await Promise.all([t.get(productRef), t.get(ratingRef)]);
-  const before = prev.exists() ? Number(prev.data().rating) : 0;
-  t.update(productRef, {
-    ratingTotal: Number(p.data().ratingTotal) - before + rating,
-    ratingCount: Number(p.data().ratingCount) + (before === 0 ? 1 : 0),
-  });
-  t.set(ratingRef, { productId, rating, actualizadoEn: serverTimestamp() });
-});
+// Igual que `enviarResena` en la app: la reseña y la suma al promedio en un solo lote
+const review = (u, productId, estrellas, texto = "Muy rico") => {
+  const b = writeBatch(u.db);
+  b.set(doc(u.db, "productos", productId, "resenas", u.uid), { autor: u.label, estrellas, texto, creadoEn: serverTimestamp() });
+  b.update(doc(u.db, "productos", productId), { resenasTotal: increment(estrellas), resenasCount: increment(1) });
+  return b.commit();
+};
+const askReview = (owner, productId, buyer) =>
+  setDoc(doc(owner.db, "productos", productId, "solicitudes", buyer.uid), { chatId: "chat-x", creadoEn: serverTimestamp() });
 const chatIdFor = (a, b) => [a, b].sort().join("_");
 const openChat = (me, other, product) => runTransaction(me.db, async (t) => {
   const id = chatIdFor(me.uid, other.uid);
@@ -271,12 +269,20 @@ await expectDenied("B guarda con un campo extra", () => setDoc(following(B, A), 
 await expectOk("B deja de seguir a A (siguiendo)", () => deleteDoc(following(B, A)));
 
 // ── PUBLICACIONES ───────────────────────────────────────────────────────────
-await expectOk("A publica una venta (5/1)", () => createProduct(A, "p-venta"));
-await expectOk("A publica una donación (0/0, sin precio)", () => createProduct(A, "p-dona", { category: "donacion", price: 0, ratingTotal: 0, ratingCount: 0 }));
+await expectOk("A publica una venta (sin reseñas)", () => createProduct(A, "p-venta"));
+await expectOk("A publica una donación (sin precio)", () => createProduct(A, "p-dona", { category: "donacion", price: 0 }));
 await expectOk("A publica con foto https de Cloudinary", () => createProduct(A, "p-foto", { imageUrl: "https://res.cloudinary.com/demo/image/upload/v1/x.png" }));
 await expectDenied("A publica a nombre de B", () => createProduct(A, "p-x1", { ownerId: B.uid }));
-await expectDenied("A publica un intercambio con calificación 5/1", () => createProduct(A, "p-x2", { category: "cambio", price: 0 }));
-await expectDenied("A publica una venta con calificación inflada 5/100", () => createProduct(A, "p-x3", { ratingCount: 100 }));
+await expectDenied("A publica con estrellas infladas", () => createProduct(A, "p-x2", { resenasTotal: 25, resenasCount: 5 }));
+await expectDenied("A publica con el 5.0 inicial de antes", () => createProduct(A, "p-x3", { ratingTotal: 5, ratingCount: 1 }));
+await expectOk("C publica con 4 fotos y productos (como la app)", () => createProduct(C, "p-sabores", {
+  category: "comida", imageUrl: "https://res.cloudinary.com/demo/a.png",
+  imagenes: ["https://res.cloudinary.com/demo/a.png", "https://res.cloudinary.com/demo/b.png", "https://res.cloudinary.com/demo/c.png", "https://res.cloudinary.com/demo/d.png"],
+  opciones: [{ id: "o1", nombre: "Cola", precio: 20, imagenUrl: null }, { id: "o2", nombre: "Limón", precio: 18, imagenUrl: "https://res.cloudinary.com/demo/l.png" }],
+}));
+await expectDenied("A publica con 5 fotos", () => createProduct(A, "p-x10", { imagenes: Array(5).fill("https://res.cloudinary.com/demo/a.png") }));
+await expectDenied("A publica con una foto http entre las fotos", () => createProduct(A, "p-x11", { imagenes: ["https://res.cloudinary.com/demo/a.png", "http://x.com/b.png"] }));
+await expectDenied("A publica con 11 productos", () => createProduct(A, "p-x12", { opciones: Array(11).fill({ id: "o", nombre: "x", precio: 1, imagenUrl: null }) }));
 await expectDenied("A publica con precio negativo", () => createProduct(A, "p-x4", { price: -1 }));
 await expectDenied("A publica con campo extra", () => createProduct(A, "p-x5", { destacado: true }));
 await expectOk("B publica con cantidad disponible (como la app)", () => createProduct(B, "p-cant", { availableQuantity: 3 }));
@@ -290,7 +296,9 @@ await expectOk("B lee la publicación de A", async () => { if (!(await getDoc(do
 await expectOk("B lista las publicaciones", async () => { if ((await getDocs(collection(B.db, "productos"))).size < 3) throw new Error("faltan"); });
 await expectOk("consulta por dueño (perfil público)", async () => { if ((await getDocs(query(collection(B.db, "productos"), where("ownerId", "==", A.uid)))).size !== 3) throw new Error("cantidad distinta"); });
 await expectDenied("B borra la publicación de A", () => deleteDoc(doc(B.db, "productos", "p-venta")));
-await expectDenied("A borra su publicación (la app no lo ofrece)", () => deleteDoc(doc(A.db, "productos", "p-venta")));
+// La dueña sí puede borrar (la app lo ofrece con "Eliminar"); se prueba con una aparte para no
+// dejar sin publicación al resto de las pruebas
+await expectOk("A borra su publicación", async () => { await createProduct(A, "p-borrar"); await deleteDoc(doc(A.db, "productos", "p-borrar")); });
 await expectDenied("B cambia el precio de A", () => updateDoc(doc(B.db, "productos", "p-venta"), { price: 1 }));
 await expectDenied("B cambia el dueño de la publicación", () => updateDoc(doc(B.db, "productos", "p-venta"), { ownerId: B.uid }));
 await expectOk("A renombra el vendedor en sus publicaciones (lote)", async () => {
@@ -301,31 +309,34 @@ await expectOk("A renombra el vendedor en sus publicaciones (lote)", async () =>
 await expectDenied("B renombra al vendedor de A", () => updateDoc(doc(B.db, "productos", "p-venta"), { seller: "Estafador" }));
 await expectDenied("A cambia el vendedor a vacío", () => updateDoc(doc(A.db, "productos", "p-venta"), { seller: "" }));
 
-// ── CALIFICACIONES ──────────────────────────────────────────────────────────
-await expectOk("B califica con 4 (transacción de la app)", () => rate(B, "p-venta", 4));
-await expectOk("el promedio quedó en 4.5 (9/2)", async () => { const d = (await getDoc(doc(B.db, "productos", "p-venta"))).data(); if (d.ratingTotal !== 9 || d.ratingCount !== 2) throw new Error(`${d.ratingTotal}/${d.ratingCount}`); });
-await expectOk("B cambia su calificación a 2 (no suma un voto)", () => rate(B, "p-venta", 2));
-await expectOk("quedó 7/2", async () => { const d = (await getDoc(doc(B.db, "productos", "p-venta"))).data(); if (d.ratingTotal !== 7 || d.ratingCount !== 2) throw new Error(`${d.ratingTotal}/${d.ratingCount}`); });
-await expectOk("C califica con 5", () => rate(C, "p-venta", 5));
-await expectDenied("A califica su propia publicación", () => rate(A, "p-venta", 5));
-await expectDenied("B califica una donación", () => rate(B, "p-dona", 5));
-await expectDenied("B sube el total sin dejar su calificación", () => updateDoc(doc(B.db, "productos", "p-foto"), { ratingTotal: 50, ratingCount: 2 }));
-await expectDenied("B suma un voto de más (+2 en vez de +calificación)", async () => {
+// ── RESEÑAS ─────────────────────────────────────────────────────────────────
+await expectDenied("B reseña sin que el vendedor se lo pida", () => review(B, "p-venta", 5));
+await expectDenied("B se pide la calificación a sí mismo", () => askReview(B, "p-venta", B));
+await expectDenied("A se pide la calificación a sí misma", () => askReview(A, "p-venta", A));
+await expectOk("A le pide la calificación a B", () => askReview(A, "p-venta", B));
+await expectOk("B lee su solicitud", async () => { if (!(await getDoc(doc(B.db, "productos", "p-venta", "solicitudes", B.uid))).exists()) throw new Error("no existe"); });
+await expectDenied("C lee la solicitud de B", () => getDoc(doc(C.db, "productos", "p-venta", "solicitudes", B.uid)));
+await expectDenied("B reseña con 6 estrellas", () => review(B, "p-venta", 6));
+await expectDenied("B reseña sin texto", () => review(B, "p-venta", 4, ""));
+await expectDenied("B deja la reseña sin sumarla al promedio", () => setDoc(doc(B.db, "productos", "p-venta", "resenas", B.uid), { autor: "B", estrellas: 5, texto: "x", creadoEn: serverTimestamp() }));
+await expectDenied("B suma de más al promedio (+5 con una reseña de 1)", () => {
   const b = writeBatch(B.db);
-  b.update(doc(B.db, "productos", "p-foto"), { ratingTotal: 5 + 5 + 5, ratingCount: 2 });
-  b.set(doc(B.db, "usuarios", B.uid, "calificaciones", "p-foto"), { productId: "p-foto", rating: 5, actualizadoEn: serverTimestamp() });
-  await b.commit();
+  b.set(doc(B.db, "productos", "p-venta", "resenas", B.uid), { autor: "B", estrellas: 1, texto: "x", creadoEn: serverTimestamp() });
+  b.update(doc(B.db, "productos", "p-venta"), { resenasTotal: increment(5), resenasCount: increment(1) });
+  return b.commit();
 });
-await expectDenied("B califica con 6", () => runTransaction(B.db, async (t) => {
-  t.update(doc(B.db, "productos", "p-foto"), { ratingTotal: 11, ratingCount: 2 });
-  t.set(doc(B.db, "usuarios", B.uid, "calificaciones", "p-foto"), { productId: "p-foto", rating: 6, actualizadoEn: serverTimestamp() });
-}));
-await expectDenied("B califica con 0 decimal 4.5", () => runTransaction(B.db, async (t) => {
-  t.update(doc(B.db, "productos", "p-foto"), { ratingTotal: 9.5, ratingCount: 2 });
-  t.set(doc(B.db, "usuarios", B.uid, "calificaciones", "p-foto"), { productId: "p-foto", rating: 4.5, actualizadoEn: serverTimestamp() });
-}));
-await expectDenied("A lee las calificaciones de B", () => getDocs(collection(A.db, "usuarios", B.uid, "calificaciones")));
-await expectOk("B lee sus calificaciones", async () => { if ((await getDocs(collection(B.db, "usuarios", B.uid, "calificaciones"))).size !== 1) throw new Error("cantidad"); });
+await expectOk("B reseña con 4 (como la app)", () => review(B, "p-venta", 4));
+await expectOk("el promedio quedó en 4 (4/1)", async () => { const d = (await getDoc(doc(B.db, "productos", "p-venta"))).data(); if (d.resenasTotal !== 4 || d.resenasCount !== 1) throw new Error(`${d.resenasTotal}/${d.resenasCount}`); });
+await expectDenied("B reseña otra vez", () => review(B, "p-venta", 5));
+await expectDenied("B edita su reseña", () => updateDoc(doc(B.db, "productos", "p-venta", "resenas", B.uid), { estrellas: 5 }));
+await expectDenied("C sube el promedio sin reseña", () => updateDoc(doc(C.db, "productos", "p-venta"), { resenasTotal: increment(5), resenasCount: increment(1) }));
+await expectDenied("A sube las estrellas de su publicación", () => updateDoc(doc(A.db, "productos", "p-venta"), { resenasTotal: 50 }));
+await expectOk("A le pide la calificación a C", () => askReview(A, "p-venta", C));
+await expectOk("C reseña con 5", () => review(C, "p-venta", 5));
+await expectOk("el promedio quedó en 4.5 (9/2)", async () => { const d = (await getDoc(doc(C.db, "productos", "p-venta"))).data(); if (d.resenasTotal !== 9 || d.resenasCount !== 2) throw new Error(`${d.resenasTotal}/${d.resenasCount}`); });
+await expectOk("A le pide la calificación de una donación a B", () => askReview(A, "p-dona", B));
+await expectDenied("B reseña una donación", () => review(B, "p-dona", 5));
+await expectOk("cualquiera con sesión lee las reseñas", async () => { if ((await getDocs(collection(C.db, "productos", "p-venta", "resenas"))).size !== 2) throw new Error("cantidad"); });
 
 // ── COMENTARIOS ─────────────────────────────────────────────────────────────
 const addComment = (u, pid, over = {}) => addDoc(collection(u.db, "productos", pid, "comentarios"), { authorId: u.uid, author: u.label, text: "Hola", creadoEn: serverTimestamp(), ...over });
@@ -440,6 +451,15 @@ await expectDenied("A falsea el último mensaje como de B", () => updateDoc(doc(
 await expectDenied("A escribe un mensaje como si fuera B", async () => { await addDoc(collection(A.db, "chats", chatAB, "mensajes"), { from: B.uid, text: "falso", images: [], creadoEn: serverTimestamp() }); });
 await expectDenied("A edita un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await updateDoc(s.docs[0].ref, { text: "editado" }); });
 await expectDenied("A borra un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await deleteDoc(s.docs[0].ref); });
+const mandarPedido = (u, pedido) => addDoc(collection(u.db, "chats", chatAB, "mensajes"), { from: u.uid, text: "🧾 Pedido", images: [], pedido, creadoEn: serverTimestamp() });
+const pedidoB = { productoId: "p-venta", producto: "Calculadora", items: [{ nombre: "Calculadora", precio: 280, cantidad: 1 }], total: 280, metodo: "efectivo", nota: "En el edificio B" };
+await expectOk("B manda un pedido (como la app)", () => mandarPedido(B, pedidoB));
+await expectDenied("B manda un pedido sin descripción", () => mandarPedido(B, { ...pedidoB, nota: "" }));
+await expectDenied("B manda un pedido con un método inventado", () => mandarPedido(B, { ...pedidoB, metodo: "cripto" }));
+await expectDenied("B manda un pedido sin productos", () => mandarPedido(B, { ...pedidoB, items: [] }));
+const pedirCalificacion = (u, productoId) => addDoc(collection(u.db, "chats", chatAB, "mensajes"), { from: u.uid, text: "⭐", images: [], calificacion: { productoId, producto: "Calculadora" }, creadoEn: serverTimestamp() });
+await expectOk("A (vendedora) pide calificación en el chat", () => pedirCalificacion(A, "p-venta"));
+await expectDenied("B pide calificación de una publicación ajena", () => pedirCalificacion(B, "p-venta"));
 const mandarTarjeta = (u, datos) => addDoc(collection(u.db, "chats", chatAB, "mensajes"), { from: u.uid, text: "💳 Tarjeta para transferir", images: [], tarjeta: datos, creadoEn: serverTimestamp() });
 const tarjetaA = { institucion: "BANORTE", clave: "072180001234567891", beneficiario: "ANA PÉREZ", color: "negro" };
 await expectOk("A manda una tarjeta (institución, clave y beneficiario)", () => mandarTarjeta(A, tarjetaA));

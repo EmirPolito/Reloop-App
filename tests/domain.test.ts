@@ -32,7 +32,15 @@ import {
   sugerirUsername,
   validarUsername,
 } from "@/features/perfil/nombreUsuario";
-import { mapComment, mapProduct } from "@/features/marketplace/productMappers";
+import { mapProduct, mapReview } from "@/features/marketplace/productMappers";
+import {
+  faltantePedido,
+  formatearDinero,
+  leerPedido,
+  textoPedido,
+  totalDe,
+} from "@/features/pedidos/formatoPedido";
+import { etiquetaEstrellas, faltanteResena, leerSolicitud } from "@/features/resenas/formatoResena";
 import {
   allowsProductRating,
   averageRatingLabel,
@@ -76,8 +84,8 @@ const ts = (millis: number) => Timestamp.fromMillis(millis);
 function product(over: Partial<Product> = {}): Product {
   return {
     id: "p1", ownerId: "u1", name: "Calculadora", description: "Casi nueva", category: "venta",
-    price: 280, imageUri: null, seller: "Ana", rating: 4.5, availableQuantity: 1, distance: "0.0 km", isMine: false,
-    createdAt: 1, ...over,
+    price: 280, imageUri: null, images: [], options: [], seller: "Ana", rating: 4.5, reviewCount: 2, availableQuantity: 1,
+    distance: "0.0 km", isMine: false, createdAt: 1, ...over,
   };
 }
 
@@ -231,11 +239,13 @@ describe("reglas por categoría", () => {
     assert.equal(formatProductPrice(product({ category: "cambio", price: 0 })), null);
     assert.equal(productBadgeLabel(product({ category: "cambio", price: 0 })), "Intercambios");
   });
-  it("promedio de reputación: solo cuenta lo calificable; sin datos, raya", () => {
+  it("valoración del perfil: promedio de todas las reseñas (cada una pesa igual); sin reseñas, 0", () => {
     assert.equal(averageRatingLabel([]), "0");
-    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined })]), "0");
-    assert.equal(averageRatingLabel([product({ rating: 5 }), product({ rating: 4 })]), "4.5");
-    assert.equal(averageRatingLabel([product({ rating: 5 }), product({ category: "cambio", rating: undefined })]), "5.0");
+    assert.equal(averageRatingLabel([product({ category: "donacion", rating: undefined, reviewCount: 0 })]), "0");
+    assert.equal(averageRatingLabel([product({ rating: 5, reviewCount: 1 }), product({ rating: 4, reviewCount: 1 })]), "4.5");
+    // 3 reseñas de 5 y 1 de 1: (15 + 1) / 4 = 4.0 (no el promedio de promedios, 3.0)
+    assert.equal(averageRatingLabel([product({ rating: 5, reviewCount: 3 }), product({ rating: 1, reviewCount: 1 })]), "4.0");
+    assert.equal(averageRatingLabel([product({ rating: 5, reviewCount: 2 }), product({ category: "cambio", rating: undefined, reviewCount: 0 })]), "5.0");
   });
 });
 
@@ -248,31 +258,42 @@ describe("borrador de publicación", () => {
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "" }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "-3" }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "abc" }).valid, false);
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "12,5" }), { valid: true, price: 12.5, availableQuantity: 1 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", priceText: "12,5" }), { valid: true, price: 12.5, availableQuantity: 1, options: [] });
   });
   it("un intercambio acepta precio vacío; si se escribe debe ser válido", () => {
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio" }), { valid: true, price: 0, availableQuantity: 1 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio" }), { valid: true, price: 0, availableQuantity: 1, options: [] });
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "cambio", priceText: "x" }).valid, false);
   });
   it("una donación ignora el precio escrito", () => {
-    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", priceText: "99" }), { valid: true, price: 0, availableQuantity: 1 });
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", priceText: "99" }), { valid: true, price: 0, availableQuantity: 1, options: [] });
   });
   it("exige una cantidad disponible válida", () => {
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", quantityText: "0" }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "X", quantityText: "2.5" }).valid, false);
     assert.deepEqual(
       validateDraft({ ...EMPTY_DRAFT, name: "X", category: "donacion", quantityText: "3" }),
-      { valid: true, price: 0, availableQuantity: 3 },
+      { valid: true, price: 0, availableQuantity: 3, options: [] },
     );
+  });
+  it("con productos: cada uno necesita nombre y precio, y la publicación cuesta lo del más barato", () => {
+    const opcion = (key: string, name: string, priceText: string, description = "") => ({ key, name, description, priceText, photo: null });
+    assert.deepEqual(
+      validateDraft({ ...EMPTY_DRAFT, name: "Refrescos", category: "comida", options: [opcion("a", " Cola ", "20", " Lata de 355 ml "), opcion("b", "Limón", "18")] }),
+      { valid: true, price: 18, availableQuantity: 1, options: [{ id: "a", nombre: "Cola", descripcion: "Lata de 355 ml", precio: 20 }, { id: "b", nombre: "Limón", descripcion: "", precio: 18 }] },
+    );
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "", "20")] }).valid, false);
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "Cola", "x")] }).valid, false);
+    // En categorías sin productos, los que hubiera no cuentan
+    assert.deepEqual(validateDraft({ ...EMPTY_DRAFT, name: "R", category: "cambio", options: [opcion("a", "", "")] }).valid, true);
   });
   it("arma los datos a guardar con texto limpio y descripción por defecto", () => {
     const data = buildNewProduct(
-      { ...EMPTY_DRAFT, name: "  Lámpara ", description: "  ", photo: "file:///x.jpg" },
-      { ownerId: "u1", seller: "Ana", price: 150, availableQuantity: 3, imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png" },
+      { ...EMPTY_DRAFT, name: "  Lámpara ", description: "  ", photos: ["file:///x.jpg"] },
+      { ownerId: "u1", seller: "Ana", price: 150, availableQuantity: 3, imagenes: ["https://res.cloudinary.com/x/image/upload/v1/a.png"], opciones: [] },
     );
     assert.deepEqual(data, {
       ownerId: "u1", seller: "Ana", name: "Lámpara", description: "Sin descripción", category: "venta", price: 150, availableQuantity: 3,
-      imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png",
+      imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png", imagenes: ["https://res.cloudinary.com/x/image/upload/v1/a.png"], opciones: [],
     });
   });
 });
@@ -332,16 +353,35 @@ describe("búsqueda de chats", () => {
 });
 
 describe("mapeo de publicaciones", () => {
-  it("promedio = total / votos; isMine según el uid; fecha del servidor", () => {
+  it("promedio = estrellas de reseñas / reseñas; isMine según el uid; fecha del servidor", () => {
     const p = mapProduct(snap("p1", {
       ownerId: "u1", name: "Calc", category: "venta", price: 280, imageUrl: "https://x/y.png", seller: "Ana",
-      description: "d", distance: "0.0 km", ratingTotal: 9, ratingCount: 2, creadoEn: ts(5000),
+      description: "d", distance: "0.0 km", resenasTotal: 9, resenasCount: 2, creadoEn: ts(5000),
     }), "u1");
     assert.equal(p?.rating, 4.5);
+    assert.equal(p?.reviewCount, 2);
+    assert.deepEqual(p?.images, ["https://x/y.png"]);
     assert.equal(p?.isMine, true);
     assert.equal(p?.createdAt, 5000);
     assert.equal(p?.imageUri, "https://x/y.png");
     assert.equal(mapProduct(snap("p1", { ownerId: "u1", name: "x", category: "venta", ratingTotal: 5, ratingCount: 1 }), "otro")?.isMine, false);
+  });
+  it("el 5.0 inicial de antes (ratingTotal) ya no cuenta: sin reseñas no hay promedio", () => {
+    const p = mapProduct(snap("p3", { ownerId: "u1", name: "x", category: "venta", ratingTotal: 5, ratingCount: 1 }), "u9");
+    assert.equal(p?.rating, undefined);
+    assert.equal(p?.reviewCount, 0);
+  });
+  it("fotos (hasta 4) y productos; los mal formados se descartan", () => {
+    const p = mapProduct(snap("p4", {
+      ownerId: "u1", name: "Refrescos", category: "comida", imageUrl: "https://a",
+      imagenes: ["https://a", "https://b", 3, "https://c", "https://d", "https://e"],
+      opciones: [{ id: "o1", nombre: "Cola", descripcion: "Lata", precio: 20, imagenUrl: "https://c" }, { nombre: "Sin precio" }, { nombre: "Limón", precio: 18 }],
+    }), "u9");
+    assert.deepEqual(p?.images, ["https://a", "https://b", "https://c", "https://d"]);
+    assert.deepEqual(p?.options, [
+      { id: "o1", name: "Cola", description: "Lata", price: 20, imageUri: "https://c" },
+      { id: "2", name: "Limón", description: "", price: 18, imageUri: null },
+    ]);
   });
   it("categorías sin calificación no traen promedio aunque haya datos", () => {
     const p = mapProduct(snap("p2", { ownerId: "u1", name: "Libreta", category: "donacion", ratingTotal: 0, ratingCount: 0 }), "u9");
@@ -356,10 +396,10 @@ describe("mapeo de publicaciones", () => {
   it("un servidor aún sin hora (escritura pendiente) no rompe la fecha", () => {
     assert.equal(mapProduct(snap("x", { name: "a", category: "venta", creadoEn: null }), "u")?.createdAt, 0);
   });
-  it("comentarios con valores por defecto", () => {
-    assert.deepEqual(mapComment(snap("c1", { authorId: "u2", author: "Beto", text: "Hola", creadoEn: ts(7) })),
-      { id: "c1", authorId: "u2", author: "Beto", text: "Hola", createdAt: 7 });
-    assert.deepEqual(mapComment(snap("c2", {})), { id: "c2", authorId: "", author: "Usuario", text: "", createdAt: 0 });
+  it("reseñas con valores por defecto (estrellas entre 1 y 5)", () => {
+    assert.deepEqual(mapReview(snap("u2", { autor: "Beto", estrellas: 4, texto: "Rico", creadoEn: ts(7) })),
+      { autorId: "u2", autor: "Beto", estrellas: 4, texto: "Rico", creadaEn: 7 });
+    assert.deepEqual(mapReview(snap("u3", { estrellas: 9 })), { autorId: "u3", autor: "Usuario", estrellas: 5, texto: "", creadaEn: 0 });
   });
 });
 
@@ -390,6 +430,18 @@ describe("mapeo de chats", () => {
     assert.equal(mapChat(snap("a_b", { ...base, lastMessage: theirs, reads: { a: ts(500) } }), "a")?.unread, false);
     assert.equal(mapChat(snap("a_b", { ...base, lastMessage: theirs }), "a")?.unread, true);
     assert.equal(mapChat(snap("a_b", { ...base, lastMessage: theirs }), "a")?.lastMessage?.hasImages, true);
+  });
+  it("quien pidió la calificación ve el mensaje de antes; la otra persona, la solicitud", () => {
+    const previo = { text: "gracias", from: "b", hasImages: false, time: 300 };
+    const lastMessage = { text: "⭐ ¿Me ayudas con una calificación?", from: "a", hasImages: false, time: ts(400), previo };
+    const vendedor = mapChat(snap("a_b", { ...base, lastMessage, reads: { a: ts(400) } }), "a");
+    assert.equal(vendedor?.lastMessage?.text, "gracias");
+    assert.equal(vendedor?.lastMessage?.from, "them");
+    assert.equal(vendedor?.lastMessage?.time, 300);
+    assert.equal(vendedor?.unread, false);
+    const comprador = mapChat(snap("a_b", { ...base, lastMessage, reads: { b: ts(300) } }), "b");
+    assert.equal(comprador?.lastMessage?.text, "⭐ ¿Me ayudas con una calificación?");
+    assert.equal(comprador?.unread, true);
   });
   it("sin mensajes no hay nada sin leer; sin producto no hay productId", () => {
     const empty = mapChat(snap("a_b", { participants: ["a", "b"], names: {}, lastMessage: null, productId: null }), "a");
@@ -643,5 +695,39 @@ describe("notificaciones", () => {
     assert.deepEqual(n, { id: "favorito_b_p1", type: "favorito", actorId: "b", actorName: "Beto", actorPhoto: null, actorOrb: null, productId: "p1", productName: "Calculadora", read: false, createdAt: 5000 });
     assert.equal(mapNotification(snap("x", { tipo: "oferta", actorId: "b" })), null);
     assert.equal(mapNotification(snap("x", undefined)), null);
+  });
+});
+
+describe("pedidos", () => {
+  const items = [{ nombre: "Cola", precio: 20, cantidad: 2 }, { nombre: "Limón", precio: 18.5, cantidad: 1 }];
+  it("total, dinero y el texto para la lista de chats", () => {
+    assert.equal(totalDe(items), 58.5);
+    assert.equal(formatearDinero(1234.5), "$1,234.50");
+    const pedido = { productoId: "p", producto: "Refrescos", items, total: 58.5, metodo: "efectivo" as const, nota: "Edificio B" };
+    assert.equal(textoPedido(pedido), "🧾 Pedido: 3 productos · $58.50");
+  });
+  it("qué falta para mandarlo: productos, método y descripción obligatoria", () => {
+    assert.match(faltantePedido({ items: [], metodo: "efectivo", nota: "x" }) ?? "", /producto/);
+    assert.match(faltantePedido({ items, metodo: null, nota: "x" }) ?? "", /pagar/);
+    assert.match(faltantePedido({ items, metodo: "transferencia", nota: "  " }) ?? "", /descripción/);
+    assert.equal(faltantePedido({ items, metodo: "transferencia", nota: "Edificio B" }), null);
+  });
+  it("lee el pedido de un mensaje y descarta lo mal formado", () => {
+    const valido = { productoId: "p", producto: "R", items: [...items, { nombre: 3 }], total: 58.5, metodo: "transferencia", nota: "n" };
+    assert.deepEqual(leerPedido(valido)?.items, items);
+    assert.equal(leerPedido({ ...valido, metodo: "cripto" }), undefined);
+    assert.equal(leerPedido(null), undefined);
+  });
+});
+
+describe("reseñas", () => {
+  it("palabras de las estrellas, qué falta y la solicitud del chat", () => {
+    assert.equal(etiquetaEstrellas(5), "Excelente");
+    assert.equal(etiquetaEstrellas(0), "Sin calificar");
+    assert.match(faltanteResena({ estrellas: 0, texto: "x" }) ?? "", /estrellas/);
+    assert.match(faltanteResena({ estrellas: 4, texto: " " }) ?? "", /reseña/);
+    assert.equal(faltanteResena({ estrellas: 4, texto: "Rico" }), null);
+    assert.deepEqual(leerSolicitud({ productoId: "p", producto: "R" }), { productoId: "p", producto: "R" });
+    assert.equal(leerSolicitud({ productoId: 1 }), undefined);
   });
 });

@@ -71,7 +71,9 @@ export function ConfirmarEliminar({
                 { backgroundColor: isDark ? "#ffffff14" : "#F1F1F3" },
               ]}
             >
-              <Text style={[estilos.textoBoton, { color: texto }]}>Cancelar</Text>
+              <Text style={[estilos.textoBoton, { color: texto }]}>
+                Cancelar
+              </Text>
             </PressableScale>
             <PressableScale
               accessibilityRole="button"

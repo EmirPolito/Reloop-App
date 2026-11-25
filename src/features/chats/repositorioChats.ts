@@ -17,6 +17,9 @@ import {
 } from "firebase/firestore";
 
 import type { Chat, ChatMessage, Product } from "@/features/marketplace/types";
+import type { Pedido } from "@/features/pedidos/formatoPedido";
+import type { SolicitudCalificacion } from "@/features/resenas/formatoResena";
+import { solicitudRef } from "@/features/resenas/repositorioResenas";
 import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { db } from "@/lib/firebase";
 import { commitInChunks } from "@/lib/firestoreBatch";
@@ -117,8 +120,10 @@ export async function openChat(input: {
   me: ChatParty;
   other: ChatParty;
   product: Pick<Product, "id" | "name"> | null;
+  /** En false, el chat queda ligado a la publicación sin el mensaje de interés (un pedido) */
+  withIntro?: boolean;
 }): Promise<{ chatId: string; intro: string | null }> {
-  const { me, other, product } = input;
+  const { me, other, product, withIntro = true } = input;
   const id = chatIdFor(me.id, other.id);
   const chatRef = doc(db, CHATS, id);
   const [firstId, secondId] = [me.id, other.id].sort();
@@ -126,7 +131,7 @@ export async function openChat(input: {
   const sentIntro = await runTransaction(db, async (transaction) => {
     const existing = await transaction.get(chatRef);
     const now = serverTimestamp();
-    const intro = product ? introMessageFor(product) : null;
+    const intro = product && withIntro ? introMessageFor(product) : null;
     const introRef = doc(collection(chatRef, MESSAGES));
     const lastMessage = intro
       ? { text: intro, from: me.id, hasImages: false, time: now }
@@ -157,6 +162,15 @@ export async function openChat(input: {
     const introduced: unknown = existing.data().introducedProducts;
     const alreadyIntroduced =
       Array.isArray(introduced) && product && introduced.includes(product.id);
+    // Sin mensaje: solo se cambia la publicación de la que se habla
+    if (product && !intro && existing.data().productId !== product.id) {
+      transaction.update(chatRef, {
+        productId: product.id,
+        introducedProducts: arrayUnion(product.id),
+        actualizadoEn: now,
+      });
+      return null;
+    }
     if (!product || !intro || alreadyIntroduced) return null;
 
     transaction.update(chatRef, {
@@ -181,7 +195,19 @@ export async function openChat(input: {
 export async function sendMessage(
   chatId: string,
   senderId: string,
-  content: { text: string; images: string[]; tarjeta?: TarjetaCompartida },
+  content: {
+    text: string;
+    images: string[];
+    tarjeta?: TarjetaCompartida;
+    pedido?: Pedido;
+    /** Con la solicitud se le permite a la otra persona (`compradorId`) escribir su reseña */
+    calificacion?: SolicitudCalificacion & { compradorId: string };
+    /**
+     * El último mensaje de antes (`from` con el uid). Va dentro del resumen: quien manda la
+     * solicitud de calificación sigue viendo este en la lista de chats
+     */
+    previo?: { text: string; from: string; hasImages: boolean; time: number };
+  },
 ): Promise<void> {
   const chatRef = doc(db, CHATS, chatId);
   const now = serverTimestamp();
@@ -191,14 +217,33 @@ export async function sendMessage(
     text: content.text,
     images: content.images,
     ...(content.tarjeta ? { tarjeta: content.tarjeta } : {}),
+    ...(content.pedido ? { pedido: content.pedido } : {}),
+    ...(content.calificacion
+      ? {
+          calificacion: {
+            productoId: content.calificacion.productoId,
+            producto: content.calificacion.producto,
+          },
+        }
+      : {}),
     creadoEn: now,
   });
+  if (content.calificacion) {
+    batch.set(
+      solicitudRef(
+        content.calificacion.productoId,
+        content.calificacion.compradorId,
+      ),
+      { chatId, creadoEn: now },
+    );
+  }
   batch.update(chatRef, {
     lastMessage: {
       text: content.text,
       from: senderId,
       hasImages: content.images.length > 0,
       time: now,
+      ...(content.previo ? { previo: content.previo } : {}),
     },
     [`reads.${senderId}`]: now,
     actualizadoEn: now,

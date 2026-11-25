@@ -1,3 +1,5 @@
+import type { Pedido } from "@/features/pedidos/formatoPedido";
+import type { SolicitudCalificacion } from "@/features/resenas/formatoResena";
 import type { TarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 
 export type CategoryId = "venta" | "cambio" | "donacion" | "mascota" | "comida";
@@ -10,12 +12,18 @@ export type Product = {
   description: string;
   category: CategoryId;
   price: number;
-  /** URL de la foto (Cloudinary) */
+  /** URL de la foto principal (Cloudinary): la primera de `images` */
   imageUri: string | null;
+  /** Todas las fotos (hasta 4); la primera es la grande */
+  images: string[];
+  /** Venta y comida: los productos que se pueden pedir (sabores, tamaños...) */
+  options: ProductOption[];
   /** Nombre visible del vendedor al momento de publicar o de renombrarse */
   seller: string;
-  /** Promedio de calificaciones; solo en categorías que se pueden calificar */
+  /** Promedio de las reseñas; solo en venta y comida y cuando ya tiene alguna */
   rating?: number;
+  /** Cuántas reseñas tiene */
+  reviewCount: number;
   /** Número de unidades disponibles */
   availableQuantity: number;
   distance: string;
@@ -26,12 +34,14 @@ export type Product = {
   createdAt: number;
 };
 
-export type ProductComment = {
+/** Un producto dentro de una publicación de venta o comida */
+export type ProductOption = {
   id: string;
-  authorId: string;
-  author: string;
-  text: string;
-  createdAt: number;
+  name: string;
+  /** Una descripción corta, debajo del nombre (opcional) */
+  description: string;
+  price: number;
+  imageUri: string | null;
 };
 
 export type ChatMessage = {
@@ -42,6 +52,10 @@ export type ChatMessage = {
   images?: string[];
   /** Tarjeta para recibir una transferencia (institución, clave y beneficiario) */
   tarjeta?: TarjetaCompartida;
+  /** Pedido de una publicación de venta o comida */
+  pedido?: Pedido;
+  /** El vendedor pide una calificación */
+  calificacion?: SolicitudCalificacion;
 };
 
 /** Resumen del último mensaje, para la lista de chats. */

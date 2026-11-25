@@ -41,7 +41,7 @@ Antes de entregar cambios corre `npm run typecheck`, `npm run lint` y `npm test`
 
 - **Cuenta.** Registro, inicio de sesión y recuperación de contraseña con Firebase Authentication. El acceso con Google y Apple aún no está disponible.
 - **Inicio.** Búsqueda, categorías, y las publicaciones de la comunidad en tiempo real.
-- **Publicaciones.** Se crean con foto, nombre, descripción, categoría y precio. Cada una admite comentarios, reportes, favoritos y una calificación de una a cinco estrellas (en ventas y comidas, y no de quien publica).
+- **Publicaciones.** Se crean con hasta 4 fotos, nombre, descripción, categoría y precio; en ventas y comidas, también con productos (cada uno con foto y precio). Admiten reportes y favoritos. En ventas y comidas se piden desde la publicación (cantidades, resumen y método de pago) y el pedido llega al chat; ahí el vendedor puede pedir una calificación, y las reseñas de quienes compraron dan las estrellas de la publicación y la valoración del perfil.
 - **Chats.** Una conversación por pareja de personas, con mensajes y fotos en tiempo real, aviso de mensajes sin leer, búsqueda y acceso a la publicación de la que se habla. Las llamadas y videollamadas aún no están disponibles.
 - **Perfil.** Foto, nombre, descripción, etiquetas, stickers y color, guardados en la nube. Cualquier persona puede ver el perfil público de otra. Incluye el modo oscuro.
 - Cambiar correo, cambiar contraseña, términos y privacidad muestran "próximamente".
@@ -63,7 +63,9 @@ src/
 │  ├─ intro/             video de introducción
 │  ├─ marketplace/       publicaciones: tipos, reglas, filtros, repositorio, mapeadores, hooks y detalle
 │  ├─ navigation/        acciones de navegación, barra de pestañas y opciones de la pila
+│  ├─ pedidos/           pedir en venta y comida: productos, resumen, drawer de pago y pedido en el chat
 │  ├─ perfil/            perfil propio y público, repositorio y editor (drawer/)
+│  ├─ resenas/           estrellas, reseñas de compradores y solicitud de calificación en el chat
 │  ├─ session/           uid de la sesión y proveedores que dependen de ella
 │  ├─ tarjetas/          billetera de tarjetas para mandar en el chat a cuál transferir
 │  └─ shared/            tema, estilos, iconos y borradores de texto

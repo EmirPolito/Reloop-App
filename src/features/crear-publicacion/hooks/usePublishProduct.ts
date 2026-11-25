@@ -9,7 +9,7 @@ import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useProfile } from "@/features/perfil/ProveedorPerfil";
 import { useIsPremium } from "@/features/premium/hooks/useMembership";
 import { useSessionUser } from "@/features/session/SessionUserProvider";
-import { uploadImage } from "@/lib/cloudinary";
+import { uploadImage, uploadImages } from "@/lib/cloudinary";
 import { showAlert, showErrorAlert } from "@/utils/alerts";
 import {
   buildNewProduct,
@@ -43,14 +43,26 @@ export function usePublishProduct() {
 
       setPublishing(true);
       try {
-        const imageUrl = draft.photo ? await uploadImage(draft.photo) : null;
+        const imagenes = await uploadImages(draft.photos);
+        // Cada producto con su foto (si tiene), ya subida
+        const opciones = await Promise.all(
+          result.options.map(async (opcion) => {
+            const foto =
+              draft.options.find((o) => o.key === opcion.id)?.photo ?? null;
+            return {
+              ...opcion,
+              imagenUrl: foto ? await uploadImage(foto) : null,
+            };
+          }),
+        );
         await createProduct(
           buildNewProduct(draft, {
             ownerId: uid,
             seller: profile.name,
             price: result.price,
             availableQuantity: result.availableQuantity,
-            imageUrl,
+            imagenes,
+            opciones,
           }),
         );
         // Sin filtros activos, la publicación nueva se ve en el inicio

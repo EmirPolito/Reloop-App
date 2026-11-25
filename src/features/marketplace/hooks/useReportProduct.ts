@@ -30,7 +30,8 @@ export function useReportProduct() {
                     "Reporte enviado",
                     "Gracias por ayudar a mantener segura la comunidad.",
                   ),
-                (error) => showErrorAlert("No se pudo enviar el reporte", error),
+                (error) =>
+                  showErrorAlert("No se pudo enviar el reporte", error),
               );
             },
           },

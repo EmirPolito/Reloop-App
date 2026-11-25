@@ -15,7 +15,6 @@ import {
   type FeedStatus,
 } from "./hooks/useMarketplaceData";
 import {
-  rateProduct as saveRating,
   removeFavorites,
   reportProduct as saveReport,
   setFavorite as saveFavorite,
@@ -29,8 +28,6 @@ export interface MarketplaceState {
   status: FeedStatus;
   /** ids de productos marcados como favoritos */
   favorites: string[];
-  /** calificación de esta persona por id de producto */
-  ratings: Record<string, number>;
   /** ids de productos que esta persona ya reportó */
   reported: string[];
   filters: FeedFilters;
@@ -43,7 +40,6 @@ interface MarketplaceActions {
   toggleFavorite: (productId: string) => Promise<boolean>;
   /** Quita varios favoritos a la vez, sin avisos (Favoritos muestra uno solo) */
   removeFavorites: (productIds: string[]) => Promise<void>;
-  rateProduct: (productId: string, rating: number) => Promise<void>;
   reportProduct: (productId: string) => Promise<void>;
   setQuery: (query: string) => void;
   setUniversidad: (universidad: string) => void;
@@ -61,7 +57,7 @@ const MarketplaceActionsContext = createContext<MarketplaceActions | null>(
 
 /**
  * Catálogo de productos y todo lo que la persona hace sobre ellos (favoritos,
- * calificaciones, reportes y filtros del inicio). Estado y acciones van en contextos
+ * reportes y filtros del inicio). Estado y acciones van en contextos
  * separados: las acciones son estables, así que quien solo dispara acciones no se
  * renderiza cuando cambia el estado.
  */
@@ -78,7 +74,6 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       products: data.products,
       status: data.status,
       favorites: data.favorites,
-      ratings: data.ratings,
       reported: data.reported,
       filters,
       universidad,
@@ -87,7 +82,6 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
       data.products,
       data.status,
       data.favorites,
-      data.ratings,
       data.reported,
       filters,
       universidad,
@@ -102,7 +96,6 @@ export function MarketplaceProvider({ children }: PropsWithChildren) {
         return favorite;
       },
       removeFavorites: (productIds) => removeFavorites(uid, productIds),
-      rateProduct: (productId, rating) => saveRating(uid, productId, rating),
       reportProduct: (productId) => saveReport(uid, productId),
       setQuery: (query) => dispatchFilters({ type: "queryChanged", query }),
       setUniversidad,

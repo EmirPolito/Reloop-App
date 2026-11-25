@@ -72,7 +72,8 @@ function borradorDe(producto: Product): ProductDraft {
     priceText: producto.price > 0 ? String(producto.price) : "",
     quantityText: String(producto.availableQuantity),
     category: producto.category,
-    photo: producto.imageUri,
+    photos: producto.images,
+    options: [],
   };
 }
 
@@ -102,11 +103,12 @@ function Formulario({
     borrador.priceText.trim() !== inicial.priceText ||
     borrador.quantityText.trim() !== inicial.quantityText ||
     borrador.category !== inicial.category ||
-    borrador.photo !== inicial.photo;
+    borrador.photos[0] !== inicial.photos[0];
 
   const elegirFoto = async () => {
     const uri = await pickSquareImage();
-    if (uri) cambiar({ photo: uri });
+    // Cambia la foto grande; las demás se quedan
+    if (uri) cambiar({ photos: [uri, ...borrador.photos.slice(1)] });
   };
 
   const guardar = async () => {
@@ -124,9 +126,8 @@ function Formulario({
     setGuardando(true);
     try {
       // Una foto nueva (de la galería) se sube; la que ya estaba subida se deja como está
-      const imageUrl = borrador.photo
-        ? await uploadImage(borrador.photo)
-        : null;
+      const principal = borrador.photos[0];
+      const imageUrl = principal ? await uploadImage(principal) : null;
       const nombre = borrador.name.trim();
       await updateProduct(producto.id, {
         name: nombre,
@@ -135,7 +136,9 @@ function Formulario({
         price: resultado.price,
         availableQuantity: resultado.availableQuantity,
         imageUrl,
-        resetRatings: borrador.category !== producto.category,
+        imagenes: imageUrl
+          ? [imageUrl, ...producto.images.slice(1)]
+          : producto.images.slice(1),
       });
       onClose();
       mostrar({
@@ -173,9 +176,9 @@ function Formulario({
           { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#F1F1F3" },
         ]}
       >
-        {borrador.photo ? (
+        {borrador.photos[0] ? (
           <Image
-            source={{ uri: borrador.photo }}
+            source={{ uri: borrador.photos[0] }}
             contentFit="cover"
             style={StyleSheet.absoluteFill}
           />

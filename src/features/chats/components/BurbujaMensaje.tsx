@@ -8,6 +8,8 @@ import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor
 import type { ChatMessage } from "@/features/marketplace/types";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
+import { PedidoChat } from "@/features/pedidos/components/PedidoChat";
+import { SolicitudChat } from "@/features/resenas/components/SolicitudChat";
 import { TarjetaChat } from "@/features/tarjetas/components/TarjetaChat";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import { formatMessageTime } from "@/utils/time";
@@ -147,15 +149,18 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
   const hasImages = images.length > 0;
   const hasText = message.text.trim().length > 0;
 
-  // Una tarjeta para transferir va sola, sin burbuja
-  const burbuja = message.tarjeta ? (
-    <Animated.View entering={isMe && isNew ? BUBBLE_ENTERING : undefined}>
-      <TarjetaChat
-        tarjeta={message.tarjeta}
-        hora={formatMessageTime(message.time)}
-        mia={isMe}
-      />
-    </Animated.View>
+  const hora = formatMessageTime(message.time);
+  const entrada = isMe && isNew ? BUBBLE_ENTERING : undefined;
+  // Una tarjeta para transferir, un pedido o una solicitud de calificación van solos, sin burbuja
+  const especial = message.tarjeta ? (
+    <TarjetaChat tarjeta={message.tarjeta} hora={hora} mia={isMe} />
+  ) : message.pedido ? (
+    <PedidoChat pedido={message.pedido} hora={hora} mia={isMe} />
+  ) : message.calificacion ? (
+    <SolicitudChat solicitud={message.calificacion} hora={hora} />
+  ) : null;
+  const burbuja = especial ? (
+    <Animated.View entering={entrada}>{especial}</Animated.View>
   ) : (
     <Animated.View
       entering={isMe && isNew ? BUBBLE_ENTERING : undefined}

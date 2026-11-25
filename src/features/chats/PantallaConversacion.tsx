@@ -22,12 +22,17 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { conSalida } from "@/components/salidaModulo";
+import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useProduct } from "@/features/marketplace/hooks/useProductsByIds";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { useDraft } from "@/features/shared/DraftsProvider";
+import { allowsProductRating } from "@/features/marketplace/rules";
+import { BotonPedirCalificacion } from "@/features/resenas/components/BotonPedirCalificacion";
+import { useEstadoResena } from "@/features/resenas/repositorioResenas";
+import { useSessionUser } from "@/features/session/SessionUserProvider";
 import { SelectorTarjetas } from "@/features/tarjetas/components/SelectorTarjetas";
 import type { Tarjeta } from "@/features/tarjetas/formatoTarjeta";
 import { useTarjetas } from "@/features/tarjetas/repositorioTarjetas";
@@ -39,15 +44,15 @@ import { VisorImagenes } from "./components/VisorImagenes";
 import { BurbujaMensaje } from "./components/BurbujaMensaje";
 import { HUECO_SOBRE_TECLADO, CajaMensaje } from "./components/CajaMensaje";
 import { CabeceraConversacion } from "./components/CabeceraConversacion";
-import { ProductoConversacion } from "./components/ProductoConversacion";
 import { useMensajesConversacion } from "./hooks/useMensajesConversacion";
 import {
   THREAD_CONTENT_GAP,
-  threadFixedHeight,
   useThreadHeaderHeight,
 } from "./medidasConversacion";
 
 const NO_IMAGES: string[] = [];
+/** Lo que ocupa el botón de pedir calificación sobre el input (alto 48 + 10 de aire) */
+const ALTO_BOTON_CALIFICACION = 58;
 
 /**
  * Mientras llega el chat: burbujas de carga (el `Skeleton` de HeroUI), unas de la otra persona
@@ -83,7 +88,9 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
   const headerHeight = useThreadHeaderHeight();
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
-  const { sendMessage, sendCard, markRead } = useChatActions();
+  const { sendMessage, sendCard, requestReview, markRead } = useChatActions();
+  const { uid } = useSessionUser();
+  const { mostrar } = useAvisos();
   const tarjetas = useTarjetas();
   const activeChat = chats.find((chat) => chat.id === chatId) ?? null;
   const { messages, status: messagesStatus } = useMensajesConversacion(
@@ -112,7 +119,7 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
       cancelAnimationFrame(segundo);
     };
   }, [enPosicion, messagesStatus]);
-  const { back, openProduct, openUserProfile, openCards } = useNavegacion();
+  const { back, openUserProfile, openCards } = useNavegacion();
   const { pickImages } = useImagePicker();
   const [messageDraft, setMessageDraft] = useDraft(`message:${chatId}`);
   // Sale con la animación de módulo y luego regresa
@@ -173,6 +180,20 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
 
   const { product: relatedProduct } = useProduct(activeChat?.productId);
   const unread = activeChat?.unread ?? false;
+  // Si me pidieron calificar esta publicación: mientras no sepa si ya la califiqué, o si ya lo
+  // hice, la solicitud no sale en el chat (la reseña se ve en la publicación)
+  const miResena = useEstadoResena(
+    relatedProduct && !relatedProduct.isMine ? relatedProduct.id : undefined,
+    uid,
+    { conSolicitud: false },
+  );
+  const solicitudPendiente = miResena !== undefined && miResena.resena === null;
+  // La solicitud de calificación solo la ve quien la recibe, y solo mientras no ha calificado.
+  // Quien la pide no ve su mensaje: al pedirla le sale un aviso
+  const visibles = messages.filter(
+    (message) =>
+      !message.calificacion || (message.from === "them" && solicitudPendiente),
+  );
 
   // Abrir el chat (o recibir un mensaje con el chat abierto) lo marca como leído
   useEffect(() => {
@@ -259,7 +280,11 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
     );
   }
 
-  const fixedTop = threadFixedHeight(headerHeight, Boolean(relatedProduct));
+  const fixedTop = headerHeight;
+  // Al vendedor de venta o comida: el botón para pedir que lo califiquen, sobre el input
+  const pideCalificacion =
+    relatedProduct?.isMine === true &&
+    allowsProductRating(relatedProduct.category);
 
   return (
     <View style={styles.fill}>
@@ -280,6 +305,7 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
             paddingBottom:
               Math.max(insets.bottom, 16) +
               (selectedImages.length > 0 ? 140 : 50) +
+              (pideCalificacion ? ALTO_BOTON_CALIFICACION : 0) +
               // Aire entre el último mensaje y el input
               22,
           },
@@ -297,7 +323,7 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
           scrollRef.current?.scrollToEnd({ animated: false });
         }}
       >
-        {messages.map((message, index) => (
+        {visibles.map((message, index) => (
           <BurbujaMensaje
             key={message.id}
             message={message}
@@ -305,7 +331,7 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
             contactName={activeChat.name}
             // El avatar sale en el primer mensaje de cada racha de la otra persona
             showAvatar={
-              message.from === "them" && messages[index - 1]?.from !== "them"
+              message.from === "them" && visibles[index - 1]?.from !== "them"
             }
             isNew={message.time >= abiertoEn}
             onOpenImages={openImageViewer}
@@ -313,15 +339,7 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
         ))}
       </Animated.ScrollView>
 
-      {/* 2. Tarjeta del producto, encima de la lista y debajo del header */}
-      {relatedProduct ? (
-        <ProductoConversacion
-          product={relatedProduct}
-          onPress={() => openProduct(relatedProduct.id)}
-        />
-      ) : null}
-
-      {/* 3. El header va DESPUÉS de la lista, así queda por encima */}
+      {/* 2. El header va DESPUÉS de la lista, así queda por encima */}
       <CabeceraConversacion
         contactId={activeChat.otherId}
         contactName={activeChat.name}
@@ -357,6 +375,27 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
         onPickImages={handlePickImages}
         onRemoveImage={removeSelectedImage}
         onOpenImage={openImageViewer}
+        encima={
+          pideCalificacion && relatedProduct ? (
+            <BotonPedirCalificacion
+              productoId={relatedProduct.id}
+              compradorId={activeChat.otherId}
+              onPedir={() =>
+                requestReview(chatId, relatedProduct)
+                  .then(() =>
+                    mostrar({
+                      tipo: "exito",
+                      titulo: "Calificación pedida",
+                      descripcion: "Le avisamos para que te califique.",
+                    }),
+                  )
+                  .catch((error) =>
+                    showErrorAlert("No se pudo pedir la calificación", error),
+                  )
+              }
+            />
+          ) : null
+        }
       />
     </View>
   );

@@ -1,6 +1,8 @@
 import type { DocumentData, DocumentSnapshot } from "firebase/firestore";
 
 import type { Chat, ChatMessage, Product } from "@/features/marketplace/types";
+import { leerPedido } from "@/features/pedidos/formatoPedido";
+import { leerSolicitud } from "@/features/resenas/formatoResena";
 import { leerTarjetaCompartida } from "@/features/tarjetas/formatoTarjeta";
 import { toMillis } from "@/lib/firestoreValues";
 
@@ -23,10 +25,17 @@ export function mapChat(
   if (!data || !Array.isArray(participants)) return null;
   const otherId = String(participants.find((id) => id !== uid) ?? uid);
 
-  const last = data.lastMessage as
-    | { text?: string; from?: string; time?: unknown; hasImages?: boolean }
-    | null
-    | undefined;
+  type Resumen = {
+    text?: string;
+    from?: string;
+    time?: unknown;
+    hasImages?: boolean;
+  };
+  const guardado = data.lastMessage as
+    (Resumen & { previo?: Resumen }) | null | undefined;
+  // Si yo pedí una calificación, en mi lista sigue el mensaje de antes (no veo la solicitud)
+  const last =
+    guardado?.previo && guardado.from === uid ? guardado.previo : guardado;
   const lastMessage = last
     ? {
         text: typeof last.text === "string" ? last.text : "",
@@ -73,6 +82,8 @@ export function mapMessage(
     ? data.images.filter((item): item is string => typeof item === "string")
     : [];
   const tarjeta = leerTarjetaCompartida(data.tarjeta);
+  const pedido = leerPedido(data.pedido);
+  const calificacion = leerSolicitud(data.calificacion);
   return {
     id: snapshot.id,
     from: data.from === uid ? "me" : "them",
@@ -80,5 +91,7 @@ export function mapMessage(
     time: toMillis(data.creadoEn),
     ...(images.length > 0 ? { images } : {}),
     ...(tarjeta ? { tarjeta } : {}),
+    ...(pedido ? { pedido } : {}),
+    ...(calificacion ? { calificacion } : {}),
   };
 }

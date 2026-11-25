@@ -21,6 +21,7 @@ export function SheetEditar({
   titulo,
   isDark,
   onClose,
+  onCerrado,
   onBack,
   permitirArrastrarContenido = true,
   bloqueado = false,
@@ -31,6 +32,8 @@ export function SheetEditar({
   titulo: string;
   isDark: boolean;
   onClose: () => void;
+  /** Cuando terminó de bajar (ya no se ve) */
+  onCerrado?: () => void;
   onBack?: () => void;
   /** En false, solo la línea de arriba arrastra el sheet (para gestos dentro del contenido) */
   permitirArrastrarContenido?: boolean;
@@ -65,6 +68,7 @@ export function SheetEditar({
         />
         <BottomSheet.Content
           enablePanDownToClose={!bloqueado}
+          onClose={onCerrado}
           enableContentPanningGesture={permitirArrastrarContenido}
           // Card flotante: separada de los lados y más cerca del borde inferior
           detached
@@ -171,16 +175,19 @@ function FondoOscuro({
   );
 }
 
+/** Lo que ocupa el encabezado sobre el contenido: alto 33, subido 7 y 20 de margen abajo */
+export const ALTO_ENCABEZADO = 33 - 7 + 20;
+
 /** Capa de drawers dentro de los providers de la sesión (su `PortalHost` va en el layout de la app) */
 export const HOST_SESION = "sesion";
 
-const RADIO_CARD = 35;
+export const RADIO_CARD = 35;
 /** Fondo de la card: [claro, oscuro] */
 /**
  * En oscuro, el mismo tono con el que se ven las tarjetas de opciones del perfil (blanco al
  * 5 % sobre el fondo #161616), pero sólido
  */
-const FONDO_CARD = ["#ffffff", "#222222"] as const;
+export const FONDO_CARD = ["#ffffff", "#222222"] as const;
 
 const styles = StyleSheet.create({
   // El mismo tono que el fondo de HeroUI (negro al 20 %)

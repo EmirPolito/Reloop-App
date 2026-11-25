@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import Animated, {
   Easing,
@@ -58,7 +58,10 @@ function usePreviewKeys(images: string[]): string[] {
   }, [images]);
 }
 
-/** Zona inferior del chat: fotos por enviar, campo de texto, adjuntar y enviar. */
+/**
+ * Zona inferior del chat: lo que va anclado encima (`encima`), fotos por enviar, campo de
+ * texto, adjuntar y enviar. Todo sube junto con el teclado.
+ */
 export function CajaMensaje({
   draft,
   onChangeDraft,
@@ -69,6 +72,7 @@ export function CajaMensaje({
   onPickImages,
   onRemoveImage,
   onOpenImage,
+  encima,
 }: {
   draft: string;
   onChangeDraft: (text: string) => void;
@@ -82,6 +86,8 @@ export function CajaMensaje({
   onPickImages: () => void;
   onRemoveImage: (index: number) => void;
   onOpenImage: (images: string[], index: number) => void;
+  /** Anclado arriba del input (p. ej. el botón de pedir calificación) */
+  encima?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
@@ -115,6 +121,8 @@ export function CajaMensaje({
         liftStyle,
       ]}
     >
+      {encima ? <View style={{ marginBottom: 10 }}>{encima}</View> : null}
+
       {/* Previsualizador horizontal de imágenes seleccionadas (aparición suave) */}
       {images.length > 0 && (
         <Animated.ScrollView

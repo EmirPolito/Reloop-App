@@ -250,9 +250,24 @@ service cloud.firestore {
       return q is int && q >= 1 && q <= 9999;
     }
 
+    // Hasta 4 fotos de Cloudinary (las reglas no recorren listas: se revisan una por una)
+    function validImages(list) {
+      return list is list && list.size() <= 4
+        && (list.size() < 1 || (list[0] is string && list[0].matches('https://.*')))
+        && (list.size() < 2 || (list[1] is string && list[1].matches('https://.*')))
+        && (list.size() < 3 || (list[2] is string && list[2].matches('https://.*')))
+        && (list.size() < 4 || (list[3] is string && list[3].matches('https://.*')));
+    }
+
+    // Venta y comida: hasta 10 productos (cada uno con nombre, precio y foto opcional)
+    function validOptions(list) {
+      return list is list && list.size() <= 10;
+    }
+
     function validNewProduct(d) {
       return d.keys().hasOnly(['ownerId', 'seller', 'name', 'description', 'category', 'price',
-                               'imageUrl', 'distance', 'ratingTotal', 'ratingCount', 'creadoEn', 'availableQuantity'])
+                               'imageUrl', 'imagenes', 'opciones', 'distance',
+                               'resenasTotal', 'resenasCount', 'creadoEn', 'availableQuantity'])
         && d.ownerId == request.auth.uid
         && d.seller is string && d.seller.size() > 0 && d.seller.size() <= 30
         && d.name is string && d.name.size() > 0 && d.name.size() <= 40
@@ -260,12 +275,13 @@ service cloud.firestore {
         && d.category in ['venta', 'cambio', 'donacion', 'mascota', 'comida']
         && d.price is number && d.price >= 0 && d.price <= 1000000
         && (d.imageUrl == null || (d.imageUrl is string && d.imageUrl.matches('https://.*')))
+        && (!('imagenes' in d) || validImages(d.imagenes))
+        && (!('opciones' in d) || validOptions(d.opciones))
         && d.distance is string
         && (!('availableQuantity' in d) || validQuantity(d.availableQuantity))
         && d.creadoEn == request.time
-        && ((d.category in ['venta', 'comida'])
-              ? (d.ratingTotal == 5 && d.ratingCount == 1)
-              : (d.ratingTotal == 0 && d.ratingCount == 0));
+        // Las estrellas salen solo de reseñas reales: siempre empieza en cero
+        && d.resenasTotal == 0 && d.resenasCount == 0;
     }
 
     // Solo la dueña puede cambiar el nombre de vendedor de sus publicaciones.
@@ -277,51 +293,80 @@ service cloud.firestore {
         && request.resource.data.seller.size() <= 30;
     }
 
-    // La dueña puede editar su publicación (nombre, descripción, categoría, precio y foto) y
-    // republicarla (renovar su fecha de creación con la hora del servidor). Al cambiar de
-    // categoría las calificaciones vuelven a empezar como en una publicación nueva; si la
-    // categoría no cambia, las calificaciones no se tocan.
+    // La dueña puede editar su publicación (nombre, descripción, categoría, precio, fotos y
+    // productos) y republicarla (renovar su fecha de creación con la hora del servidor). Las
+    // reseñas no las toca.
     function validOwnerEdit() {
       let d = request.resource.data;
       let changed = d.diff(resource.data).affectedKeys();
       return resource.data.ownerId == request.auth.uid
-        && changed.hasOnly(['name', 'description', 'category', 'price', 'imageUrl',
-                            'ratingTotal', 'ratingCount', 'creadoEn', 'availableQuantity'])
+        && changed.hasOnly(['name', 'description', 'category', 'price', 'imageUrl', 'imagenes',
+                            'opciones', 'creadoEn', 'availableQuantity'])
         && (!('availableQuantity' in changed) || validQuantity(d.availableQuantity))
         && d.name is string && d.name.size() > 0 && d.name.size() <= 40
         && d.description is string && d.description.size() <= 500
         && d.category in ['venta', 'cambio', 'donacion', 'mascota', 'comida']
         && d.price is number && d.price >= 0 && d.price <= 1000000
         && (d.imageUrl == null || (d.imageUrl is string && d.imageUrl.matches('https://.*')))
-        && (!('creadoEn' in changed) || d.creadoEn == request.time)
-        && (('category' in changed)
-              ? ((d.category in ['venta', 'comida'])
-                  ? (d.ratingTotal == 5 && d.ratingCount == 1)
-                  : (d.ratingTotal == 0 && d.ratingCount == 0))
-              : !changed.hasAny(['ratingTotal', 'ratingCount']));
+        && (!('imagenes' in changed) || validImages(d.imagenes))
+        && (!('opciones' in changed) || validOptions(d.opciones))
+        && (!('creadoEn' in changed) || d.creadoEn == request.time);
     }
 
-    // Cualquier persona, salvo la dueña, puede calificar. El promedio solo cambia en la
-    // medida exacta de su propia nota: se compara su calificación antes y después del cambio.
-    function validRatingUpdate(productId) {
-      let ratingPath = /databases/$(database)/documents/usuarios/$(request.auth.uid)/calificaciones/$(productId);
-      let before = exists(ratingPath) ? get(ratingPath).data.rating : 0;
-      let after = getAfter(ratingPath).data.rating;
+    // Una reseña nueva suma sus estrellas al promedio, en el mismo lote que la crea: el total
+    // sube exactamente lo que dice la reseña y el conteo, en uno.
+    function validReviewUpdate(productId) {
+      let resenaPath = /databases/$(database)/documents/productos/$(productId)/resenas/$(request.auth.uid);
       return resource.data.ownerId != request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingTotal', 'ratingCount'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resenasTotal', 'resenasCount'])
         && resource.data.category in ['venta', 'comida']
-        && after is int && after >= 1 && after <= 5
-        && request.resource.data.ratingTotal == resource.data.ratingTotal - before + after
-        && request.resource.data.ratingCount == resource.data.ratingCount + (before == 0 ? 1 : 0);
+        && !exists(resenaPath)
+        && existsAfter(resenaPath)
+        && request.resource.data.resenasCount == resource.data.get('resenasCount', 0) + 1
+        && request.resource.data.resenasTotal
+             == resource.data.get('resenasTotal', 0) + getAfter(resenaPath).data.estrellas;
     }
 
     match /productos/{productId} {
       allow read: if signedIn();
       allow create: if signedIn() && validNewProduct(request.resource.data);
       allow update: if signedIn()
-        && (validSellerRename() || validOwnerEdit() || validRatingUpdate(productId));
+        && (validSellerRename() || validOwnerEdit() || validReviewUpdate(productId));
       // Solo la dueña borra su publicación
       allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+
+      // El vendedor le pide la calificación a quien le compró (el id es el uid de esa persona).
+      // Solo la ven el vendedor y esa persona.
+      match /solicitudes/{buyerId} {
+        allow read: if signedIn()
+          && (request.auth.uid == buyerId
+              || get(/databases/$(database)/documents/productos/$(productId)).data.ownerId == request.auth.uid);
+        allow create: if signedIn()
+          && get(/databases/$(database)/documents/productos/$(productId)).data.ownerId == request.auth.uid
+          && buyerId != request.auth.uid
+          && request.resource.data.keys().hasOnly(['chatId', 'creadoEn'])
+          && request.resource.data.chatId is string
+          && request.resource.data.creadoEn == request.time;
+      }
+
+      // Reseñas: una por persona (el id es su uid), solo si el vendedor se la pidió, y en el
+      // mismo lote que suma sus estrellas al promedio. No se editan ni se borran.
+      match /resenas/{authorId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && authorId == request.auth.uid
+          && exists(/databases/$(database)/documents/productos/$(productId)/solicitudes/$(request.auth.uid))
+          && request.resource.data.keys().hasOnly(['autor', 'estrellas', 'texto', 'creadoEn'])
+          && request.resource.data.autor is string
+          && request.resource.data.autor.size() > 0 && request.resource.data.autor.size() <= 30
+          && request.resource.data.estrellas is int
+          && request.resource.data.estrellas >= 1 && request.resource.data.estrellas <= 5
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0 && request.resource.data.texto.size() <= 300
+          && request.resource.data.creadoEn == request.time
+          && getAfter(/databases/$(database)/documents/productos/$(productId)).data.resenasCount
+               == get(/databases/$(database)/documents/productos/$(productId)).data.get('resenasCount', 0) + 1;
+      }
 
       match /comentarios/{commentId} {
         allow read: if signedIn();
@@ -412,7 +457,8 @@ service cloud.firestore {
         // getAfter: el primer mensaje se crea en la misma operación que el chat
         allow create: if signedIn()
           && request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(chatId)).data.participants
-          && request.resource.data.keys().hasOnly(['from', 'text', 'images', 'tarjeta', 'creadoEn'])
+          && request.resource.data.keys().hasOnly(['from', 'text', 'images', 'tarjeta', 'pedido',
+                                                   'calificacion', 'creadoEn'])
           && request.resource.data.from == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 2000
@@ -424,6 +470,30 @@ service cloud.firestore {
                 || (request.resource.data.tarjeta is map
                     && request.resource.data.tarjeta.keys().hasOnly(['institucion', 'clave', 'beneficiario', 'color'])
                     && validCardData(request.resource.data.tarjeta)))
+          // Un pedido: la publicación, sus productos, el total, cómo se paga y la descripción
+          && (!('pedido' in request.resource.data)
+                || (request.resource.data.pedido is map
+                    && request.resource.data.pedido.keys().hasOnly(['productoId', 'producto', 'items',
+                                                                    'total', 'metodo', 'nota'])
+                    && request.resource.data.pedido.productoId is string
+                    && request.resource.data.pedido.producto is string
+                    && request.resource.data.pedido.items is list
+                    && request.resource.data.pedido.items.size() > 0
+                    && request.resource.data.pedido.items.size() <= 10
+                    && request.resource.data.pedido.total is number
+                    && request.resource.data.pedido.total >= 0
+                    && request.resource.data.pedido.metodo in ['efectivo', 'transferencia']
+                    && request.resource.data.pedido.nota is string
+                    && request.resource.data.pedido.nota.size() > 0
+                    && request.resource.data.pedido.nota.size() <= 300))
+          // Pedir una calificación: solo el dueño de la publicación
+          && (!('calificacion' in request.resource.data)
+                || (request.resource.data.calificacion is map
+                    && request.resource.data.calificacion.keys().hasOnly(['productoId', 'producto'])
+                    && request.resource.data.calificacion.productoId is string
+                    && request.resource.data.calificacion.producto is string
+                    && get(/databases/$(database)/documents/productos/$(request.resource.data.calificacion.productoId)).data.ownerId
+                         == request.auth.uid))
           && request.resource.data.creadoEn == request.time;
       }
     }

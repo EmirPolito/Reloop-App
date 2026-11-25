@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -8,7 +7,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -18,15 +16,13 @@ import {
 
 import { db } from "@/lib/firebase";
 import { commitInChunks } from "@/lib/firestoreBatch";
-import { mapComment, mapProduct } from "./productMappers";
-import { allowsProductRating } from "./rules";
-import type { CategoryId, Product, ProductComment } from "./types";
+import { mapProduct } from "./productMappers";
+import type { CategoryId, Product } from "./types";
 
 const PRODUCTS = "productos";
 const USERS = "usuarios";
 const REPORTS = "reportes";
 const FEED_LIMIT = 200;
-const COMMENTS_LIMIT = 200;
 
 type OnError = (error: unknown) => void;
 
@@ -74,7 +70,10 @@ export function subscribeUserProducts(
   onData: (products: Product[]) => void,
   onError: OnError,
 ): Unsubscribe {
-  const owned = query(collection(db, PRODUCTS), where("ownerId", "==", ownerId));
+  const owned = query(
+    collection(db, PRODUCTS),
+    where("ownerId", "==", ownerId),
+  );
   return onSnapshot(
     owned,
     (snapshot) =>
@@ -96,20 +95,31 @@ export interface NewProductData {
   category: CategoryId;
   price: number;
   availableQuantity: number;
-  /** URL ya subida a Cloudinary */
+  /** URL ya subida a Cloudinary (la primera de `imagenes`) */
   imageUrl: string | null;
+  /** Todas las fotos, ya subidas (hasta 4) */
+  imagenes: string[];
+  /** Venta y comida: los productos que se pueden pedir, con su foto ya subida */
+  opciones: OpcionGuardada[];
 }
 
-/** Crea la publicación; las categorías con calificación empiezan en 5.0 (un voto de 5). */
+/** Un producto de la publicación como se guarda en Firestore */
+export interface OpcionGuardada {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  imagenUrl: string | null;
+}
+
+/** Crea la publicación; empieza sin reseñas (las estrellas salen solo de reseñas reales). */
 export async function createProduct(data: NewProductData): Promise<string> {
   const ref = doc(collection(db, PRODUCTS));
-  const rated = allowsProductRating(data.category);
   await setDoc(ref, {
     ...data,
     distance: "0.0 km",
-    ratingTotal: rated ? 5 : 0,
-    ratingCount: rated ? 1 : 0,
-    availableQuantity: data.availableQuantity,
+    resenasTotal: 0,
+    resenasCount: 0,
     creadoEn: serverTimestamp(),
   });
   return ref.id;
@@ -122,29 +132,24 @@ export interface ProductEdits {
   category: CategoryId;
   price: number;
   availableQuantity: number;
-  /** URL ya subida a Cloudinary */
+  /** URL ya subida a Cloudinary (la primera de `imagenes`) */
   imageUrl: string | null;
-  /** La categoría cambió: las calificaciones vuelven a empezar como en una publicación nueva */
-  resetRatings: boolean;
+  imagenes: string[];
 }
 
-/** Guarda la edición de una publicación propia. */
+/** Guarda la edición de una publicación propia (las reseñas no se tocan). */
 export async function updateProduct(
   productId: string,
-  { resetRatings, ...edits }: ProductEdits,
+  edits: ProductEdits,
 ): Promise<void> {
-  const rated = allowsProductRating(edits.category);
-  await updateDoc(doc(db, PRODUCTS, productId), {
-    ...edits,
-    ...(resetRatings
-      ? { ratingTotal: rated ? 5 : 0, ratingCount: rated ? 1 : 0 }
-      : {}),
-  });
+  await updateDoc(doc(db, PRODUCTS, productId), { ...edits });
 }
 
 /** Republica: renueva la fecha de creación, así vuelve a salir al principio del inicio. */
 export async function republishProduct(productId: string): Promise<void> {
-  await updateDoc(doc(db, PRODUCTS, productId), { creadoEn: serverTimestamp() });
+  await updateDoc(doc(db, PRODUCTS, productId), {
+    creadoEn: serverTimestamp(),
+  });
 }
 
 /** Borra una publicación propia. */
@@ -200,84 +205,6 @@ export async function removeFavorites(
   );
 }
 
-// ── Calificaciones ───────────────────────────────────────────────────────────
-
-export function subscribeMyRatings(
-  uid: string,
-  onData: (ratings: Record<string, number>) => void,
-  onError: OnError,
-): Unsubscribe {
-  return onSnapshot(
-    collection(db, USERS, uid, "calificaciones"),
-    (snapshot) =>
-      onData(
-        Object.fromEntries(
-          snapshot.docs.map((item) => [item.id, Number(item.data().rating)]),
-        ),
-      ),
-    onError,
-  );
-}
-
-/**
- * Guarda la calificación de la persona y actualiza el promedio del producto en la
- * misma transacción (las reglas comprueban que ambas cuadren).
- */
-export async function rateProduct(
-  uid: string,
-  productId: string,
-  rating: number,
-): Promise<void> {
-  const productRef = doc(db, PRODUCTS, productId);
-  const ratingRef = doc(db, USERS, uid, "calificaciones", productId);
-  await runTransaction(db, async (transaction) => {
-    const [product, previous] = await Promise.all([
-      transaction.get(productRef),
-      transaction.get(ratingRef),
-    ]);
-    if (!product.exists()) throw new Error("La publicación ya no existe.");
-    const before = previous.exists() ? Number(previous.data().rating) : 0;
-    transaction.update(productRef, {
-      ratingTotal: Number(product.data().ratingTotal ?? 0) - before + rating,
-      ratingCount: Number(product.data().ratingCount ?? 0) + (before === 0 ? 1 : 0),
-    });
-    transaction.set(ratingRef, {
-      productId,
-      rating,
-      actualizadoEn: serverTimestamp(),
-    });
-  });
-}
-
-// ── Comentarios ──────────────────────────────────────────────────────────────
-
-export function subscribeComments(
-  productId: string,
-  onData: (comments: ProductComment[]) => void,
-  onError: OnError,
-): Unsubscribe {
-  const comments = query(
-    collection(db, PRODUCTS, productId, "comentarios"),
-    orderBy("creadoEn", "asc"),
-    limit(COMMENTS_LIMIT),
-  );
-  return onSnapshot(
-    comments,
-    (snapshot) => onData(snapshot.docs.map(mapComment)),
-    onError,
-  );
-}
-
-export async function addComment(
-  productId: string,
-  comment: { authorId: string; author: string; text: string },
-): Promise<void> {
-  await addDoc(collection(db, PRODUCTS, productId, "comentarios"), {
-    ...comment,
-    creadoEn: serverTimestamp(),
-  });
-}
-
 // ── Reportes ─────────────────────────────────────────────────────────────────
 
 /** Ids de las publicaciones que esta persona ya reportó. */
@@ -289,7 +216,8 @@ export function subscribeMyReports(
   const mine = query(collection(db, REPORTS), where("reporterId", "==", uid));
   return onSnapshot(
     mine,
-    (snapshot) => onData(snapshot.docs.map((item) => String(item.data().productId))),
+    (snapshot) =>
+      onData(snapshot.docs.map((item) => String(item.data().productId))),
     onError,
   );
 }

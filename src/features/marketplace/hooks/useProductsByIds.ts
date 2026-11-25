@@ -40,7 +40,10 @@ export function useProductsByIds(ids: string[]): {
         uid,
         (product) => setFetched((current) => ({ ...current, [id]: product })),
         (error) => {
-          console.warn("No se pudo leer la publicación.", describeFirestoreError(error));
+          console.warn(
+            "No se pudo leer la publicación.",
+            describeFirestoreError(error),
+          );
           setFetched((current) => ({ ...current, [id]: null }));
         },
       ),

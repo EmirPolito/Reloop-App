@@ -1,5 +1,11 @@
-import { categoryPriceMode } from "@/features/marketplace/rules";
-import type { NewProductData } from "@/features/marketplace/productRepository";
+import {
+  allowsProductRating,
+  categoryPriceMode,
+} from "@/features/marketplace/rules";
+import type {
+  NewProductData,
+  OpcionGuardada,
+} from "@/features/marketplace/productRepository";
 import type { CategoryId } from "@/features/marketplace/types";
 import { parsePrice } from "@/utils/price";
 
@@ -12,13 +18,35 @@ export const FORM_CATEGORY_LABELS: Record<CategoryId, string> = {
   comida: "Comida",
 };
 
+/** Cuántas fotos puede tener una publicación (la primera es la grande) */
+export const MAX_FOTOS = 4;
+/** Cuántos productos puede tener una publicación de venta o comida */
+export const MAX_OPCIONES = 10;
+/** Largo de la descripción corta de cada producto */
+export const LARGO_DESCRIPCION_OPCION = 60;
+
+/** Un producto de la publicación mientras se escribe (sabor, tamaño...) */
+export interface DraftOption {
+  /** Clave local, también es el id que se guarda */
+  key: string;
+  name: string;
+  /** Descripción corta, opcional */
+  description: string;
+  priceText: string;
+  /** URI local o URL ya subida */
+  photo: string | null;
+}
+
 export interface ProductDraft {
   name: string;
   description: string;
   priceText: string;
   quantityText: string;
   category: CategoryId;
-  photo: string | null;
+  /** Hasta 4 fotos (URI local o URL ya subida); la primera es la grande */
+  photos: string[];
+  /** Venta y comida: los productos que se pueden pedir */
+  options: DraftOption[];
 }
 
 export const EMPTY_DRAFT: ProductDraft = {
@@ -27,12 +55,29 @@ export const EMPTY_DRAFT: ProductDraft = {
   priceText: "",
   quantityText: "1",
   category: "venta",
-  photo: null,
+  photos: [],
+  options: [],
 };
 
 export type DraftValidation =
-  | { valid: true; price: number; availableQuantity: number }
+  | {
+      valid: true;
+      price: number;
+      availableQuantity: number;
+      /** Los productos con su precio ya leído (sin fotos subidas) */
+      options: {
+        id: string;
+        nombre: string;
+        descripcion: string;
+        precio: number;
+      }[];
+    }
   | { valid: false; title: string; message: string };
+
+/** Los productos solo se guardan en venta y comida */
+export function usesOptions(category: CategoryId): boolean {
+  return allowsProductRating(category);
+}
 
 /** Comprueba el borrador antes de publicar y resuelve el precio final. */
 export function validateDraft(draft: ProductDraft): DraftValidation {
@@ -44,10 +89,47 @@ export function validateDraft(draft: ProductDraft): DraftValidation {
     };
   }
 
+  const options = usesOptions(draft.category) ? draft.options : [];
+  const leidas: {
+    id: string;
+    nombre: string;
+    descripcion: string;
+    precio: number;
+  }[] = [];
+  for (const option of options) {
+    const nombre = option.name.trim();
+    const precio = parsePrice(option.priceText);
+    if (!nombre) {
+      return {
+        valid: false,
+        title: "Falta un nombre",
+        message: "Escribe el nombre de cada producto o quita el que no uses.",
+      };
+    }
+    if (precio === null) {
+      return {
+        valid: false,
+        title: "Precio no válido",
+        message: 'Escribe el precio de "' + nombre + '".',
+      };
+    }
+    leidas.push({
+      id: option.key,
+      nombre,
+      descripcion: option.description.trim().slice(0, LARGO_DESCRIPCION_OPCION),
+      precio,
+    });
+  }
+
   const mode = categoryPriceMode(draft.category);
-  const price = parsePrice(draft.priceText);
-  const priceTyped = draft.priceText.trim().length > 0;
-  const priceRequired = mode === "required" || (mode === "optional" && priceTyped);
+  // Con productos, el precio de la publicación es el del más barato
+  const price =
+    leidas.length > 0
+      ? Math.min(...leidas.map((o) => o.precio))
+      : parsePrice(draft.priceText);
+  const priceTyped = leidas.length > 0 || draft.priceText.trim().length > 0;
+  const priceRequired =
+    mode === "required" || (mode === "optional" && priceTyped);
 
   if (priceRequired && price === null) {
     return {
@@ -58,11 +140,7 @@ export function validateDraft(draft: ProductDraft): DraftValidation {
   }
 
   const quantity = Number(draft.quantityText.trim());
-  if (
-    !Number.isInteger(quantity) ||
-    quantity < 1 ||
-    quantity > 9999
-  ) {
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 9999) {
     return {
       valid: false,
       title: "Cantidad no válida",
@@ -74,10 +152,11 @@ export function validateDraft(draft: ProductDraft): DraftValidation {
     valid: true,
     price: mode === "none" ? 0 : (price ?? 0),
     availableQuantity: quantity,
+    options: leidas,
   };
 }
 
-/** Datos que se guardan al publicar; la foto ya debe estar subida (`imageUrl`). */
+/** Datos que se guardan al publicar; las fotos ya deben estar subidas. */
 export function buildNewProduct(
   draft: ProductDraft,
   {
@@ -85,13 +164,15 @@ export function buildNewProduct(
     seller,
     price,
     availableQuantity,
-    imageUrl,
+    imagenes,
+    opciones,
   }: {
     ownerId: string;
     seller: string;
     price: number;
     availableQuantity: number;
-    imageUrl: string | null;
+    imagenes: string[];
+    opciones: OpcionGuardada[];
   },
 ): NewProductData {
   return {
@@ -102,6 +183,8 @@ export function buildNewProduct(
     category: draft.category,
     price,
     availableQuantity,
-    imageUrl,
+    imageUrl: imagenes[0] ?? null,
+    imagenes: imagenes.slice(0, MAX_FOTOS),
+    opciones,
   };
 }
