@@ -41,6 +41,25 @@ export function averageRatingLabel(products: Product[]): string {
   return resenas === 0 ? "0" : (estrellas / resenas).toFixed(1);
 }
 
+/** Cuánto dura una publicación: 24 horas desde que se publicó (o se republicó) */
+export const DURACION_PUBLICACION_MS = 24 * 60 * 60 * 1000;
+
+/** Si ya pasaron sus 24 horas: los demás ya no la ven (la dueña sí, para republicarla) */
+export function publicacionVencida(createdAt: number, now: number): boolean {
+  return createdAt > 0 && now - createdAt >= DURACION_PUBLICACION_MS;
+}
+
+/** "Hace un momento", "Hace 5 min", "Hace 3 h" (o "Hace 2 días" si ya venció) */
+export function formatPublicationTime(createdAt: number, now: number): string {
+  const minutos = Math.floor(Math.max(0, now - createdAt) / 60_000);
+  if (!createdAt || minutos < 1) return "Hace un momento";
+  if (minutos < 60) return `Hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  return dias === 1 ? "Hace 1 día" : `Hace ${dias} días`;
+}
+
 /** "Donación", "$120" o `null` cuando el producto no tiene precio. */
 export function formatProductPrice(product: Product): string | null {
   if (product.category === "donacion") return "Donación";

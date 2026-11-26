@@ -19,6 +19,7 @@ import { useImagePicker } from "@/hooks/useImagePicker";
 import {
   EMPTY_DRAFT,
   FORM_CATEGORY_LABELS,
+  LARGO_UBICACION,
   MAX_FOTOS,
   MAX_OPCIONES,
   usesOptions,
@@ -261,6 +262,17 @@ export function PantallaCrearPublicacion() {
               placeholderTextColor={placeholderColor}
               multiline
               style={[styles.input, styles.descriptionInput]}
+            />
+
+            <Text style={styles.createFieldLabel}>Ubicación (opcional)</Text>
+            <TextInput
+              accessibilityLabel="Ubicación, opcional"
+              value={draft.ubicacion}
+              onChangeText={(ubicacion) => updateDraft({ ubicacion })}
+              placeholder="Ej. Edificio B"
+              placeholderTextColor={placeholderColor}
+              maxLength={LARGO_UBICACION}
+              style={styles.input}
             />
 
             {conProductos ? (

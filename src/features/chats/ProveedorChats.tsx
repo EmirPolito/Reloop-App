@@ -18,6 +18,7 @@ import { useRequiredContext } from "@/hooks/useRequiredContext";
 import { PrecargaAvatares } from "./components/PrecargaAvatares";
 import {
   deleteChatsForMe,
+  deleteMessageForMe,
   markChatRead,
   sendMessage as saveMessage,
   subscribeChats,
@@ -49,6 +50,8 @@ interface ChatActions {
   markRead: (chatId: string) => Promise<void>;
   /** Elimina chats solo para esta persona. */
   deleteChats: (chatIds: string[]) => Promise<void>;
+  /** Elimina un mensaje solo para esta persona. */
+  deleteMessage: (chatId: string, messageId: string) => Promise<void>;
 }
 
 /** Texto de los mensajes con tarjeta: es lo que se ve en la lista de chats y en la notificación */
@@ -142,6 +145,8 @@ export function ChatProvider({ children }: PropsWithChildren) {
       },
       markRead: (chatId) => markChatRead(chatId, uid),
       deleteChats: (chatIds) => deleteChatsForMe(uid, chatIds),
+      deleteMessage: (chatId, messageId) =>
+        deleteMessageForMe(chatId, messageId, uid),
     }),
     [uid, chatsRef, notify],
   );

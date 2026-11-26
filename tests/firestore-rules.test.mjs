@@ -285,6 +285,9 @@ await expectDenied("A publica con una foto http entre las fotos", () => createPr
 await expectDenied("A publica con 11 productos", () => createProduct(A, "p-x12", { opciones: Array(11).fill({ id: "o", nombre: "x", precio: 1, imagenUrl: null }) }));
 await expectDenied("A publica con precio negativo", () => createProduct(A, "p-x4", { price: -1 }));
 await expectDenied("A publica con campo extra", () => createProduct(A, "p-x5", { destacado: true }));
+await expectOk("C publica con ubicación (como la app)", () => createProduct(C, "p-ubicacion", { ubicacion: "Edificio B" }));
+await expectDenied("A publica con ubicación vacía", () => createProduct(A, "p-x13", { ubicacion: "" }));
+await expectDenied("A publica con ubicación de más de 40 letras", () => createProduct(A, "p-x14", { ubicacion: "x".repeat(41) }));
 await expectOk("B publica con cantidad disponible (como la app)", () => createProduct(B, "p-cant", { availableQuantity: 3 }));
 await expectDenied("A publica con cantidad 0", () => createProduct(A, "p-x6", { availableQuantity: 0 }));
 await expectDenied("A publica con cantidad decimal", () => createProduct(A, "p-x7", { availableQuantity: 1.5 }));
@@ -451,6 +454,12 @@ await expectDenied("A falsea el último mensaje como de B", () => updateDoc(doc(
 await expectDenied("A escribe un mensaje como si fuera B", async () => { await addDoc(collection(A.db, "chats", chatAB, "mensajes"), { from: B.uid, text: "falso", images: [], creadoEn: serverTimestamp() }); });
 await expectDenied("A edita un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await updateDoc(s.docs[0].ref, { text: "editado" }); });
 await expectDenied("A borra un mensaje", async () => { const s = await getDocs(collection(A.db, "chats", chatAB, "mensajes")); await deleteDoc(s.docs[0].ref); });
+const mensajesAB = (await getDocs(collection(A.db, "chats", chatAB, "mensajes"))).docs;
+await expectOk("A elimina un mensaje solo para sí (como la app)", () => updateDoc(doc(A.db, "chats", chatAB, "mensajes", mensajesAB[0].id), { ocultoPara: arrayUnion(A.uid) }));
+await expectOk("B elimina el mismo mensaje para sí", () => updateDoc(doc(B.db, "chats", chatAB, "mensajes", mensajesAB[0].id), { ocultoPara: arrayUnion(B.uid) }));
+await expectDenied("A elimina un mensaje a nombre de B", () => updateDoc(doc(A.db, "chats", chatAB, "mensajes", mensajesAB[1].id), { ocultoPara: arrayUnion(B.uid) }));
+await expectDenied("A lo elimina para sí y de paso lo edita", () => updateDoc(doc(A.db, "chats", chatAB, "mensajes", mensajesAB[1].id), { ocultoPara: arrayUnion(A.uid), text: "editado" }));
+await expectDenied("C elimina un mensaje de A y B para sí", () => updateDoc(doc(C.db, "chats", chatAB, "mensajes", mensajesAB[1].id), { ocultoPara: arrayUnion(C.uid) }));
 const mandarPedido = (u, pedido) => addDoc(collection(u.db, "chats", chatAB, "mensajes"), { from: u.uid, text: "🧾 Pedido", images: [], pedido, creadoEn: serverTimestamp() });
 const pedidoB = { productoId: "p-venta", producto: "Calculadora", items: [{ nombre: "Calculadora", precio: 280, cantidad: 1 }], total: 280, metodo: "efectivo", nota: "En el edificio B" };
 await expectOk("B manda un pedido (como la app)", () => mandarPedido(B, pedidoB));

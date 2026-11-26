@@ -13,6 +13,7 @@ import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor
 import {
   allowsProductRating,
   formatProductPrice,
+  formatPublicationTime,
 } from "@/features/marketplace/rules";
 import type { Product } from "@/features/marketplace/types";
 import { coloresTarjetaVendedor } from "@/features/perfil/components/TarjetaVendedor";
@@ -21,6 +22,7 @@ import { AppIcon } from "@/features/shared/AppIcon";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { PRODUCT_COLORS, PRODUCT_ICONS } from "@/features/shared/constants";
 import { Text } from "@/features/shared/Text";
+import { useMinutoActual } from "@/hooks/useMinutoActual";
 import { optimizedImageUrl } from "@/lib/imageUrl";
 import {
   IconoCorazon,
@@ -33,15 +35,6 @@ const COLOR_ESTRELLA = "#F5A623";
 const RADIO = 22;
 /** Borde blanco de la tarjeta */
 const BORDE = 3;
-
-function formatPublicationTime(createdAt: number): string {
-  if (!createdAt) return "Hoy";
-  const elapsed = Math.max(0, Date.now() - createdAt);
-  const days = Math.floor(elapsed / 86400000);
-  if (days < 1) return "Hoy";
-  if (days === 1) return "Hace 1 día";
-  return `Hace ${days} días`;
-}
 
 /**
  * Tarjeta de publicación: encabezado del vendedor, foto cuadrada y pie con nombre,
@@ -73,6 +66,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   alto?: number;
 }) {
   const { isDark } = useAppTheme();
+  // Cada minuto: así "Hace 5 min" se mantiene al día
+  const ahora = useMinutoActual();
   const perfil = usePerfilDe(item.ownerId);
   const imageUri = optimizedImageUrl(item.imageUri, cardWidth * 2);
   const conEstrella = allowsProductRating(item.category);
@@ -171,7 +166,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
                   isDark && { color: "#8A8D93" },
                 ]}
               >
-                {formatPublicationTime(item.createdAt)}
+                {formatPublicationTime(item.createdAt, ahora)}
+                {item.ubicacion ? ` · ${item.ubicacion}` : ""}
               </Text>
             </Pressable>
             <Pressable

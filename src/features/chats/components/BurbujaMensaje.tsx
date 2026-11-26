@@ -1,8 +1,17 @@
 import { Image } from "expo-image";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
+import {
+  BotonEliminarBurbuja,
+  ESPACIO_BOTON_BURBUJA,
+  TapaRoja,
+  useAperturaBurbuja,
+} from "@/components/ui/DeslizarConBoton";
 import { EASE_OUT } from "@/constants/motion";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import type { ChatMessage } from "@/features/marketplace/types";
@@ -151,6 +160,18 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
 
   const hora = formatMessageTime(message.time);
   const entrada = isMe && isNew ? BUBBLE_ENTERING : undefined;
+  const soloFotos = hasImages && !hasText;
+  const esEspecial = Boolean(
+    message.tarjeta || message.pedido || message.calificacion,
+  );
+  // Al deslizarla para eliminar, la burbuja se alarga a la derecha: ahí va su botón
+  const apertura = useAperturaBurbuja();
+  const rellenoDerecho = esEspecial || soloFotos ? 0 : 16;
+  const estiloApertura = useAnimatedStyle(() =>
+    apertura
+      ? { paddingRight: rellenoDerecho + apertura.get() * ESPACIO_BOTON_BURBUJA }
+      : {},
+  );
   // Una tarjeta para transferir, un pedido o una solicitud de calificación van solos, sin burbuja
   const especial = message.tarjeta ? (
     <TarjetaChat tarjeta={message.tarjeta} hora={hora} mia={isMe} />
@@ -160,7 +181,16 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
     <SolicitudChat solicitud={message.calificacion} hora={hora} />
   ) : null;
   const burbuja = especial ? (
-    <Animated.View entering={entrada}>{especial}</Animated.View>
+    // Recortada en redondo: el rojo de eliminar no se sale de su forma (ver la burbuja normal)
+    <Animated.View
+      entering={entrada}
+      style={[{ borderRadius: 18, overflow: "hidden" }, estiloApertura]}
+    >
+      {especial}
+      <BotonEliminarBurbuja />
+      {/* Al eliminarla se cubre toda de rojo y luego se vuelve polvo */}
+      <TapaRoja />
+    </Animated.View>
   ) : (
     <Animated.View
       entering={isMe && isNew ? BUBBLE_ENTERING : undefined}
@@ -176,6 +206,10 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
           borderRadius: 13,
           marginVertical: 5,
           alignSelf: isMe ? "flex-end" : "auto",
+          // Recorta lo de adentro con su forma: el rojo de eliminar es un rectángulo y la
+          // burbuja le da las esquinas. Con esquinas propias, al angostarse (al cerrarse) iOS
+          // las achicaba y asomaba un pedazo de rojo fuera de la burbuja
+          overflow: "hidden",
           ...(hasImages && !hasText
             ? {
                 backgroundColor: "transparent",
@@ -195,6 +229,7 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
                   backgroundColor: isDark ? "#2A2B32" : "#FFFFFF",
                 }),
         },
+        estiloApertura,
       ]}
     >
       <MessageImages images={images} onOpen={onOpenImages} />
@@ -258,6 +293,9 @@ export const BurbujaMensaje = memo(function BurbujaMensaje({
           {formatMessageTime(message.time)}
         </Text>
       </View>
+      <BotonEliminarBurbuja />
+      {/* Al eliminarla se cubre toda de rojo, con su misma forma, y luego se vuelve polvo */}
+      <TapaRoja />
     </Animated.View>
   );
 

@@ -3,18 +3,21 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
+import { BulkSearchIcon } from "@/features/chats/components/IconosChats";
+import {
+  FilaSeguidor,
+  FilaSeguidorEsqueleto,
+} from "@/features/perfil/seguidores/FilaSeguidor";
 import { Text } from "@/features/shared/Text";
 import { useBuscarPersonas } from "../hooks/useBuscarPersonas";
-import {
-  ResultadoUsuario,
-  ResultadoUsuarioEsqueleto,
-} from "./ResultadoUsuario";
 
 const FILAS_ESQUELETO = 4;
 
 /**
  * Resultados del modo "@" del buscador del inicio: personas que coinciden o, con solo "@",
- * las cuentas más recientes como sugerencia. Incluye carga, vacío y error con reintento.
+ * las cuentas más recientes como sugerencia. Incluye carga, vacío y error con reintento. Cada
+ * persona sale sin tarjeta, igual que en seguidores y seguidos (con su botón de seguir).
  */
 export function ResultadosUsuarios({
   termino,
@@ -38,7 +41,7 @@ export function ResultadosUsuarios({
       {busqueda.estado === "cargando" ? (
         <View style={styles.lista} accessibilityLabel="Buscando personas">
           {Array.from({ length: FILAS_ESQUELETO }, (_, i) => (
-            <ResultadoUsuarioEsqueleto key={i} isDark={isDark} />
+            <FilaSeguidorEsqueleto key={i} />
           ))}
         </View>
       ) : null}
@@ -55,25 +58,27 @@ export function ResultadosUsuarios({
       ) : null}
 
       {busqueda.estado === "listo" && busqueda.usuarios.length === 0 ? (
-        <EmptyState
+        // Sin tarjeta, como cuando la búsqueda de publicaciones no encuentra nada
+        <IllustratedEmptyState
+          icon={<BulkSearchIcon size={80} />}
           title={
             termino
               ? `Sin resultados para "@${termino}"`
               : "Aún no hay personas"
           }
           message="Prueba con otro usuario o con su nombre."
-          icon="search"
+          conInter
+          style={styles.vacio}
         />
       ) : null}
 
       {busqueda.estado === "listo" && busqueda.usuarios.length > 0 ? (
         <Animated.View entering={FadeIn.duration(180)} style={styles.lista}>
           {busqueda.usuarios.map((usuario) => (
-            <ResultadoUsuario
+            <FilaSeguidor
               key={usuario.uid}
-              usuario={usuario}
-              isDark={isDark}
-              onOpen={onOpenUser}
+              uid={usuario.uid}
+              onAbrir={onOpenUser}
             />
           ))}
         </Animated.View>
@@ -85,5 +90,7 @@ export function ResultadosUsuarios({
 const styles = StyleSheet.create({
   contenedor: { paddingTop: 14, gap: 10 },
   titulo: { fontFamily: "Inter_500Medium", fontSize: 13, paddingHorizontal: 4 },
-  lista: { gap: 8 },
+  // Sin espacio extra: cada fila trae el suyo, como en seguidores
+  lista: { paddingHorizontal: 4 },
+  vacio: { paddingTop: 56, paddingBottom: 140 },
 });

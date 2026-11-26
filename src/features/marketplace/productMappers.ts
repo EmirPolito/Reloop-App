@@ -86,6 +86,9 @@ export function mapProduct(
       ),
     ),
     distance: typeof data.distance === "string" ? data.distance : "0.0 km",
+    ...(typeof data.ubicacion === "string" && data.ubicacion.trim()
+      ? { ubicacion: data.ubicacion.trim() }
+      : {}),
     isMine: data.ownerId === uid,
     createdAt: toMillis(data.creadoEn),
   };

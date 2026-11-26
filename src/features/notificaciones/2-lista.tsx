@@ -11,10 +11,10 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import { DeslizarConBoton } from "@/components/ui/DeslizarConBoton";
 import type { Disolvedor } from "@/components/ui/Disolvible";
 import { IconoNotificacionRellena } from "@/components/ui/IconoNotificacion";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { SwipeParaEliminar } from "@/components/ui/SwipeParaEliminar";
 import { Text } from "@/features/shared/Text";
 import { FilaNotificacion } from "./components/FilaNotificacion";
 import type { NotificationSection } from "./reglasNotificaciones";
@@ -74,9 +74,11 @@ export function ListaNotificaciones({
   );
   const renderFila = useCallback(
     ({ item }: { item: AppNotification }) => (
-      <SwipeParaEliminar
+      <DeslizarConBoton
+        forma="tarjeta"
         disabled={seleccionando}
         radio={22}
+        sombra={estilos.sombraTarjeta}
         separacion={9}
         onDelete={() => onEliminar(item.id)}
       >
@@ -89,7 +91,7 @@ export function ListaNotificaciones({
           marcada={marcados.has(item.id)}
           registrar={registrar}
         />
-      </SwipeParaEliminar>
+      </DeslizarConBoton>
     ),
     [seleccionando, onEliminar, now, onPress, onLongPress, marcados, registrar],
   );
@@ -152,6 +154,13 @@ export function EsqueletoNotificaciones({ isDark }: { isDark: boolean }) {
 }
 
 const estilos = StyleSheet.create({
+  // La misma sombra de la tarjeta: va por fuera de su recorte al deslizarla
+  sombraTarjeta: {
+    shadowColor: "#000000",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+  },
   seccion: {
     fontFamily: "Inter_500Medium",
     fontSize: 12.5,

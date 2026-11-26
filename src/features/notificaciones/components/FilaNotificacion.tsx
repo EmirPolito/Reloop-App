@@ -3,7 +3,6 @@ import { StyleSheet, View } from "react-native";
 
 import { PressableSuave } from "@/components/PressableSuave";
 import { Disolvible, type Disolvedor } from "@/components/ui/Disolvible";
-import { TextoSobreRojo } from "@/components/ui/SwipeParaEliminar";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
 import { Text } from "@/features/shared/Text";
 import {
@@ -95,25 +94,20 @@ export function FilaNotificacion({
           >
             {notificationTitle(notification)}
           </Text>
-          {/* En oscuro la tarjeta es translúcida: al deslizar, el gris se aclara sobre el rojo */}
-          <TextoSobreRojo
+          <Text
             numberOfLines={2}
-            colorBase={isDark ? "#94A3B8" : "#6B6B70"}
-            colorSobreRojo={isDark ? undefined : "#6B6B70"}
-            style={styles.descripcion}
+            style={[styles.descripcion, { color: isDark ? "#94A3B8" : "#6B6B70" }]}
           >
             {notification.actorName} {message}
-          </TextoSobreRojo>
+          </Text>
         </View>
 
         <View style={styles.derecha}>
-          <TextoSobreRojo
-            colorBase={isDark ? "#94A3B8" : "#8A8A8F"}
-            colorSobreRojo={isDark ? undefined : "#8A8A8F"}
-            style={styles.tiempo}
+          <Text
+            style={[styles.tiempo, { color: isDark ? "#94A3B8" : "#8A8A8F" }]}
           >
             {time}
-          </TextoSobreRojo>
+          </Text>
           <View
             style={[
               styles.punto,

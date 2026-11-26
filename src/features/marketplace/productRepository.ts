@@ -11,12 +11,15 @@ import {
   setDoc,
   updateDoc,
   where,
+  type DocumentData,
+  type DocumentSnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 import { commitInChunks } from "@/lib/firestoreBatch";
 import { mapProduct } from "./productMappers";
+import { DURACION_PUBLICACION_MS, publicacionVencida } from "./rules";
 import type { CategoryId, Product } from "./types";
 
 const PRODUCTS = "productos";
@@ -26,7 +29,57 @@ const FEED_LIMIT = 200;
 
 type OnError = (error: unknown) => void;
 
-/** Las publicaciones más recientes, en tiempo real. */
+/**
+ * Las publicaciones duran 24 horas: convierte los documentos y quita las vencidas (las propias
+ * solo si `ocultarPropias`). Como vencen con el tiempo y no con un cambio en Firestore, vuelve a
+ * emitir cuando vence la próxima. `emitir` se llama con cada foto nueva de Firestore.
+ */
+function conVencimiento(
+  uid: string,
+  ocultarPropias: boolean,
+  onData: (products: Product[]) => void,
+) {
+  let docs: DocumentSnapshot<DocumentData>[] = [];
+  let temporizador: ReturnType<typeof setTimeout> | undefined;
+
+  const publicar = () => {
+    clearTimeout(temporizador);
+    const ahora = Date.now();
+    const visibles = docs
+      .map((item) => mapProduct(item, uid))
+      .filter(
+        (product): product is Product =>
+          product !== null &&
+          (!publicacionVencida(product.createdAt, ahora) ||
+            (product.isMine && !ocultarPropias)),
+      );
+    onData(visibles);
+    // La próxima que vence entre las que se ven (las que se quedan aunque venzan no cuentan)
+    const proxima = Math.min(
+      ...visibles
+        .filter((p) => p.createdAt > 0 && !(p.isMine && !ocultarPropias))
+        .map((p) => p.createdAt + DURACION_PUBLICACION_MS),
+    );
+    if (Number.isFinite(proxima)) esperar(proxima);
+  };
+  // Revisa a lo más cada minuto: un temporizador largo se atrasa si la app se suspende
+  const esperar = (proxima: number) => {
+    temporizador = setTimeout(
+      () => (Date.now() >= proxima ? publicar() : esperar(proxima)),
+      Math.min(60_000, Math.max(0, proxima - Date.now()) + 50),
+    );
+  };
+
+  return {
+    emitir: (nuevos: DocumentSnapshot<DocumentData>[]) => {
+      docs = nuevos;
+      publicar();
+    },
+    cancelar: () => clearTimeout(temporizador),
+  };
+}
+
+/** Las publicaciones más recientes de las últimas 24 horas, en tiempo real. */
 export function subscribeProducts(
   uid: string,
   onData: (products: Product[]) => void,
@@ -37,33 +90,48 @@ export function subscribeProducts(
     orderBy("creadoEn", "desc"),
     limit(FEED_LIMIT),
   );
-  return onSnapshot(
+  // En el inicio tampoco salen las propias vencidas: se republican desde el perfil
+  const vencimiento = conVencimiento(uid, true, onData);
+  const dejar = onSnapshot(
     feed,
-    (snapshot) =>
-      onData(
-        snapshot.docs
-          .map((item) => mapProduct(item, uid))
-          .filter((product): product is Product => product !== null),
-      ),
+    (snapshot) => vencimiento.emitir(snapshot.docs),
     onError,
   );
+  return () => {
+    dejar();
+    vencimiento.cancelar();
+  };
 }
 
-/** Una publicación en tiempo real; `null` si no existe o ya no es visible. */
+/**
+ * Una publicación en tiempo real; `null` si no existe o ya no es visible (una ajena vencida;
+ * la propia sí, para poder verla y republicarla).
+ */
 export function subscribeProduct(
   productId: string,
   uid: string,
   onData: (product: Product | null) => void,
   onError: OnError,
 ): Unsubscribe {
-  return onSnapshot(
+  const vencimiento = conVencimiento(uid, false, (products) =>
+    onData(products[0] ?? null),
+  );
+  const dejar = onSnapshot(
     doc(db, PRODUCTS, productId),
-    (snapshot) => onData(mapProduct(snapshot, uid)),
+    (snapshot) => vencimiento.emitir([snapshot]),
     onError,
   );
+  return () => {
+    dejar();
+    vencimiento.cancelar();
+  };
 }
 
-/** Publicaciones de una persona, de la más reciente a la más antigua (se ordena aquí para no pedir un índice). */
+/**
+ * Publicaciones de una persona, de la más reciente a la más antigua (se ordena aquí para no
+ * pedir un índice). En el perfil ajeno solo las de las últimas 24 horas; en el propio todas,
+ * para poder republicar las vencidas.
+ */
 export function subscribeUserProducts(
   ownerId: string,
   uid: string,
@@ -74,17 +142,18 @@ export function subscribeUserProducts(
     collection(db, PRODUCTS),
     where("ownerId", "==", ownerId),
   );
-  return onSnapshot(
+  const vencimiento = conVencimiento(uid, false, (products) =>
+    onData([...products].sort((a, b) => b.createdAt - a.createdAt)),
+  );
+  const dejar = onSnapshot(
     owned,
-    (snapshot) =>
-      onData(
-        snapshot.docs
-          .map((item) => mapProduct(item, uid))
-          .filter((product): product is Product => product !== null)
-          .sort((a, b) => b.createdAt - a.createdAt),
-      ),
+    (snapshot) => vencimiento.emitir(snapshot.docs),
     onError,
   );
+  return () => {
+    dejar();
+    vencimiento.cancelar();
+  };
 }
 
 export interface NewProductData {
@@ -101,6 +170,8 @@ export interface NewProductData {
   imagenes: string[];
   /** Venta y comida: los productos que se pueden pedir, con su foto ya subida */
   opciones: OpcionGuardada[];
+  /** Dónde se entrega (opcional, p. ej. "Edificio B"); sin ella no se guarda */
+  ubicacion?: string;
 }
 
 /** Un producto de la publicación como se guarda en Firestore */

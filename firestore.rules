@@ -267,7 +267,8 @@ service cloud.firestore {
     function validNewProduct(d) {
       return d.keys().hasOnly(['ownerId', 'seller', 'name', 'description', 'category', 'price',
                                'imageUrl', 'imagenes', 'opciones', 'distance',
-                               'resenasTotal', 'resenasCount', 'creadoEn', 'availableQuantity'])
+                               'resenasTotal', 'resenasCount', 'creadoEn', 'availableQuantity',
+                               'ubicacion'])
         && d.ownerId == request.auth.uid
         && d.seller is string && d.seller.size() > 0 && d.seller.size() <= 30
         && d.name is string && d.name.size() > 0 && d.name.size() <= 40
@@ -279,6 +280,8 @@ service cloud.firestore {
         && (!('opciones' in d) || validOptions(d.opciones))
         && d.distance is string
         && (!('availableQuantity' in d) || validQuantity(d.availableQuantity))
+        // Dónde se entrega (opcional, p. ej. "Edificio B")
+        && (!('ubicacion' in d) || (d.ubicacion is string && d.ubicacion.size() > 0 && d.ubicacion.size() <= 40))
         && d.creadoEn == request.time
         // Las estrellas salen solo de reseñas reales: siempre empieza en cero
         && d.resenasTotal == 0 && d.resenasCount == 0;
@@ -380,6 +383,16 @@ service cloud.firestore {
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500
           && request.resource.data.creadoEn == request.time;
+
+        // Eliminar un mensaje solo para mí: cada participante solo puede agregarse a sí mismo
+        // a `ocultoPara`; el mensaje no cambia en nada más
+        allow update: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ocultoPara'])
+          && request.resource.data.ocultoPara is list
+          && request.resource.data.ocultoPara.size() <= 2
+          && request.resource.data.ocultoPara.toSet()
+               == resource.data.get('ocultoPara', []).toSet().union([request.auth.uid].toSet());
       }
     }
 
@@ -495,6 +508,16 @@ service cloud.firestore {
                     && get(/databases/$(database)/documents/productos/$(request.resource.data.calificacion.productoId)).data.ownerId
                          == request.auth.uid))
           && request.resource.data.creadoEn == request.time;
+
+        // Eliminar un mensaje solo para mí: cada participante solo puede agregarse a sí mismo
+        // a `ocultoPara`; el mensaje no cambia en nada más
+        allow update: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ocultoPara'])
+          && request.resource.data.ocultoPara is list
+          && request.resource.data.ocultoPara.size() <= 2
+          && request.resource.data.ocultoPara.toSet()
+               == resource.data.get('ocultoPara', []).toSet().union([request.auth.uid].toSet());
       }
     }
   }

@@ -24,6 +24,8 @@ export const MAX_FOTOS = 4;
 export const MAX_OPCIONES = 10;
 /** Largo de la descripción corta de cada producto */
 export const LARGO_DESCRIPCION_OPCION = 60;
+/** Largo de la ubicación (p. ej. "Edificio B") */
+export const LARGO_UBICACION = 40;
 
 /** Un producto de la publicación mientras se escribe (sabor, tamaño...) */
 export interface DraftOption {
@@ -47,6 +49,8 @@ export interface ProductDraft {
   photos: string[];
   /** Venta y comida: los productos que se pueden pedir */
   options: DraftOption[];
+  /** Dónde se entrega, opcional */
+  ubicacion: string;
 }
 
 export const EMPTY_DRAFT: ProductDraft = {
@@ -57,6 +61,7 @@ export const EMPTY_DRAFT: ProductDraft = {
   category: "venta",
   photos: [],
   options: [],
+  ubicacion: "",
 };
 
 export type DraftValidation =
@@ -175,6 +180,7 @@ export function buildNewProduct(
     opciones: OpcionGuardada[];
   },
 ): NewProductData {
+  const ubicacion = draft.ubicacion.trim().slice(0, LARGO_UBICACION);
   return {
     ownerId,
     seller,
@@ -186,5 +192,6 @@ export function buildNewProduct(
     imageUrl: imagenes[0] ?? null,
     imagenes: imagenes.slice(0, MAX_FOTOS),
     opciones,
+    ...(ubicacion ? { ubicacion } : {}),
   };
 }

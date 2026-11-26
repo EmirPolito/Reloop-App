@@ -26,7 +26,7 @@ Piezas de `components/`:
 - **`PildoraOpcion`:** las píldoras de opciones.
 - **`Neblina` y `NeblinaDesenfocada`:** las neblinas de las cabeceras.
 - **`PlaceholderRotativo`:** las frases que rotan en el buscador.
-- **`ResultadosUsuarios` y `ResultadoUsuario`:** la lista de personas, con su esqueleto de carga, que usa el `Skeleton` de HeroUI.
+- **`ResultadosUsuarios`:** la lista de personas, con las mismas filas de seguidores y seguidos (`FilaSeguidor` y su esqueleto).
 
 ## Cómo funciona
 

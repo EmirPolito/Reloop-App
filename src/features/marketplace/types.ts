@@ -27,6 +27,8 @@ export type Product = {
   /** Número de unidades disponibles */
   availableQuantity: number;
   distance: string;
+  /** Dónde se entrega, si quien publica la puso (p. ej. "Edificio B") */
+  ubicacion?: string;
   /** Universidad de la publicación (ver `universidades.ts`); sin ella es la propia */
   universidad?: string;
   /** Derivado: la publicación es de la persona con sesión iniciada */

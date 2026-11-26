@@ -74,6 +74,7 @@ function borradorDe(producto: Product): ProductDraft {
     category: producto.category,
     photos: producto.images,
     options: [],
+    ubicacion: producto.ubicacion ?? "",
   };
 }
 

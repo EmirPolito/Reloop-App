@@ -6,7 +6,6 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { PressableSuave } from "@/components/PressableSuave";
 import { colorSeleccion } from "@/components/ui/colorSeleccion";
 import { Disolvible, type Disolvedor } from "@/components/ui/Disolvible";
-import { TextoSobreRojo } from "@/components/ui/SwipeParaEliminar";
 import { AvatarVendedor } from "@/features/marketplace/components/AvatarVendedor";
 import { categoryFor } from "@/features/marketplace/data";
 import type { CategoryId, Chat } from "@/features/marketplace/types";
@@ -136,23 +135,20 @@ export const FilaChat = memo(function FilaChat({
               </View>
             ) : null}
           </View>
-          {/* Al deslizar para eliminar, el gris se aclara un poco sobre el rojo */}
-          <TextoSobreRojo
+          <Text
             numberOfLines={1}
-            colorBase={isDark ? "#94A3B8" : "#6B6B70"}
-            style={styles.mensaje}
+            style={[styles.mensaje, { color: isDark ? "#94A3B8" : "#6B6B70" }]}
           >
             {resumen}
-          </TextoSobreRojo>
+          </Text>
         </View>
 
         <View style={styles.derecha}>
-          <TextoSobreRojo
-            colorBase={isDark ? "#94A3B8" : "#8A8A8F"}
-            style={styles.hora}
+          <Text
+            style={[styles.hora, { color: isDark ? "#94A3B8" : "#8A8A8F" }]}
           >
             {hora}
-          </TextoSobreRojo>
+          </Text>
           {esMio ? (
             <Ionicons
               name={visto ? "checkmark-done" : "checkmark"}

@@ -46,7 +46,9 @@ import {
   averageRatingLabel,
   categoryPriceMode,
   formatProductPrice,
+  formatPublicationTime,
   productBadgeLabel,
+  publicacionVencida,
 } from "@/features/marketplace/rules";
 import type { Chat, Product } from "@/features/marketplace/types";
 import {
@@ -295,6 +297,31 @@ describe("borrador de publicación", () => {
       ownerId: "u1", seller: "Ana", name: "Lámpara", description: "Sin descripción", category: "venta", price: 150, availableQuantity: 3,
       imageUrl: "https://res.cloudinary.com/x/image/upload/v1/a.png", imagenes: ["https://res.cloudinary.com/x/image/upload/v1/a.png"], opciones: [],
     });
+  });
+
+  it("guarda la ubicación solo si se escribió, sin espacios de más", () => {
+    const base = { ownerId: "u1", seller: "Ana", price: 1, availableQuantity: 1, imagenes: [], opciones: [] };
+    assert.equal(buildNewProduct({ ...EMPTY_DRAFT, name: "X", ubicacion: "  Edificio B " }, base).ubicacion, "Edificio B");
+    assert.equal("ubicacion" in buildNewProduct({ ...EMPTY_DRAFT, name: "X", ubicacion: "   " }, base), false);
+  });
+});
+
+describe("hora y duración de las publicaciones", () => {
+  const ahora = Date.UTC(2026, 10, 26, 12, 0, 0);
+  const min = 60_000;
+  it("dice hace cuánto se publicó, en minutos y horas", () => {
+    assert.equal(formatPublicationTime(ahora - 20_000, ahora), "Hace un momento");
+    assert.equal(formatPublicationTime(ahora - 5 * min, ahora), "Hace 5 min");
+    assert.equal(formatPublicationTime(ahora - 59 * min, ahora), "Hace 59 min");
+    assert.equal(formatPublicationTime(ahora - 60 * min, ahora), "Hace 1 h");
+    assert.equal(formatPublicationTime(ahora - 23 * 60 * min, ahora), "Hace 23 h");
+    assert.equal(formatPublicationTime(ahora - 48 * 60 * min, ahora), "Hace 2 días");
+  });
+  it("vence a las 24 horas", () => {
+    assert.equal(publicacionVencida(ahora - (24 * 60 - 1) * min, ahora), false);
+    assert.equal(publicacionVencida(ahora - 24 * 60 * min, ahora), true);
+    // Sin fecha todavía (recién creada) no vence
+    assert.equal(publicacionVencida(0, ahora), false);
   });
 });
 

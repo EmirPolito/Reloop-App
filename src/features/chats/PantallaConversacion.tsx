@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { conSalida } from "@/components/salidaModulo";
 import { useAvisos } from "@/features/avisos/AvisosProvider";
 import { BackHeader } from "@/components/ui/BackHeader";
+import { DeslizarConBoton } from "@/components/ui/DeslizarConBoton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useProduct } from "@/features/marketplace/hooks/useProductsByIds";
 import { useNavegacion } from "@/features/navigation/useNavegacion";
@@ -88,7 +89,8 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
   const headerHeight = useThreadHeaderHeight();
   const { styles } = useAppTheme();
   const { chats, status: chatsStatus } = useChats();
-  const { sendMessage, sendCard, requestReview, markRead } = useChatActions();
+  const { sendMessage, sendCard, requestReview, markRead, deleteMessage } =
+    useChatActions();
   const { uid } = useSessionUser();
   const { mostrar } = useAvisos();
   const tarjetas = useTarjetas();
@@ -323,19 +325,33 @@ export function PantallaConversacion({ chatId }: { chatId: string }) {
           scrollRef.current?.scrollToEnd({ animated: false });
         }}
       >
+        {/* Cada burbuja se desliza a la izquierda para eliminarla (solo para mí) */}
         {visibles.map((message, index) => (
-          <BurbujaMensaje
+          <DeslizarConBoton
             key={message.id}
-            message={message}
-            contactId={activeChat.otherId}
-            contactName={activeChat.name}
-            // El avatar sale en el primer mensaje de cada racha de la otra persona
-            showAvatar={
-              message.from === "them" && visibles[index - 1]?.from !== "them"
-            }
-            isNew={message.time >= abiertoEn}
-            onOpenImages={openImageViewer}
-          />
+            forma="burbuja"
+            alineacion={message.from === "me" ? "flex-end" : "flex-start"}
+            onDelete={async () => {
+              try {
+                await deleteMessage(chatId, message.id);
+              } catch (error) {
+                showErrorAlert("No se pudo eliminar el mensaje", error);
+                throw error;
+              }
+            }}
+          >
+            <BurbujaMensaje
+              message={message}
+              contactId={activeChat.otherId}
+              contactName={activeChat.name}
+              // El avatar sale en el primer mensaje de cada racha de la otra persona
+              showAvatar={
+                message.from === "them" && visibles[index - 1]?.from !== "them"
+              }
+              isNew={message.time >= abiertoEn}
+              onOpenImages={openImageViewer}
+            />
+          </DeslizarConBoton>
         ))}
       </Animated.ScrollView>
 

@@ -174,29 +174,53 @@ export function DetailScreen({ productId }: { productId: string }) {
         />
 
         <View style={styles.info}>
+          {/* El precio a la derecha, a la altura del título: si el título es largo baja de
+              línea en su columna y el precio no se mueve */}
           <View style={styles.filaTitulo}>
             <Text style={[INTER.semibold, styles.titulo, { color: c.texto }]}>
               {product.name}
             </Text>
-            {conPedido ? (
-              <View style={styles.calificacion}>
-                <Text
-                  style={[
-                    INTER.semibold,
-                    styles.calificacionTexto,
-                    { color: c.texto },
-                  ]}
-                >
-                  {(product.rating ?? 0).toFixed(1)}
-                </Text>
-                <Ionicons name="star" size={16} color="#FFC107" />
-              </View>
+            {price ? (
+              <Text
+                style={[INTER.semibold, styles.precio, { color: c.texto }]}
+              >
+                {price}
+              </Text>
             ) : null}
           </View>
-          <View style={styles.filaPrecio}>
-            <Text style={[INTER.semibold, styles.precio, { color: c.texto }]}>
-              {price ?? ""}
-            </Text>
+          {/* Debajo del título, las estrellas y la ubicación; la categoría a la derecha */}
+          <View style={styles.filaDetalles}>
+            <View style={styles.detalles}>
+              {conPedido ? (
+                <View style={styles.calificacion}>
+                  <Text
+                    style={[
+                      INTER.semibold,
+                      styles.calificacionTexto,
+                      { color: c.texto },
+                    ]}
+                  >
+                    {(product.rating ?? 0).toFixed(1)}
+                  </Text>
+                  <Ionicons name="star" size={16} color="#FFC107" />
+                </View>
+              ) : null}
+              {product.ubicacion ? (
+                <View style={styles.ubicacion}>
+                  <Ionicons name="location-outline" size={16} color={c.suave} />
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      INTER.medium,
+                      styles.ubicacionTexto,
+                      { color: c.suave },
+                    ]}
+                  >
+                    {product.ubicacion}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             {/* La categoría en píldora, como en el inicio pero más chica */}
             <View style={[styles.pildora, { backgroundColor: c.neutro }]}>
               <Text
@@ -311,20 +335,30 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   titulo: { flex: 1, fontSize: 22, lineHeight: 28 },
-  calificacion: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 4,
-  },
-  calificacionTexto: { fontSize: 15.5 },
-  filaPrecio: {
+  // Con el mismo alto de línea que el título: queda centrado con su primera línea
+  precio: { fontSize: 17, lineHeight: 28, flexShrink: 0 },
+  filaDetalles: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
   },
-  precio: { fontSize: 17 },
+  detalles: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    minWidth: 0,
+  },
+  calificacion: { flexDirection: "row", alignItems: "center", gap: 4 },
+  calificacionTexto: { fontSize: 15.5 },
+  ubicacion: {
+    flexShrink: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ubicacionTexto: { flexShrink: 1, fontSize: 14.5 },
   pildora: {
     height: 28,
     paddingHorizontal: 12,

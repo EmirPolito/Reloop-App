@@ -1,5 +1,5 @@
 import { createContext, memo, useContext, type ReactNode } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   type SharedValue,
@@ -7,6 +7,8 @@ import Animated, {
 
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
+import { BulkSearchIcon } from "@/features/chats/components/IconosChats";
 import type { CategoryId, Product } from "@/features/marketplace/types";
 import { universidadPorId } from "@/features/marketplace/universidades";
 import { TarjetaVendedorDe } from "@/features/perfil/components/TarjetaVendedorDe";
@@ -146,7 +148,11 @@ export const AvisoSinPublicaciones = memo(function AvisoSinPublicaciones({
   const filtrando = Boolean(query || activeCategory);
   return (
     <ConTransicionFiltro>
-      <EmptyState
+      {/* Sin tarjeta, con la misma ilustración que la búsqueda cuando no encuentra nada */}
+      <IllustratedEmptyState
+        icon={<BulkSearchIcon size={80} />}
+        conInter
+        style={estilosVacio.vacio}
         title={
           sinComunidad
             ? `Aún no hay publicaciones en ${universidadPorId(universidad).sigla}`
@@ -161,7 +167,6 @@ export const AvisoSinPublicaciones = memo(function AvisoSinPublicaciones({
               ? "Prueba con otra búsqueda o categoría."
               : "Sé la primera persona en publicar. Comparte algo con la comunidad UTSV."
         }
-        icon={query ? "search" : "sell"}
       />
     </ConTransicionFiltro>
   );
@@ -183,4 +188,9 @@ export const AvisoError = memo(function AvisoError({
       <PrimaryButton label="Reintentar" onPress={onReintentar} />
     </View>
   );
+});
+
+const estilosVacio = StyleSheet.create({
+  // Debajo del banner y las categorías: menos aire arriba que en la búsqueda
+  vacio: { paddingTop: 48, paddingBottom: 80 },
 });

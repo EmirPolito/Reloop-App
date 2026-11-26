@@ -80,6 +80,8 @@ export function subscribeMessages(
     (snapshot) =>
       onData(
         snapshot.docs
+          // Los que esta persona eliminó para sí ya no se le muestran
+          .filter((item) => !esOcultoPara(item.get("ocultoPara"), uid))
           .map((item) => mapMessage(item, uid))
           .filter((message) => message.time > deletedAt),
       ),
@@ -270,6 +272,22 @@ export async function deleteChatsForMe(
       [`borrados.${uid}`]: serverTimestamp(),
     }),
   );
+}
+
+/** Si `uid` está en la lista de quienes eliminaron el mensaje para sí */
+function esOcultoPara(ocultoPara: unknown, uid: string): boolean {
+  return Array.isArray(ocultoPara) && ocultoPara.includes(uid);
+}
+
+/** "Elimina" un mensaje solo para esta persona: la otra lo sigue viendo. */
+export async function deleteMessageForMe(
+  chatId: string,
+  messageId: string,
+  uid: string,
+): Promise<void> {
+  await updateDoc(doc(db, CHATS, chatId, MESSAGES, messageId), {
+    ocultoPara: arrayUnion(uid),
+  });
 }
 
 /** Actualiza el nombre propio en los chats en los que se participa y que aún muestran otro. */
