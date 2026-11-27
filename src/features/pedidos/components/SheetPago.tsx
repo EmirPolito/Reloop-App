@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useBottomSheetInternal } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import { useBottomSheetAwareHandlers } from "heroui-native";
 import { useState, type ReactNode } from "react";
-import * as Haptics from "expo-haptics";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
 
@@ -38,9 +38,9 @@ const ICONO_METODO: Record<MetodoPago, ReactNode> = {
 };
 
 /**
- * Drawer para terminar el pedido: cómo se paga (efectivo o transferencia), la descripción
- * (obligatoria) y "Enviar", que lo manda al chat con el vendedor. Ya enviado, una ola arcoíris
- * nace del botón y deja ver "Pedido enviado"; al terminar llama a `onEnviado`.
+- Drawer para terminar el pedido: cómo se paga (efectivo o transferencia), la descripción
+- (obligatoria) y "Enviar", que lo manda al chat con el vendedor. Ya enviado, una ola arcoíris
+- nace del botón y deja ver "Pedido enviado"; al terminar llama a `onEnviado`.
  */
 export function SheetPago({
   visible,
@@ -220,7 +220,7 @@ function Contenido({
                       entering={PALOMITA}
                       style={styles.radioLleno}
                     >
-                      <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                      <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                     </Animated.View>
                   ) : null}
                 </View>
@@ -231,7 +231,7 @@ function Contenido({
       </View>
 
       <View style={[styles.seccion, styles.conAire]}>
-        <Text style={[INTER.semibold, styles.etiqueta, { color: c.texto }]}>
+        <Text style={[INTER.medium, styles.etiqueta, { color: c.suave }]}>
           Descripción
         </Text>
         <TextInput
@@ -294,10 +294,11 @@ function Contenido({
 const ESPACIO_ABAJO = 14;
 
 const PALOMITA = ZoomIn.duration(180).easing(EASE_OUT_CUBIC);
-const LADO_RADIO = 22;
+const LADO_RADIO = 18;
 
 const styles = StyleSheet.create({
-  contenido: { paddingHorizontal: 20, gap: 18 },
+  /*Expancion de cotenido */
+  contenido: { paddingHorizontal: 21, gap: 18 },
   ola: {
     position: "absolute",
     left: 0,
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   seccion: { gap: 6 },
   // La descripción, un poco más abajo de las opciones
   conAire: { marginTop: 10 },
-  etiqueta: { fontSize: 15.5 },
+  etiqueta: { fontSize: 15 },
   opciones: { gap: 10 },
   opcion: {
     flexDirection: "row",
@@ -331,6 +332,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     overflow: "hidden",
   },
+
   radioLleno: {
     position: "absolute",
     top: -1.5,

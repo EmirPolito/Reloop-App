@@ -80,7 +80,7 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
   const nombreUsuario = perfil?.name ?? item.seller;
   const compacta = cardWidth < 260;
   const ladoAvatar = compacta ? 32 : 44;
-  const radioCorazon = compacta ? 20 : 25;
+  const altoEncabezado = compacta ? 50 : 60;
   // La foto no llega a los lados: deja este aire y tiene sus propias esquinas redondeadas
   const margenFoto = compacta ? 6 : 8;
   const ladoFoto = Math.round(cardWidth - BORDE * 2 - margenFoto * 2);
@@ -125,7 +125,7 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             style={[
               estilos.encabezado,
               // Un poco menos de aire arriba del avatar (el de abajo se queda igual)
-              { height: compacta ? 50 : 60, paddingBottom: 4 },
+              { height: altoEncabezado, paddingBottom: 4 },
               compacta && estilos.encabezadoCompacto,
             ]}
           >
@@ -170,30 +170,6 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
                 {item.ubicacion ? ` · ${item.ubicacion}` : ""}
               </Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                favorite ? "Quitar de favoritos" : "Agregar a favoritos"
-              }
-              accessibilityState={{ selected: favorite }}
-              onPress={alternarFavorito}
-              hitSlop={10}
-              style={estilos.favorito}
-            >
-              <Animated.View style={estiloCorazon}>
-                {favorite ? (
-                  <IconoCorazonRelleno
-                    size={radioCorazon}
-                    color={COLOR_FAVORITO}
-                  />
-                ) : (
-                  <IconoCorazon
-                    size={radioCorazon}
-                    color={isDark ? "#F1F5F9" : "#101010"}
-                  />
-                )}
-              </Animated.View>
-            </Pressable>
           </View>
         )}
 
@@ -235,8 +211,8 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
           </LinearGradient>
         </Pressable>
 
-        {sinEncabezado && !acciones ? (
-          // Sin encabezado, el favorito va sobre la foto
+        {!acciones ? (
+          // El favorito va dentro de la foto, arriba a la derecha
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
@@ -247,14 +223,21 @@ export const TarjetaPublicacion = memo(function TarjetaPublicacion({
             hitSlop={8}
             style={[
               estilos.favoritoSobreFoto,
-              { top: 8 + margenFoto, right: 8 + margenFoto },
+              compacta && estilos.favoritoSobreFotoCompacto,
+              {
+                top: (sinEncabezado ? margenFoto : altoEncabezado) + 8,
+                right: 8 + margenFoto,
+              },
             ]}
           >
             <Animated.View style={estiloCorazon}>
               {favorite ? (
-                <IconoCorazonRelleno size={20} color={COLOR_FAVORITO} />
+                <IconoCorazonRelleno
+                  size={compacta ? 17 : 20}
+                  color={COLOR_FAVORITO}
+                />
               ) : (
-                <IconoCorazon size={20} color="#FFFFFF" />
+                <IconoCorazon size={compacta ? 17 : 20} color="#FFFFFF" />
               )}
             </Animated.View>
           </Pressable>
@@ -366,12 +349,6 @@ const estilos = StyleSheet.create({
     fontSize: 11,
     color: "#6B7280",
   },
-  favorito: {
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   favoritoSobreFoto: {
     position: "absolute",
     width: 34,
@@ -381,6 +358,7 @@ const estilos = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.38)",
   },
+  favoritoSobreFotoCompacto: { width: 30, height: 30, borderRadius: 15 },
   foto: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   pie: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8 },
   pieCompacto: { paddingHorizontal: 8, paddingTop: 6, paddingBottom: 5 },

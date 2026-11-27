@@ -130,4 +130,13 @@ export const estilos = StyleSheet.create({
     gap: 16,
     marginBottom: 16,
   },
+  // Lo más destacado: de dos en dos, con la misma separación que los resultados
+  // Lo más destacado: de dos en dos, con la misma separación que los resultados entre
+  // columnas y un poco más entre filas
+  destacadas: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: 16,
+    rowGap: 26,
+  },
 });

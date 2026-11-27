@@ -35,17 +35,11 @@ export default function AppLayout() {
         <Stack.Screen name="tarjetas" options={{ animation: "none" }} />
         <Stack.Screen name="legal/[documento]" />
         <Stack.Screen name="premium" />
-        {/* Encima del inicio, que se sigue viendo detrás: la transición la anima el módulo.
-            "contained": dentro de la pila y no como modal nativo encima de toda la app. Así el
-            efecto de disolver (que se dibuja sobre la pila) se ve: con "transparentModal" el
-            polvo quedaba detrás del módulo y solo se veía el hueco en blanco */}
-        <Stack.Screen
-          name="buscar"
-          options={{
-            presentation: "containedTransparentModal",
-            animation: "none",
-          }}
-        />
+        {/* Como los demás módulos: una pantalla normal de la pila (no un modal). Encima de un
+            modal, en iPhone lo que se abría (una publicación, un perfil) salía como hoja oscura
+            con el contenido más abajo. Así se abre normal y, al regresar, la búsqueda sigue
+            donde se quedó. Sin la animación de la pila: entra y sale con la del módulo */}
+        <Stack.Screen name="buscar" options={{ animation: "none" }} />
       </Stack>
       {/* La barra de navegación: una sola, fuera de la pila, así no se duplica ni se anima por
           separado al ir y volver de notificaciones o de un perfil */}

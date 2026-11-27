@@ -78,3 +78,21 @@ export function premiumPrimero(
     ...products.filter((product) => !premiumOwners.has(product.ownerId)),
   ];
 }
+
+/**
+ * Lo más destacado: primero las mejor calificadas; a igual calificación, las que tienen más
+ * reseñas y luego las más recientes. Las que no tienen calificación cuentan como 0.
+ */
+export function destacadas(
+  products: readonly Product[],
+  max: number,
+): Product[] {
+  return [...products]
+    .sort(
+      (a, b) =>
+        (b.rating ?? 0) - (a.rating ?? 0) ||
+        b.reviewCount - a.reviewCount ||
+        b.createdAt - a.createdAt,
+    )
+    .slice(0, max);
+}

@@ -280,7 +280,9 @@ await expectOk("C publica con 4 fotos y productos (como la app)", () => createPr
   imagenes: ["https://res.cloudinary.com/demo/a.png", "https://res.cloudinary.com/demo/b.png", "https://res.cloudinary.com/demo/c.png", "https://res.cloudinary.com/demo/d.png"],
   opciones: [{ id: "o1", nombre: "Cola", precio: 20, imagenUrl: null }, { id: "o2", nombre: "Limón", precio: 18, imagenUrl: "https://res.cloudinary.com/demo/l.png" }],
 }));
-await expectDenied("A publica con 5 fotos", () => createProduct(A, "p-x10", { imagenes: Array(5).fill("https://res.cloudinary.com/demo/a.png") }));
+await expectOk("C publica con 5 fotos (la grande y 4 chicas)", () => createProduct(C, "p-5fotos", { imagenes: Array(5).fill("https://res.cloudinary.com/demo/a.png") }));
+await expectDenied("A publica con 6 fotos", () => createProduct(A, "p-x10", { imagenes: Array(6).fill("https://res.cloudinary.com/demo/a.png") }));
+await expectDenied("A publica con la quinta foto http", () => createProduct(A, "p-x15", { imagenes: [...Array(4).fill("https://res.cloudinary.com/demo/a.png"), "http://x.com/e.png"] }));
 await expectDenied("A publica con una foto http entre las fotos", () => createProduct(A, "p-x11", { imagenes: ["https://res.cloudinary.com/demo/a.png", "http://x.com/b.png"] }));
 await expectDenied("A publica con 11 productos", () => createProduct(A, "p-x12", { opciones: Array(11).fill({ id: "o", nombre: "x", precio: 1, imagenUrl: null }) }));
 await expectDenied("A publica con precio negativo", () => createProduct(A, "p-x4", { price: -1 }));

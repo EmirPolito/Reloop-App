@@ -14,7 +14,7 @@ export type Product = {
   price: number;
   /** URL de la foto principal (Cloudinary): la primera de `images` */
   imageUri: string | null;
-  /** Todas las fotos (hasta 4); la primera es la grande */
+  /** Todas las fotos (hasta 5); la primera es la grande */
   images: string[];
   /** Venta y comida: los productos que se pueden pedir (sabores, tamaños...) */
   options: ProductOption[];
@@ -44,6 +44,8 @@ export type ProductOption = {
   description: string;
   price: number;
   imageUri: string | null;
+  /** Cuántos tiene el vendedor de este producto (las publicaciones de antes no lo traen) */
+  available?: number;
 };
 
 export type ChatMessage = {

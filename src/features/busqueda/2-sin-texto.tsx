@@ -17,9 +17,11 @@ import Animated, {
 
 import { TRANSICION_MODULO } from "@/constants/motion";
 import { IconoBusqueda } from "@/features/home/components/IconosTarjeta";
+import type { Product } from "@/features/marketplace/types";
 import { AppIcon } from "@/features/shared/AppIcon";
 import { Text } from "@/features/shared/Text";
 import { GROSOR_LUPA } from "./components/PildoraCristal";
+import { TarjetaDestacada } from "./components/TarjetaDestacada";
 import { estilos, type ColoresBusqueda } from "./estilos";
 import { IDEAS_BUSQUEDA } from "./frasesBusqueda";
 
@@ -34,7 +36,8 @@ const SALIDA_RECIENTES = FadeOut.duration(240);
 const DURACION_POLVO = 1500;
 
 /**
- * Vista del módulo sin texto: las búsquedas recientes y debajo ideas de qué buscar. Al quitar
+ * Vista del módulo sin texto: las búsquedas recientes, debajo ideas de qué buscar y, al final,
+ * lo más destacado (las publicaciones mejor calificadas, de dos en dos). Al quitar
  * una reciente se vuelve polvo y, cuando termina, las de abajo suben suave. El acomodo solo se
  * activa al quitar una: al entrar, todo aparece en su lugar sin deslizarse.
  */
@@ -46,6 +49,11 @@ export const VistaSinTexto = memo(function VistaSinTexto({
   onElegirReciente,
   onElegirIdea,
   onQuitarReciente,
+  destacadas,
+  anchoTarjeta,
+  favoritos,
+  onOpen,
+  onToggleFavorite,
 }: {
   recientes: string[];
   colores: ColoresBusqueda;
@@ -54,6 +62,12 @@ export const VistaSinTexto = memo(function VistaSinTexto({
   onElegirReciente: (texto: string) => void;
   onElegirIdea: (texto: string) => void;
   onQuitarReciente: (texto: string) => void;
+  /** Lo más destacado (ya ordenado) */
+  destacadas: Product[];
+  anchoTarjeta: number;
+  favoritos: ReadonlySet<string>;
+  onOpen: (productId: string) => void;
+  onToggleFavorite: (productId: string) => void;
 }) {
   const [acomodando, setAcomodando] = useState(false);
   const finAcomodo = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,6 +141,28 @@ export const VistaSinTexto = memo(function VistaSinTexto({
           />
         ))}
       </Animated.View>
+      {destacadas.length > 0 ? (
+        <Animated.View
+          layout={acomodando ? ACOMODO : undefined}
+          style={estilos.seccionSiguiente}
+        >
+          <Text style={[estilos.tituloSeccion, { color: colores.suave }]}>
+            Lo más destacado
+          </Text>
+          <View style={estilos.destacadas}>
+            {destacadas.map((product) => (
+              <TarjetaDestacada
+                key={product.id}
+                item={product}
+                ancho={anchoTarjeta}
+                favorito={favoritos.has(product.id)}
+                onOpen={onOpen}
+                onToggleFavorite={onToggleFavorite}
+              />
+            ))}
+          </View>
+        </Animated.View>
+      ) : null}
     </Animated.ScrollView>
   );
 });

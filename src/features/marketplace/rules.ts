@@ -60,7 +60,10 @@ export function formatPublicationTime(createdAt: number, now: number): string {
   return dias === 1 ? "Hace 1 día" : `Hace ${dias} días`;
 }
 
-/** "Donación", "$120" o `null` cuando el producto no tiene precio. */
+/**
+ * "Donación", "$120.00 MXN" o `null` cuando el producto no tiene precio. Con productos, el
+ * precio es el del más barato.
+ */
 export function formatProductPrice(product: Product): string | null {
   if (product.category === "donacion") return "Donación";
   if (product.price <= 0) return null;

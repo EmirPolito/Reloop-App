@@ -166,7 +166,7 @@ export interface NewProductData {
   availableQuantity: number;
   /** URL ya subida a Cloudinary (la primera de `imagenes`) */
   imageUrl: string | null;
-  /** Todas las fotos, ya subidas (hasta 4) */
+  /** Todas las fotos, ya subidas (hasta 5) */
   imagenes: string[];
   /** Venta y comida: los productos que se pueden pedir, con su foto ya subida */
   opciones: OpcionGuardada[];
@@ -181,6 +181,8 @@ export interface OpcionGuardada {
   descripcion: string;
   precio: number;
   imagenUrl: string | null;
+  /** Cuántos tiene el vendedor de este producto */
+  disponibles: number;
 }
 
 /** Crea la publicación; empieza sin reseñas (las estrellas salen solo de reseñas reales). */

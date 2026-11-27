@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   FadeIn,
+  FadeOut,
+  LinearTransition,
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
 
-import { PressableScale } from "@/components/PressableScale";
 import { EASE_OUT_CUBIC } from "@/constants/motion";
 import { INTER } from "@/features/perfil/editar/editarTema";
 import { useAppTheme } from "@/features/shared/AppThemeProvider";
@@ -20,9 +21,11 @@ import {
   type ItemPedido,
 } from "../formatoPedido";
 
+const TRANSICION_SUAVE = LinearTransition.duration(260).easing(EASE_OUT_CUBIC);
+
 /**
- * El resumen antes de pedir: "Total" con su flecha y, al abrirlo, cada producto elegido con su
- * cantidad y el subtotal.
+- El resumen antes de pedir: "Total" con su flecha y, al abrirlo, cada producto elegido con su
+- cantidad y el subtotal.
  */
 export function ResumenPedido({ items }: { items: readonly ItemPedido[] }) {
   const { isDark } = useAppTheme();
@@ -35,7 +38,7 @@ export function ResumenPedido({ items }: { items: readonly ItemPedido[] }) {
     transform: [
       {
         rotate: withTiming(abierto ? "180deg" : "0deg", {
-          duration: 220,
+          duration: 260,
           easing: EASE_OUT_CUBIC,
         }),
       },
@@ -43,37 +46,36 @@ export function ResumenPedido({ items }: { items: readonly ItemPedido[] }) {
   }));
 
   return (
-    <View
-      style={[
-        styles.tarjeta,
-        // Fondo blanco, sin borde
-        { backgroundColor: c.tarjeta },
-      ]}
-    >
-      <PressableScale
+    // Sin fondo propio: va directo sobre la pantalla con transición suave de altura
+    <Animated.View layout={TRANSICION_SUAVE} style={styles.contenedor}>
+      {/* "Total: $X" a la izquierda y la flecha a la derecha. Sin achicarse al tocarlo: se
+          sentía como un rebote */}
+      <Pressable
         accessibilityRole="button"
         accessibilityLabel={abierto ? "Ocultar el desglose" : "Ver el desglose"}
         accessibilityState={{ expanded: abierto }}
         onPress={() => setAbierto((valor) => !valor)}
-        scaleTo={0.98}
         style={styles.totalFila}
       >
-        <View style={styles.totalTexto}>
-          <Text style={[INTER.semibold, styles.total, { color: c.texto }]}>
-            Total
-          </Text>
-          <Animated.View style={flecha}>
-            <Ionicons name="chevron-down" size={17} color={c.texto} />
-          </Animated.View>
-        </View>
         <Text style={[INTER.semibold, styles.total, { color: c.texto }]}>
-          {formatearDinero(total)}
+          Total: {formatearDinero(total)}
         </Text>
-      </PressableScale>
+        <Animated.View style={flecha}>
+          <Ionicons name="chevron-down" size={18} color={c.texto} />
+        </Animated.View>
+      </Pressable>
 
       {abierto ? (
-        <Animated.View entering={FadeIn.duration(200)} style={styles.desglose}>
-          <View style={[styles.punteada, { borderColor: c.linea }]} />
+        <Animated.View
+          entering={FadeIn.duration(240).easing(EASE_OUT_CUBIC)}
+          exiting={FadeOut.duration(160).easing(EASE_OUT_CUBIC)}
+          style={styles.desglose}
+        >
+          {/* En iPhone un borde punteado de un solo lado sale continuo: se dibuja un borde
+              punteado completo y se deja ver solo su línea de arriba */}
+          <View style={styles.punteada}>
+            <View style={[styles.punteadaBorde, { borderColor: c.linea }]} />
+          </View>
           {items.length === 0 ? (
             <Text style={[INTER.regular, styles.linea, { color: c.suave }]}>
               Aún no eliges productos.
@@ -106,32 +108,26 @@ export function ResumenPedido({ items }: { items: readonly ItemPedido[] }) {
               {formatearDinero(total)}
             </Text>
           </View>
-          <View style={styles.fila}>
-            <Text style={[INTER.regular, styles.linea, { color: c.suave }]}>
-              Entrega
-            </Text>
-            <Text style={[INTER.medium, styles.linea, { color: c.texto }]}>
-              Se acuerda en el chat
-            </Text>
-          </View>
         </Animated.View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  tarjeta: { borderRadius: 18, paddingHorizontal: 16 },
+  contenedor: { overflow: "hidden" },
+  // Un poco más arriba (menos aire encima)
   totalFila: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 16,
+    paddingTop: 4,
+    paddingBottom: 14,
   },
-  totalTexto: { flexDirection: "row", alignItems: "center", gap: 6 },
   total: { fontSize: 16 },
   desglose: { gap: 10, paddingBottom: 16 },
-  punteada: { borderTopWidth: 1, borderStyle: "dashed", marginBottom: 4 },
+  punteada: { height: 1, overflow: "hidden", marginBottom: 4 },
+  punteadaBorde: { height: 4, borderWidth: 1, borderStyle: "dashed" },
   fila: {
     flexDirection: "row",
     alignItems: "center",

@@ -24,7 +24,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { conSalida, registrarSalida } from "@/components/salidaModulo";
 import { TRANSICION_MODULO } from "@/constants/motion";
 import { useMarketplaceState } from "@/features/marketplace/MarketplaceProvider";
-import { filterProducts } from "@/features/marketplace/feedFilters";
+import { destacadas, filterProducts } from "@/features/marketplace/feedFilters";
 import { useToggleFavorite } from "@/features/marketplace/hooks/useToggleFavorite";
 import type { CategoryId } from "@/features/marketplace/types";
 import { UNIVERSIDAD_PROPIA } from "@/features/marketplace/universidades";
@@ -44,6 +44,8 @@ import { modoDeBusqueda } from "./modoBusqueda";
 /** Entrada y salida: las mismas de los demás módulos */
 const { entrada: ENTRADA, salida: SALIDA } = TRANSICION_MODULO;
 const DESPLAZAMIENTO = TRANSICION_MODULO.desplazamiento;
+/** Cuántas publicaciones salen en "Lo más destacado" */
+const MAX_DESTACADAS = 6;
 /** Al cambiar de vista dentro del módulo: la misma entrada y salida */
 const ENTRADA_VISTA = FadeInDown.duration(ENTRADA.duration)
   .easing(ENTRADA.easing)
@@ -124,6 +126,11 @@ export function PantallaBusqueda() {
       ),
     [todos, universidad],
   );
+  // Lo más destacado, debajo de las ideas: las mejor calificadas
+  const masDestacadas = useMemo(
+    () => destacadas(products, MAX_DESTACADAS),
+    [products],
+  );
   // Buscar en un Set es directo (en el arreglo había que recorrerlo por cada tarjeta)
   const favoritos = useMemo(() => new Set(favorites), [favorites]);
 
@@ -143,14 +150,18 @@ export function PantallaBusqueda() {
   const abrirProducto = useCallback(
     (productId: string) => {
       agregar(textoRef.current);
-      conSalida(() => openProduct(productId));
+      // Directo, como desde el inicio: esperar a que la búsqueda se desvaneciera se veía
+
+      // como un parpadeo antes de la información
+
+      openProduct(productId);
     },
     [agregar, textoRef, openProduct],
   );
   const abrirPersona = useCallback(
     (uid: string) => {
       agregar(textoRef.current);
-      conSalida(() => openUserProfile(uid));
+      openUserProfile(uid);
     },
     [agregar, textoRef, openUserProfile],
   );
@@ -256,6 +267,11 @@ export function PantallaBusqueda() {
               onElegirReciente={elegirTexto}
               onElegirIdea={elegirIdea}
               onQuitarReciente={quitar}
+              destacadas={masDestacadas}
+              anchoTarjeta={cardWidth}
+              favoritos={favoritos}
+              onOpen={abrirProducto}
+              onToggleFavorite={toggleFavorite}
             />
           )}
         </Animated.View>

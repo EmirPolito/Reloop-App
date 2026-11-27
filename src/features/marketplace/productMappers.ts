@@ -10,7 +10,7 @@ function isCategory(value: unknown): value is CategoryId {
   return CATEGORIES.some((category) => category.id === value);
 }
 
-const MAX_FOTOS = 4;
+const MAX_FOTOS = 5;
 
 function textos(valor: unknown): string[] {
   return Array.isArray(valor)
@@ -22,10 +22,8 @@ function opciones(valor: unknown): ProductOption[] {
   if (!Array.isArray(valor)) return [];
   return valor.flatMap((item, i): ProductOption[] => {
     if (!item || typeof item !== "object") return [];
-    const { id, nombre, descripcion, precio, imagenUrl } = item as Record<
-      string,
-      unknown
-    >;
+    const { id, nombre, descripcion, precio, imagenUrl, disponibles } =
+      item as Record<string, unknown>;
     if (typeof nombre !== "string" || typeof precio !== "number") return [];
     return [
       {
@@ -34,6 +32,9 @@ function opciones(valor: unknown): ProductOption[] {
         description: typeof descripcion === "string" ? descripcion : "",
         price: precio,
         imageUri: typeof imagenUrl === "string" ? imagenUrl : null,
+        ...(typeof disponibles === "number" && disponibles >= 0
+          ? { available: Math.floor(disponibles) }
+          : {}),
       },
     ];
   });

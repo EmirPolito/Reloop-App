@@ -5,13 +5,13 @@ import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
-  ZoomIn,
   FadeIn,
   interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withTiming,
+  ZoomIn,
 } from "react-native-reanimated";
 
 import { EASE_OUT_CUBIC } from "@/constants/motion";
@@ -31,9 +31,9 @@ const ARCOIRIS = [
 /** Grosor del borde de luz y de su resplandor (a escala completa) */
 const BORDE = 26;
 const RESPLANDOR = 70;
-const DURACION = 1300;
+const DURACION = 1600;
 /** Lo que se queda "Pedido enviado" en pantalla antes de ir al chat */
-const ESPERA = 1600;
+const ESPERA = 2100;
 const CURVA_OLA = Easing.bezier(0.45, 0, 0.2, 1);
 
 /**
@@ -139,14 +139,14 @@ export function OlaEnviado({
       >
         <Animated.View
           entering={ZoomIn.delay(reducir ? 0 : DURACION * 0.55)
-            .duration(260)
+            .duration(340)
             .easing(EASE_OUT_CUBIC)}
           style={styles.palomita}
         >
-          <Ionicons name="checkmark" size={34} color="#FFFFFF" />
+          <Ionicons name="checkmark" size={46} color="#FFFFFF" />
         </Animated.View>
         <Animated.View
-          entering={FadeIn.delay(reducir ? 0 : DURACION * 0.7).duration(220)}
+          entering={FadeIn.delay(reducir ? 0 : DURACION * 0.7).duration(300)}
           style={styles.textos}
         >
           <Text style={[INTER.semibold, styles.titulo, { color: c.texto }]}>
@@ -161,10 +161,17 @@ export function OlaEnviado({
   );
 }
 
-const LADO_PALOMITA = 64;
+const LADO_PALOMITA = 86;
 
 const styles = StyleSheet.create({
-  centro: { alignItems: "center", justifyContent: "center", gap: 14 },
+  // Centrado y un poco más arriba del medio, con más aire entre la palomita y el texto
+  centro: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 70,
+  },
   palomita: {
     width: LADO_PALOMITA,
     height: LADO_PALOMITA,
@@ -173,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  textos: { alignItems: "center", gap: 4 },
-  titulo: { fontSize: 18 },
-  nota: { fontSize: 13.5 },
+  textos: { alignItems: "center", gap: 6 },
+  titulo: { fontSize: 22, textAlign: "center" },
+  nota: { fontSize: 14.5, textAlign: "center" },
 });

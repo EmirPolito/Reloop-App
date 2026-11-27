@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import { createContext, useContext, type Ref } from "react";
 import {
   Text as NativeText,
   TextInput as NativeTextInput,
@@ -25,6 +25,21 @@ function poppinsFor(weight: TextStyle["fontWeight"]): string {
     default:
       return "Poppins_400Regular";
   }
+}
+
+/**
+ * La familia de letra de los `Text` y `TextInput` de adentro: Poppins (la de siempre) o Inter.
+ * Un módulo entero puede usar Inter con `<FuenteTexto.Provider value="inter">`.
+ */
+export const FuenteTexto = createContext<"poppins" | "inter">("poppins");
+
+/** El archivo de la fuente para la familia y el grosor (Inter tiene los mismos grosores) */
+function fuentePara(
+  familia: "poppins" | "inter",
+  weight: TextStyle["fontWeight"],
+): string {
+  const poppins = poppinsFor(weight);
+  return familia === "inter" ? poppins.replace("Poppins_", "Inter_") : poppins;
 }
 
 /** Lee el grosor desde clases de Tailwind (font-bold, font-[700], etc.). */
@@ -83,12 +98,13 @@ function resolveWeight(style: TextProps["style"], className?: string) {
 
 /** Text con fuente Poppins automática según fontWeight o clase font-*. Es el único Text que debe usarse en la app. */
 export function Text({ style, ...props }: TextProps & { className?: string }) {
+  const familia = useContext(FuenteTexto);
   const weight = resolveWeight(style, props.className);
   return (
     <NativeText
       {...props}
       style={[
-        { fontFamily: poppinsFor(weight) },
+        { fontFamily: fuentePara(familia, weight) },
         style,
         SAME_ON_EVERY_PLATFORM,
       ]}
@@ -104,12 +120,13 @@ export function TextInput({
   className?: string;
   ref?: Ref<TextInputInstance>;
 }) {
+  const familia = useContext(FuenteTexto);
   const weight = resolveWeight(style, props.className);
   return (
     <NativeTextInput
       {...props}
       style={[
-        { fontFamily: poppinsFor(weight) },
+        { fontFamily: fuentePara(familia, weight) },
         style,
         SAME_ON_EVERY_PLATFORM,
       ]}

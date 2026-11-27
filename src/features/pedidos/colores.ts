@@ -1,5 +1,5 @@
 /** El azul del botón principal de pedir */
-export const AZUL_PEDIR = "#11A8FF";
+export const AZUL_PEDIR = "#101010";
 
 /** Colores de la publicación, el pedido y las reseñas, en claro y oscuro */
 export function coloresPedido(isDark: boolean) {
@@ -18,7 +18,7 @@ export function coloresPedido(isDark: boolean) {
         suave: "#8A8A8A",
         neutro: "#F5F5F5",
         tarjeta: "#FFFFFF",
-        borde: "#EDEDED",
+        borde: "#ffffffff",
         linea: "#D4D4D4",
       };
 }

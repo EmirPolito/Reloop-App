@@ -20,7 +20,7 @@ import {
 } from "@/features/tarjetas/formatoTarjeta";
 import { buildNewProduct, validateDraft, EMPTY_DRAFT } from "@/features/crear-publicacion/draftRules";
 import { buildHomeFeedRows, homeRowKey } from "@/features/home/filasInicio";
-import { filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
+import { destacadas, filterProducts, filtersReducer, NO_FILTERS } from "@/features/marketplace/feedFilters";
 import { modoDeBusqueda } from "@/features/busqueda/modoBusqueda";
 import { estadoBarraParaRuta } from "@/features/navigation/rutas";
 import { pasoDesdeIndice, PASOS_ONBOARDING, puedeFinalizar } from "@/features/onboarding/reglasOnboarding";
@@ -90,6 +90,19 @@ function product(over: Partial<Product> = {}): Product {
     distance: "0.0 km", isMine: false, createdAt: 1, ...over,
   };
 }
+
+describe("lo más destacado de la búsqueda", () => {
+  it("mejor calificadas primero; empate por más reseñas y luego las más recientes", () => {
+    const lista = [
+      product({ id: "sin", rating: undefined, reviewCount: 0, createdAt: 9 }),
+      product({ id: "cuatro", rating: 4, reviewCount: 3, createdAt: 1 }),
+      product({ id: "cinco-pocas", rating: 5, reviewCount: 1, createdAt: 1 }),
+      product({ id: "cinco-muchas", rating: 5, reviewCount: 8, createdAt: 1 }),
+      product({ id: "cuatro-nueva", rating: 4, reviewCount: 3, createdAt: 5 }),
+    ];
+    assert.deepEqual(destacadas(lista, 4).map((p) => p.id), ["cinco-muchas", "cinco-pocas", "cuatro-nueva", "cuatro"]);
+  });
+});
 
 describe("filtros del inicio", () => {
   it("escribir cambia la búsqueda y no toca la categoría", () => {
@@ -240,6 +253,11 @@ describe("reglas por categoría", () => {
     assert.equal(formatProductPrice(product({ category: "donacion", price: 0 })), "Donación");
     assert.equal(formatProductPrice(product({ category: "cambio", price: 0 })), null);
     assert.equal(productBadgeLabel(product({ category: "cambio", price: 0 })), "Intercambios");
+    // Con productos, el precio es el del más barato (sin "Desde", aunque cuesten distinto)
+    const opcion = (id: string, price: number) => ({ id, name: id, description: "", price, imageUri: null });
+    assert.equal(formatProductPrice(product({ price: 25, options: [opcion("a", 25), opcion("b", 40)] })), "$25.00 MXN");
+    assert.equal(formatProductPrice(product({ price: 25, options: [opcion("a", 25), opcion("b", 25)] })), "$25.00 MXN");
+    assert.equal(formatProductPrice(product({ price: 25, options: [opcion("a", 25)] })), "$25.00 MXN");
   });
   it("valoración del perfil: promedio de todas las reseñas (cada una pesa igual); sin reseñas, 0", () => {
     assert.equal(averageRatingLabel([]), "0");
@@ -278,11 +296,20 @@ describe("borrador de publicación", () => {
     );
   });
   it("con productos: cada uno necesita nombre y precio, y la publicación cuesta lo del más barato", () => {
-    const opcion = (key: string, name: string, priceText: string, description = "") => ({ key, name, description, priceText, photo: null });
+    const opcion = (key: string, name: string, priceText: string, description = "", quantityText = "1") => ({ key, name, description, priceText, quantityText, photo: null });
+    // La publicación tiene la suma de lo que hay de cada producto
     assert.deepEqual(
-      validateDraft({ ...EMPTY_DRAFT, name: "Refrescos", category: "comida", options: [opcion("a", " Cola ", "20", " Lata de 355 ml "), opcion("b", "Limón", "18")] }),
-      { valid: true, price: 18, availableQuantity: 1, options: [{ id: "a", nombre: "Cola", descripcion: "Lata de 355 ml", precio: 20 }, { id: "b", nombre: "Limón", descripcion: "", precio: 18 }] },
+      validateDraft({ ...EMPTY_DRAFT, name: "Refrescos", category: "comida", options: [opcion("a", " Cola ", "20", " Lata de 355 ml ", "5"), opcion("b", "Limón", "18")] }),
+      { valid: true, price: 18, availableQuantity: 6, options: [{ id: "a", nombre: "Cola", descripcion: "Lata de 355 ml", precio: 20, disponibles: 5 }, { id: "b", nombre: "Limón", descripcion: "", precio: 18, disponibles: 1 }] },
     );
+    // El de ejemplo que se deja vacío no cuenta (sin productos, se pide el precio de siempre)
+    assert.deepEqual(
+      validateDraft({ ...EMPTY_DRAFT, name: "R", category: "comida", priceText: "30", options: [opcion("a", "", "")] }),
+      { valid: true, price: 30, availableQuantity: 1, options: [] },
+    );
+    // Cada producto necesita cuántos hay, entre 1 y 9999
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "Cola", "20", "", "")] }).valid, false);
+    assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "Cola", "20", "", "0")] }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "", "20")] }).valid, false);
     assert.equal(validateDraft({ ...EMPTY_DRAFT, name: "R", options: [opcion("a", "Cola", "x")] }).valid, false);
     // En categorías sin productos, los que hubiera no cuentan
@@ -398,15 +425,16 @@ describe("mapeo de publicaciones", () => {
     assert.equal(p?.rating, undefined);
     assert.equal(p?.reviewCount, 0);
   });
-  it("fotos (hasta 4) y productos; los mal formados se descartan", () => {
+  it("fotos (hasta 5) y productos; los mal formados se descartan", () => {
     const p = mapProduct(snap("p4", {
       ownerId: "u1", name: "Refrescos", category: "comida", imageUrl: "https://a",
-      imagenes: ["https://a", "https://b", 3, "https://c", "https://d", "https://e"],
-      opciones: [{ id: "o1", nombre: "Cola", descripcion: "Lata", precio: 20, imagenUrl: "https://c" }, { nombre: "Sin precio" }, { nombre: "Limón", precio: 18 }],
+      imagenes: ["https://a", "https://b", 3, "https://c", "https://d", "https://e", "https://f"],
+      opciones: [{ id: "o1", nombre: "Cola", descripcion: "Lata", precio: 20, imagenUrl: "https://c", disponibles: 7 }, { nombre: "Sin precio" }, { nombre: "Limón", precio: 18 }],
     }), "u9");
-    assert.deepEqual(p?.images, ["https://a", "https://b", "https://c", "https://d"]);
+    assert.deepEqual(p?.images, ["https://a", "https://b", "https://c", "https://d", "https://e"]);
+    // Los de antes no traen cuántos hay
     assert.deepEqual(p?.options, [
-      { id: "o1", name: "Cola", description: "Lata", price: 20, imageUri: "https://c" },
+      { id: "o1", name: "Cola", description: "Lata", price: 20, imageUri: "https://c", available: 7 },
       { id: "2", name: "Limón", description: "", price: 18, imageUri: null },
     ]);
   });

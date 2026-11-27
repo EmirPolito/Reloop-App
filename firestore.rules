@@ -252,11 +252,12 @@ service cloud.firestore {
 
     // Hasta 4 fotos de Cloudinary (las reglas no recorren listas: se revisan una por una)
     function validImages(list) {
-      return list is list && list.size() <= 4
+      return list is list && list.size() <= 5
         && (list.size() < 1 || (list[0] is string && list[0].matches('https://.*')))
         && (list.size() < 2 || (list[1] is string && list[1].matches('https://.*')))
         && (list.size() < 3 || (list[2] is string && list[2].matches('https://.*')))
-        && (list.size() < 4 || (list[3] is string && list[3].matches('https://.*')));
+        && (list.size() < 4 || (list[3] is string && list[3].matches('https://.*')))
+        && (list.size() < 5 || (list[4] is string && list[4].matches('https://.*')));
     }
 
     // Venta y comida: hasta 10 productos (cada uno con nombre, precio y foto opcional)

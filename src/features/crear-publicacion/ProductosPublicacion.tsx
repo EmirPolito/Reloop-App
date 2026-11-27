@@ -14,7 +14,7 @@ import {
 /**
  * Venta y comida: los productos que se pueden pedir (p. ej., cada sabor de refresco). Cada
  * producto lleva su imagen a la izquierda (tocarla elige la foto), el nombre con una X para
- * quitarlo, una descripción corta y el precio.
+ * quitarlo, una descripción corta y, abajo, el precio y cuántos tiene.
  */
 export function ProductosPublicacion({
   opciones,
@@ -68,7 +68,7 @@ export function ProductosPublicacion({
                 accessibilityLabel={`Nombre del producto ${i + 1}`}
                 value={opcion.name}
                 onChangeText={(name) => onCambiar(opcion.key, { name })}
-                placeholder="Ej. Refresco de cola"
+                placeholder="Nombre (ej. Refresco de cola)"
                 placeholderTextColor={suave}
                 maxLength={40}
                 style={[styles.nombre, { color: texto }]}
@@ -94,15 +94,41 @@ export function ProductosPublicacion({
               maxLength={LARGO_DESCRIPCION_OPCION}
               style={[styles.descripcion, { color: texto }]}
             />
-            <TextInput
-              accessibilityLabel={`Precio del producto ${i + 1}`}
-              value={opcion.priceText}
-              onChangeText={(priceText) => onCambiar(opcion.key, { priceText })}
-              placeholder="$ 0.00"
-              placeholderTextColor={suave}
-              keyboardType="decimal-pad"
-              style={[styles.precio, { color: texto, backgroundColor: fondo }]}
-            />
+            <View style={styles.filaPrecio}>
+              <TextInput
+                accessibilityLabel={`Precio del producto ${i + 1}`}
+                value={opcion.priceText}
+                onChangeText={(priceText) =>
+                  onCambiar(opcion.key, { priceText })
+                }
+                placeholder="Precio ($0.00)"
+                placeholderTextColor={suave}
+                keyboardType="decimal-pad"
+                style={[
+                  styles.precio,
+                  { color: texto, backgroundColor: fondo },
+                ]}
+              />
+              <View style={[styles.cantidad, { backgroundColor: fondo }]}>
+                <TextInput
+                  accessibilityLabel={`Cuántos tienes del producto ${i + 1}`}
+                  value={opcion.quantityText}
+                  onChangeText={(quantityText) =>
+                    onCambiar(opcion.key, {
+                      quantityText: quantityText.replace(/[^0-9]/g, ""),
+                    })
+                  }
+                  placeholder="1"
+                  placeholderTextColor={suave}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  style={[styles.cantidadTexto, { color: texto }]}
+                />
+                <Text style={[styles.cantidadEtiqueta, { color: suave }]}>
+                  pzas.
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       ))}
@@ -116,7 +142,7 @@ export function ProductosPublicacion({
         >
           <Ionicons name="add" size={18} color={texto} />
           <Text style={[styles.agregarTexto, { color: texto }]}>
-            Agregar producto
+            Agregar otro producto
           </Text>
         </PressableScale>
       ) : null}
@@ -143,12 +169,26 @@ const styles = StyleSheet.create({
   filaNombre: { flexDirection: "row", alignItems: "center", gap: 8 },
   nombre: { flex: 1, fontSize: 14.5, paddingVertical: 2 },
   descripcion: { fontSize: 12.5, paddingVertical: 0, marginTop: -4 },
+  filaPrecio: { flexDirection: "row", gap: 8 },
   precio: {
+    flex: 1,
     height: 38,
     borderRadius: 12,
     paddingHorizontal: 12,
     fontSize: 14,
   },
+  // Cuántas piezas tiene: el número y, a su lado, "pzas."
+  cantidad: {
+    width: 86,
+    height: 38,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  cantidadTexto: { flex: 1, fontSize: 14, paddingVertical: 0 },
+  cantidadEtiqueta: { fontSize: 12.5 },
   agregar: {
     height: 46,
     borderRadius: 23,
